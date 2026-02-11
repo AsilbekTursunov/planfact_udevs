@@ -72,7 +72,7 @@ export function OperationModal({
 			return {
 				paymentDate,
 				confirmPayment: raw.oplata_podtverzhdena || false,
-				accountAndLegalEntity: raw.currenies_id || null,
+				accountAndLegalEntity: raw.bank_accounts_id || null,
 				amount: raw.summa ? Math.abs(raw.summa) : '',
 				counterparty: raw.counterparties_id || null,
 				chartOfAccount: raw.chart_of_accounts_id || null,
@@ -152,7 +152,6 @@ export function OperationModal({
 		data: {},
 	})
 	const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
- 
 
 	// Build tree structure for counterparties (groups and their children)
 	const counterAgentsTree = useMemo(() => {
@@ -921,7 +920,6 @@ export function OperationModal({
 												checkboxLabel='Подтвердить оплату'
 												checkboxValue={formData.confirmPayment}
 												onCheckboxChange={checked =>
-													// payment_confirmed change this value
 													setFormData({ ...formData, confirmPayment: checked })
 												}
 												className={errors.paymentDate ? styles.error : ''}
@@ -932,7 +930,7 @@ export function OperationModal({
 										</div>
 									</div>
 
-									{/* Счет и юрлицо currenies_id currencyID */}
+									{/* Счет и юрлицо */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
 											Счет и юрлицо <span className={styles.required}>*</span>
@@ -961,7 +959,7 @@ export function OperationModal({
 										</div>
 									</div>
 
-									{/* Сумма new form value summa */}
+									{/* Сумма */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
 											Сумма <span className={styles.required}>*</span>
@@ -988,7 +986,7 @@ export function OperationModal({
 										</div>
 									</div>
 
-									{/* Дата начисления new value data_nachisleniya if confirmAccrual is true */}
+									{/* Дата начисления */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>Дата начисления</label>
 										<DatePicker
@@ -997,10 +995,6 @@ export function OperationModal({
 											placeholder='Выберите дату'
 											showCheckbox
 											checkboxLabel='Подтвердить начисление'
-											onCheckboxChange={checked =>
-												//  payment_accrual
-												setFormData({ ...formData, confirmAccrual: checked })
-											}
 										/>
 									</div>
 

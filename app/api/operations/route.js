@@ -167,6 +167,8 @@ export async function PUT(request) {
       'X-API-KEY': 'P-7LpJciQKbkwuC2ecwefamfEQhoe5F8Bc',
     }
 
+    console.log('data => ', data)
+
     const response = await fetch(url, {
       method: 'PUT',
       headers,
