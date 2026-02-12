@@ -9,7 +9,7 @@ import { CategoryMenu } from '@/components/directories/CategoryMenu/CategoryMenu
 import { DeleteCategoryConfirmModal } from '@/components/directories/DeleteCategoryConfirmModal/DeleteCategoryConfirmModal'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
 import styles from './transaction-categories.module.scss'
-import { useChartOfAccountsPlanFact, useChartOfAccountsV2 } from '../../../../hooks/useDashboard'
+import { useChartOfAccountsPlanFact } from '../../../../hooks/useDashboard'
 
 // Recursive component for rendering category tree
 function CategoryTreeItem({
@@ -259,7 +259,10 @@ export default function TransactionCategoriesPage() {
 		data: chartOfAccountsData,
 		isLoading: isLoadingChartOfAccounts,
 		error: chartOfAccountsError,
-	} = useChartOfAccountsV2()
+	} = useChartOfAccountsPlanFact({
+		page: 1,
+		limit: 100
+	})
 
 	// Compatibility aliases (old variable names used in JSX below)
 	const isLoadingChartOfAccountsV2 = isLoadingChartOfAccounts
@@ -274,21 +277,34 @@ export default function TransactionCategoriesPage() {
 		if (!Array.isArray(chartOfAccountsTree)) return []
 
 		const flat = []
-		const visit = node => {
+		const visit = (node, isRootWithEmptyGuid = false) => {
 			if (!node || typeof node !== 'object') return
 
 			const { children, ...item } = node
 			const childrenArr = Array.isArray(children) ? children : []
 
-			// Some responses include group/root nodes with empty guid - skip them but still traverse children
+			// If this is a root node with empty guid (like "Доходы", "Расходы"), 
+			// don't add it but mark its children as root items
+			if (!item.guid && childrenArr.length > 0) {
+				// This is a root group node - traverse children and mark them as root items
+				childrenArr.forEach(child => visit(child, true))
+				return
+			}
+
+			// Add item if it has a guid
 			if (item.guid) {
+				// If parent had empty guid, clear the parent reference so this becomes a root item
+				if (isRootWithEmptyGuid) {
+					item.chart_of_accounts_id_2 = null
+				}
 				flat.push(item)
 			}
 
-			childrenArr.forEach(visit)
+			// Traverse children normally
+			childrenArr.forEach(child => visit(child, false))
 		}
 
-		chartOfAccountsTree.forEach(visit)
+		chartOfAccountsTree.forEach(node => visit(node, false))
 		return flat
 	}, [chartOfAccountsTree])
 
@@ -802,7 +818,7 @@ export default function TransactionCategoriesPage() {
 				onConfirm={async () => {
 					if (categoryToDelete?.guid) {
 						try {
-							await deleteMutation.mutateAsync([categoryToDelete.guid])
+							await deleteMutation.mutateAsync({ guid: categoryToDelete.guid })
 							showSuccessNotification('Учетная статья успешно удалена!')
 							setIsDeleteModalOpen(false)
 							setCategoryToDelete(null)

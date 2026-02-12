@@ -18,10 +18,10 @@ export function OperationsFiltersSidebar({
   onDatePaymentRangeChange,
   selectedDateStartRange,
   onDateStartRangeChange,
-  bankAccounts,
-  selectedAccounts,
-  onAccountToggle,
-  onSelectAllAccounts,
+  legalEntities,
+  selectedLegalEntities,
+  onLegalEntityToggle,
+  onSelectAllLegalEntities,
   counterAgents,
   selectedCounterAgents,
   onCounterAgentToggle,
@@ -46,8 +46,9 @@ export function OperationsFiltersSidebar({
   const dateStartPickerRef = useRef(null)
   const datePickerModalRef = useRef(null)
   const dateStartPickerModalRef = useRef(null)
+  const calendarPortalRef = useRef(null) // Добавляем ref для календаря
   const parameterDropdownRef = useRef(null)
-  const accountsDropdownRef = useRef(null)
+  const legalEntitiesDropdownRef = useRef(null)
   const counterAgentsDropdownRef = useRef(null)
   const justOpenedRef = useRef(false)
   const justOpenedStartRef = useRef(false)
@@ -201,7 +202,8 @@ export function OperationsFiltersSidebar({
       if (isDatePaymentModalOpen) {
         const clickedInsideButton = datePickerRef.current?.contains(event.target)
         const clickedInsideModal = datePickerModalRef.current?.contains(event.target)
-        if (!clickedInsideButton && !clickedInsideModal) {
+        const clickedInsideCalendar = calendarPortalRef.current?.contains(event.target)
+        if (!clickedInsideButton && !clickedInsideModal && !clickedInsideCalendar) {
           closeDatePaymentModal()
         }
       }
@@ -215,20 +217,18 @@ export function OperationsFiltersSidebar({
         }
       }
       
-      // Check for accounts dropdown
-      if (openParameterDropdown === 'accounts') {
-        if (accountsDropdownRef.current) {
-          // Check if click was inside the dropdown container (including menu)
-          const clickedInside = accountsDropdownRef.current.contains(event.target) ||
+      // Check for legal entities dropdown
+      if (openParameterDropdown === 'legalentities') {
+        if (legalEntitiesDropdownRef.current) {
+          const clickedInside = legalEntitiesDropdownRef.current.contains(event.target) ||
             event.target.closest(`.${styles.parameterDropdownMenu}`) !== null ||
             event.target.closest(`.${styles.parameterItem}`) !== null ||
             event.target.closest(`.${styles.checkboxWrapper}`) !== null ||
             event.target.type === 'checkbox' ||
             event.target.closest('input[type="checkbox"]') !== null
           
-          // Check if click was on the button that opens the dropdown
           const button = event.target.closest(`.${styles.parameterDropdownButton}`)
-          const isButtonClick = button && accountsDropdownRef.current.contains(button)
+          const isButtonClick = button && legalEntitiesDropdownRef.current.contains(button)
           
           if (!clickedInside && !isButtonClick) {
             setOpenParameterDropdown(null)
@@ -656,29 +656,29 @@ export function OperationsFiltersSidebar({
             </svg>
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {/* Юрлица и счета */}
-            <div className={styles.parameterDropdown} ref={accountsDropdownRef}>
+            {/* Юрлица */}
+            <div className={styles.parameterDropdown} ref={legalEntitiesDropdownRef}>
               <button 
-                onClick={() => setOpenParameterDropdown(openParameterDropdown === 'accounts' ? null : 'accounts')}
+                onClick={() => setOpenParameterDropdown(openParameterDropdown === 'legalentities' ? null : 'legalentities')}
                 className={styles.parameterDropdownButton}
               >
                 <div className={styles.parameterDropdownButtonContent}>
-                  {bankAccounts && Object.keys(selectedAccounts).filter(guid => selectedAccounts[guid]).length > 0 ? (
+                  {legalEntities && Object.keys(selectedLegalEntities).filter(guid => selectedLegalEntities[guid]).length > 0 ? (
                     <div className={styles.parameterDropdownChips}>
-                      {Object.keys(selectedAccounts)
-                        .filter(guid => selectedAccounts[guid])
+                      {Object.keys(selectedLegalEntities)
+                        .filter(guid => selectedLegalEntities[guid])
                         .slice(0, 2)
                         .map(guid => {
-                          const account = bankAccounts.find(acc => acc.guid === guid)
-                          if (!account) return null
+                          const entity = legalEntities.find(le => le.guid === guid)
+                          if (!entity) return null
                           return (
                             <div key={guid} className={styles.parameterDropdownChip}>
-                              <span className={styles.parameterDropdownChipLabel}>{account.label}</span>
+                              <span className={styles.parameterDropdownChipLabel}>{entity.nazvanie || 'Без названия'}</span>
                               <div
                                 className={styles.parameterDropdownChipRemove}
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  onAccountToggle(guid)
+                                  onLegalEntityToggle(guid)
                                 }}
                                 onMouseDown={(e) => e.stopPropagation()}
                                 role="button"
@@ -687,7 +687,7 @@ export function OperationsFiltersSidebar({
                                   if (e.key === 'Enter' || e.key === ' ') {
                                     e.preventDefault()
                                     e.stopPropagation()
-                                    onAccountToggle(guid)
+                                    onLegalEntityToggle(guid)
                                   }
                                 }}
                               >
@@ -698,22 +698,22 @@ export function OperationsFiltersSidebar({
                             </div>
                           )
                         })}
-                      {Object.keys(selectedAccounts).filter(guid => selectedAccounts[guid]).length > 2 && (
+                      {Object.keys(selectedLegalEntities).filter(guid => selectedLegalEntities[guid]).length > 2 && (
                         <span className={styles.parameterDropdownChipMore}>
-                          +{Object.keys(selectedAccounts).filter(guid => selectedAccounts[guid]).length - 2}
+                          +{Object.keys(selectedLegalEntities).filter(guid => selectedLegalEntities[guid]).length - 2}
                         </span>
                       )}
                     </div>
                   ) : (
-                    <span>Юрлица и счета</span>
+                    <span>Юрлица</span>
                   )}
                 </div>
-                <svg className={cn(styles.parameterDropdownIcon, openParameterDropdown === 'accounts' && styles.open)} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={cn(styles.parameterDropdownIcon, openParameterDropdown === 'legalentities' && styles.open)} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
               
-              {openParameterDropdown === 'accounts' && (
+              {openParameterDropdown === 'legalentities' && (
                 <div 
                   className={styles.parameterDropdownMenu}
                   onClick={(e) => e.stopPropagation()}
@@ -737,7 +737,7 @@ export function OperationsFiltersSidebar({
                     <button 
                       onClick={(e) => {
                         e.stopPropagation()
-                        onSelectAllAccounts()
+                        onSelectAllLegalEntities()
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
                       className={styles.parameterDropdownSelectAllButton}
@@ -748,76 +748,62 @@ export function OperationsFiltersSidebar({
                   
                   <div className={styles.parameterDropdownList}>
                     <div className={styles.parameterDropdownListInner}>
-                      {bankAccounts && bankAccounts.length > 0 ? (
-                        Object.entries(
-                          bankAccounts.reduce((acc, account) => {
-                            const group = account.group || 'Без группы'
-                            if (!acc[group]) acc[group] = []
-                            acc[group].push(account)
-                            return acc
-                          }, {})
-                        ).map(([groupName, items]) => (
-                          <div key={groupName} className={styles.parameterGroup}>
-                            <div className={styles.parameterGroupTitle}>
-                              {groupName}
-                            </div>
-                            {items.map((account) => (
-                              <label 
-                                key={account.guid} 
-                                className={cn(styles.parameterItem, styles.nested)}
-                                onClick={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
+                      {legalEntities && legalEntities.length > 0 ? (
+                        legalEntities.map((entity) => (
+                          <label 
+                            key={entity.guid} 
+                            className={styles.parameterItem}
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          >
+                            <div className={styles.checkboxWrapper}>
+                              <input
+                                type="checkbox"
+                                checked={selectedLegalEntities[entity.guid] || false}
+                                onChange={(e) => {
+                                  e.stopPropagation()
+                                  onLegalEntityToggle(entity.guid)
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation()
+                                }}
+                                className={styles.checkboxInput}
+                              />
+                              <div 
+                                className={cn(
+                                  styles.checkbox,
+                                  selectedLegalEntities[entity.guid] && styles.checkboxChecked
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onLegalEntityToggle(entity.guid)
+                                }}
+                                onMouseDown={(e) => {
+                                  e.stopPropagation()
+                                  onLegalEntityToggle(entity.guid)
+                                }}
+                                style={{
+                                  '--checkbox-bg': selectedLegalEntities[entity.guid] ? '#307FE2' : 'white',
+                                  '--checkbox-border': selectedLegalEntities[entity.guid] ? '#307FE2' : '#d1d5db',
+                                  '--checkbox-hover-border': '#9ca3af'
+                                }}
                               >
-                                <div className={styles.checkboxWrapper}>
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedAccounts[account.guid] || false}
-                                    onChange={(e) => {
-                                      e.stopPropagation()
-                                      onAccountToggle(account.guid)
-                                    }}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                    }}
-                                    onMouseDown={(e) => {
-                                      e.stopPropagation()
-                                    }}
-                                    className={styles.checkboxInput}
-                                  />
-                                  <div 
-                                    className={cn(
-                                      styles.checkbox,
-                                      selectedAccounts[account.guid] && styles.checkboxChecked
-                                    )}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      onAccountToggle(account.guid)
-                                    }}
-                                    onMouseDown={(e) => {
-                                      e.stopPropagation()
-                                      onAccountToggle(account.guid)
-                                    }}
-                                    style={{
-                                      '--checkbox-bg': selectedAccounts[account.guid] ? '#307FE2' : 'white',
-                                      '--checkbox-border': selectedAccounts[account.guid] ? '#307FE2' : '#d1d5db',
-                                      '--checkbox-hover-border': '#9ca3af'
-                                    }}
-                                  >
-                                    {selectedAccounts[account.guid] && (
-                                      <svg className={styles.checkboxIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    )}
-                                  </div>
-                                </div>
-                                <span className={styles.parameterItemLabel}>{account.label}</span>
-                              </label>
-                            ))}
-                          </div>
+                                {selectedLegalEntities[entity.guid] && (
+                                  <svg className={styles.checkboxIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                            </div>
+                            <span className={styles.parameterItemLabel}>{entity.nazvanie || 'Без названия'}</span>
+                          </label>
                         ))
                       ) : (
                         <div className={styles.parameterItemLabel} style={{ padding: '0.5rem', color: '#9ca3af' }}>
-                          Нет доступных счетов
+                          Нет доступных юрлиц
                         </div>
                       )}
                     </div>
@@ -1018,6 +1004,7 @@ export function OperationsFiltersSidebar({
     {/* Calendar Portal - показывается поверх всего */}
     {mounted && activeInput && isDatePaymentModalOpen && createPortal(
       <div 
+        ref={calendarPortalRef}
         className={styles.calendarPortal}
         style={{
           position: 'fixed',
@@ -1072,10 +1059,10 @@ export function OperationsFiltersSidebar({
                     if (isCurrentMonth) {
                       if (activeInput === 'start') {
                         setTempStartDate(date)
-                        setActiveInput(null)
+                        // Не закрываем календарь, оставляем открытым для выбора второй даты
                       } else if (activeInput === 'end') {
                         setTempEndDate(date)
-                        setActiveInput(null)
+                        // Не закрываем календарь, оставляем открытым
                       }
                     }
                   }}

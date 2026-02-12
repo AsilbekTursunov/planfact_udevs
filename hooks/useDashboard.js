@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dashboardAPI } from '@/lib/api/dashboard'
 import { chartOfAccountsAPI } from '@/lib/api/ucode/chartOfAccounts'
+import { getOperations } from '@/lib/api/ucode/operations'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
 
 // Get dashboard data
@@ -87,32 +88,6 @@ export const useDeleteOperation = () => {
   })
 }
 
-// Get chart of accounts (План счетов)
-export const useChartOfAccounts = (params = {}) => {
-  return useQuery({
-    queryKey: ['chartOfAccounts', params],
-    queryFn: async () => {
-      console.log('useChartOfAccounts: Making request with params:', params)
-      try {
-        const result = await dashboardAPI.getChartOfAccounts(params)
-        console.log('useChartOfAccounts: Response received:', result)
-        return result
-      } catch (error) {
-        console.error('useChartOfAccounts: Error:', error)
-        console.error('useChartOfAccounts: Error response:', error.response?.data)
-        // Return empty data structure instead of throwing to prevent app crash
-        return {
-          status: 'ERROR',
-          data: { data: { count: 0, response: [] } }
-        }
-      }
-    },
-    enabled: true, // projectId is now in config, so always enabled
-    staleTime: 5 * 60 * 1000,
-    retry: false, // Don't retry on error to prevent infinite loops
-  })
-}
-
 // Get chart of accounts using v2/items/chart_of_accounts endpoint (GET)
 export const useChartOfAccountsV2 = (params = {}) => {
   return useQuery({
@@ -157,6 +132,9 @@ export const useChartOfAccountsPlanFact = (params = {}) => {
     },
     enabled: true,
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchOnWindowFocus: false, // Don't refetch on window focus
     retry: false,
   })
 }
@@ -184,6 +162,32 @@ export const useBankAccounts = (params = {}) => {
     enabled: true, // projectId is now in config, so always enabled
     staleTime: 5 * 60 * 1000,
     retry: false, // Don't retry on error to prevent infinite loops
+  })
+}
+
+// Get bank accounts using invoke_function planfact-plan-fact (POST)
+export const useBankAccountsPlanFact = (params = {}) => {
+  return useQuery({
+    queryKey: ['bankAccountsPlanFact', params],
+    queryFn: async () => {
+      console.log('useBankAccountsPlanFact: Making request with params:', params)
+      try {
+        const { bankAccountsAPI } = await import('@/lib/api/ucode/bankAccounts')
+        const result = await bankAccountsAPI.getBankAccountsInvokeFunction(params)
+        console.log('useBankAccountsPlanFact: Response received:', result)
+        return result
+      } catch (error) {
+        console.error('useBankAccountsPlanFact: Error:', error)
+        console.error('useBankAccountsPlanFact: Error response:', error.response?.data)
+        return { status: 'ERROR', data: { data: [] } }
+      }
+    },
+    enabled: true,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    retry: false,
   })
 }
 
@@ -250,6 +254,32 @@ export const useCounterpartiesV2 = (params = {}) => {
   })
 }
 
+// Get counterparties using invoke_function planfact-plan-fact (POST)
+export const useCounterpartiesPlanFact = (params = {}) => {
+  return useQuery({
+    queryKey: ['counterpartiesPlanFact', params],
+    queryFn: async () => {
+      console.log('useCounterpartiesPlanFact: Making request with params:', params)
+      try {
+        const { counterpartiesAPI } = await import('@/lib/api/ucode/counterparties')
+        const result = await counterpartiesAPI.getCounterpartiesInvokeFunction(params)
+        console.log('useCounterpartiesPlanFact: Response received:', result)
+        return result
+      } catch (error) {
+        console.error('useCounterpartiesPlanFact: Error:', error)
+        console.error('useCounterpartiesPlanFact: Error response:', error.response?.data)
+        return { status: 'ERROR', data: { data: [] } }
+      }
+    },
+    enabled: true,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+}
+
 // Create counterparty mutation
 export const useCreateCounterparty = () => {
   const queryClient = useQueryClient()
@@ -273,6 +303,32 @@ export const useCounterpartiesGroupsV2 = (params = {}) => {
     queryFn: () => dashboardAPI.getCounterpartiesGroupsV2(params),
     enabled: true,
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+// Get counterparties groups using invoke_function planfact-plan-fact (POST)
+export const useCounterpartiesGroupsPlanFact = (params = {}) => {
+  return useQuery({
+    queryKey: ['counterpartiesGroupsPlanFact', params],
+    queryFn: async () => {
+      console.log('useCounterpartiesGroupsPlanFact: Making request with params:', params)
+      try {
+        const { counterpartiesAPI } = await import('@/lib/api/ucode/counterparties')
+        const result = await counterpartiesAPI.getCounterpartiesGroupInvokeFunction(params)
+        console.log('useCounterpartiesGroupsPlanFact: Response received:', result)
+        return result
+      } catch (error) {
+        console.error('useCounterpartiesGroupsPlanFact: Error:', error)
+        console.error('useCounterpartiesGroupsPlanFact: Error response:', error.response?.data)
+        return { status: 'ERROR', data: { data: [] } }
+      }
+    },
+    enabled: true,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: false,
   })
 }
 
@@ -376,7 +432,9 @@ export const useOperationsList = (params = {}) => {
       }
     },
     enabled: true,
-    staleTime: 1 * 60 * 1000, // Cache for 1 minute
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching
     retry: false, // Don't retry on error to prevent infinite loops
   })
 }
@@ -385,9 +443,14 @@ export const useOperationsList = (params = {}) => {
 export const useCreateChartOfAccounts = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: dashboardAPI.createChartOfAccounts,
+    mutationFn: (params) => chartOfAccountsAPI.createChartOfAccount(params),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chartOfAccountsPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['chartOfAccountsV2'] })
+      showSuccessNotification('Учетная статья успешно создана!')
+    },
+    onError: (error) => {
+      showErrorNotification(error.message || 'Ошибка при создании учетной статьи')
     },
   })
 }
@@ -396,9 +459,14 @@ export const useCreateChartOfAccounts = () => {
 export const useUpdateChartOfAccounts = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: dashboardAPI.updateChartOfAccounts,
+    mutationFn: (params) => chartOfAccountsAPI.updateChartOfAccount(params),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chartOfAccountsPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['chartOfAccountsV2'] })
+      showSuccessNotification('Учетная статья успешно обновлена!')
+    },
+    onError: (error) => {
+      showErrorNotification(error.message || 'Ошибка при обновлении учетной статьи')
     },
   })
 }
@@ -407,9 +475,14 @@ export const useUpdateChartOfAccounts = () => {
 export const useDeleteChartOfAccounts = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: dashboardAPI.deleteChartOfAccounts,
+    mutationFn: (params) => chartOfAccountsAPI.deleteChartOfAccount(params),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chartOfAccountsPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['chartOfAccountsV2'] })
+      showSuccessNotification('Учетная статья успешно удалена!')
+    },
+    onError: (error) => {
+      showErrorNotification(error.message || 'Ошибка при удалении учетной статьи')
     },
   })
 }
@@ -484,6 +557,32 @@ export const useLegalEntitiesV2 = (params = {}) => {
   })
 }
 
+// Get legal entities using invoke_function planfact-plan-fact (POST)
+export const useLegalEntitiesPlanFact = (params = {}) => {
+  return useQuery({
+    queryKey: ['legalEntitiesPlanFact', params],
+    queryFn: async () => {
+      console.log('useLegalEntitiesPlanFact: Making request with params:', params)
+      try {
+        const { legalEntitiesAPI } = await import('@/lib/api/ucode/legalEntities')
+        const result = await legalEntitiesAPI.getLegalEntitiesInvokeFunction(params)
+        console.log('useLegalEntitiesPlanFact: Response received:', result)
+        return result
+      } catch (error) {
+        console.error('useLegalEntitiesPlanFact: Error:', error)
+        console.error('useLegalEntitiesPlanFact: Error response:', error.response?.data)
+        return { status: 'ERROR', data: { data: [] } }
+      }
+    },
+    enabled: true,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    retry: false,
+  })
+}
+
 // Get accounts groups (Группы счетов) - v2/items/accounts_group
 export const useAccountsGroupsV2 = (params = {}) => {
   return useQuery({
@@ -552,3 +651,51 @@ export const useFinanceSummary = (params) => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
+
+// Get operations using invoke_function planfact-plan-fact (POST)
+export const useOperationsPlanFact = (params = {}) => {
+  return useQuery({
+    queryKey: ['operationsPlanFact', params],
+    queryFn: async () => {
+      console.log('useOperationsPlanFact: Making request with params:', params)
+      try {
+        const result = await getOperations(params)
+        console.log('useOperationsPlanFact: Response received:', result)
+        return result
+      } catch (error) {
+        console.error('useOperationsPlanFact: Error:', error)
+        console.error('useOperationsPlanFact: Error response:', error.response?.data)
+        return { status: 'ERROR', data: { data: { data: [] } } }
+      }
+    },
+    enabled: true,
+    staleTime: 1 * 60 * 1000, // Cache for 1 minute
+    retry: false,
+  })
+}
+
+// Get single operation by GUID
+export const useOperation = (guid, options = {}) => {
+  return useQuery({
+    queryKey: ['operation', guid],
+    queryFn: async () => {
+      console.log('useOperation: Making request for guid:', guid)
+      try {
+        const { operationsAPI } = await import('@/lib/api/ucode/operations')
+        const result = await operationsAPI.getOperation(guid)
+        console.log('useOperation: Response received:', result)
+        return result
+      } catch (error) {
+        console.error('useOperation: Error:', error)
+        console.error('useOperation: Error response:', error.response?.data)
+        return { status: 'ERROR', data: null }
+      }
+    },
+    enabled: !!guid && options.enabled !== false,
+    staleTime: 0, // Always consider data stale to force refetch
+    gcTime: 0, // Don't cache data
+    refetchOnMount: true, // Always refetch on mount
+    retry: false,
+  })
+}
+

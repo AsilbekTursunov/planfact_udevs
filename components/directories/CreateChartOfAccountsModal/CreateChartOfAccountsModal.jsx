@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { cn } from '@/app/lib/utils'
 import { dashboardAPI } from '@/lib/api/dashboard'
 import { useQueryClient } from '@tanstack/react-query'
-import { useChartOfAccountsV2 } from '@/hooks/useDashboard'
+import { useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import styles from './CreateChartOfAccountsModal.module.scss'
 
@@ -36,8 +36,42 @@ export default function CreateChartOfAccountsModal({ isOpen, onClose, initialTab
   }, [isOpen])
 
   // Get all chart of accounts for parent selection
-  const { data: allAccountsData } = useChartOfAccountsV2({ data: {} })
-  const allAccounts = allAccountsData?.data?.data?.response || []
+  const { data: allAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })
+  
+  // Flatten the hierarchical data from new API
+  const allAccounts = useMemo(() => {
+    const tree = allAccountsData?.data?.data?.data || []
+    if (!Array.isArray(tree)) return []
+    
+    const flat = []
+    const visit = (node, isRootWithEmptyGuid = false) => {
+      if (!node || typeof node !== 'object') return
+      
+      const { children, ...item } = node
+      const childrenArr = Array.isArray(children) ? children : []
+      
+      // If this is a root node with empty guid, mark its children as root items
+      if (!item.guid && childrenArr.length > 0) {
+        childrenArr.forEach(child => visit(child, true))
+        return
+      }
+      
+      // Add item if it has a guid
+      if (item.guid) {
+        // If parent had empty guid, clear the parent reference
+        if (isRootWithEmptyGuid) {
+          item.chart_of_accounts_id_2 = null
+        }
+        flat.push(item)
+      }
+      
+      // Traverse children normally
+      childrenArr.forEach(child => visit(child, false))
+    }
+    
+    tree.forEach(node => visit(node, false))
+    return flat
+  }, [allAccountsData])
 
   // Map tab keys to API tip values
   const tabToTipMap = {
@@ -217,6 +251,7 @@ export default function CreateChartOfAccountsModal({ isOpen, onClose, initialTab
       await dashboardAPI.createChartOfAccounts(submitData)
       
       // Invalidate queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['chartOfAccountsPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['chartOfAccountsV2'] })
       
       handleClose()

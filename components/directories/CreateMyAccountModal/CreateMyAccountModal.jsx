@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
-import { useCreateMyAccount, useUpdateMyAccount, useCurrencies, useLegalEntitiesV2 } from '@/hooks/useDashboard'
+import { useCreateMyAccount, useUpdateMyAccount, useCurrencies, useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityModal/CreateLegalEntityModal'
@@ -35,8 +35,11 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
   // Fetch currencies
   const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
   
-  // Fetch legal entities
-  const { data: legalEntitiesData, isLoading: loadingLegalEntities } = useLegalEntitiesV2({ data: {} })
+  // Fetch legal entities using new invoke_function API
+  const { data: legalEntitiesData, isLoading: loadingLegalEntities } = useLegalEntitiesPlanFact({
+    page: 1,
+    limit: 100,
+  })
   
   // Transform currencies data
   const currencies = useMemo(() => {
@@ -50,7 +53,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
   // Transform legal entities data
   const legalEntities = useMemo(() => {
-    return (legalEntitiesData?.data?.data?.response || []).map(item => ({
+    return (legalEntitiesData?.data?.data?.data || []).map(item => ({
       guid: item.guid,
       label: item.nazvanie || ''
     }))

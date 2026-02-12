@@ -18,14 +18,20 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (pickerRef.current && !pickerRef.current.contains(event.target) &&
-          modalRef.current && !modalRef.current.contains(event.target)) {
+      // Проверяем, что клик был вне pickerRef И вне modalRef
+      const isOutsidePicker = pickerRef.current && !pickerRef.current.contains(event.target)
+      const isOutsideModal = modalRef.current && !modalRef.current.contains(event.target)
+      
+      if (isOutsidePicker && isOutsideModal) {
         closeModal()
       }
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+    
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (isOpen && pickerRef.current) {

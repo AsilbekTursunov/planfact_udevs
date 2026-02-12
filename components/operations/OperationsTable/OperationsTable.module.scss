@@ -159,6 +159,22 @@
   }
 }
 
+.amountWithIcons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.375rem;
+}
+
+.debitIcon,
+.creditIcon {
+  flex-shrink: 0;
+}
+
+.amountText {
+  // Amount text styling
+}
+
 // Menu styles
 .menuContainer {
   position: relative;

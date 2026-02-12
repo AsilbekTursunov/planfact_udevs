@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useCounterpartiesV2, useOperationsList } from '@/hooks/useDashboard'
+import { useCounterpartiesPlanFact, useOperationsList } from '@/hooks/useDashboard'
 import { OperationModal } from '@/components/operations/OperationModal/OperationModal'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
@@ -28,20 +28,31 @@ export default function KontragentDetailPage() {
   const deleteOperationMutation = useDeleteOperation()
 
   // Fetch counterparty data by GUID
-  const { data: counterpartyData, isLoading: isLoadingCounterparty } = useCounterpartiesV2({
-    data: counterpartyGuid ? { guid: { $in: [counterpartyGuid] } } : {}
+  const { data: counterpartyData, isLoading: isLoadingCounterparty } = useCounterpartiesPlanFact({
+    page: 1,
+    limit: 1000
   })
   
-  const counterparty = counterpartyData?.data?.data?.response?.[0] || null
+  // Find the specific counterparty by GUID from the list
+  const allCounterparties = counterpartyData?.data?.data?.data || []
+  const counterparty = allCounterparties.find(cp => cp.guid === counterpartyGuid) || null
 
   // Fetch operations for this counterparty
+  // Note: New API doesn't support counterparty filtering, so we fetch all and filter on frontend
   const { data: operationsData, isLoading: isLoadingOperations } = useOperationsList({
-    limit: 1000,
-    offset: 0,
-    filters: counterpartyGuid ? { counterparties_id: [counterpartyGuid] } : {}
+    date_range: {
+      start_date: '2026-01-01',
+      end_date: '2026-12-31'
+    },
+    page: 1,
+    limit: 1000
   })
 
-  const operationsItems = operationsData?.data?.data?.response || []
+  // Filter operations by counterparty GUID on frontend
+  const allOperationsItems = operationsData?.data?.data?.data || []
+  const operationsItems = counterpartyGuid 
+    ? allOperationsItems.filter(op => op.counterparties_id === counterpartyGuid)
+    : allOperationsItems
 
   // Transform operations data for display
   const operations = useMemo(() => {
@@ -92,12 +103,12 @@ export default function KontragentDetailPage() {
         id: item.guid || index,
         guid: item.guid,
         date: formatDate(operationDate),
-        account: item.bank_accounts_id_data?.nazvanie || '',
+        account: item.my_accounts_name || item.bank_accounts_id_data?.nazvanie || '',
         type: type,
         typeCategory: type,
         typeLabel: typeLabel,
-        counterparty: item.counterparties_id_data?.nazvanie || '',
-        category: item.chart_of_accounts_id_data?.nazvanie || '',
+        counterparty: item.counterparties_name || item.counterparties_id_data?.nazvanie || '',
+        category: item.chart_of_accounts_name || item.chart_of_accounts_id_data?.nazvanie || '',
         project: '',
         deal: '',
         amount: `${amountSign}${amountFormatted}`,

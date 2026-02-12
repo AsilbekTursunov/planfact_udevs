@@ -7,7 +7,7 @@ import { FilterSidebar, FilterSection, FilterCheckbox } from '@/components/direc
 import { DropdownFilter } from '@/components/directories/DropdownFilter/DropdownFilter'
 import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
 import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
-import { useCounterpartiesV2, useCounterpartiesGroupsV2, useDeleteCounterparties, useDeleteCounterpartiesGroups, useChartOfAccountsV2 } from '@/hooks/useDashboard'
+import { useCounterpartiesV2, useCounterpartiesGroupsV2, useDeleteCounterparties, useDeleteCounterpartiesGroups, useChartOfAccountsPlanFact, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
 import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
 import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
 import EditCounterpartyGroupModal from '@/components/directories/EditCounterpartyGroupModal/EditCounterpartyGroupModal'
@@ -44,8 +44,6 @@ export default function CounterpartiesPage() {
     supplier: true,
     // Counterparties groups filter
     selectedGroups: [],
-    // Type filter (Плательщик, Получатель, Смешанный)
-    selectedTypes: [],
     // Selected counterparties for filter
     selectedCounterparties: [],
     // Selected chart of accounts for filter
@@ -90,33 +88,59 @@ export default function CounterpartiesPage() {
     return apiFilters
   }, [filters])
   
-  // Fetch all counterparties for filter dropdown (without filters) - always fetch all
-  const { data: allCounterpartiesData } = useCounterpartiesV2({ data: {} })
-  const allCounterparties = allCounterpartiesData?.data?.data?.response || []
-
-  // Fetch counterparties from API using v2 endpoint with filters (for table)
-  const { data: counterpartiesData, isLoading: isLoadingCounterparties } = useCounterpartiesV2({
-    data: filtersForAPI
+  // Fetch counterparties using new invoke_function API
+  const { data: counterpartiesData, isLoading: isLoadingCounterparties } = useCounterpartiesPlanFact({
+    page: 1,
+    limit: 100,
   })
-
-  // Fetch counterparties groups for filter
-  const { data: counterpartiesGroupsData } = useCounterpartiesGroupsV2({ data: {} })
-  const counterpartiesGroups = counterpartiesGroupsData?.data?.data?.response || []
+  
+  console.log('Counterparties data:', counterpartiesData)
+  
+  // Extract counterparties from response
+  const counterpartiesItems = useMemo(() => {
+    const items = counterpartiesData?.data?.data?.data || []
+    console.log('Counterparties items:', items)
+    return Array.isArray(items) ? items : []
+  }, [counterpartiesData])
+  
+  // Fetch counterparties groups using new invoke_function API
+  const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
+    page: 1,
+    limit: 100,
+  })
+  
+  const counterpartiesGroupsItems = useMemo(() => {
+    const items = counterpartiesGroupsData?.data?.data?.data || []
+    return Array.isArray(items) ? items : []
+  }, [counterpartiesGroupsData])
 
   // Fetch chart of accounts for filter
-  const { data: chartOfAccountsData } = useChartOfAccountsV2({ data: {} })
-  const chartOfAccounts = chartOfAccountsData?.data?.data?.response || []
+  const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })
+  const chartOfAccountsRaw = chartOfAccountsData?.data?.data?.data || []
 
-  const counterpartiesItems = counterpartiesData?.data?.data?.response || []
+  // Flatten hierarchical structure to array
+  const chartOfAccounts = useMemo(() => {
+    const flatten = (items) => {
+      let result = []
+      items.forEach(item => {
+        result.push(item)
+        if (item.children && item.children.length > 0) {
+          result = result.concat(flatten(item.children))
+        }
+      })
+      return result
+    }
+    return Array.isArray(chartOfAccountsRaw) ? flatten(chartOfAccountsRaw) : []
+  }, [chartOfAccountsRaw])
 
-  // Prepare options for filters - use all counterparties, not filtered ones
+  // Prepare options for filters
   const counterpartiesOptions = useMemo(() => {
-    if (!allCounterparties || allCounterparties.length === 0) return []
-    return allCounterparties.map(item => ({
+    if (!counterpartiesItems || counterpartiesItems.length === 0) return []
+    return counterpartiesItems.map(item => ({
       value: item.guid,
       label: item.nazvanie || 'Без названия'
     }))
-  }, [allCounterparties])
+  }, [counterpartiesItems])
 
   const chartOfAccountsOptions = useMemo(() => {
     if (!chartOfAccounts || chartOfAccounts.length === 0) return []
@@ -160,47 +184,31 @@ export default function CounterpartiesPage() {
   // Convert counterparties API data to component format with grouping
   const { groupedCounterparties, flatCounterparties } = useMemo(() => {
     const items = counterpartiesItems.map((item, index) => {
-      // Определяем тип на основе статей
-      let tip = null
-      const hasReceiptArticle = !!item.chart_of_accounts_id
-      const hasPaymentArticle = !!item.chart_of_accounts_id_2
-      
-      if (hasReceiptArticle && !hasPaymentArticle) {
-        tip = 'Плательщик'
-      } else if (!hasReceiptArticle && hasPaymentArticle) {
-        tip = 'Получатель'
-      } else if (hasReceiptArticle && hasPaymentArticle) {
-        tip = 'Смешанный'
-      }
-      
       return {
-      id: item.guid || `counterparty-${index}`,
+        id: item.guid || `counterparty-${index}`,
         guid: item.guid,
         nazvanie: item.nazvanie || 'Без названия',
         polnoe_imya: item.polnoe_imya || null,
-        gruppa: item.gruppa && item.gruppa.length > 0 ? item.gruppa.join(', ') : null,
-      inn: item.inn ? String(item.inn) : null,
+        gruppa: item.group_name || null,
+        inn: item.inn ? String(item.inn) : null,
         kpp: item.kpp ? String(item.kpp) : null,
         nomer_scheta: item.nomer_scheta ? String(item.nomer_scheta) : null,
-        chart_of_accounts_id: item.chart_of_accounts_id || (item.chart_of_accounts_id_data?.guid) || null,
-        chart_of_accounts_id_2: item.chart_of_accounts_id_2 || (item.chart_of_accounts_id_2_data?.guid) || null,
-        chart_of_accounts_id_display: item.chart_of_accounts_id_data?.nazvanie || null,
-        chart_of_accounts_id_2_display: item.chart_of_accounts_id_2_data?.nazvanie || null,
-        tip: tip,
-        counterparties_group_id: item.counterparties_group_id || (item.counterparties_group_id_data?.guid) || null,
-        counterparties_group: item.counterparties_group_id_data?.nazvanie_gruppy || null,
-        counterparties_group_data: item.counterparties_group_id_data || null,
+        counterparties_group_id: item.counterparties_group_id || null,
+        counterparties_group: item.group_name || null,
         komentariy: item.komentariy || null,
         data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya).toLocaleDateString('ru-RU') : null,
-        primenyat_stat_i_po_umolchaniyu: item.primenyatь_statьi_po_umolchaniyu ? 'Да' : 'Нет',
+        // Новые поля из API
+        debitorka: item.debitorka || 0,
+        kreditorka: item.kreditorka || 0,
+        receivables: item.receivables || 0,
+        payables: item.payables || 0,
+        profit: item.profit || 0,
         rawData: item
       }
     })
     
-    // Фильтруем по типу, если выбран фильтр
-    const filteredItems = filters.selectedTypes.length > 0
-      ? items.filter(item => item.tip && filters.selectedTypes.includes(item.tip))
-      : items
+    // Применяем фильтры
+    const filteredItems = items
 
     // Group by counterparties_group_id
     const groupsMap = new Map()
@@ -209,8 +217,8 @@ export default function CounterpartiesPage() {
     filteredItems.forEach(item => {
         if (item.counterparties_group_id) {
           if (!groupsMap.has(item.counterparties_group_id)) {
-            // Find the group data from counterpartiesGroups
-            const groupData = counterpartiesGroups.find(g => g.guid === item.counterparties_group_id)
+            // Find the group data from counterpartiesGroupsItems
+            const groupData = counterpartiesGroupsItems.find(g => g.guid === item.counterparties_group_id)
             groupsMap.set(item.counterparties_group_id, {
               id: `group-${item.counterparties_group_id}`,
               guid: item.counterparties_group_id,
@@ -232,7 +240,7 @@ export default function CounterpartiesPage() {
         groupedCounterparties: [...grouped, ...ungrouped],
         flatCounterparties: filteredItems
       }
-    }, [counterpartiesItems, filters.selectedTypes, counterpartiesGroups])
+    }, [counterpartiesItems, filters.selectedTypes, counterpartiesGroupsItems])
 
   const totalCounterparties = flatCounterparties.length
   const [expandedGroups, setExpandedGroups] = useState(new Set())
@@ -261,17 +269,6 @@ export default function CounterpartiesPage() {
       <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
         <FilterSection title="Параметры">
           <div className="space-y-2.5">
-            <DropdownFilter
-              label="Тип"
-              options={[
-                { value: 'Плательщик', label: 'Плательщик' },
-                { value: 'Получатель', label: 'Получатель' },
-                { value: 'Смешанный', label: 'Смешанный' }
-              ]}
-              selectedValues={filters.selectedTypes}
-              onChange={(values) => setFilters(prev => ({ ...prev, selectedTypes: values }))}
-              placeholder="Выберите тип"
-            />
             <DropdownFilter
               label="Контрагенты"
               options={counterpartiesOptions || []}
@@ -320,7 +317,7 @@ export default function CounterpartiesPage() {
 
         <FilterSection title="Группы контрагентов">
           <div className="space-y-2.5">
-            {counterpartiesGroups.map((group) => (
+            {counterpartiesGroupsItems.map((group) => (
               <FilterCheckbox
                 key={group.guid}
                 checked={filters.selectedGroups.includes(group.guid)}
@@ -381,15 +378,7 @@ export default function CounterpartiesPage() {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={styles.tableHeaderButton}>
-                      Название
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
-                      Полное название
+                      Контрагент
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -405,14 +394,6 @@ export default function CounterpartiesPage() {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={styles.tableHeaderButton}>
-                      Тип
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
                       ИНН
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -421,7 +402,7 @@ export default function CounterpartiesPage() {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={styles.tableHeaderButton}>
-                      КПП
+                      Операций
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -429,7 +410,7 @@ export default function CounterpartiesPage() {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={styles.tableHeaderButton}>
-                      Номер счета
+                      Дебиторка
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -437,7 +418,7 @@ export default function CounterpartiesPage() {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={styles.tableHeaderButton}>
-                      Статья для поступлений
+                      Кредиторка
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -445,7 +426,7 @@ export default function CounterpartiesPage() {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={styles.tableHeaderButton}>
-                      Статья для выплат
+                      Доход
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -453,31 +434,7 @@ export default function CounterpartiesPage() {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={styles.tableHeaderButton}>
-                      Группа контрагентов
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
-                      Комментарий
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
-                      Дата создания
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
-                      Применять статьи по умолчанию
+                      Расход
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -489,13 +446,13 @@ export default function CounterpartiesPage() {
               <tbody>
                 {isLoadingCounterparties ? (
                   <tr className={styles.emptyRow}>
-                    <td colSpan={15} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
+                    <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
                       Загрузка...
                     </td>
                   </tr>
                 ) : groupedCounterparties.length === 0 ? (
                   <tr className={styles.emptyRow}>
-                    <td colSpan={15} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
+                    <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
                       Нет данных
                     </td>
                   </tr>
@@ -531,11 +488,6 @@ export default function CounterpartiesPage() {
                             <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
                             <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
                             <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted, styles.commentCell)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.data_sozdaniya || '–'}</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
                             <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                               <GroupMenu
                                 group={item}
@@ -563,18 +515,13 @@ export default function CounterpartiesPage() {
                                 {childIndex + 1}
                               </td>
                               <td className={cn(styles.tableCell, styles.text)}>{counterparty.nazvanie}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.polnoe_imya || '–'}</td>
                               <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.gruppa || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.tip || '–'}</td>
                               <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.inn || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.kpp || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.nomer_scheta || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.chart_of_accounts_id || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.chart_of_accounts_id_2 || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.counterparties_group || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted, styles.commentCell)}>{counterparty.komentariy || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.data_sozdaniya || '–'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.primenyat_stat_i_po_umolchaniyu || '–'}</td>
+                              <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
+                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.debitorka?.toLocaleString('ru-RU') || '0'}</td>
+                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
+                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.receivables?.toLocaleString('ru-RU') || '0'}</td>
+                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.payables?.toLocaleString('ru-RU') || '0'}</td>
                               <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                                 <CounterpartyMenu
                                   counterparty={counterparty}
@@ -601,18 +548,13 @@ export default function CounterpartiesPage() {
                             {itemIndex + 1}
                           </td>
                           <td className={cn(styles.tableCell, styles.text)}>{item.nazvanie}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.polnoe_imya || '–'}</td>
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.gruppa || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.tip || '–'}</td>
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.inn || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.kpp || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.nomer_scheta || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.chart_of_accounts_id_display || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.chart_of_accounts_id_2_display || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.counterparties_group || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted, styles.commentCell)}>{item.komentariy || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.data_sozdaniya || '–'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.primenyat_stat_i_po_umolchaniyu || '–'}</td>
+                          <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
+                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.debitorka?.toLocaleString('ru-RU') || '0'}</td>
+                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
+                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.receivables?.toLocaleString('ru-RU') || '0'}</td>
+                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.payables?.toLocaleString('ru-RU') || '0'}</td>
                           <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                             <CounterpartyMenu
                               counterparty={item}

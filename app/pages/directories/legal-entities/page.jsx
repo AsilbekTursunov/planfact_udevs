@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { cn } from '@/app/lib/utils'
-import { useLegalEntitiesV2, useDeleteLegalEntities } from '@/hooks/useDashboard'
+import { useLegalEntitiesV2, useDeleteLegalEntities, useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
 import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityModal/CreateLegalEntityModal'
 import LegalEntityMenu from '@/components/directories/LegalEntityMenu/LegalEntityMenu'
 import DeleteLegalEntityConfirmModal from '@/components/directories/DeleteLegalEntityConfirmModal/DeleteLegalEntityConfirmModal'
@@ -17,9 +17,20 @@ export default function LegalEntitiesPage() {
   
   const deleteMutation = useDeleteLegalEntities()
 
-  // Fetch legal entities from API
-  const { data: legalEntitiesData, isLoading: isLoadingLegalEntities } = useLegalEntitiesV2({ data: {} })
-  const legalEntitiesItems = legalEntitiesData?.data?.data?.response || []
+  // Fetch legal entities using new invoke_function API
+  const { data: legalEntitiesData, isLoading: isLoadingLegalEntities } = useLegalEntitiesPlanFact({
+    page: 1,
+    limit: 100,
+  })
+  
+  console.log('Legal entities data:', legalEntitiesData)
+  
+  // Extract legal entities from response - correct path is data.data.data
+  const legalEntitiesItems = useMemo(() => {
+    const items = legalEntitiesData?.data?.data?.data || []
+    console.log('Legal entities items:', items)
+    return Array.isArray(items) ? items : []
+  }, [legalEntitiesData])
 
   // Transform API data to component format
   const entities = useMemo(() => {

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
-import { useChartOfAccountsV2, useUpdateCounterparty, useCounterpartiesGroupsV2 } from '@/hooks/useDashboard'
+import { useChartOfAccountsPlanFact, useUpdateCounterparty, useCounterpartiesGroupsV2 } from '@/hooks/useDashboard'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import styles from '../CreateCounterpartyModal/CreateCounterpartyModal.module.scss'
@@ -32,8 +32,23 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
   const [isVisible, setIsVisible] = useState(false)
 
   // Get chart of accounts for articles dropdowns
-  const { data: chartOfAccountsData } = useChartOfAccountsV2({ data: {} })
-  const chartOfAccounts = chartOfAccountsData?.data?.data?.response || []
+  const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })
+  const chartOfAccountsRaw = chartOfAccountsData?.data?.data?.data || []
+
+  // Flatten hierarchical structure to array
+  const chartOfAccounts = useMemo(() => {
+    const flatten = (items) => {
+      let result = []
+      items.forEach(item => {
+        result.push(item)
+        if (item.children && item.children.length > 0) {
+          result = result.concat(flatten(item.children))
+        }
+      })
+      return result
+    }
+    return Array.isArray(chartOfAccountsRaw) ? flatten(chartOfAccountsRaw) : []
+  }, [chartOfAccountsRaw])
 
   // Get counterparties groups for dropdown
   const { data: counterpartiesGroupsData } = useCounterpartiesGroupsV2({ data: {} })
@@ -41,6 +56,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
 
   // Transform chart of accounts for GroupedSelect
   const chartOfAccountsOptions = useMemo(() => {
+    if (!Array.isArray(chartOfAccounts)) return []
     return chartOfAccounts.map(item => ({
       guid: item.guid,
       label: item.nazvanie || '',
@@ -50,144 +66,58 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
 
   // Build tree for chart of accounts - separate trees for income and expenses
   const chartOfAccountsTreeIncome = useMemo(() => {
-    if (chartOfAccounts.length === 0) return []
+    if (!Array.isArray(chartOfAccountsRaw) || chartOfAccountsRaw.length === 0) return []
     
-    // Build a map for quick lookup
-    const itemsMap = new Map()
-    chartOfAccounts.forEach(item => {
-      itemsMap.set(item.guid, item)
-    })
+    // Find the root item with tip "Доходы"
+    const incomeRoot = chartOfAccountsRaw.find(item => 
+      Array.isArray(item.tip) && item.tip.some(t => t && t.includes('Доход'))
+    )
     
-    // Build child items map: parentGuid -> [children]
-    const childItemsMap = new Map()
-    chartOfAccounts.forEach(item => {
-      if (item.chart_of_accounts_id_2) {
-        const parentGuid = item.chart_of_accounts_id_2
-        if (!childItemsMap.has(parentGuid)) {
-          childItemsMap.set(parentGuid, [])
-        }
-        childItemsMap.get(parentGuid).push(item)
-      }
-    })
+    if (!incomeRoot || !incomeRoot.children) return []
     
-    // Helper to check if item or any of its descendants match the filter (Доходы)
-    const hasMatchingDescendants = (item) => {
-      const children = childItemsMap.get(item.guid) || []
-      
-      // Check if item itself matches the filter
-      const itemMatches = item.tip && Array.isArray(item.tip) && item.tip.length > 0 && 
-        item.tip.some(t => t && t.includes('Доход'))
-      
-      // If item has children, check if any child matches
-      if (children.length > 0) {
-        const hasMatchingChild = children.some(child => hasMatchingDescendants(child))
-        return itemMatches || hasMatchingChild
-      }
-      
-      return itemMatches
-    }
-    
-    // Build tree structure recursively
-    const buildTree = (item, level = 0) => {
-      const children = childItemsMap.get(item.guid) || []
-      
-      // Filter children - only include those that match or have matching descendants
-      const filteredChildren = children.filter(child => hasMatchingDescendants(child))
-      
-      const hasChildren = filteredChildren.length > 0
-      
-      const treeNode = {
+    // Convert to TreeSelect format
+    const convertToTreeFormat = (items) => {
+      return items.map(item => ({
         value: item.guid,
         title: item.nazvanie || 'Без названия',
-        selectable: true, // Allow selecting any node
-        expanded: false, // Collapsed by default
+        selectable: !!item.guid, // Only selectable if has guid
+        expanded: false,
         tip: item.tip,
-        level: level,
-        children: hasChildren 
-          ? filteredChildren.map(child => buildTree(child, level + 1))
+        children: item.children && item.children.length > 0 
+          ? convertToTreeFormat(item.children)
           : undefined
-      }
-      return treeNode
+      }))
     }
     
-    // Find root items
-    const rootItems = chartOfAccounts.filter(item => !item.chart_of_accounts_id_2)
-    
-    // Filter root items - only include those that have matching descendants
-    const filteredRootItems = rootItems.filter(root => hasMatchingDescendants(root))
-    
-    return filteredRootItems.map(item => buildTree(item, 0))
-  }, [chartOfAccounts])
+    return convertToTreeFormat(incomeRoot.children)
+  }, [chartOfAccountsRaw])
 
   const chartOfAccountsTreeExpense = useMemo(() => {
-    if (chartOfAccounts.length === 0) return []
+    if (!Array.isArray(chartOfAccountsRaw) || chartOfAccountsRaw.length === 0) return []
     
-    // Build a map for quick lookup
-    const itemsMap = new Map()
-    chartOfAccounts.forEach(item => {
-      itemsMap.set(item.guid, item)
-    })
+    // Find the root item with tip "Расходы"
+    const expenseRoot = chartOfAccountsRaw.find(item => 
+      Array.isArray(item.tip) && item.tip.some(t => t && t.includes('Расход'))
+    )
     
-    // Build child items map: parentGuid -> [children]
-    const childItemsMap = new Map()
-    chartOfAccounts.forEach(item => {
-      if (item.chart_of_accounts_id_2) {
-        const parentGuid = item.chart_of_accounts_id_2
-        if (!childItemsMap.has(parentGuid)) {
-          childItemsMap.set(parentGuid, [])
-        }
-        childItemsMap.get(parentGuid).push(item)
-      }
-    })
+    if (!expenseRoot || !expenseRoot.children) return []
     
-    // Helper to check if item or any of its descendants match the filter (Расходы)
-    const hasMatchingDescendants = (item) => {
-      const children = childItemsMap.get(item.guid) || []
-      
-      // Check if item itself matches the filter
-      const itemMatches = item.tip && Array.isArray(item.tip) && item.tip.length > 0 && 
-        item.tip.some(t => t && t.includes('Расход'))
-      
-      // If item has children, check if any child matches
-      if (children.length > 0) {
-        const hasMatchingChild = children.some(child => hasMatchingDescendants(child))
-        return itemMatches || hasMatchingChild
-      }
-      
-      return itemMatches
-    }
-    
-    // Build tree structure recursively
-    const buildTree = (item, level = 0) => {
-      const children = childItemsMap.get(item.guid) || []
-      
-      // Filter children - only include those that match or have matching descendants
-      const filteredChildren = children.filter(child => hasMatchingDescendants(child))
-      
-      const hasChildren = filteredChildren.length > 0
-      
-      const treeNode = {
+    // Convert to TreeSelect format
+    const convertToTreeFormat = (items) => {
+      return items.map(item => ({
         value: item.guid,
         title: item.nazvanie || 'Без названия',
-        selectable: true, // Allow selecting any node
-        expanded: false, // Collapsed by default
+        selectable: !!item.guid, // Only selectable if has guid
+        expanded: false,
         tip: item.tip,
-        level: level,
-        children: hasChildren 
-          ? filteredChildren.map(child => buildTree(child, level + 1))
+        children: item.children && item.children.length > 0 
+          ? convertToTreeFormat(item.children)
           : undefined
-      }
-      return treeNode
+      }))
     }
     
-    // Find root items
-    const rootItems = chartOfAccounts.filter(item => !item.chart_of_accounts_id_2)
-    
-    // Filter root items - only include those that have matching descendants
-    const filteredRootItems = rootItems.filter(root => hasMatchingDescendants(root))
-    
-    return filteredRootItems.map(item => buildTree(item, 0))
-  }, [chartOfAccounts])
+    return convertToTreeFormat(expenseRoot.children)
+  }, [chartOfAccountsRaw])
 
   // Transform counterparties groups for GroupedSelect
   const counterpartiesGroupsOptions = useMemo(() => {

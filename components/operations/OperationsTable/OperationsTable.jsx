@@ -181,7 +181,23 @@ export function OperationsTable({ operations = [], onRowClick }) {
                   styles.amountCell,
                   operation.amount.startsWith('+') ? styles.positive : operation.amount.startsWith('-') ? styles.negative : ''
                 )}>
-                  {operation.amount}
+                  <div className={styles.amountWithIcons}>
+                    {/* Debit icon (Дебет) - показываем если есть дата оплаты */}
+                    {operation.data_oplaty && (
+                      <svg width="22" height="27" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.debitIcon}>
+                        <rect width="22" height="27" rx="6" fill="#1E98AD"/>
+                        <path d="M6.80096 20.1136V17.0625H7.36346C7.55664 16.8864 7.73846 16.6378 7.90891 16.3168C8.08221 15.9929 8.22852 15.5611 8.34783 15.0213C8.46999 14.4787 8.55096 13.7898 8.59073 12.9545L8.77823 9.27273H13.9601V17.0625H14.9657V20.0966H13.9601V18H7.80664V20.1136H6.80096ZM8.62482 17.0625H12.9544V10.2102H9.73278L9.59641 12.9545C9.56232 13.5909 9.50266 14.1676 9.41744 14.6847C9.33221 15.1989 9.22283 15.6548 9.08931 16.0526C8.95579 16.4474 8.80096 16.7841 8.62482 17.0625Z" fill="#FCFCFD"/>
+                      </svg>
+                    )}
+                    {/* Credit icon (Кредит) - показываем если есть дата начисления */}
+                    {operation.data_nachisleniya && (
+                      <svg width="22" height="27" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.creditIcon}>
+                        <rect width="22" height="27" rx="6" fill="#6C64BC"/>
+                        <path d="M8.05682 18V9.27273H9.11364V13.6023H9.21591L13.1364 9.27273H14.517L10.8523 13.2102L14.517 18H13.2386L10.2045 13.9432L9.11364 15.1705V18H8.05682Z" fill="#FCFCFD"/>
+                      </svg>
+                    )}
+                    <span className={styles.amountText}>{operation.amount}</span>
+                  </div>
                 </td>
                 <td 
                   className={styles.tableCell}

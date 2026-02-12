@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { FilterSidebar, FilterSection, FilterCheckbox } from '@/components/directories/FilterSidebar/FilterSidebar'
 import { DropdownFilter } from '@/components/directories/DropdownFilter/DropdownFilter'
-import { useMyAccountsV2, useDeleteMyAccounts, useLegalEntitiesV2 } from '@/hooks/useDashboard'
+import { useDeleteMyAccounts, useBankAccountsPlanFact, useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
 import CreateMyAccountModal from '@/components/directories/CreateMyAccountModal/CreateMyAccountModal'
 import { AccountMenu } from '@/components/directories/AccountMenu/AccountMenu'
 import { DeleteAccountConfirmModal } from '@/components/directories/DeleteAccountConfirmModal/DeleteAccountConfirmModal'
@@ -55,13 +55,31 @@ export default function AccountsPage() {
   const [selectedEntity, setSelectedEntity] = useState([])
   const [selectedAccounts, setSelectedAccounts] = useState([])
 
-  // Fetch legal entities from API
-  const { data: legalEntitiesData, isLoading: isLoadingLegalEntities } = useLegalEntitiesV2({ data: {} })
-  const legalEntitiesItems = legalEntitiesData?.data?.data?.response || []
+  // Fetch legal entities using new invoke_function API
+  const { data: legalEntitiesData, isLoading: isLoadingLegalEntities } = useLegalEntitiesPlanFact({
+    page: 1,
+    limit: 100,
+  })
   
-  // Fetch all accounts for filter dropdown (without filters) - always fetch all
-  const { data: allAccountsData } = useMyAccountsV2({ data: {} })
-  const allAccountsItems = allAccountsData?.data?.data?.response || []
+  const legalEntitiesItems = useMemo(() => {
+    const items = legalEntitiesData?.data?.data?.data || []
+    return Array.isArray(items) ? items : []
+  }, [legalEntitiesData])
+  
+  // Fetch bank accounts using new invoke_function API
+  const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useBankAccountsPlanFact({
+    page: 1,
+    limit: 100,
+  })
+  
+  console.log('Bank accounts data:', bankAccountsData)
+  
+  // Extract bank accounts from response - correct path is data.data.data
+  const bankAccountsItems = useMemo(() => {
+    const items = bankAccountsData?.data?.data?.data || []
+    console.log('Bank accounts items:', items)
+    return Array.isArray(items) ? items : []
+  }, [bankAccountsData])
 
   // Transform legal entities data for dropdown
   const entities = useMemo(() => {
@@ -73,12 +91,12 @@ export default function AccountsPage() {
 
   // Transform accounts data for dropdown
   const accountsOptions = useMemo(() => {
-    if (!allAccountsItems || allAccountsItems.length === 0) return []
-    return allAccountsItems.map(item => ({
+    if (!bankAccountsItems || bankAccountsItems.length === 0) return []
+    return bankAccountsItems.map(item => ({
       value: item.guid,
       label: item.nazvanie || 'Без названия'
     }))
-  }, [allAccountsItems])
+  }, [bankAccountsItems])
 
   const accountingMethods = [
     { value: 'cash', label: 'Кассовый метод' },
@@ -89,87 +107,53 @@ export default function AccountsPage() {
     setFilters(prev => ({ ...prev, [key]: !prev[key] }))
   }
 
-  // Build filter data for API
-  const filtersForAPI = useMemo(() => {
-    const filterData = {}
+  // Filter bank accounts on frontend based on selected filters
+  const filteredBankAccountsItems = useMemo(() => {
+    if (!bankAccountsItems || bankAccountsItems.length === 0) return []
     
-    // Filter by account types - always pass as array
-    const selectedTypes = []
-    if (filters.nalichnye) selectedTypes.push('Наличный')
-    if (filters.beznalichnye) selectedTypes.push('Безналичный')
-    if (filters.kartaFizlica) selectedTypes.push('Карта физлица')
-    if (filters.elektronnye) selectedTypes.push('Электронный')
-    
-    // Always pass tip as array (even if empty)
-    filterData.tip = selectedTypes
-    
-    // Add search query if exists
-    if (searchQuery.trim()) {
-      filterData.nazvanie = { $like: `%${searchQuery.trim()}%` }
-    }
-    
-    // Filter by selected accounts
-    if (selectedAccounts.length > 0) {
-      filterData.guid = { $in: selectedAccounts }
-    }
-    
-    // Filter by selected legal entities
-    if (selectedEntity.length > 0) {
-      filterData.legal_entity_id = { $in: selectedEntity }
-    }
-    
-    return filterData
-  }, [filters, searchQuery, selectedAccounts, selectedEntity])
-
-  // Fetch my accounts from API using v2 endpoint with filters
-  const { data: myAccountsData, isLoading: isLoadingBankAccounts } = useMyAccountsV2({
-    data: filtersForAPI
-  })
-
-  const bankAccountsItems = myAccountsData?.data?.data?.response || []
+    return bankAccountsItems.filter(item => {
+      // Note: New API doesn't return 'tip' field, so type filtering is disabled
+      // If you need type filtering, it should be added to the API
+      
+      // Filter by search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase()
+        const name = (item.nazvanie || '').toLowerCase()
+        const accountNumber = (item.nomer_scheta || '').toLowerCase()
+        if (!name.includes(query) && !accountNumber.includes(query)) return false
+      }
+      
+      // Filter by selected accounts
+      if (selectedAccounts.length > 0) {
+        if (!selectedAccounts.includes(item.guid)) return false
+      }
+      
+      // Note: New API doesn't return 'legal_entity_id' field
+      // Legal entity filtering is disabled for now
+      
+      return true
+    })
+  }, [bankAccountsItems, searchQuery, selectedAccounts])
   const [selectedRows, setSelectedRows] = useState([])
 
-  // Get all field keys from API response - always show standard fields even if no data
+  // Get all field keys from API response - only show needed fields
   const allFields = useMemo(() => {
-    // Define standard field order (exclude guid from display)
+    // Define only the fields we want to display
     const standardFields = [
       'nazvanie',
-      'tip',
+      'nomer_scheta',
       'nachalьnyy_ostatok',
-      'data_sozdaniya',
-      'currenies_id',
-      'komentariy',
-      'legal_entity_id'
+      'balans',
+      'currenies_kod',
     ]
     
-    if (bankAccountsItems.length === 0) {
-      // Return standard fields even if no data
-      return standardFields
-    }
-    
-    const fields = new Set()
-    bankAccountsItems.forEach(item => {
-      Object.keys(item).forEach(key => {
-        // Skip nested data objects
-        if (!key.endsWith('_data')) {
-          fields.add(key)
-        }
-      })
-    })
-    
-    // Filter out guid and nested data objects
-    const filteredFields = Array.from(fields).filter(f => f !== 'guid' && !f.endsWith('_data'))
-    
-    const orderedFields = standardFields.filter(f => filteredFields.includes(f))
-    const otherFields = filteredFields.filter(f => !standardFields.includes(f))
-    
-    return [...orderedFields, ...otherFields]
-  }, [bankAccountsItems])
+    return standardFields
+  }, [])
 
   const isRowSelected = (id) => selectedRows.includes(id)
   
   const getAllSelectableIds = () => {
-    return bankAccountsItems.map(item => item.guid)
+    return filteredBankAccountsItems.map(item => item.guid)
   }
 
   const allSelected = () => {
@@ -214,6 +198,14 @@ export default function AccountsPage() {
     if (value === null || value === undefined) return '–'
     
     switch (field) {
+      case 'nazvanie':
+        return value || '–'
+      case 'nomer_scheta':
+        return value || '–'
+      case 'balans':
+        return typeof value === 'number' ? value.toLocaleString('ru-RU') : value
+      case 'currenies_kod':
+        return value || '–'
       case 'tip':
         return Array.isArray(value) ? value.join(', ') : value
       case 'nachalьnyy_ostatok':
@@ -243,8 +235,8 @@ export default function AccountsPage() {
     }
   }
 
-  const totalCurrentBalance = bankAccountsItems.reduce((sum, item) => {
-    const balance = item.nachalьnyy_ostatok
+  const totalCurrentBalance = filteredBankAccountsItems.reduce((sum, item) => {
+    const balance = item.balans || item.nachalьnyy_ostatok
     return sum + (balance != null ? Number(balance) : 0)
   }, 0)
 
@@ -352,12 +344,10 @@ export default function AccountsPage() {
                     <th key={field} className={styles.tableHeaderCell}>
                     <button className={styles.tableHeaderButton}>
                         {field === 'nazvanie' ? 'Название' :
-                         field === 'tip' ? 'Тип' :
+                         field === 'nomer_scheta' ? 'Номер счета' :
                          field === 'nachalьnyy_ostatok' ? 'Начальный остаток' :
-                         field === 'data_sozdaniya' ? 'Дата создания' :
-                         field === 'currenies_id' ? 'Валюта' :
-                         field === 'komentariy' ? 'Комментарий' :
-                         field === 'legal_entity_id' ? 'Юрлицо' :
+                         field === 'balans' ? 'Текущий баланс' :
+                         field === 'currenies_kod' ? 'Валюта' :
                          field}
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -375,14 +365,14 @@ export default function AccountsPage() {
                       Загрузка...
                     </td>
                   </tr>
-                ) : bankAccountsItems.length === 0 ? (
+                ) : filteredBankAccountsItems.length === 0 ? (
                   <tr className={styles.emptyRow}>
                     <td colSpan={allFields.length + 2} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
                       Нет данных
                     </td>
                   </tr>
                 ) : (
-                  bankAccountsItems.map((item, index) => (
+                  filteredBankAccountsItems.map((item, index) => (
                     <tr 
                       key={item.guid} 
                       className={styles.tableRow}
@@ -414,7 +404,7 @@ export default function AccountsPage() {
         <div className={cn(styles.footer, isFilterOpen && styles.footerWithFilter)}>
           <div className={styles.footerText}>
             <span className={styles.footerTextBold}>
-              {myAccountsData?.data?.data?.count || 0} {myAccountsData?.data?.data?.count === 1 ? 'счет' : myAccountsData?.data?.data?.count && myAccountsData.data.data.count < 5 ? 'счета' : 'счетов'}
+              {filteredBankAccountsItems.length} {filteredBankAccountsItems.length === 1 ? 'счет' : filteredBankAccountsItems.length < 5 ? 'счета' : 'счетов'}
             </span>
           </div>
           <div className={styles.footerTextMuted}>

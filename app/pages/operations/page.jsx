@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect, Fragment, useMemo } from 'react'
 import { cn } from '@/app/lib/utils'
 import {
-	useCounterpartiesV2,
-	useCounterpartiesGroupsV2,
+	useCounterpartiesPlanFact,
+	useCounterpartiesGroupsPlanFact,
 	useMyAccountsV2,
-	useLegalEntitiesV2,
+	useLegalEntitiesPlanFact,
 	useOperationsList,
 	useDeleteOperation,
 } from '@/hooks/useDashboard'
@@ -53,7 +53,7 @@ export default function OperationsPage() {
 
 	const [selectedDatePaymentRange, setSelectedDatePaymentRange] = useState(null)
 	const [selectedDateStartRange, setSelectedDateStartRange] = useState(null)
-	const [selectedAccounts, setSelectedAccounts] = useState({}) // Will store account GUIDs
+	const [selectedLegalEntities, setSelectedLegalEntities] = useState({}) // Will store legal entity GUIDs
 	const [selectedCounterAgents, setSelectedCounterAgents] = useState({})
 	const [selectedFinancialAccounts, setSelectedFinancialAccounts] = useState({})
 
@@ -98,14 +98,6 @@ export default function OperationsPage() {
     }
     */
 
-		// Bank accounts - bank_accounts_id (array of IDs)
-		const selectedAccountGuids = Object.keys(selectedAccounts).filter(
-			guid => selectedAccounts[guid],
-		)
-		if (selectedAccountGuids.length > 0) {
-			filters.bank_accounts_id = selectedAccountGuids
-		}
-
 		// Counter agents - counterparties_id (array of IDs)
 		const selectedCounterAgentGuids = Object.keys(selectedCounterAgents).filter(
 			guid => selectedCounterAgents[guid],
@@ -128,7 +120,6 @@ export default function OperationsPage() {
 		dateFilters,
 		selectedDatePaymentRange,
 		selectedDateStartRange,
-		selectedAccounts,
 		selectedCounterAgents,
 		selectedFinancialAccounts,
 	])
@@ -138,26 +129,112 @@ export default function OperationsPage() {
 		console.log('Filters for API:', filtersForAPI)
 	}, [filtersForAPI])
 
+	// Reset pagination when filters change
+	useEffect(() => {
+		setPage(1)
+		setAllOperations([])
+		setHasMore(true)
+	}, [
+		selectedFilters,
+		dateFilters,
+		selectedDatePaymentRange,
+		selectedDateStartRange,
+		selectedLegalEntities,
+		selectedCounterAgents,
+		selectedFinancialAccounts,
+	])
+
 	// Fetch data from API - using V2 endpoints
-	const { data: counterAgentsData } = useCounterpartiesV2({ data: {} })
-	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsV2({ data: {} })
-	const { data: bankAccountsData } = useMyAccountsV2({ data: {} })
-	const { data: legalEntitiesData } = useLegalEntitiesV2({ data: {} })
-	const { data: operationsListData, isLoading: isLoadingOperations } = useOperationsList({
+	const { data: counterAgentsData } = useCounterpartiesPlanFact({
+		page: 1,
+		limit: 100,
+	})
+	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
+		page: 1,
+		limit: 100,
+	})
+	const { data: legalEntitiesData } = useLegalEntitiesPlanFact({
+		page: 1,
+		limit: 100,
+	})
+	
+	// Pagination state
+	const [page, setPage] = useState(1)
+	const [hasMore, setHasMore] = useState(true)
+	const [allOperations, setAllOperations] = useState([])
+	const [isLoadingMore, setIsLoadingMore] = useState(false)
+	const limit = 20
+	const tableWrapperRef = useRef(null)
+	
+	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList({
 		date_range: {
 			start_date: '2026-01-01',
 			end_date: '2026-12-31',
 		},
-		page: 1,
-		limit: 20,
+		page: page,
+		limit: limit,
 	})
 
 	console.log('operationsListData => ', operationsListData)
+	
+	// Update operations when new data arrives
+	useEffect(() => {
+		if (operationsListData?.data?.data?.data) {
+			const newOps = operationsListData.data.data.data
+			
+			// Only update if we actually have new data
+			if (newOps.length === 0) return
+			
+			if (page === 1) {
+				// First page - replace all operations
+				setAllOperations(newOps)
+			} else {
+				// Subsequent pages - append to existing operations
+				setAllOperations(prev => {
+					// Avoid duplicates by checking if operations already exist
+					const existingGuids = new Set(prev.map(op => op.guid))
+					const uniqueNewOps = newOps.filter(op => !existingGuids.has(op.guid))
+					
+					// Only append if we have new unique operations
+					if (uniqueNewOps.length > 0) {
+						return [...prev, ...uniqueNewOps]
+					}
+					return prev
+				})
+			}
+			
+			// Check if there are more pages
+			if (newOps.length < limit) {
+				setHasMore(false)
+			}
+			setIsLoadingMore(false)
+		}
+	}, [operationsListData, page, limit])
+	
+	// Infinite scroll handler
+	useEffect(() => {
+		const tableWrapper = tableWrapperRef.current
+		if (!tableWrapper) return
+		
+		const handleScroll = () => {
+			const { scrollTop, scrollHeight, clientHeight } = tableWrapper
+			// Load more when scrolled to the bottom (with small threshold)
+			const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10
+			
+			if (isAtBottom && hasMore && !isLoadingOperations && !isLoadingMore) {
+				setIsLoadingMore(true)
+				setPage(prev => prev + 1)
+			}
+		}
+		
+		tableWrapper.addEventListener('scroll', handleScroll)
+		return () => tableWrapper.removeEventListener('scroll', handleScroll)
+	}, [hasMore, isLoadingOperations, isLoadingMore])
 
 	// Extract and transform data from API responses - build tree structure for filter
 	const counterAgents = useMemo(() => {
-		const counterparties = counterAgentsData?.data?.data?.response || []
-		const groups = counterpartiesGroupsData?.data?.data?.response || []
+		const counterparties = counterAgentsData?.data?.data?.data || []
+		const groups = counterpartiesGroupsData?.data?.data?.data || []
 
 		// Create a map of groups by guid
 		const groupsMap = new Map()
@@ -173,31 +250,8 @@ export default function OperationsPage() {
 		}))
 	}, [counterAgentsData, counterpartiesGroupsData])
 
-	// Transform bank accounts data with legal entities grouping
-	const bankAccounts = useMemo(() => {
-		const accounts = bankAccountsData?.data?.data?.response || []
-		const legalEntities = legalEntitiesData?.data?.data?.response || []
-
-		// Create a map of legal entities by guid for quick lookup
-		const legalEntitiesMap = new Map()
-		legalEntities.forEach(entity => {
-			legalEntitiesMap.set(entity.guid, entity.nazvanie || 'Без названия')
-		})
-
-		return accounts.map(item => ({
-			guid: item.guid,
-			label: item.nazvanie || '',
-			group: item.legal_entity_id
-				? legalEntitiesMap.get(item.legal_entity_id) ||
-					item.legal_entity_id_data?.nazvanie ||
-					'Без группы'
-				: 'Без группы',
-		}))
-	}, [bankAccountsData, legalEntitiesData])
-
 	// Extract operations list from API response (v2/items/operations format)
-	const operationsItems =
-		operationsListData?.data?.data?.data || operationsListData?.data?.response || []
+	const operationsItems = allOperations
 
 	// Filter operations by date ranges on frontend (since API doesn't support it)
 	const filteredOperationsItems = useMemo(() => {
@@ -329,15 +383,17 @@ export default function OperationsPage() {
 				accrualDate: formatDate(accrualDate),
 				operationDate: formatDate(operationDate),
 				paymentConfirmed: item.oplata_podtverzhdena,
+				payment_confirmed: item.payment_confirmed, // Добавляем новое поле
+				payment_accrual: item.payment_accrual, // Добавляем новое поле
 				amount: amountFormatted,
 				amountRaw: amount,
 				currency: item.currenies_kod || item.currenies_id_data?.nazvanie || '',
 				currencyId: item.currenies_id || null,
 				description: item.opisanie || '',
-				chartOfAccounts: item.chart_of_accounts_name || '',
+				chartOfAccounts: item.chart_of_accounts_id_data?.nazvanie || item.chart_of_accounts_name || '',
 				chartOfAccountsId: item.chart_of_accounts_id || null,
 				bankAccount: item.my_accounts_name || '',
-				bankAccountId: item.bank_accounts_id || null,
+				bankAccountId: item.my_accounts_id || null,
 				counterparty: item.counterparties_name || '',
 				counterpartyId: item.counterparties_id || null,
 				createdAt: formatDate(item.data_sozdaniya ? new Date(item.data_sozdaniya) : null),
@@ -395,26 +451,6 @@ export default function OperationsPage() {
 		document.addEventListener('mousedown', handleClickOutside)
 		return () => document.removeEventListener('mousedown', handleClickOutside)
 	}, [])
-
-	const toggleAccount = key => {
-		setSelectedAccounts(prev => ({ ...prev, [key]: !prev[key] }))
-	}
-
-	const selectAllAccounts = () => {
-		// Check if all accounts are already selected
-		const allAccountGuids = bankAccounts.map(account => account.guid)
-		const allSelected = allAccountGuids.every(guid => selectedAccounts[guid])
-
-		if (allSelected) {
-			// If all are selected, deselect all
-			setSelectedAccounts({})
-		} else {
-			// If not all are selected, select all
-			const newSelected = {}
-			bankAccounts.forEach(account => (newSelected[account.guid] = true))
-			setSelectedAccounts(newSelected)
-		}
-	}
 
 	const [selectedOperations, setSelectedOperations] = useState([])
 	const [expandedRows, setExpandedRows] = useState([])
@@ -553,8 +589,22 @@ export default function OperationsPage() {
 		}
 	}
 
-	const handleAccountToggle = key => {
-		setSelectedAccounts(prev => ({ ...prev, [key]: !prev[key] }))
+	const handleLegalEntityToggle = guid => {
+		setSelectedLegalEntities(prev => ({ ...prev, [guid]: !prev[guid] }))
+	}
+
+	const handleSelectAllLegalEntities = () => {
+		const legalEntities = legalEntitiesData?.data?.data?.data || []
+		const allLegalEntityGuids = legalEntities.map(le => le.guid)
+		const allSelected = allLegalEntityGuids.every(guid => selectedLegalEntities[guid])
+
+		if (allSelected) {
+			setSelectedLegalEntities({})
+		} else {
+			const newSelected = {}
+			legalEntities.forEach(le => (newSelected[le.guid] = true))
+			setSelectedLegalEntities(newSelected)
+		}
 	}
 
 	const handleSelectAllCounterAgents = () => {
@@ -594,10 +644,10 @@ export default function OperationsPage() {
 				onDatePaymentRangeChange={setSelectedDatePaymentRange}
 				selectedDateStartRange={selectedDateStartRange}
 				onDateStartRangeChange={setSelectedDateStartRange}
-				bankAccounts={bankAccounts}
-				selectedAccounts={selectedAccounts}
-				onAccountToggle={handleAccountToggle}
-				onSelectAllAccounts={selectAllAccounts}
+				legalEntities={legalEntitiesData?.data?.data?.data || []}
+				selectedLegalEntities={selectedLegalEntities}
+				onLegalEntityToggle={handleLegalEntityToggle}
+				onSelectAllLegalEntities={handleSelectAllLegalEntities}
 				counterAgents={counterAgents}
 				selectedCounterAgents={selectedCounterAgents}
 				onCounterAgentToggle={handleCounterAgentToggle}
@@ -675,7 +725,7 @@ export default function OperationsPage() {
 						</div>
 					)}
 
-					<div className={styles.tableWrapper}>
+					<div className={styles.tableWrapper} ref={tableWrapperRef}>
 						<table className={styles.table}>
 							<thead className={styles.tableHeader}>
 								<tr className={styles.tableHeaderRow}>
@@ -811,7 +861,7 @@ export default function OperationsPage() {
 													<td className={cn(styles.tableCell, styles.statusCell)}>
 														{op.chartOfAccounts || '-'}
 													</td>
-													<td className={styles.tableCell}>false</td>
+													<td className={styles.tableCell}>-</td>
 													<td
 														className={cn(
 															styles.tableCell,
@@ -821,7 +871,23 @@ export default function OperationsPage() {
 															op.typeCategory === 'transfer' && styles.neutral,
 														)}
 													>
-														{op.amount}
+														<div className={styles.amountWithIcons}>
+															{/* Debit icon (Дебет) - показываем если payment_confirmed = true, но не показываем если оба true */}
+															{op.payment_confirmed && !(op.payment_confirmed && op.payment_accrual) && (
+																<svg width="22" height="27" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.debitIcon}>
+																	<rect width="22" height="27" rx="6" fill="#1E98AD"/>
+																	<path d="M6.80096 20.1136V17.0625H7.36346C7.55664 16.8864 7.73846 16.6378 7.90891 16.3168C8.08221 15.9929 8.22852 15.5611 8.34783 15.0213C8.46999 14.4787 8.55096 13.7898 8.59073 12.9545L8.77823 9.27273H13.9601V17.0625H14.9657V20.0966H13.9601V18H7.80664V20.1136H6.80096ZM8.62482 17.0625H12.9544V10.2102H9.73278L9.59641 12.9545C9.56232 13.5909 9.50266 14.1676 9.41744 14.6847C9.33221 15.1989 9.22283 15.6548 9.08931 16.0526C8.95579 16.4474 8.80096 16.7841 8.62482 17.0625Z" fill="#FCFCFD"/>
+																</svg>
+															)}
+															{/* Credit icon (Кредит) - показываем если payment_accrual = true, но не показываем если оба true */}
+															{op.payment_accrual && !(op.payment_confirmed && op.payment_accrual) && (
+																<svg width="22" height="27" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.creditIcon}>
+																	<rect width="22" height="27" rx="6" fill="#6C64BC"/>
+																	<path d="M8.05682 18V9.27273H9.11364V13.6023H9.21591L13.1364 9.27273H14.517L10.8523 13.2102L14.517 18H13.2386L10.2045 13.9432L9.11364 15.1705V18H8.05682Z" fill="#FCFCFD"/>
+																</svg>
+															)}
+															<span className={styles.amountText}>{op.amount}</span>
+														</div>
 													</td>
 													<td
 														className={cn(styles.tableCell, styles.tableCellActions)}
@@ -934,7 +1000,23 @@ export default function OperationsPage() {
 															op.typeCategory === 'transfer' && styles.neutral,
 														)}
 													>
-														{op.amount}
+														<div className={styles.amountWithIcons}>
+															{/* Debit icon (Дебет) - показываем если payment_confirmed = true, но не показываем если оба true */}
+															{op.payment_confirmed && !(op.payment_confirmed && op.payment_accrual) && (
+																<svg width="22" height="27" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.debitIcon}>
+																	<rect width="22" height="27" rx="6" fill="#1E98AD"/>
+																	<path d="M6.80096 20.1136V17.0625H7.36346C7.55664 16.8864 7.73846 16.6378 7.90891 16.3168C8.08221 15.9929 8.22852 15.5611 8.34783 15.0213C8.46999 14.4787 8.55096 13.7898 8.59073 12.9545L8.77823 9.27273H13.9601V17.0625H14.9657V20.0966H13.9601V18H7.80664V20.1136H6.80096ZM8.62482 17.0625H12.9544V10.2102H9.73278L9.59641 12.9545C9.56232 13.5909 9.50266 14.1676 9.41744 14.6847C9.33221 15.1989 9.22283 15.6548 9.08931 16.0526C8.95579 16.4474 8.80096 16.7841 8.62482 17.0625Z" fill="#FCFCFD"/>
+																</svg>
+															)}
+															{/* Credit icon (Кредит) - показываем если payment_accrual = true, но не показываем если оба true */}
+															{op.payment_accrual && !(op.payment_confirmed && op.payment_accrual) && (
+																<svg width="22" height="27" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.creditIcon}>
+																	<rect width="22" height="27" rx="6" fill="#6C64BC"/>
+																	<path d="M8.05682 18V9.27273H9.11364V13.6023H9.21591L13.1364 9.27273H14.517L10.8523 13.2102L14.517 18H13.2386L10.2045 13.9432L9.11364 15.1705V18H8.05682Z" fill="#FCFCFD"/>
+																</svg>
+															)}
+															<span className={styles.amountText}>{op.amount}</span>
+														</div>
 													</td>
 													<td
 														className={cn(styles.tableCell, styles.tableCellActions)}
@@ -952,6 +1034,18 @@ export default function OperationsPage() {
 								)}
 							</tbody>
 						</table>
+						{/* Loading indicator */}
+						{(isLoadingMore || (isLoadingOperations && page > 1)) && (
+							<div className={styles.loadingMore}>
+								<div className={styles.loadingSpinner}></div>
+								<span>Загрузка...</span>
+							</div>
+						)}
+						{!hasMore && operations.length > 0 && (
+							<div className={styles.noMoreData}>
+								Все операции загружены
+							</div>
+						)}
 					</div>
 				</div>
 

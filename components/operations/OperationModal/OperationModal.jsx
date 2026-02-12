@@ -7,12 +7,13 @@ import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import {
-	useCounterpartiesV2,
-	useCounterpartiesGroupsV2,
-	useChartOfAccountsV2,
-	useMyAccountsV2,
-	useLegalEntitiesV2,
+	useCounterpartiesPlanFact,
+	useCounterpartiesGroupsPlanFact,
+	useChartOfAccountsPlanFact,
+	useBankAccountsPlanFact,
+	useLegalEntitiesPlanFact,
 	useCurrencies,
+	useOperation,
 } from '@/hooks/useDashboard'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
 import styles from './OperationModal.module.scss'
@@ -27,8 +28,52 @@ export function OperationModal({
 }) {
 	const queryClient = useQueryClient()
 	const isNew = operation?.isNew || false
+	
+	// Extract guid from operation - check multiple possible locations
+	const operationGuid = useMemo(() => {
+		if (isNew) return null
+		// Try to get guid from various possible locations
+		return operation?.rawData?.guid || operation?.guid || null
+	}, [isNew, operation])
+	
+	console.log('=== OperationModal Debug ===')
+	console.log('isNew:', isNew)
+	console.log('operation:', operation)
+	console.log('operationGuid:', operationGuid)
+	
+	// Fetch full operation data if editing existing operation
+	const { data: fullOperationData, isLoading: isLoadingOperation, refetch } = useOperation(operationGuid, {
+		enabled: !isNew && !!operationGuid
+	})
+	
+	// Refetch operation data when modal opens (when isOpening becomes true)
+	useEffect(() => {
+		if (!isNew && operationGuid && isOpening) {
+			console.log('Refetching operation data for guid:', operationGuid)
+			refetch()
+		}
+	}, [isOpening, operationGuid, isNew, refetch])
+	
+	// Use full operation data if available, otherwise use passed operation
+	const operationData = useMemo(() => {
+		if (isNew) {
+			console.log('Using new operation mode')
+			return operation
+		}
+		if (fullOperationData?.data?.data?.data) {
+			console.log('Using full operation data from API:', fullOperationData.data.data.data)
+			return {
+				...operation,
+				rawData: fullOperationData.data.data.data
+			}
+		}
+		console.log('Using passed operation data:', operation)
+		return operation
+	}, [isNew, operation, fullOperationData])
 
-	console.log('OperationModal', operation)
+	console.log('Final operationData:', operationData)
+	console.log('Full operation data response:', fullOperationData)
+	
 	// Current active tab
 	const [activeTab, setActiveTab] = useState(modalType || 'income')
 	const [isSubmitting, setIsSubmitting] = useState(false)
@@ -59,9 +104,9 @@ export function OperationModal({
 
 	// Initialize form data from operation or defaults
 	const getInitialFormData = () => {
-		if (operation && !isNew && operation.rawData) {
+		if (operationData && !isNew && operationData.rawData) {
 			// Editing existing operation - use rawData
-			const raw = operation.rawData
+			const raw = operationData.rawData
 			const paymentDate = raw.data_operatsii
 				? new Date(raw.data_operatsii).toISOString().split('T')[0]
 				: new Date().toISOString().split('T')[0]
@@ -71,9 +116,9 @@ export function OperationModal({
 
 			return {
 				paymentDate,
-				confirmPayment: raw.oplata_podtverzhdena || false,
-				accountAndLegalEntity: raw.currenies_id || null,
-				amount: raw.summa ? Math.abs(raw.summa) : '',
+				confirmPayment: raw.payment_confirmed !== undefined ? raw.payment_confirmed : (raw.oplata_podtverzhdena || false),
+				accountAndLegalEntity: raw.my_accounts_id || raw.bank_accounts_id || null,
+				amount: raw.summa ? formatAmount(Math.abs(raw.summa)) : '',
 				counterparty: raw.counterparties_id || null,
 				chartOfAccount: raw.chart_of_accounts_id || null,
 				project: null,
@@ -82,14 +127,14 @@ export function OperationModal({
 				purpose: raw.opisanie || '',
 				// For transfer
 				fromDate: paymentDate,
-				fromAccount: raw.bank_accounts_id || null,
-				fromAmount: raw.summa ? Math.abs(raw.summa) : '',
+				fromAccount: raw.my_accounts_id || raw.bank_accounts_id || null,
+				fromAmount: raw.summa ? formatAmount(Math.abs(raw.summa)) : '',
 				toDate: paymentDate,
 				toAccount: null,
 				toAmount: '0',
 				// For accrual
 				accrualDate,
-				confirmAccrual: false,
+				confirmAccrual: raw.payment_accrual !== undefined ? raw.payment_accrual : false,
 				legalEntity: raw.legal_entity_id || null,
 				expenseItem: raw.chart_of_accounts_id || null,
 				cashMethod: true,
@@ -101,7 +146,7 @@ export function OperationModal({
 		// New operation - use defaults
 		return {
 			paymentDate: new Date().toISOString().split('T')[0],
-			confirmPayment: false,
+			confirmPayment: true, // Включен по умолчанию
 			accountAndLegalEntity: null,
 			amount: '',
 			counterparty: preselectedCounterparty || null,
@@ -119,7 +164,7 @@ export function OperationModal({
 			toAmount: '0',
 			// For accrual
 			accrualDate: new Date().toISOString().split('T')[0],
-			confirmAccrual: false,
+			confirmAccrual: true, // Включен по умолчанию
 			legalEntity: null,
 			expenseItem: null,
 			cashMethod: true,
@@ -129,7 +174,35 @@ export function OperationModal({
 	}
 
 	// Form state
-	const [formData, setFormData] = useState(getInitialFormData())
+	const [formData, setFormData] = useState(() => getInitialFormData())
+
+	// Update form data when operationData changes (for editing)
+	useEffect(() => {
+		if (!isNew && operationData && !isLoadingOperation) {
+			console.log('Updating form data with operationData:', operationData)
+			const newFormData = getInitialFormData()
+			console.log('New form data:', newFormData)
+			setFormData(newFormData)
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [operationData, isNew, isLoadingOperation])
+	
+	// Reset form when modal closes
+	useEffect(() => {
+		if (isClosing) {
+			console.log('Modal closing, will reset form on next open')
+		}
+	}, [isClosing])
+	
+	// Reset form when modal opens
+	useEffect(() => {
+		if (isOpening) {
+			console.log('Modal opening, resetting form')
+			const newFormData = getInitialFormData()
+			setFormData(newFormData)
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOpening])
 
 	// Validation errors state
 	const [errors, setErrors] = useState({})
@@ -140,24 +213,33 @@ export function OperationModal({
 	}, [activeTab])
 
 	// Fetch data from API - using V2 endpoints
-	const { data: counterpartiesData, isLoading: loadingCounterparties } = useCounterpartiesV2({
-		data: {},
+	const { data: counterpartiesData, isLoading: loadingCounterparties } = useCounterpartiesPlanFact({
+		page: 1,
+		limit: 100,
 	})
-	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsV2({ data: {} })
-	const { data: chartOfAccountsData, isLoading: loadingChartOfAccounts } = useChartOfAccountsV2({
-		data: {},
+	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
+		page: 1,
+		limit: 100,
 	})
-	const { data: bankAccountsData, isLoading: loadingBankAccounts } = useMyAccountsV2({ data: {} })
-	const { data: legalEntitiesData, isLoading: loadingLegalEntities } = useLegalEntitiesV2({
-		data: {},
+	const { data: chartOfAccountsData, isLoading: loadingChartOfAccounts } = useChartOfAccountsPlanFact({
+		page: 1,
+		limit: 100,
+	})
+	const { data: bankAccountsData, isLoading: loadingBankAccounts } = useBankAccountsPlanFact({
+		page: 1,
+		limit: 100,
+	})
+	const { data: legalEntitiesData, isLoading: loadingLegalEntities } = useLegalEntitiesPlanFact({
+		page: 1,
+		limit: 100,
 	})
 	const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
  
 
 	// Build tree structure for counterparties (groups and their children)
 	const counterAgentsTree = useMemo(() => {
-		const counterparties = counterpartiesData?.data?.data?.response || []
-		const groups = counterpartiesGroupsData?.data?.data?.response || []
+		const counterparties = counterpartiesData?.data?.data?.data || []
+		const groups = counterpartiesGroupsData?.data?.data?.data || []
 
 		if (counterparties.length === 0) return []
 
@@ -233,7 +315,7 @@ export function OperationModal({
 	}, [counterpartiesData, counterpartiesGroupsData])
 
 	// Also keep flat list for backward compatibility (if needed)
-	const counterAgents = (counterpartiesData?.data?.data?.response || []).map(item => ({
+	const counterAgents = (counterpartiesData?.data?.data?.data || []).map(item => ({
 		guid: item.guid,
 		label: item.nazvanie || '',
 		group: item.counterparties_group_id_data?.nazvanie_gruppy || 'Без группы',
@@ -241,7 +323,7 @@ export function OperationModal({
 
 	// Transform legal entities data
 	const legalEntities = useMemo(() => {
-		const items = legalEntitiesData?.data?.data?.response || []
+		const items = legalEntitiesData?.data?.data?.data || []
 		return items.map(item => ({
 			guid: item.guid,
 			label: item.nazvanie || 'Без названия',
@@ -251,213 +333,113 @@ export function OperationModal({
 
 	// Transform chart of accounts data - show full tree filtered by type
 	const chartOfAccountsTree = useMemo(() => {
-		const items = chartOfAccountsData?.data?.data?.response || []
-		if (items.length === 0) return []
+		// New API returns hierarchical data with children already built
+		const rootItems = chartOfAccountsData?.data?.data?.data || []
+		if (rootItems.length === 0) return []
 
-		// Filter out items without tip (type)
-		const itemsWithType = items.filter(
-			item => item.tip && Array.isArray(item.tip) && item.tip.length > 0,
-		)
+		console.log('=== Chart of Accounts Raw Data ===')
+		console.log('Root items:', rootItems)
+		console.log('Active Tab:', activeTab)
 
-		// For accrual tab, group by type
-		if (activeTab === 'accrual') {
-			// Build a map for quick lookup
-			const itemsMap = new Map()
-			itemsWithType.forEach(item => {
-				itemsMap.set(item.guid, item)
-			})
-
-			// Build child items map: parentGuid -> [children]
-			const childItemsMap = new Map()
-			itemsWithType.forEach(item => {
-				if (item.chart_of_accounts_id_2) {
-					const parentGuid = item.chart_of_accounts_id_2
-					if (!childItemsMap.has(parentGuid)) {
-						childItemsMap.set(parentGuid, [])
-					}
-					childItemsMap.get(parentGuid).push(item)
-				}
-			})
-
-			// Helper to get all descendants of an item
-			const getAllDescendants = (itemGuid, collected = new Set()) => {
-				const children = childItemsMap.get(itemGuid) || []
-				children.forEach(child => {
-					if (!collected.has(child.guid)) {
-						collected.add(child.guid)
-						getAllDescendants(child.guid, collected)
-					}
-				})
-				return collected
+		// Recursive function to filter and transform tree based on active tab
+		const filterAndTransformTree = (item, skipTypeCheck = false) => {
+			// Check if item has tip (type) - skip for manually created nodes
+			if (!skipTypeCheck && (!item.tip || !Array.isArray(item.tip) || item.tip.length === 0)) {
+				return null
 			}
 
-			// Group items by type (including all their descendants)
-			const groupedByType = {
-				Актив: new Set(),
-				Капитал: new Set(),
-				Обязательства: new Set(),
+			const tipText = item.tip ? item.tip[0] : ''
+			
+			// For income tab, only show items with "Доход" type
+			if (!skipTypeCheck && activeTab === 'income' && !tipText.includes('Доход')) {
+				return null
+			}
+			
+			// For payment tab, only show items with "Расход" type
+			if (!skipTypeCheck && activeTab === 'payment' && !tipText.includes('Расход')) {
+				return null
 			}
 
-			itemsWithType.forEach(item => {
-				if (item.tip && Array.isArray(item.tip) && item.tip.length > 0) {
-					const tipText = item.tip[0]
-					let targetGroup = null
-
-					if (tipText && tipText.includes('Актив')) {
-						targetGroup = 'Актив'
-					} else if (tipText && tipText.includes('Капитал')) {
-						targetGroup = 'Капитал'
-					} else if (tipText && tipText.includes('Обязательства')) {
-						targetGroup = 'Обязательства'
-					}
-
-					if (targetGroup) {
-						// Add item itself
-						groupedByType[targetGroup].add(item.guid)
-						// Add all descendants
-						const descendants = getAllDescendants(item.guid)
-						descendants.forEach(guid => groupedByType[targetGroup].add(guid))
-					}
+			// For accrual tab, show Актив, Капитал, Обязательства
+			if (!skipTypeCheck && activeTab === 'accrual') {
+				const isValidType = tipText.includes('Актив') || 
+				                   tipText.includes('Капитал') || 
+				                   tipText.includes('Обязательства')
+				if (!isValidType) {
+					return null
 				}
-			})
-
-			// Build tree for each type
-			const result = []
-
-			Object.entries(groupedByType).forEach(([typeName, itemGuids]) => {
-				if (itemGuids.size === 0) return
-
-				// Get items for this type
-				const typeItems = Array.from(itemGuids)
-					.map(guid => itemsMap.get(guid))
-					.filter(Boolean)
-
-				// Build child items map for this type only
-				const typeChildItemsMap = new Map()
-				typeItems.forEach(item => {
-					if (item.chart_of_accounts_id_2 && itemGuids.has(item.chart_of_accounts_id_2)) {
-						const parentGuid = item.chart_of_accounts_id_2
-						if (!typeChildItemsMap.has(parentGuid)) {
-							typeChildItemsMap.set(parentGuid, [])
-						}
-						typeChildItemsMap.get(parentGuid).push(item)
-					}
-				})
-
-				// Build tree structure recursively
-				const buildTree = item => {
-					const children = typeChildItemsMap.get(item.guid) || []
-					const hasChildren = children.length > 0
-
-					const treeNode = {
-						value: item.guid,
-						title: item.nazvanie || 'Без названия',
-						selectable: true, // Allow selecting any node
-						expanded: false, // Collapsed by default
-						tip: item.tip,
-						children: hasChildren ? children.map(child => buildTree(child)) : undefined,
-					}
-					return treeNode
-				}
-
-				// Find root items for this type (items that don't have parent in this type)
-				const rootItems = typeItems.filter(
-					item => !item.chart_of_accounts_id_2 || !itemGuids.has(item.chart_of_accounts_id_2),
-				)
-
-				// Create type group node
-				const typeNode = {
-					value: `type_${typeName}`,
-					title: typeName,
-					selectable: false,
-					expanded: false, // Collapsed by default
-					tip: [typeName],
-					children: rootItems.map(root => buildTree(root)),
-				}
-
-				result.push(typeNode)
-			})
-
-			return result
-		}
-
-		// For other tabs, use existing logic
-		// Build a map for quick lookup
-		const itemsMap = new Map()
-		itemsWithType.forEach(item => {
-			itemsMap.set(item.guid, item)
-		})
-
-		// Build child items map: parentGuid -> [children]
-		const childItemsMap = new Map()
-		itemsWithType.forEach(item => {
-			if (item.chart_of_accounts_id_2) {
-				const parentGuid = item.chart_of_accounts_id_2
-				if (!childItemsMap.has(parentGuid)) {
-					childItemsMap.set(parentGuid, [])
-				}
-				childItemsMap.get(parentGuid).push(item)
-			}
-		})
-
-		// Helper to check if item or any of its descendants match the filter
-		const hasMatchingDescendants = item => {
-			const children = childItemsMap.get(item.guid) || []
-
-			// Check if item itself matches the filter first
-			const itemMatches =
-				item.tip &&
-				Array.isArray(item.tip) &&
-				item.tip.length > 0 &&
-				((activeTab === 'income' && item.tip.some(t => t && t.includes('Доход'))) ||
-					(activeTab === 'payment' && item.tip.some(t => t && t.includes('Расход'))))
-
-			// If item has children, check if any child matches
-			if (children.length > 0) {
-				const hasMatchingChild = children.some(child => hasMatchingDescendants(child))
-				// Include item if it matches OR has matching children
-				return itemMatches || hasMatchingChild
 			}
 
-			// If no children (leaf node), return whether item itself matches
-			return itemMatches
-		}
+			// Process children recursively
+			const children = item.children || []
+			const transformedChildren = children
+				.map(child => filterAndTransformTree(child, false))
+				.filter(Boolean) // Remove null items
 
-		// Build tree structure recursively
-		const buildTree = item => {
-			const children = childItemsMap.get(item.guid) || []
-
-			// Filter children - only include those that match or have matching descendants
-			const filteredChildren = children.filter(child => hasMatchingDescendants(child))
-
-			const hasChildren = filteredChildren.length > 0
-
+			// Build tree node
 			const treeNode = {
-				value: item.guid,
-				title: item.nazvanie || 'Без названия',
-				selectable: true, // Allow selecting any node
-				expanded: false, // Collapsed by default
+				value: item.guid || item.value || item.nazvanie, // Use guid, value, or name
+				title: item.nazvanie || item.title || 'Без названия',
+				selectable: item.selectable !== undefined ? item.selectable : true,
+				expanded: item.expanded !== undefined ? item.expanded : false,
 				tip: item.tip,
-				children: hasChildren ? filteredChildren.map(child => buildTree(child)) : undefined,
+				children: transformedChildren.length > 0 ? transformedChildren : undefined,
 			}
+
 			return treeNode
 		}
 
-		// Find root items (level 1)
-		const rootItems = itemsWithType.filter(item => !item.chart_of_accounts_id_2)
+		// Find the root item that matches the active tab
+		let matchingRootItem = null
+		let headerTitle = ''
+		
+		if (activeTab === 'income') {
+			matchingRootItem = rootItems.find(item => 
+				item.nazvanie === 'Доходы' || 
+				(item.tip && item.tip[0] && item.tip[0].includes('Доход'))
+			)
+			headerTitle = 'Доходы'
+		} else if (activeTab === 'payment') {
+			matchingRootItem = rootItems.find(item => 
+				item.nazvanie === 'Расходы' || 
+				(item.tip && item.tip[0] && item.tip[0].includes('Расход'))
+			)
+			headerTitle = 'Расходы'
+		}
 
-		// Filter root items - only include those that have matching descendants
-		const filteredRootItems = rootItems.filter(root => hasMatchingDescendants(root))
+		// For income and payment tabs, return children wrapped in a header node
+		if ((activeTab === 'income' || activeTab === 'payment') && matchingRootItem) {
+			const children = matchingRootItem.children || []
+			const transformedChildren = children
+				.map(child => filterAndTransformTree(child, false))
+				.filter(Boolean)
+			
+			// Create a single root node with the type as title
+			const treeWithHeader = [{
+				value: `header_${activeTab}`,
+				title: headerTitle,
+				selectable: false,
+				expanded: true, // Always expanded
+				tip: matchingRootItem.tip,
+				children: transformedChildren
+			}]
+			
+			console.log('=== Transformed Tree (with header) ===')
+			console.log('Tree:', treeWithHeader)
+			
+			return treeWithHeader
+		}
 
-		// Debug: log tree structure
-		console.log('=== Chart of Accounts Tree ===')
-		console.log('Active Tab:', activeTab)
-		console.log(
-			'Filtered Root Items:',
-			filteredRootItems.map(r => r.nazvanie),
-		)
+		// For accrual tab, transform all root items
+		const transformedTree = rootItems
+			.map(item => filterAndTransformTree(item, false))
+			.filter(Boolean) // Remove null items
 
-		return filteredRootItems.map(buildTree)
+		console.log('=== Transformed Tree ===')
+		console.log('Tree:', transformedTree)
+		console.log('Tree length:', transformedTree.length)
+
+		return transformedTree
 	}, [chartOfAccountsData, activeTab])
 
 	// Debug: log the tree structure
@@ -472,15 +454,39 @@ export function OperationModal({
 	const filteredChartOfAccountsTree = chartOfAccountsTree
 
 	const bankAccounts = useMemo(() => {
-		const items = bankAccountsData?.data?.data?.response || []
+		const items = bankAccountsData?.data?.data?.data || []
+		const legalEntitiesItems = legalEntitiesData?.data?.data?.data || []
+		const currenciesItems = currenciesData?.data?.data?.response || currenciesData?.data?.response || []
+		
+		// Create a map of legal entities by guid for quick lookup
+		const legalEntitiesMap = new Map()
+		legalEntitiesItems.forEach(entity => {
+			legalEntitiesMap.set(entity.guid, entity.nazvanie || 'Без названия')
+		})
+		
+		// Create a map of currencies by guid for quick lookup
+		const currenciesMap = new Map()
+		currenciesItems.forEach(currency => {
+			currenciesMap.set(currency.guid, {
+				kod: currency.kod || '',
+				nazvanie: currency.nazvanie || ''
+			})
+		})
+		
 		return items.map(item => ({
 			guid: item.guid,
 			label: item.nazvanie || '',
-			group: item.legal_entity_id_data?.nazvanie || 'Без группы',
+			group: item.legal_entity_id && legalEntitiesMap.has(item.legal_entity_id)
+				? legalEntitiesMap.get(item.legal_entity_id)
+				: 'Без группы',
 			currenies_id: item.currenies_id || null,
-			currenies_id_data: item.currenies_id_data || null,
+			currenies_kod: item.currenies_kod || '',
+			// Build currenies_id_data from currencies map
+			currenies_id_data: item.currenies_id && currenciesMap.has(item.currenies_id)
+				? currenciesMap.get(item.currenies_id)
+				: null,
 		}))
-	}, [bankAccountsData])
+	}, [bankAccountsData, legalEntitiesData, currenciesData])
 
 	// Transform currencies data
 	const currencies = (
@@ -706,6 +712,8 @@ export function OperationModal({
 				data_nachisleniya:
 					activeTab === 'accrual' ? accrualDate.toISOString() : paymentDate.toISOString(),
 				oplata_podtverzhdena: formData.confirmPayment || false,
+				payment_confirmed: formData.confirmPayment || false, // Добавляем новое поле
+				payment_accrual: formData.confirmAccrual || false, // Добавляем новое поле
 				summa: parseFloat(formData.amount) || 0,
 				opisanie: formData.purpose || '',
 				data_sozdaniya: now.toISOString(),
@@ -714,7 +722,7 @@ export function OperationModal({
 
 			// Add optional fields only if they have values (don't send empty strings or null)
 			if (formData.accountAndLegalEntity) {
-				requestData.bank_accounts_id = formData.accountAndLegalEntity
+				requestData.my_accounts_id = formData.accountAndLegalEntity
 			}
 			if (formData.counterparty) {
 				requestData.counterparties_id = formData.counterparty
@@ -741,17 +749,31 @@ export function OperationModal({
 			})
 
 			// Determine if this is create or update
-			const isUpdate = !isNew && operation?.rawData?.guid
+			const isUpdate = !isNew && (operationData?.rawData?.guid || operationData?.guid)
+			const updateGuid = operationData?.rawData?.guid || operationData?.guid
 			const endpoint = isUpdate ? '/api/operations/update' : '/api/operations/create'
 			const method = isUpdate ? 'PUT' : 'POST'
+			
+			console.log('=== Submit Operation Debug ===')
+			console.log('isNew:', isNew)
+			console.log('isUpdate:', isUpdate)
+			console.log('updateGuid:', updateGuid)
+			console.log('operationData:', operationData)
+			console.log('operationData.rawData:', operationData?.rawData)
+			console.log('endpoint:', endpoint)
+			console.log('method:', method)
 
 			// For update, add guid to request data
-			if (isUpdate && operation.rawData.guid) {
-				requestData.guid = operation.rawData.guid
+			if (isUpdate && updateGuid) {
+				requestData.guid = updateGuid
+				console.log('Adding guid to request:', updateGuid)
 				// Keep original creation date for update
-				if (operation.rawData.data_sozdaniya) {
-					requestData.data_sozdaniya = operation.rawData.data_sozdaniya
+				if (operationData.rawData?.data_sozdaniya) {
+					requestData.data_sozdaniya = operationData.rawData.data_sozdaniya
 				}
+				// Always send payment_accrual and payment_confirmed for updates
+				requestData.payment_accrual = formData.confirmAccrual || false
+				requestData.payment_confirmed = formData.confirmPayment || false
 			}
 
 			console.log(
@@ -790,15 +812,19 @@ export function OperationModal({
 			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
 			queryClient.invalidateQueries({ queryKey: ['operations'] })
 			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+			// Invalidate the specific operation query to ensure fresh data on next open
+			if (updateGuid) {
+				queryClient.invalidateQueries({ queryKey: ['operation', updateGuid] })
+			}
 			onClose()
 		} catch (error) {
 			console.error(
-				`Error ${!isNew && operation?.rawData?.guid ? 'updating' : 'creating'} operation:`,
+				`Error ${!isNew && operationData?.rawData?.guid ? 'updating' : 'creating'} operation:`,
 				error,
 			)
 			showErrorNotification(
 				error.message ||
-					`Ошибка при ${!isNew && operation?.rawData?.guid ? 'обновлении' : 'создании'} операции`,
+					`Ошибка при ${!isNew && operationData?.rawData?.guid ? 'обновлении' : 'создании'} операции`,
 			)
 		} finally {
 			setIsSubmitting(false)
@@ -806,7 +832,17 @@ export function OperationModal({
 	}
 
 	// Don't return null for new operations
-	if (!operation && !isNew) return null
+	// Show loading state while fetching operation data
+	if (!isNew && isLoadingOperation) {
+		return (
+			<div className={styles.loadingOverlay}>
+				<div className={styles.loadingSpinner}></div>
+				<span>Загрузка операции...</span>
+			</div>
+		)
+	}
+	
+	if (!operationData && !isNew) return null
 
 	return (
 		<>
@@ -846,7 +882,7 @@ export function OperationModal({
 											d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
 										/>
 									</svg>
-									{!isNew && <span>Создана {operation?.createdAt || '—'}</span>}
+									{!isNew && <span>Создана {operationData?.createdAt || '—'}</span>}
 								</div>
 							</div>
 							<button onClick={onClose} className={styles.closeButton}>
@@ -948,7 +984,7 @@ export function OperationModal({
 													}
 												}}
 												placeholder='Выберите счет...'
-												groupBy={true}
+												groupBy={false}
 												labelKey='label'
 												valueKey='guid'
 												groupKey='group'
@@ -997,6 +1033,7 @@ export function OperationModal({
 											placeholder='Выберите дату'
 											showCheckbox
 											checkboxLabel='Подтвердить начисление'
+											checkboxValue={formData.confirmAccrual}
 											onCheckboxChange={checked =>
 												//  payment_accrual
 												setFormData({ ...formData, confirmAccrual: checked })
@@ -1021,6 +1058,7 @@ export function OperationModal({
 										<label className={styles.label}>Статья</label>
 										<TreeSelect
 											data={filteredChartOfAccountsTree}
+												alwaysExpanded={true}
 											value={formData.chartOfAccount}
 											onChange={value => setFormData({ ...formData, chartOfAccount: value })}
 											placeholder='Выберите статью...'
@@ -1101,7 +1139,7 @@ export function OperationModal({
 													}
 												}}
 												placeholder='Выберите счет...'
-												groupBy={true}
+												groupBy={false}
 												labelKey='label'
 												valueKey='guid'
 												groupKey='group'
@@ -1133,9 +1171,9 @@ export function OperationModal({
 													placeholder='0'
 													className={cn(styles.input, errors.amount && styles.error)}
 												/>
-												<span className={styles.inputText}>
-													{operation.currency || 'RUB (Российский рубль)'}
-												</span>
+												<div className={styles.currencyDisplay}>
+													{getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
+												</div>
 											</div>
 											{errors.amount && <span className={styles.errorText}>{errors.amount}</span>}
 										</div>
@@ -1150,6 +1188,10 @@ export function OperationModal({
 											placeholder='Выберите дату'
 											showCheckbox
 											checkboxLabel='Подтвердить начисление'
+											checkboxValue={formData.confirmAccrual}
+											onCheckboxChange={checked =>
+												setFormData({ ...formData, confirmAccrual: checked })
+											}
 										/>
 									</div>
 
@@ -1170,6 +1212,7 @@ export function OperationModal({
 										<label className={styles.label}>Статья</label>
 										<TreeSelect
 											data={filteredChartOfAccountsTree}
+												alwaysExpanded={true}
 											value={formData.chartOfAccount}
 											onChange={value => setFormData({ ...formData, chartOfAccount: value })}
 											placeholder='Выберите статью...'
@@ -1258,7 +1301,7 @@ export function OperationModal({
 														}
 													}}
 													placeholder='Выберите счет...'
-													groupBy={true}
+													groupBy={false}
 													labelKey='label'
 													valueKey='guid'
 													groupKey='group'
@@ -1346,7 +1389,7 @@ export function OperationModal({
 														}
 													}}
 													placeholder='Выберите счет...'
-													groupBy={true}
+													groupBy={false}
 													labelKey='label'
 													valueKey='guid'
 													groupKey='group'
@@ -1501,6 +1544,7 @@ export function OperationModal({
 											<div className={styles.fieldWrapper}>
 												<TreeSelect
 													data={filteredChartOfAccountsTree}
+												alwaysExpanded={true}
 													value={formData.expenseItem}
 													onChange={value => {
 														setFormData({ ...formData, expenseItem: value })
@@ -1576,6 +1620,7 @@ export function OperationModal({
 											<div className={styles.fieldWrapper}>
 												<TreeSelect
 													data={filteredChartOfAccountsTree}
+												alwaysExpanded={true}
 													value={formData.creditItem}
 													onChange={value => {
 														setFormData({ ...formData, creditItem: value })

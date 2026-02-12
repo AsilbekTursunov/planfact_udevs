@@ -337,18 +337,18 @@ export default function EditChartOfAccountsModal({ isOpen, onClose, category }) 
         <div className={styles.footer}>
           <div className={styles.footerRight}>
             <button 
-              onClick={handleSubmit} 
-              className={styles.submitButton}
-              disabled={updateMutation.isPending}
-            >
-              {updateMutation.isPending ? 'Сохранение...' : 'Сохранить'}
-            </button>
-            <button 
               onClick={handleClose} 
               className={styles.cancelButton}
               disabled={updateMutation.isPending}
             >
               Отменить
+            </button>
+            <button 
+              onClick={handleSubmit} 
+              className={styles.submitButton}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? 'Сохранение...' : 'Сохранить'}
             </button>
           </div>
         </div>
