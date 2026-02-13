@@ -42,18 +42,18 @@ export default function DeleteLegalEntityConfirmModal({ isOpen, legalEntity, onC
         </div>
         <div className={styles.footer}>
           <button 
-            className={styles.deleteButton}
-            onClick={onConfirm}
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Удаление...' : 'Удалить'}
-          </button>
-          <button 
             className={styles.cancelButton} 
             onClick={onCancel}
             disabled={isDeleting}
           >
             Отменить
+          </button>
+          <button 
+            className={styles.deleteButton}
+            onClick={onConfirm}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Удаление...' : 'Удалить'}
           </button>
         </div>
       </div>

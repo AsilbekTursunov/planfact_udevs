@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection, FilterCheckbox } from '@/components/directories/FilterSidebar/FilterSidebar'
 import { DropdownFilter } from '@/components/directories/DropdownFilter/DropdownFilter'
 import { useDeleteMyAccounts, useBankAccountsPlanFact, useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
@@ -80,6 +81,8 @@ export default function AccountsPage() {
     console.log('Bank accounts items:', items)
     return Array.isArray(items) ? items : []
   }, [bankAccountsData])
+
+  const queryClient = useQueryClient()
 
   // Transform legal entities data for dropdown
   const entities = useMemo(() => {
@@ -183,6 +186,9 @@ export default function AccountsPage() {
     try {
       await deleteMutation.mutateAsync([deletingAccount.guid])
       setDeletingAccount(null)
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
+      queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
     } catch (error) {
       console.error('Error deleting account:', error)
     }
@@ -425,7 +431,12 @@ export default function AccountsPage() {
       {isCreateModalOpen && (
         <CreateMyAccountModal
           isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
+          onClose={() => {
+            setIsCreateModalOpen(false)
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
+            queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
+          }}
         />
       )}
 
@@ -433,7 +444,12 @@ export default function AccountsPage() {
       {editingAccount && (
         <CreateMyAccountModal
           isOpen={!!editingAccount}
-          onClose={() => setEditingAccount(null)}
+          onClose={() => {
+            setEditingAccount(null)
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
+            queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
+          }}
           account={editingAccount}
         />
       )}

@@ -335,13 +335,17 @@ export default function KontragentDetailPage() {
               {/* Debit Card */}
               <div className={styles.debitCreditCard}>
                 <div className={styles.debitCreditTitle}>Дебиторка</div>
-                <div className={styles.debitCreditValue}>Нет задолженности</div>
+                <div className={styles.debitCreditValue}>
+                  {counterparty?.receivables ? counterparty.receivables.toLocaleString('ru-RU') : 'Нет задолженности'}
+                </div>
               </div>
 
               {/* Credit Card */}
               <div className={styles.debitCreditCard}>
                 <div className={styles.debitCreditTitle}>Кредиторка</div>
-                <div className={styles.debitCreditValue}>Нет задолженности</div>
+                <div className={styles.debitCreditValue}>
+                  {counterparty?.payables ? counterparty.payables.toLocaleString('ru-RU') : 'Нет задолженности'}
+                </div>
               </div>
             </div>
 

@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import { getCorsHeaders } from '@/lib/api/ucode/base'
 import { makeUcodeV2Request, parseDataParam } from '@/app/api/utils/ucode-v2'
 
@@ -49,5 +50,5 @@ export async function DELETE(request) {
 }
 
 export function OPTIONS() {
-  return NextResponse.json({}, { headers: getCorsHeaders() })
+  return new NextResponse(null, { status: 200, headers: getCorsHeaders() })
 }

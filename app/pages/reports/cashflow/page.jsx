@@ -51,9 +51,22 @@ export default function CashFlowReportPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
+        
+        // Calculate date range for last 6 months
+        const endDate = new Date()
+        const startDate = new Date()
+        startDate.setMonth(startDate.getMonth() - 6)
+        
+        const formatDate = (date) => {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+        
         const response = await getCashFlowReport({
-          periodStartDate: '2025-01-01',
-          periodEndDate: '2026-12-31',
+          periodStartDate: formatDate(startDate),
+          periodEndDate: formatDate(endDate),
           periodType: selectedGrouping,
           currencyCode: 'RUB'
         })

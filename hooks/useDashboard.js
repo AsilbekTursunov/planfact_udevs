@@ -504,6 +504,7 @@ export const useCreateMyAccount = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
       queryClient.invalidateQueries({ queryKey: ['bankAccounts'] })
+      queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
       showSuccessNotification('Счет успешно создан!')
     },
     onError: (error) => {
@@ -521,6 +522,7 @@ export const useUpdateMyAccount = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
       queryClient.invalidateQueries({ queryKey: ['bankAccounts'] })
+      queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
       showSuccessNotification('Счет успешно обновлен!')
     },
     onError: (error) => {
@@ -538,6 +540,7 @@ export const useDeleteMyAccounts = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
       queryClient.invalidateQueries({ queryKey: ['bankAccounts'] })
+      queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
       showSuccessNotification('Счета успешно удалены!')
     },
     onError: (error) => {
@@ -602,6 +605,7 @@ export const useCreateLegalEntity = () => {
     mutationFn: dashboardAPI.createLegalEntity,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['legalEntitiesV2'] })
+      queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
       showSuccessNotification('Юрлицо успешно создано!')
     },
     onError: (error) => {
@@ -618,6 +622,7 @@ export const useUpdateLegalEntity = () => {
     mutationFn: dashboardAPI.updateLegalEntity,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['legalEntitiesV2'] })
+      queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
       showSuccessNotification('Юрлицо успешно обновлено!')
     },
     onError: (error) => {
@@ -634,6 +639,7 @@ export const useDeleteLegalEntities = () => {
     mutationFn: dashboardAPI.deleteLegalEntities,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['legalEntitiesV2'] })
+      queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
       showSuccessNotification('Юрлицо успешно удалено!')
     },
     onError: (error) => {

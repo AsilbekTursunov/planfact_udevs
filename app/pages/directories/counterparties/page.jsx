@@ -197,11 +197,11 @@ export default function CounterpartiesPage() {
         counterparties_group: item.group_name || null,
         komentariy: item.komentariy || null,
         data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya).toLocaleDateString('ru-RU') : null,
-        // Новые поля из API
+        // Используем правильные ключи из API
+        receivables: item.receivables || 0,  // Дебиторка
+        payables: item.payables || 0,        // Кредиторка
         debitorka: item.debitorka || 0,
         kreditorka: item.kreditorka || 0,
-        receivables: item.receivables || 0,
-        payables: item.payables || 0,
         profit: item.profit || 0,
         rawData: item
       }
@@ -518,10 +518,10 @@ export default function CounterpartiesPage() {
                               <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.gruppa || '–'}</td>
                               <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.inn || '–'}</td>
                               <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.debitorka?.toLocaleString('ru-RU') || '0'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
                               <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.receivables?.toLocaleString('ru-RU') || '0'}</td>
                               <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.payables?.toLocaleString('ru-RU') || '0'}</td>
+                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.debitorka?.toLocaleString('ru-RU') || '0'}</td>
+                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
                               <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                                 <CounterpartyMenu
                                   counterparty={counterparty}
@@ -551,10 +551,10 @@ export default function CounterpartiesPage() {
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.gruppa || '–'}</td>
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.inn || '–'}</td>
                           <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.debitorka?.toLocaleString('ru-RU') || '0'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.receivables?.toLocaleString('ru-RU') || '0'}</td>
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.payables?.toLocaleString('ru-RU') || '0'}</td>
+                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.debitorka?.toLocaleString('ru-RU') || '0'}</td>
+                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
                           <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                             <CounterpartyMenu
                               counterparty={item}

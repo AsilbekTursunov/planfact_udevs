@@ -6,25 +6,25 @@
   width: 80px;
   display: flex;
   flex-direction: column;
-  background: #2D3282;
-  color: #9ca3af;
+  background: #022565;
+  color: rgba(255, 255, 255, 0.7);
   z-index: 40;
   overflow-y: auto;
   overflow-x: hidden;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  border-right: none;
   padding-top: 0;
 }
 
 .header {
   height: 3.5rem;
   width: 100%;
-  background: #2D3282;
+  background: #022565;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none;
 }
 
 .logo {
@@ -52,11 +52,9 @@
   position: absolute;
   left: 0.25rem;
   right: 0.25rem;
-  background: #F5F5F533;
+  background: transparent;
   border-radius: 0.5rem;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: none;
   transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
               height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.3s ease;
@@ -116,9 +114,9 @@
 .navLinkNormal {
   &:hover {
     color: white;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    background: transparent;
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
   }
 }
 
@@ -131,9 +129,9 @@
 }
 
 .navLinkActive .iconWrapper {
-  color: #8b7dff;
+  color: white;
   transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(139, 125, 255, 0.4));
+  filter: none;
 }
 
 .navLinkComingSoon .iconWrapper {
@@ -163,7 +161,7 @@
 }
 
 .navLinkNormal .label {
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .navLinkNormal:hover .label {
@@ -173,7 +171,7 @@
 .submenu {
   position: fixed;
   left: 80px;
-  background: #2D3282;
+  background: #022565;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0 0.5rem 0.5rem 0;
   box-shadow: 
@@ -206,14 +204,14 @@
     top: 0;
     bottom: 0;
     width: 3px;
-    background: linear-gradient(180deg, #8b7dff 0%, #6366f1 100%);
+    background: white;
     transform: scaleY(0);
     transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
 .submenuLinkActive {
-  background: #F5F5F533;
+  background: transparent;
   color: white;
   
   &::before {
@@ -222,10 +220,10 @@
 }
 
 .submenuLinkInactive {
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.7);
 
   &:hover {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    background: transparent;
     color: white;
     
     &::before {

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
 import { useLegalEntitiesV2, useDeleteLegalEntities, useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
 import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityModal/CreateLegalEntityModal'
@@ -9,6 +10,7 @@ import DeleteLegalEntityConfirmModal from '@/components/directories/DeleteLegalE
 import styles from './legal-entities.module.scss'
 
 export default function LegalEntitiesPage() {
+  const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRows, setSelectedRows] = useState([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -89,6 +91,9 @@ export default function LegalEntitiesPage() {
       try {
         await deleteMutation.mutateAsync([deletingLegalEntity.guid])
         setDeletingLegalEntity(null)
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+        queryClient.invalidateQueries({ queryKey: ['legalEntitiesV2'] })
       } catch (error) {
         console.error('Error deleting legal entity:', error)
       }
@@ -212,7 +217,12 @@ export default function LegalEntitiesPage() {
       {isCreateModalOpen && (
         <CreateLegalEntityModal
           isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
+          onClose={() => {
+            setIsCreateModalOpen(false)
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+            queryClient.invalidateQueries({ queryKey: ['legalEntitiesV2'] })
+          }}
         />
       )}
 
@@ -220,7 +230,12 @@ export default function LegalEntitiesPage() {
       {editingLegalEntity && (
         <CreateLegalEntityModal
           isOpen={!!editingLegalEntity}
-          onClose={() => setEditingLegalEntity(null)}
+          onClose={() => {
+            setEditingLegalEntity(null)
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+            queryClient.invalidateQueries({ queryKey: ['legalEntitiesV2'] })
+          }}
           legalEntity={editingLegalEntity}
         />
       )}

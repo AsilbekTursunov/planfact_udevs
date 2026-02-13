@@ -508,9 +508,13 @@
 
   &.apply {
     padding: 0.25rem 1rem;
-    background-color: #0F51B9;
+    background-color: #0E73F6;
     color: white;
     border-radius: 0.25rem;
+    
+    &:hover {
+      background-color: #0c5fd4;
+    }
   }
 }
 
@@ -943,12 +947,10 @@
   position: sticky;
   right: 0;
   background: linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%) !important;
-  border-left: none;
-  box-shadow: none;
   z-index: 21;
   min-width: 48px;
   width: 48px;
-  text-align: right;
+  text-align: left;
   padding: 0.625rem 0.5rem;
 }
 
@@ -1029,10 +1031,6 @@
   background-color: white;
   position: relative;
 
-  &:nth-child(even) {
-    background-color: #fafbfc;
-  }
-
   &:hover {
     background-color: #f0f4f8 !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -1086,22 +1084,13 @@
   position: sticky;
   right: 0;
   background-color: white;
-  border-left: 1px solid #e5e7eb;
-  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
   z-index: 20;
   min-width: 48px;
   width: 48px;
-  text-align: right;
+  text-align: left;
   padding: 0.625rem 0.5rem;
   vertical-align: middle;
-  
-  // Важно: не создаем stacking context для ячейки, чтобы выпадающее меню могло выйти за его пределы
   isolation: auto;
-  
-  // Важно: явно задаем фон для всех состояний
-  .tableRow:nth-child(even) & {
-    background-color: #fafbfc;
-  }
   
   .tableRow:hover & {
     background-color: #f9fafb !important;
@@ -1176,7 +1165,7 @@
 
 .accountCell {
   font-size: 12px;
-  color: #6366f1;
+  color: #334155;
 }
 
 .typeIcon {
@@ -1185,39 +1174,6 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 0.5rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.typeIconIn {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-  color: #166534;
-  
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
-  }
-}
-
-.typeIconOut {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  color: #991b1b;
-  
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-  }
-}
-
-.typeIconTransfer {
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-  color: #475569;
-  
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(71, 85, 105, 0.25);
-  }
 }
 
 .paymentStatus {
@@ -1260,7 +1216,7 @@
 
 .statusCell {
   font-size: 13px;
-  color: #6366f1;
+  color: #334155;
 }
 
 .projectCell {
