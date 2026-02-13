@@ -209,7 +209,9 @@ export default function AccountsPage() {
       case 'nomer_scheta':
         return value || '–'
       case 'balans':
-        return typeof value === 'number' ? value.toLocaleString('ru-RU') : value
+        // Use current_balance from API, fallback to balans or nachalьnyy_ostatok
+        const balance = item.current_balance ?? item.balans ?? item.nachalьnyy_ostatok
+        return typeof balance === 'number' ? balance.toLocaleString('ru-RU') : (balance || '–')
       case 'currenies_kod':
         return value || '–'
       case 'tip':
@@ -242,7 +244,7 @@ export default function AccountsPage() {
   }
 
   const totalCurrentBalance = filteredBankAccountsItems.reduce((sum, item) => {
-    const balance = item.balans || item.nachalьnyy_ostatok
+    const balance = item.current_balance ?? item.balans ?? item.nachalьnyy_ostatok
     return sum + (balance != null ? Number(balance) : 0)
   }, 0)
 

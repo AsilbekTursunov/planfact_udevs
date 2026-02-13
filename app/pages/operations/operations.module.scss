@@ -939,14 +939,14 @@
 }
 
 .tableHeaderRow {
-  background: linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%);
+  background: #F2F4F7;
   border-bottom: 2px solid #e5e7eb;
 }
 
 .tableHeaderCellActions {
   position: sticky;
   right: 0;
-  background: linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%) !important;
+  background: #F2F4F7 !important;
   z-index: 21;
   min-width: 48px;
   width: 48px;
@@ -1260,13 +1260,15 @@
 }
 
 .sectionHeader {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  background: white;
   border-bottom: 2px solid #cbd5e1;
   border-top: 2px solid #cbd5e1;
 }
 
 .sectionHeaderCell {
   padding: 0.875rem 1rem;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .sectionHeaderTitle {

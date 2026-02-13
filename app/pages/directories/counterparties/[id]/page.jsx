@@ -469,13 +469,20 @@ export default function KontragentDetailPage() {
                         <td className={styles.tableCell}>{op.date}</td>
                         <td className={styles.tableCell}>{op.account}</td>
                         <td className={styles.tableCell}>
-                          <span className={cn(
-                            styles.typeBadge,
-                            op.typeCategory === 'in' && styles.typeBadgeIn,
-                            op.typeCategory === 'out' && styles.typeBadgeOut,
-                            op.typeCategory === 'transfer' && styles.typeBadgeTransfer
-                          )}>
-                            {op.typeLabel}
+                          <span className={styles.typeBadge}>
+                            {op.typeLabel === 'Поступление' ? (
+                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            ) : op.typeLabel === 'Выплата' ? (
+                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            ) : (
+                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
                           </span>
                         </td>
                         <td className={styles.tableCell}>{op.counterparty}</td>

@@ -253,25 +253,27 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
               </div>
             </div>
 
-            {/* Начальный остаток */}
-            <div className={styles.formRow}>
-              <label className={styles.label}>Начальный остаток</label>
-              <div className={styles.inputGroup}>
-                <input
-                  type="number"
-                  value={formData.nachalьnyy_ostatok}
-                  onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: e.target.value })}
-                  placeholder="0"
-                  className={styles.input}
-                  onWheel={(e) => e.target.blur()}
-                />
-                <DatePicker
-                  value={formData.data_sozdaniya}
-                  onChange={(value) => setFormData({ ...formData, data_sozdaniya: value })}
-                  placeholder="Выберите дату"
-                />
+            {/* Начальный остаток - показываем только при создании */}
+            {!isEdit && (
+              <div className={styles.formRow}>
+                <label className={styles.label}>Начальный остаток</label>
+                <div className={styles.inputGroup}>
+                  <input
+                    type="number"
+                    value={formData.nachalьnyy_ostatok}
+                    onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: e.target.value })}
+                    placeholder="0"
+                    className={styles.input}
+                    onWheel={(e) => e.target.blur()}
+                  />
+                  <DatePicker
+                    value={formData.data_sozdaniya}
+                    onChange={(value) => setFormData({ ...formData, data_sozdaniya: value })}
+                    placeholder="Выберите дату"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Валюта */}
             <div className={styles.formRow}>
