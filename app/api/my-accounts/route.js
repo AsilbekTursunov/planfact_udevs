@@ -1,16 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getCorsHeaders } from '@/lib/api/ucode/base'
-import { makeUcodeV2Request, parseDataParam } from '@/app/api/utils/ucode-v2'
+import { makePlanFactRequest, parseDataParam } from '@/app/api/utils/ucode_v2_new'
 
 export async function GET(request) {
   const dataParams = parseDataParam(request)
-  return makeUcodeV2Request({
+  return makePlanFactRequest({
     request,
-    endpoint: 'my_accounts',
-    method: 'GET',
-    queryParams: {
-      data: JSON.stringify(dataParams)
-    }
+    method: 'get_my_accounts',
+    objectData: dataParams
   })
 }
 
@@ -30,11 +27,10 @@ export async function POST(request) {
       )
     }
 
-    return makeUcodeV2Request({
+    return makePlanFactRequest({
       request,
-      endpoint: 'my_accounts',
-      method: 'POST',
-      data
+      method: 'create_my_account',
+      objectData: data
     })
   } catch (error) {
     console.error('My Accounts POST error:', error)
@@ -76,11 +72,10 @@ export async function PUT(request) {
       )
     }
 
-    return makeUcodeV2Request({
+    return makePlanFactRequest({
       request,
-      endpoint: 'my_accounts',
-      method: 'PUT',
-      data
+      method: 'update_my_account',
+      objectData: data
     })
   } catch (error) {
     console.error('My Accounts PUT error:', error)
@@ -111,11 +106,10 @@ export async function DELETE(request) {
       )
     }
 
-    return makeUcodeV2Request({
+    return makePlanFactRequest({
       request,
-      endpoint: 'my_accounts',
-      method: 'DELETE',
-      data: { ids }
+      method: 'delete_my_accounts',
+      objectData: { ids }
     })
   } catch (error) {
     console.error('My Accounts DELETE error:', error)

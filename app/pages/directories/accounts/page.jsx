@@ -201,23 +201,29 @@ export default function AccountsPage() {
   const formatFieldValue = (item, field) => {
     const value = item[field]
     
-    if (value === null || value === undefined) return '–'
-    
     switch (field) {
       case 'nazvanie':
         return value || '–'
       case 'nomer_scheta':
         return value || '–'
       case 'balans':
-        // Use current_balance from API, fallback to balans or nachalьnyy_ostatok
-        const balance = item.current_balance ?? item.balans ?? item.nachalьnyy_ostatok
-        return typeof balance === 'number' ? balance.toLocaleString('ru-RU') : (balance || '–')
+        // Use current_balance from API, but if it's 0 and nachalьnyy_ostatok exists, use that
+        const currentBalance = item.current_balance
+        const initialBalance = item.nachalьnyy_ostatok
+        
+        // If current_balance is 0 or null/undefined, fallback to initial balance
+        const balance = (currentBalance !== null && currentBalance !== undefined && currentBalance !== 0) 
+          ? currentBalance 
+          : (initialBalance ?? 0)
+        
+        return typeof balance === 'number' ? balance.toLocaleString('ru-RU') : '–'
+      case 'nachalьnyy_ostatok':
+        // Display initial balance from nachalьnyy_ostatok field
+        return typeof value === 'number' ? value.toLocaleString('ru-RU') : '–'
       case 'currenies_kod':
         return value || '–'
       case 'tip':
         return Array.isArray(value) ? value.join(', ') : value
-      case 'nachalьnyy_ostatok':
-        return typeof value === 'number' ? value.toLocaleString('ru-RU') : value
       case 'data_sozdaniya':
         if (value) {
           const date = new Date(value)
@@ -239,6 +245,7 @@ export default function AccountsPage() {
         }
         return value || '–'
       default:
+        if (value === null || value === undefined) return '–'
         return value
     }
   }
