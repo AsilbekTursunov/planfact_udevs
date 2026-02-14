@@ -77,6 +77,45 @@
   overflow: hidden;
 }
 
+.filterToggleBar {
+  width: 24px;
+  background-color: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  flex-shrink: 0;
+  
+  &:hover {
+    background-color: #f3f4f6;
+    
+    .filterToggleButton {
+      color: #0E73F6;
+    }
+  }
+}
+
+.filterToggleButton {
+  width: 24px;
+  height: 40px;
+  background-color: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #98A2B3;
+  transition: all 0.2s;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .sidebar {
   width: 280px;
   background-color: white;

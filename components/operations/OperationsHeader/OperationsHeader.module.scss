@@ -19,16 +19,6 @@
   gap: 1rem;
 }
 
-.headerMenuButton {
-  font-size: 1.25rem;
-  color: #475569;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #1e293b;
-  }
-}
-
 .headerTitle {
   font-family: Inter, sans-serif;
   font-weight: 600;
@@ -228,5 +218,35 @@
 
   &:active {
     transform: scale(0.98);
+  }
+}
+
+.headerFilterButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: #98A2B3;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    color: #475569;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &.active {
+    background-color: #EFF8FF;
+    border-color: #0E73F6;
+    color: #0E73F6;
   }
 }
