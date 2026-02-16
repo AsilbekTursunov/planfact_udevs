@@ -1,0 +1,68 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.125rem;
+
+  &.positive .amountText {
+    color: #16a34a;
+  }
+  &.positive .currency {
+    color: #16a34a;
+  }
+
+  &.negative .amountText {
+    color: #dc2626;
+  } 
+
+  &.negative .currency {
+    color: #dc2626;
+  } 
+
+  &.neutral .amountText {
+    color: #64748b;
+  }
+
+  &.neutral .currency {
+    color: #64748b;
+  }
+}
+
+.debitIcon,
+.creditIcon { 
+  width:19px;
+  height: 19px; 
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  .text {
+    font-size: 13px; 
+    height: 18px !important;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.debitIcon{
+  background-color: #1E98AD;
+  color: #FCFCFD;
+}
+
+.creditIcon {
+  background-color: #6C64BC;
+  color: #FCFCFD;
+}
+
+.amountText {
+  min-width: 75px;
+  text-align: end;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #0f172a; 
+}
+.currency {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums; 
+}

@@ -7,8 +7,6 @@ import {
   getExpandedRowModel,
   flexRender,
 } from '@tanstack/react-table'
-import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
-import { DateRangePickerModal } from '@/components/common/DateRangePickerModal/DateRangePickerModal'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar'
 import { getCashFlowReport } from '@/lib/api/ucode/cashflow'
@@ -20,7 +18,7 @@ export default function CashFlowReportPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [reportData, setReportData] = useState(null)
-  
+
   // Filter states
   const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [selectedEntity, setSelectedEntity] = useState('all')
@@ -33,7 +31,7 @@ export default function CashFlowReportPage() {
     { guid: 'quarterly', label: 'По кварталам' },
     { guid: 'yearly', label: 'По годам' }
   ]
-  
+
   const periodOptions = [
     { guid: 'all', label: 'Весь период' },
     { guid: 'q1', label: '1 квартал 2026' },
@@ -54,33 +52,33 @@ export default function CashFlowReportPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
-        
+
         // Calculate date range for last 6 months
         const endDate = new Date()
         const startDate = new Date()
         startDate.setMonth(startDate.getMonth() - 6)
-        
+
         const formatDate = (date) => {
           const year = date.getFullYear()
           const month = String(date.getMonth() + 1).padStart(2, '0')
           const day = String(date.getDate()).padStart(2, '0')
           return `${year}-${month}-${day}`
         }
-        
+
         const response = await getCashFlowReport({
           periodStartDate: formatDate(startDate),
           periodEndDate: formatDate(endDate),
           periodType: selectedGrouping,
           currencyCode: 'RUB'
         })
-        
+
         console.log('API Response:', response)
         console.log('Data path check:', {
           'response.data': response?.data,
           'response.data.data': response?.data?.data,
           'response.data.data.data': response?.data?.data?.data
         })
-        
+
         // Структура ответа: response.data.data.data
         if (response?.data?.data?.data) {
           console.log('Setting report data:', response.data.data.data)
@@ -94,7 +92,7 @@ export default function CashFlowReportPage() {
         setLoading(false)
       }
     }
-    
+
     fetchData()
   }, [selectedGrouping])
 
@@ -107,13 +105,13 @@ export default function CashFlowReportPage() {
   // Transform API data into hierarchical structure
   const data = useMemo(() => {
     if (!reportData?.rows) return []
-    
+
     const transformRow = (row, depth = 0) => {
       const monthData = {}
       months.forEach(monthKey => {
         monthData[monthKey] = row.values?.[monthKey] || 0
       })
-      
+
       const node = {
         id: row.id,
         name: row.name,
@@ -122,15 +120,15 @@ export default function CashFlowReportPage() {
         level: depth,
         subRows: []
       }
-      
+
       // Проверяем наличие details (дочерних элементов)
       if (row.details && Array.isArray(row.details) && row.details.length > 0) {
         node.subRows = row.details.map(detail => transformRow(detail, depth + 1))
       }
-      
+
       return node
     }
-    
+
     return reportData.rows.map(row => transformRow(row, 0))
   }, [reportData, months])
 
@@ -181,7 +179,7 @@ export default function CashFlowReportPage() {
           const value = getValue()
           const hasSubRows = row.subRows?.length > 0
           const isExpanded = row.getIsExpanded()
-          
+
           return (
             <div
               style={{
@@ -199,14 +197,14 @@ export default function CashFlowReportPage() {
                 >
                   {isExpanded ? (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round"/>
-                      <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round" />
+                      <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round"/>
-                      <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M8 5.33337L8 10.6667" stroke="#667085" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round" />
+                        <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M8 5.33337L8 10.6667" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
@@ -302,7 +300,7 @@ export default function CashFlowReportPage() {
           <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
             <button className={styles.filterToggleBarButton}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
@@ -314,14 +312,6 @@ export default function CashFlowReportPage() {
             <div className={styles.headerContent}>
               <div className={styles.titleRow}>
                 <h1 className={styles.title}>Отчет о движении денежных средств</h1>
-                <button className={styles.infoButton}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="8" cy="8" r="7" stroke="#9CA3AF" strokeWidth="1.5"/>
-                    <path d="M8 7V11" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
-                    <circle cx="8" cy="5" r="0.5" fill="#9CA3AF"/>
-                  </svg>
-                </button>
-                <span className={styles.currency}>RUB</span>
               </div>
               <div className={styles.headerRight}>
                 <GroupedSelect
@@ -333,46 +323,48 @@ export default function CashFlowReportPage() {
                 />
                 <button className={styles.moreButton}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="8" cy="3" r="1" fill="currentColor"/>
-                    <circle cx="8" cy="8" r="1" fill="currentColor"/>
-                    <circle cx="8" cy="13" r="1" fill="currentColor"/>
+                    <circle cx="8" cy="3" r="1" fill="currentColor" />
+                    <circle cx="8" cy="8" r="1" fill="currentColor" />
+                    <circle cx="8" cy="13" r="1" fill="currentColor" />
                   </svg>
                 </button>
               </div>
             </div>
           </div>
-          
           <div className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`}>
-            <table className={styles.table}>
+            <table className={styles.table}> 
               <thead className={styles.thead}>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th 
-                        key={header.id} 
-                        className={styles.th}
-                        style={{ width: header.getSize() }}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
+                {table.getHeaderGroups().map(headerGroup => {
+                  console.log(headerGroup)
+                  return (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                        <th
+                          key={header.id}
+                          className={styles.th}
+                          style={{ width: header.getSize() }}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
                               header.column.columnDef.header,
                               header.getContext()
                             )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
+                        </th>
+                      ))}
+                    </tr>
+                  )
+                })}
               </thead>
               <tbody className={styles.tbody}>
                 {table.getRowModel().rows.map((row, index) => (
-                  <tr 
-                    key={row.id} 
+                  <tr
+                    key={row.id}
                     className={`${styles.tr} ${row.depth === 0 && index > 0 ? styles.topLevelRow : ''}`}
                   >
                     {row.getVisibleCells().map(cell => (
-                      <td 
-                        key={cell.id} 
+                      <td
+                        key={cell.id}
                         className={styles.td}
                         style={{ width: cell.column.getSize() }}
                       >

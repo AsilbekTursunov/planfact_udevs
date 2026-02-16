@@ -25,7 +25,7 @@
   font-weight: 400;
   color: #6b7280;
 }
-
+z
 .tableHeaderCellCheckbox {
   width: 3rem;
 }
@@ -195,7 +195,7 @@
   color: #9ca3af;
   border-radius: 0.25rem;
   position: relative;
-  z-index: 2; // Кнопка выше фона ячейки
+  z-index: 1; // Кнопка выше фона ячейки
   
   svg {
     transform: rotate(90deg);
@@ -216,7 +216,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 0.375rem;
   box-shadow: none;
-  z-index: 99999; // Очень высокий z-index, чтобы быть выше всех элементов
+  z-index: 4; // Очень высокий z-index, чтобы быть выше всех элементов
   min-width: 180px;
   overflow: hidden;
   isolation: isolate; // Создаем новый stacking context

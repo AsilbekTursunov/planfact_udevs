@@ -1,5 +1,5 @@
 .footer {
-  background-color: white;
+  background-color: #f2f4f7;
   border-top: 1px solid #e5e7eb;
   padding: 0.875rem 1.5rem;
   position: fixed;
@@ -17,13 +17,14 @@
 .footerInner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .footerLeft {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+ 
   font-size: 13px;
   color: #6b7280;
 }
@@ -31,6 +32,13 @@
 .footerText {
   font-weight: 600;
   color: #0f172a;
+  
+}
+
+.textWrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .footerTextPositive {
@@ -45,10 +53,14 @@
 
 .footerRight {
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 20px;
   color: #6b7280;
 }
 
 .footerTotal {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
 }

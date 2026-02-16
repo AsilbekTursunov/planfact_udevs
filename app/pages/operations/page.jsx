@@ -14,9 +14,10 @@ import { OperationsFiltersSidebar } from '@/components/operations/OperationsFilt
 import { OperationsHeader } from '@/components/operations/OperationsHeader/OperationsHeader'
 import { OperationsFooter } from '@/components/operations/OperationsFooter/OperationsFooter'
 import { OperationModal } from '@/components/operations/OperationModal/OperationModal'
-import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
+import OperationTableRow from '@/components/operations/TableRow'
 import styles from './operations.module.scss'
+import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
 
 export default function OperationsPage() {
 	// Block body scroll for this page only
@@ -89,14 +90,14 @@ export default function OperationsPage() {
 		// We'll filter on frontend after receiving data
 		// Commenting out date filters for now
 		/*
-    if (selectedDatePaymentRange?.start && selectedDatePaymentRange.start !== '') {
-      filters.data_operatsii = selectedDatePaymentRange.start
-    }
-    
-    if (selectedDateStartRange?.start && selectedDateStartRange.start !== '') {
-      filters.data_nachisleniya = selectedDateStartRange.start
-    }
-    */
+		if (selectedDatePaymentRange?.start && selectedDatePaymentRange.start !== '') {
+			filters.data_operatsii = selectedDatePaymentRange.start
+		}
+	  
+		if (selectedDateStartRange?.start && selectedDateStartRange.start !== '') {
+			filters.data_nachisleniya = selectedDateStartRange.start
+		}
+		*/
 
 		// Counter agents - counterparties_id (array of IDs)
 		const selectedCounterAgentGuids = Object.keys(selectedCounterAgents).filter(
@@ -157,7 +158,7 @@ export default function OperationsPage() {
 		page: 1,
 		limit: 100,
 	})
-	
+
 	// Pagination state
 	const [page, setPage] = useState(1)
 	const [hasMore, setHasMore] = useState(true)
@@ -165,7 +166,7 @@ export default function OperationsPage() {
 	const [isLoadingMore, setIsLoadingMore] = useState(false)
 	const limit = 20
 	const tableWrapperRef = useRef(null)
-	
+
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList({
 		date_range: {
 			start_date: '2026-01-01',
@@ -176,15 +177,15 @@ export default function OperationsPage() {
 	})
 
 	console.log('operationsListData => ', operationsListData)
-	
+
 	// Update operations when new data arrives
 	useEffect(() => {
 		if (operationsListData?.data?.data?.data) {
 			const newOps = operationsListData.data.data.data
-			
+
 			// Only update if we actually have new data
 			if (newOps.length === 0) return
-			
+
 			if (page === 1) {
 				// First page - replace all operations
 				setAllOperations(newOps)
@@ -194,7 +195,7 @@ export default function OperationsPage() {
 					// Avoid duplicates by checking if operations already exist
 					const existingGuids = new Set(prev.map(op => op.guid))
 					const uniqueNewOps = newOps.filter(op => !existingGuids.has(op.guid))
-					
+
 					// Only append if we have new unique operations
 					if (uniqueNewOps.length > 0) {
 						return [...prev, ...uniqueNewOps]
@@ -202,7 +203,7 @@ export default function OperationsPage() {
 					return prev
 				})
 			}
-			
+
 			// Check if there are more pages
 			if (newOps.length < limit) {
 				setHasMore(false)
@@ -210,23 +211,23 @@ export default function OperationsPage() {
 			setIsLoadingMore(false)
 		}
 	}, [operationsListData, page, limit])
-	
+
 	// Infinite scroll handler
 	useEffect(() => {
 		const tableWrapper = tableWrapperRef.current
 		if (!tableWrapper) return
-		
+
 		const handleScroll = () => {
 			const { scrollTop, scrollHeight, clientHeight } = tableWrapper
 			// Load more when scrolled to the bottom (with small threshold)
 			const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10
-			
+
 			if (isAtBottom && hasMore && !isLoadingOperations && !isLoadingMore) {
 				setIsLoadingMore(true)
 				setPage(prev => prev + 1)
 			}
 		}
-		
+
 		tableWrapper.addEventListener('scroll', handleScroll)
 		return () => tableWrapper.removeEventListener('scroll', handleScroll)
 	}, [hasMore, isLoadingOperations, isLoadingMore])
@@ -575,7 +576,7 @@ export default function OperationsPage() {
 			}, 0)
 	}, [operations, selectedOperations])
 
-	const toggleFilter = (category, key) => { 
+	const toggleFilter = (category, key) => {
 		if (category === 'type') {
 			setSelectedFilters(prev => {
 				const newValue = !prev[key]
@@ -626,7 +627,9 @@ export default function OperationsPage() {
 	const handleCounterAgentToggle = guid => {
 		setSelectedCounterAgents(prev => ({ ...prev, [guid]: !prev[guid] }))
 	}
- 
+
+	console.log(operations)
+
 
 	return (
 		<div className={styles.container}>
@@ -659,7 +662,7 @@ export default function OperationsPage() {
 				<div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
 					<button className={styles.filterToggleButton}>
 						<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+							<path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
 						</svg>
 					</button>
 				</div>
@@ -741,12 +744,10 @@ export default function OperationsPage() {
 							<thead className={styles.tableHeader}>
 								<tr className={styles.tableHeaderRow}>
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>
-										<input
-											type='checkbox'
+										<OperationCheckbox
 											checked={isAllSelected}
 											onChange={toggleSelectAll}
-											className={styles.tableCheckbox}
-										/>
+										/> 
 									</th>
 									<th className={styles.tableHeaderCell}>
 										<button className={styles.tableHeaderButton}>
@@ -797,86 +798,15 @@ export default function OperationsPage() {
 										{operations
 											.filter(op => op.section === 'today')
 											.map((op, index) => (
-												<tr
+												<OperationTableRow
 													key={op.id}
-													className={styles.tableRow}
-													onClick={e => {
-														if (!e.target.closest('input') && !e.target.closest('button')) {
-															openOperationModal(op)
-														}
-													}}
-												>
-													<td className={cn(styles.tableCell, styles.tableCellIndex)}>
-														<input
-															type='checkbox'
-															checked={selectedOperations.includes(op.id)}
-															onChange={() => toggleOperation(op.id)}
-															className={styles.tableCheckbox}
-															onClick={e => e.stopPropagation()}
-														/>
-													</td>
-													<td className={styles.tableCell}>{op.operationDate || '-'}</td>
-													<td className={cn(styles.tableCell, styles.accountCell)}>
-														{op.bankAccount || '-'}
-													</td>
-													<td className={styles.tableCell}>
-														{op.typeLabel ? (
-															<div className={styles.typeIcon}>
-																{op.typeLabel === 'Поступление' ? (
-															<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/></svg>
-																) : op.typeLabel === 'Выплата' ? (
-															<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/></svg>
-																) : (op.typeLabel === 'Перемещение' || op.typeLabel === 'Начисление') ? (
-															<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/></svg>
-																) : null}
-															</div>
-														) : null}
-													</td>
-													<td className={cn(styles.tableCell, styles.counterpartyCell)}>
-														{op.counterparty || '-'}
-													</td>
-													<td className={cn(styles.tableCell, styles.statusCell)}>
-														{op.chartOfAccounts || '-'}
-													</td>
-													<td className={styles.tableCell}>-</td>
-													<td
-														className={cn(
-															styles.tableCell,
-															styles.amountCell,
-															op.typeCategory === 'in' && styles.positive,
-															op.typeCategory === 'out' && styles.negative,
-															op.typeCategory === 'transfer' && styles.neutral,
-														)}
-													>
-														<div className={styles.amountWithIcons}>
-															{/* Debit icon (Дебет) - показываем если payment_confirmed = true, но не показываем если оба true */}
-															{op.payment_confirmed && !(op.payment_confirmed && op.payment_accrual) && (
-																<svg width="16" height="20" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.debitIcon}>
-																	<rect width="22" height="27" rx="6" fill="#1E98AD"/>
-																	<path d="M6.80096 20.1136V17.0625H7.36346C7.55664 16.8864 7.73846 16.6378 7.90891 16.3168C8.08221 15.9929 8.22852 15.5611 8.34783 15.0213C8.46999 14.4787 8.55096 13.7898 8.59073 12.9545L8.77823 9.27273H13.9601V17.0625H14.9657V20.0966H13.9601V18H7.80664V20.1136H6.80096ZM8.62482 17.0625H12.9544V10.2102H9.73278L9.59641 12.9545C9.56232 13.5909 9.50266 14.1676 9.41744 14.6847C9.33221 15.1989 9.22283 15.6548 9.08931 16.0526C8.95579 16.4474 8.80096 16.7841 8.62482 17.0625Z" fill="#FCFCFD"/>
-																</svg>
-															)}
-															{/* Credit icon (Кредит) - показываем если payment_accrual = true, но не показываем если оба true */}
-															{op.payment_accrual && !(op.payment_confirmed && op.payment_accrual) && (
-																<svg width="16" height="20" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.creditIcon}>
-																	<rect width="22" height="27" rx="6" fill="#6C64BC"/>
-																	<path d="M8.05682 18V9.27273H9.11364V13.6023H9.21591L13.1364 9.27273H14.517L10.8523 13.2102L14.517 18H13.2386L10.2045 13.9432L9.11364 15.1705V18H8.05682Z" fill="#FCFCFD"/>
-																</svg>
-															)}
-															<span className={styles.amountText}>{op.amount}</span>
-														</div>
-													</td>
-													<td
-														className={cn(styles.tableCell, styles.tableCellActions)}
-														onClick={e => e.stopPropagation()}
-													>
-														<OperationMenu
-															operation={op}
-															onEdit={handleEditOperation}
-															onDelete={handleDeleteOperation}
-														/>
-													</td>
-												</tr>
+													op={op}
+													selectedOperations={selectedOperations}
+													toggleOperation={toggleOperation}
+													openOperationModal={openOperationModal}
+													handleEditOperation={handleEditOperation}
+													handleDeleteOperation={handleDeleteOperation}
+												/>
 											))}
 
 										{/* Вчера и ранее - Section Header */}
@@ -891,96 +821,16 @@ export default function OperationsPage() {
 										{/* Yesterday Operations */}
 										{operations
 											.filter(op => op.section === 'yesterday')
-											.map((op, index) => (
-												<tr
+													.map((op) => (
+														<OperationTableRow
 													key={op.id}
-													className={styles.tableRow}
-													onClick={e => {
-														if (!e.target.closest('input') && !e.target.closest('button')) {
-															openOperationModal(op)
-														}
-													}}
-												>
-													<td className={cn(styles.tableCell, styles.tableCellIndex)}>
-														<input
-															type='checkbox'
-															checked={selectedOperations.includes(op.id)}
-															onChange={() => toggleOperation(op.id)}
-															className={styles.tableCheckbox}
-															onClick={e => e.stopPropagation()}
+															op={op}
+															selectedOperations={selectedOperations}
+															toggleOperation={toggleOperation}
+															openOperationModal={openOperationModal}
+															handleEditOperation={handleEditOperation}
+															handleDeleteOperation={handleDeleteOperation}
 														/>
-													</td>
-													<td className={styles.tableCell}>{op.operationDate || '-'}</td>
-													<td className={cn(styles.tableCell, styles.accountCell)}>
-														{op.bankAccount || '-'}
-													</td>
-													<td className={styles.tableCell}>
-														{op.typeLabel ? (
-															<div
-																className={cn(
-																	styles.typeIcon,
-																	op.typeCategory === 'in' && styles.typeIconIn,
-																	op.typeCategory === 'out' && styles.typeIconOut,
-																	op.typeCategory === 'transfer' && styles.typeIconTransfer,
-																)}
-															>
-																{op.typeCategory === 'in' ? (
-															<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/></svg>
-																) : op.typeCategory === 'out' ? (
-																	<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-																		<path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-																	</svg>
-																) : (
-															<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/></svg>
-																)}
-															</div>
-														) : null}
-													</td>
-													<td className={cn(styles.tableCell, styles.counterpartyCell)}>
-														{op.counterparty || '-'}
-													</td>
-													<td className={cn(styles.tableCell, styles.statusCell)}>
-														{op.chartOfAccounts || '-'}
-													</td>
-													<td className={styles.tableCell}>-</td>
-													<td
-														className={cn(
-															styles.tableCell,
-															styles.amountCell,
-															op.typeCategory === 'in' && styles.positive,
-															op.typeCategory === 'out' && styles.negative,
-															op.typeCategory === 'transfer' && styles.neutral,
-														)}
-													>
-														<div className={styles.amountWithIcons}>
-															{/* Debit icon (Дебет) - показываем если payment_confirmed = true, но не показываем если оба true */}
-															{op.payment_confirmed && !(op.payment_confirmed && op.payment_accrual) && (
-																<svg width="16" height="20" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.debitIcon}>
-																	<rect width="22" height="27" rx="6" fill="#1E98AD"/>
-																	<path d="M6.80096 20.1136V17.0625H7.36346C7.55664 16.8864 7.73846 16.6378 7.90891 16.3168C8.08221 15.9929 8.22852 15.5611 8.34783 15.0213C8.46999 14.4787 8.55096 13.7898 8.59073 12.9545L8.77823 9.27273H13.9601V17.0625H14.9657V20.0966H13.9601V18H7.80664V20.1136H6.80096ZM8.62482 17.0625H12.9544V10.2102H9.73278L9.59641 12.9545C9.56232 13.5909 9.50266 14.1676 9.41744 14.6847C9.33221 15.1989 9.22283 15.6548 9.08931 16.0526C8.95579 16.4474 8.80096 16.7841 8.62482 17.0625Z" fill="#FCFCFD"/>
-																</svg>
-															)}
-															{/* Credit icon (Кредит) - показываем если payment_accrual = true, но не показываем если оба true */}
-															{op.payment_accrual && !(op.payment_confirmed && op.payment_accrual) && (
-																<svg width="16" height="20" viewBox="0 0 22 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.creditIcon}>
-																	<rect width="22" height="27" rx="6" fill="#6C64BC"/>
-																	<path d="M8.05682 18V9.27273H9.11364V13.6023H9.21591L13.1364 9.27273H14.517L10.8523 13.2102L14.517 18H13.2386L10.2045 13.9432L9.11364 15.1705V18H8.05682Z" fill="#FCFCFD"/>
-																</svg>
-															)}
-															<span className={styles.amountText}>{op.amount}</span>
-														</div>
-													</td>
-													<td
-														className={cn(styles.tableCell, styles.tableCellActions)}
-														onClick={e => e.stopPropagation()}
-													>
-														<OperationMenu
-															operation={op}
-															onEdit={handleEditOperation}
-															onDelete={handleDeleteOperation}
-														/>
-													</td>
-												</tr>
 											))}
 									</>
 								)}
@@ -993,11 +843,11 @@ export default function OperationsPage() {
 								<span>Загрузка...</span>
 							</div>
 						)}
-						{!hasMore && operations.length > 0 && (
+						{/* {!hasMore && operations.length > 0 && (
 							<div className={styles.noMoreData}>
 								Все операции загружены
 							</div>
-						)}
+						)} */}
 					</div>
 				</div>
 

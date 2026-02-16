@@ -167,13 +167,13 @@ export default function ProfitAndLossPage() {
           {legend.map(period => (
             <td key={period.key} className={styles.td}>
               <span className={item.level === 0 ? styles.boldNumber : ''}>
-                {item.values?.[period.key] || 0}
+                {item.values?.[period.key]?.toLocaleString('ru-RU') || 0}
               </span>
             </td>
           ))}
           <td className={styles.td}>
             <span className={item.level === 0 ? styles.boldNumber : ''}>
-              {item.totalValue || 0}
+              {item.totalValue?.toLocaleString('ru-RU') || 0}
             </span>
           </td>
         </tr>
@@ -223,15 +223,7 @@ export default function ProfitAndLossPage() {
           <div className={styles.header}>
             <div className={styles.headerContent}>
               <div className={styles.titleRow}>
-                <h1 className={styles.title}>Отчет о прибылях и убытках (P&L)</h1>
-                <button className={styles.infoButton}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="8" cy="8" r="7" stroke="#9CA3AF" strokeWidth="1.5"/>
-                    <path d="M8 7V11" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round"/>
-                    <circle cx="8" cy="5" r="0.5" fill="#9CA3AF"/>
-                  </svg>
-                </button>
-                <span className={styles.currency}>RUB</span>
+                <h1 className={styles.title}>Отчет о прибылях и убытках (P&L)</h1> 
               </div>
               <div className={styles.headerRight}>
                 <GroupedSelect
@@ -252,10 +244,10 @@ export default function ProfitAndLossPage() {
             </div>
           </div>
           
-          <div className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`}>
+          <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead className={styles.thead}>
-                <tr>
+                <tr >
                   <th className={styles.th}>Статья</th>
                   {legend.map(period => (
                     <th key={period.key} className={styles.th}>
@@ -267,10 +259,10 @@ export default function ProfitAndLossPage() {
               </thead>
               <tbody className={styles.tbody}>
                 {/* Revenue Section */}
-                {revenue.map(item => renderRow(item))}
+                {revenue?.map(item => renderRow(item))}
 
                 {/* Expenses Section */}
-                {expenses.map(item => renderRow(item))}
+                {expenses?.map(item => renderRow(item))}
               </tbody>
             </table>
           </div>

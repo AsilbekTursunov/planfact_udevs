@@ -11,6 +11,7 @@
 .contentWrapper {
   display: flex;
   flex: 1;
+ 
   overflow: hidden;
 }
 
@@ -57,8 +58,8 @@
 .header {
   background-color: #ffffff;
   border-bottom: 1px solid #e5e7eb;
-  padding: 10px 24px;
-  height: 52px;
+  padding-bottom:  10px;
+  // height: 52px;
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -68,7 +69,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  width: 100%; 
 }
 
 .titleRow {
@@ -158,8 +159,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 0.375rem;
@@ -210,14 +211,12 @@
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
-
-.tableContainerWithFilter {
-  padding: 1rem;
-}
+ 
 
 .contentWrapper {
   display: flex;
   flex: 1;
+  
   overflow: hidden;
   position: relative;
 }
@@ -225,6 +224,7 @@
 .tableWrapper {
   overflow-x: auto;
   overflow-y: visible;
+  
   min-width: 100%;
 }
 
@@ -232,9 +232,8 @@
   width: max-content;
   min-width: 100%;
   border-collapse: collapse;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  overflow: hidden;
+  background-color: white; 
+  position: relative;
   table-layout: auto;
 }
 
@@ -248,10 +247,10 @@
 .th {
   padding: 0.375rem 0.5rem;
   text-align: left;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 550;
   color: #334155;
-  text-transform: uppercase;
+  text-transform: lowercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid #e5e7eb;
   border-right: 1px solid #e5e7eb;
@@ -262,13 +261,15 @@
     position: sticky;
     left: 0;
     z-index: 11;
+     text-transform: uppercase;
     min-width: 250px;
+    border-left: none;
     font-size: 11px;
   }
   
   &:last-child {
     text-align: right;
-    border-right: 1px solid #e5e7eb;
+    border-right: none;
   }
   
   &:not(:first-child):not(:last-child) {
@@ -281,10 +282,11 @@
 }
 
 .tr {
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #ff060b;
+  border-left: transparent;
   transition: all 0.2s ease-in-out;
   animation: fadeIn 0.2s ease-in-out;
-  
+  font-size: 15px;
   &:hover {
     background-color: #f0f4f8;
   }
@@ -322,14 +324,15 @@
     background-color: inherit;
     z-index: 1;
     min-width: 250px;
+    border-left: none;
     white-space: normal;
     word-wrap: break-word;
   }
   
   &:last-child {
     text-align: right;
+    border-right: none;
     font-weight: 600;
-    border-right: 1px solid #e5e7eb;
   }
   
   &:not(:first-child):not(:last-child) {
@@ -614,6 +617,8 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  padding: 0px 18px ;
+  margin-top: 10px;
   overflow: hidden;
   transition: margin-left 0.3s ease;
 }

@@ -1,0 +1,56 @@
+.checkboxContainer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.hiddenInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.customCheckbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0; // Light grey border
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+}
+
+.hiddenInput:checked + .customCheckbox {
+  background-color: #1E98AD; // Teal color from debit icon
+  border-color: #1E98AD;
+}
+
+.checkmark {
+  color: white;
+  width: 30px;
+  height: 30px;
+  display: block;
+}
+
+.label {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  
+  &:hover {
+    color: #0f172a;
+  }
+}

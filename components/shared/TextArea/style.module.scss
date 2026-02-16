@@ -1,0 +1,38 @@
+.textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 13px;
+  color: #0f172a;
+  border: 1px solid #e9ebef; // Matching Input border color
+  border-radius: 5px; // Matching Input border radius
+  resize: none;
+  background-color: white;
+  transition: all 0.2s;
+  min-height: 80px;
+
+  &::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px #0F51B9;
+    border-color: #0F51B9;
+  }
+
+  &.error {
+    border-color: #dc3545;
+    
+    &:focus {
+      box-shadow: 0 0 0 1px #dc3545;
+      border-color: #dc3545;
+    }
+  }
+
+  &:disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+}

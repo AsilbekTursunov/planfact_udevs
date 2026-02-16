@@ -16,7 +16,10 @@ import {
 	useOperation,
 } from '@/hooks/useDashboard'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
+import Input from '@/components/shared/Input'
+import TextArea from '@/components/shared/TextArea'
 import styles from './OperationModal.module.scss'
+import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 
 export function OperationModal({
 	operation,
@@ -28,24 +31,24 @@ export function OperationModal({
 }) {
 	const queryClient = useQueryClient()
 	const isNew = operation?.isNew || false
-	
+
 	// Extract guid from operation - check multiple possible locations
 	const operationGuid = useMemo(() => {
 		if (isNew) return null
 		// Try to get guid from various possible locations
 		return operation?.rawData?.guid || operation?.guid || null
 	}, [isNew, operation])
-	
+
 	console.log('=== OperationModal Debug ===')
 	console.log('isNew:', isNew)
 	console.log('operation:', operation)
 	console.log('operationGuid:', operationGuid)
-	
+
 	// Fetch full operation data if editing existing operation
 	const { data: fullOperationData, isLoading: isLoadingOperation, refetch } = useOperation(operationGuid, {
 		enabled: !isNew && !!operationGuid
 	})
-	
+
 	// Refetch operation data when modal opens (when isOpening becomes true)
 	useEffect(() => {
 		if (!isNew && operationGuid && isOpening) {
@@ -53,7 +56,7 @@ export function OperationModal({
 			refetch()
 		}
 	}, [isOpening, operationGuid, isNew, refetch])
-	
+
 	// Use full operation data if available, otherwise use passed operation
 	const operationData = useMemo(() => {
 		if (isNew) {
@@ -73,7 +76,7 @@ export function OperationModal({
 
 	console.log('Final operationData:', operationData)
 	console.log('Full operation data response:', fullOperationData)
-	
+
 	// Current active tab
 	const [activeTab, setActiveTab] = useState(modalType || 'income')
 	const [isSubmitting, setIsSubmitting] = useState(false)
@@ -186,14 +189,14 @@ export function OperationModal({
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [operationData, isNew, isLoadingOperation])
-	
+
 	// Reset form when modal closes
 	useEffect(() => {
 		if (isClosing) {
 			console.log('Modal closing, will reset form on next open')
 		}
 	}, [isClosing])
-	
+
 	// Reset form when modal opens
 	useEffect(() => {
 		if (isOpening) {
@@ -234,7 +237,7 @@ export function OperationModal({
 		limit: 100,
 	})
 	const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
- 
+
 
 	// Build tree structure for counterparties (groups and their children)
 	const counterAgentsTree = useMemo(() => {
@@ -302,10 +305,10 @@ export function OperationModal({
 				children:
 					item.children && item.children.length > 0
 						? item.children.map(child => ({
-								value: child.guid,
-								title: child.nazvanie || 'Без названия',
-								selectable: true,
-							}))
+							value: child.guid,
+							title: child.nazvanie || 'Без названия',
+							selectable: true,
+						}))
 						: undefined,
 			}
 			return treeNode
@@ -337,9 +340,6 @@ export function OperationModal({
 		const rootItems = chartOfAccountsData?.data?.data?.data || []
 		if (rootItems.length === 0) return []
 
-		console.log('=== Chart of Accounts Raw Data ===')
-		console.log('Root items:', rootItems)
-		console.log('Active Tab:', activeTab)
 
 		// Recursive function to filter and transform tree based on active tab
 		const filterAndTransformTree = (item, skipTypeCheck = false) => {
@@ -349,12 +349,12 @@ export function OperationModal({
 			}
 
 			const tipText = item.tip ? item.tip[0] : ''
-			
+
 			// For income tab, only show items with "Доход" type
 			if (!skipTypeCheck && activeTab === 'income' && !tipText.includes('Доход')) {
 				return null
 			}
-			
+
 			// For payment tab, only show items with "Расход" type
 			if (!skipTypeCheck && activeTab === 'payment' && !tipText.includes('Расход')) {
 				return null
@@ -362,9 +362,9 @@ export function OperationModal({
 
 			// For accrual tab, show Актив, Капитал, Обязательства
 			if (!skipTypeCheck && activeTab === 'accrual') {
-				const isValidType = tipText.includes('Актив') || 
-				                   tipText.includes('Капитал') || 
-				                   tipText.includes('Обязательства')
+				const isValidType = tipText.includes('Актив') ||
+					tipText.includes('Капитал') ||
+					tipText.includes('Обязательства')
 				if (!isValidType) {
 					return null
 				}
@@ -392,16 +392,16 @@ export function OperationModal({
 		// Find the root item that matches the active tab
 		let matchingRootItem = null
 		let headerTitle = ''
-		
+
 		if (activeTab === 'income') {
-			matchingRootItem = rootItems.find(item => 
-				item.nazvanie === 'Доходы' || 
+			matchingRootItem = rootItems.find(item =>
+				item.nazvanie === 'Доходы' ||
 				(item.tip && item.tip[0] && item.tip[0].includes('Доход'))
 			)
 			headerTitle = 'Доходы'
 		} else if (activeTab === 'payment') {
-			matchingRootItem = rootItems.find(item => 
-				item.nazvanie === 'Расходы' || 
+			matchingRootItem = rootItems.find(item =>
+				item.nazvanie === 'Расходы' ||
 				(item.tip && item.tip[0] && item.tip[0].includes('Расход'))
 			)
 			headerTitle = 'Расходы'
@@ -413,7 +413,7 @@ export function OperationModal({
 			const transformedChildren = children
 				.map(child => filterAndTransformTree(child, false))
 				.filter(Boolean)
-			
+
 			// Create a single root node with the type as title
 			const treeWithHeader = [{
 				value: `header_${activeTab}`,
@@ -423,10 +423,10 @@ export function OperationModal({
 				tip: matchingRootItem.tip,
 				children: transformedChildren
 			}]
-			
+
 			console.log('=== Transformed Tree (with header) ===')
 			console.log('Tree:', treeWithHeader)
-			
+
 			return treeWithHeader
 		}
 
@@ -457,13 +457,13 @@ export function OperationModal({
 		const items = bankAccountsData?.data?.data?.data || []
 		const legalEntitiesItems = legalEntitiesData?.data?.data?.data || []
 		const currenciesItems = currenciesData?.data?.data?.response || currenciesData?.data?.response || []
-		
+
 		// Create a map of legal entities by guid for quick lookup
 		const legalEntitiesMap = new Map()
 		legalEntitiesItems.forEach(entity => {
 			legalEntitiesMap.set(entity.guid, entity.nazvanie || 'Без названия')
 		})
-		
+
 		// Create a map of currencies by guid for quick lookup
 		const currenciesMap = new Map()
 		currenciesItems.forEach(currency => {
@@ -472,7 +472,7 @@ export function OperationModal({
 				nazvanie: currency.nazvanie || ''
 			})
 		})
-		
+
 		return items.map(item => ({
 			guid: item.guid,
 			label: item.nazvanie || '',
@@ -529,17 +529,12 @@ export function OperationModal({
 			if (activeTab === 'income') {
 				const validationErrors = {}
 
-				if (!formData.paymentDate) {
-					validationErrors.paymentDate = 'Обязательное поле'
-				}
+
 				if (!formData.accountAndLegalEntity) {
-					validationErrors.accountAndLegalEntity = 'Обязательное поле'
-				}
-				if (!formData.amount || parseFloat(formData.amount) <= 0) {
-					validationErrors.amount = 'Обязательное поле'
+					validationErrors.accountAndLegalEntity = 'Не выбран счет и юрлицо'
 				}
 				if (!formData.purpose || formData.purpose.trim() === '') {
-					validationErrors.purpose = 'Обязательное поле'
+					validationErrors.purpose = 'Укажите назначение платежа'
 				}
 
 				if (Object.keys(validationErrors).length > 0) {
@@ -553,17 +548,13 @@ export function OperationModal({
 			if (activeTab === 'payment') {
 				const validationErrors = {}
 
-				if (!formData.paymentDate) {
-					validationErrors.paymentDate = 'Обязательное поле'
-				}
+
 				if (!formData.accountAndLegalEntity) {
-					validationErrors.accountAndLegalEntity = 'Обязательное поле'
+					validationErrors.accountAndLegalEntity = 'Не выбран счет и юрлицо'
 				}
-				if (!formData.amount || parseFloat(formData.amount) <= 0) {
-					validationErrors.amount = 'Обязательное поле'
-				}
+
 				if (!formData.purpose || formData.purpose.trim() === '') {
-					validationErrors.purpose = 'Обязательное поле'
+					validationErrors.purpose = 'Укажите назначение платежа'
 				}
 
 				if (Object.keys(validationErrors).length > 0) {
@@ -577,26 +568,19 @@ export function OperationModal({
 			if (activeTab === 'transfer') {
 				const validationErrors = {}
 
-				if (!formData.fromDate) {
-					validationErrors.fromDate = 'Обязательное поле'
-				}
+
 				if (!formData.fromAccount) {
-					validationErrors.fromAccount = 'Обязательное поле'
+					validationErrors.fromAccount = 'Не выбран счет и юрлицо'
 				}
-				if (!formData.fromAmount || parseFloat(formData.fromAmount) <= 0) {
-					validationErrors.fromAmount = 'Обязательное поле'
-				}
-				if (!formData.toDate) {
-					validationErrors.toDate = 'Обязательное поле'
-				}
+
 				if (!formData.toAccount) {
-					validationErrors.toAccount = 'Обязательное поле'
+					validationErrors.toAccount = 'Не выбран счет и юрлицо'
 				}
 				if (!formData.toAmount || parseFloat(formData.toAmount) <= 0) {
-					validationErrors.toAmount = 'Обязательное поле'
+					validationErrors.toAmount = 'Не указана сумма'
 				}
 				if (!formData.purpose || formData.purpose.trim() === '') {
-					validationErrors.purpose = 'Обязательное поле'
+					validationErrors.purpose = 'Укажите назначение платежа'
 				}
 
 				if (Object.keys(validationErrors).length > 0) {
@@ -610,23 +594,19 @@ export function OperationModal({
 			if (activeTab === 'accrual') {
 				const validationErrors = {}
 
-				if (!formData.accrualDate) {
-					validationErrors.accrualDate = 'Обязательное поле'
-				}
+
 				if (!formData.legalEntity) {
-					validationErrors.legalEntity = 'Обязательное поле'
+					validationErrors.legalEntity = 'Не выбрано юрлицо'
 				}
 				if (!formData.expenseItem) {
-					validationErrors.expenseItem = 'Обязательное поле'
+					validationErrors.expenseItem = 'Не выбрана статья по дебету'
 				}
-				if (!formData.amount || parseFloat(formData.amount) <= 0) {
-					validationErrors.amount = 'Обязательное поле'
-				}
+
 				if (!formData.creditItem) {
-					validationErrors.creditItem = 'Обязательное поле'
+					validationErrors.creditItem = 'Не выбрана статья по кредиту'
 				}
 				if (!formData.purpose || formData.purpose.trim() === '') {
-					validationErrors.purpose = 'Обязательное поле'
+					validationErrors.purpose = 'Укажите назначение'
 				}
 
 				if (Object.keys(validationErrors).length > 0) {
@@ -753,7 +733,7 @@ export function OperationModal({
 			const updateGuid = operationData?.rawData?.guid || operationData?.guid
 			const endpoint = isUpdate ? '/api/operations/update' : '/api/operations/create'
 			const method = isUpdate ? 'PUT' : 'POST'
-			
+
 			console.log('=== Submit Operation Debug ===')
 			console.log('isNew:', isNew)
 			console.log('isUpdate:', isUpdate)
@@ -802,8 +782,8 @@ export function OperationModal({
 			if (result.status === 'ERROR') {
 				throw new Error(
 					result.data ||
-						result.description ||
-						`Ошибка при ${isUpdate ? 'обновлении' : 'создании'} операции`,
+					result.description ||
+					`Ошибка при ${isUpdate ? 'обновлении' : 'создании'} операции`,
 				)
 			}
 
@@ -824,7 +804,7 @@ export function OperationModal({
 			)
 			showErrorNotification(
 				error.message ||
-					`Ошибка при ${!isNew && operationData?.rawData?.guid ? 'обновлении' : 'создании'} операции`,
+				`Ошибка при ${!isNew && operationData?.rawData?.guid ? 'обновлении' : 'создании'} операции`,
 			)
 		} finally {
 			setIsSubmitting(false)
@@ -841,7 +821,7 @@ export function OperationModal({
 			</div>
 		)
 	}
-	
+
 	if (!operationData && !isNew) return null
 
 	return (
@@ -868,7 +848,7 @@ export function OperationModal({
 								<h2 className={styles.title}>
 									{isNew ? 'Создание операции' : 'Редактирование операции'}
 								</h2>
-								<div className={styles.headerDate}>
+								{!isNew && <div className={styles.headerDate}>
 									<svg
 										className={styles.headerIcon}
 										fill='none'
@@ -882,8 +862,8 @@ export function OperationModal({
 											d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
 										/>
 									</svg>
-									{!isNew && <span>Создана {operationData?.createdAt || '—'}</span>}
-								</div>
+									<span>Создана {operationData?.createdAt || '—'}</span>
+								</div>}
 							</div>
 							<button onClick={onClose} className={styles.closeButton}>
 								✕
@@ -941,7 +921,7 @@ export function OperationModal({
 									{/* Дата оплаты */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
-											Дата оплаты <span className={styles.required}>*</span>
+											Дата оплаты 
 										</label>
 										<div className={styles.fieldWrapper}>
 											<DatePicker
@@ -952,15 +932,14 @@ export function OperationModal({
 														setErrors({ ...errors, paymentDate: null })
 													}
 												}}
+												className={styles.datePicker}
 												placeholder='Выберите дату'
 												showCheckbox={true}
 												checkboxLabel='Подтвердить оплату'
 												checkboxValue={formData.confirmPayment}
 												onCheckboxChange={checked =>
-													// payment_confirmed change this value
 													setFormData({ ...formData, confirmPayment: checked })
 												}
-												className={errors.paymentDate ? styles.error : ''}
 											/>
 											{errors.paymentDate && (
 												<span className={styles.errorText}>{errors.paymentDate}</span>
@@ -1000,12 +979,11 @@ export function OperationModal({
 									{/* Сумма new form value summa */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
-											Сумма <span className={styles.required}>*</span>
+											Сумма 
 										</label>
 										<div className={styles.fieldWrapper}>
 											<div className={styles.inputGroup}>
-												<input
-													type='text'
+												<Input
 													value={formatAmount(formData.amount)}
 													onChange={e => {
 														setFormData({ ...formData, amount: parseAmount(e.target.value) })
@@ -1013,14 +991,13 @@ export function OperationModal({
 															setErrors({ ...errors, amount: null })
 														}
 													}}
-													placeholder='0'
-													className={cn(styles.input, errors.amount && styles.error)}
+													placeholder='0' 
+													className={styles.input}
 												/>
-												<div className={styles.currencyDisplay}>
+												{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
 													{getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
-												</div>
+												</div>}
 											</div>
-											{errors.amount && <span className={styles.errorText}>{errors.amount}</span>}
 										</div>
 									</div>
 
@@ -1032,6 +1009,7 @@ export function OperationModal({
 											onChange={value => setFormData({ ...formData, accrualDate: value })}
 											placeholder='Выберите дату'
 											showCheckbox
+											className={styles.datePicker}
 											checkboxLabel='Подтвердить начисление'
 											checkboxValue={formData.confirmAccrual}
 											onCheckboxChange={checked =>
@@ -1058,7 +1036,7 @@ export function OperationModal({
 										<label className={styles.label}>Статья</label>
 										<TreeSelect
 											data={filteredChartOfAccountsTree}
-												alwaysExpanded={true}
+											alwaysExpanded={true}
 											value={formData.chartOfAccount}
 											onChange={value => setFormData({ ...formData, chartOfAccount: value })}
 											placeholder='Выберите статью...'
@@ -1073,7 +1051,7 @@ export function OperationModal({
 											Назначение платежа <span className={styles.required}>*</span>
 										</label>
 										<div className={styles.fieldWrapper}>
-											<textarea
+											<TextArea
 												value={formData.purpose}
 												onChange={e => {
 													setFormData({ ...formData, purpose: e.target.value })
@@ -1083,7 +1061,7 @@ export function OperationModal({
 												}}
 												placeholder='Назначение платежа'
 												rows={3}
-												className={cn(styles.textarea, errors.purpose && styles.error)}
+												error={errors.purpose}
 											/>
 											{errors.purpose && <span className={styles.errorText}>{errors.purpose}</span>}
 										</div>
@@ -1097,7 +1075,7 @@ export function OperationModal({
 									{/* Дата оплаты */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
-											Дата оплаты <span className={styles.required}>*</span>
+											Дата оплаты  
 										</label>
 										<div className={styles.fieldWrapper}>
 											<DatePicker
@@ -1110,16 +1088,14 @@ export function OperationModal({
 												}}
 												placeholder='Выберите дату'
 												showCheckbox={true}
+
 												checkboxLabel='Подтвердить оплату'
 												checkboxValue={formData.confirmPayment}
 												onCheckboxChange={checked =>
 													setFormData({ ...formData, confirmPayment: checked })
 												}
-												className={errors.paymentDate ? styles.error : ''}
-											/>
-											{errors.paymentDate && (
-												<span className={styles.errorText}>{errors.paymentDate}</span>
-											)}
+												className={[styles.datePicker, errors.paymentDate ? styles.error : ''].join(' ')}
+											/> 
 										</div>
 									</div>
 
@@ -1155,11 +1131,11 @@ export function OperationModal({
 									{/* Сумма */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
-											Сумма <span className={styles.required}>*</span>
+											Сумма  
 										</label>
 										<div className={styles.fieldWrapper}>
 											<div className={styles.inputGroup}>
-												<input
+												<Input
 													type='text'
 													value={formatAmount(formData.amount)}
 													onChange={e => {
@@ -1171,11 +1147,11 @@ export function OperationModal({
 													placeholder='0'
 													className={cn(styles.input, errors.amount && styles.error)}
 												/>
-												<div className={styles.currencyDisplay}>
-													{getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
-												</div>
+												{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
+													{getAccountCurrency(formData.accountAndLegalEntity)}
+												</div>}
 											</div>
-											{errors.amount && <span className={styles.errorText}>{errors.amount}</span>}
+
 										</div>
 									</div>
 
@@ -1192,6 +1168,7 @@ export function OperationModal({
 											onCheckboxChange={checked =>
 												setFormData({ ...formData, confirmAccrual: checked })
 											}
+											className={cn(styles.datePicker, errors.accrualDate ? styles.error : '')}
 										/>
 									</div>
 
@@ -1212,7 +1189,7 @@ export function OperationModal({
 										<label className={styles.label}>Статья</label>
 										<TreeSelect
 											data={filteredChartOfAccountsTree}
-												alwaysExpanded={true}
+											alwaysExpanded={true}
 											value={formData.chartOfAccount}
 											onChange={value => setFormData({ ...formData, chartOfAccount: value })}
 											placeholder='Выберите статью...'
@@ -1227,7 +1204,7 @@ export function OperationModal({
 											Назначение платежа <span className={styles.required}>*</span>
 										</label>
 										<div className={styles.fieldWrapper}>
-											<textarea
+											<TextArea
 												value={formData.purpose}
 												onChange={e => {
 													setFormData({ ...formData, purpose: e.target.value })
@@ -1237,7 +1214,7 @@ export function OperationModal({
 												}}
 												placeholder='Назначение платежа'
 												rows={3}
-												className={cn(styles.textarea, errors.purpose && styles.error)}
+												error={errors.purpose}
 											/>
 											{errors.purpose && <span className={styles.errorText}>{errors.purpose}</span>}
 										</div>
@@ -1277,11 +1254,9 @@ export function OperationModal({
 													onCheckboxChange={checked =>
 														setFormData({ ...formData, confirmPayment: checked })
 													}
-													className={errors.fromDate ? styles.error : ''}
+													className={[styles.datePicker, errors.fromDate ? styles.error : ''].join(' ')}
 												/>
-												{errors.fromDate && (
-													<span className={styles.errorText}>{errors.fromDate}</span>
-												)}
+
 											</div>
 										</div>
 
@@ -1326,20 +1301,15 @@ export function OperationModal({
 														value={formatAmount(formData.fromAmount)}
 														onChange={e => {
 															setFormData({ ...formData, fromAmount: parseAmount(e.target.value) })
-															if (errors.fromAmount) {
-																setErrors({ ...errors, fromAmount: null })
-															}
+
 														}}
 														placeholder='0'
-														className={cn(styles.input, errors.fromAmount && styles.error)}
+														className={cn(styles.input)}
 													/>
-													<div className={styles.currencyDisplay}>
-														{getAccountCurrency(formData.fromAccount) || 'Выберите счет'}
-													</div>
-												</div>
-												{errors.fromAmount && (
-													<span className={styles.errorText}>{errors.fromAmount}</span>
-												)}
+													{getAccountCurrency(formData.fromAccount) && <div className={styles.currencyDisplay}>
+														{getAccountCurrency(formData.fromAccount)}
+													</div>}
+												</div> 
 											</div>
 										</div>
 									</div>
@@ -1367,7 +1337,7 @@ export function OperationModal({
 														}
 													}}
 													placeholder='Выберите дату'
-													className={errors.toDate ? styles.error : ''}
+													className={[styles.datePicker, errors.toDate ? styles.error : ''].join(' ')}
 												/>
 												{errors.toDate && <span className={styles.errorText}>{errors.toDate}</span>}
 											</div>
@@ -1409,7 +1379,7 @@ export function OperationModal({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<div className={styles.inputGroup}>
-													<input
+													<Input
 														type='text'
 														value={formatAmount(formData.toAmount)}
 														onChange={e => {
@@ -1421,9 +1391,9 @@ export function OperationModal({
 														placeholder='0'
 														className={cn(styles.input, errors.toAmount && styles.error)}
 													/>
-													<div className={styles.currencyDisplay}>
-														{getAccountCurrency(formData.toAccount) || 'Выберите счет'}
-													</div>
+													{getAccountCurrency(formData.toAccount) && <div className={styles.currencyDisplay}>
+														{getAccountCurrency(formData.toAccount)}
+													</div>}
 												</div>
 												{errors.toAmount && (
 													<span className={styles.errorText}>{errors.toAmount}</span>
@@ -1437,7 +1407,7 @@ export function OperationModal({
 												Назначение платежа <span className={styles.required}>*</span>
 											</label>
 											<div className={styles.fieldWrapper}>
-												<textarea
+												<TextArea
 													value={formData.purpose}
 													onChange={e => {
 														setFormData({ ...formData, purpose: e.target.value })
@@ -1484,28 +1454,20 @@ export function OperationModal({
 														}
 													}}
 													placeholder='Выберите дату'
-													className={errors.accrualDate ? styles.error : ''}
-												/>
-												{errors.accrualDate && (
-													<span className={styles.errorText}>{errors.accrualDate}</span>
-												)}
+													className={[styles.datePicker, errors.accrualDate ? styles.error : ''].join(' ')}
+												/> 
 											</div>
 										</div>
 
 										{/* Подтвердить начисление */}
 										<div className={styles.formRow}>
 											<div className={styles.labelSpacer}></div>
-											<label className={styles.checkboxLabel}>
-												<input
-													type='checkbox'
-													className={styles.checkbox}
-													checked={formData.confirmAccrual}
-													onChange={e =>
-														setFormData({ ...formData, confirmAccrual: e.target.checked })
-													}
-												/>
-												<span>Подтвердить начисление</span>
-											</label>
+
+											<OperationCheckbox
+												checked={formData.confirmAccrual}
+												label='Подтвердить начисление'
+												onChange={e => setFormData({ ...formData, confirmAccrual: e.target.checked })}
+											/>
 										</div>
 
 										{/* Юрлицо */}
@@ -1544,7 +1506,7 @@ export function OperationModal({
 											<div className={styles.fieldWrapper}>
 												<TreeSelect
 													data={filteredChartOfAccountsTree}
-												alwaysExpanded={true}
+													alwaysExpanded={true}
 													value={formData.expenseItem}
 													onChange={value => {
 														setFormData({ ...formData, expenseItem: value })
@@ -1569,38 +1531,31 @@ export function OperationModal({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<div className={styles.inputGroup}>
-													<input
+													<Input
 														type='text'
 														value={formatAmount(formData.amount)}
 														onChange={e => {
 															setFormData({ ...formData, amount: parseAmount(e.target.value) })
-															if (errors.amount) {
-																setErrors({ ...errors, amount: null })
-															}
+
 														}}
 														placeholder='0'
 														className={cn(styles.input, errors.amount && styles.error)}
 													/>
-													<div className={styles.currencyDisplay}>
-														{getLegalEntityCurrency(formData.legalEntity) || 'Выберите юрлицо'}
-													</div>
+													{getLegalEntityCurrency(formData.legalEntity) && <div className={styles.currencyDisplay}>
+														{getLegalEntityCurrency(formData.legalEntity)}
+													</div>}
 												</div>
-												{errors.amount && <span className={styles.errorText}>{errors.amount}</span>}
 											</div>
 										</div>
 
 										{/* Учитывать в ОПиУ кассовым методом */}
 										<div className={styles.formRow}>
 											<div className={styles.labelSpacer}></div>
-											<label className={styles.checkboxLabel}>
-												<input
-													type='checkbox'
-													className={styles.checkbox}
-													checked={formData.cashMethod}
-													onChange={e => setFormData({ ...formData, cashMethod: e.target.checked })}
-												/>
-												<span>Учитывать в ОПиУ кассовым методом</span>
-											</label>
+											<OperationCheckbox
+												checked={formData.cashMethod}
+												label='Учитывать в ОПиУ кассовым методом'
+												onChange={e => setFormData({ ...formData, cashMethod: e.target.checked })}
+											/>
 										</div>
 									</div>
 
@@ -1620,7 +1575,7 @@ export function OperationModal({
 											<div className={styles.fieldWrapper}>
 												<TreeSelect
 													data={filteredChartOfAccountsTree}
-												alwaysExpanded={true}
+													alwaysExpanded={true}
 													value={formData.creditItem}
 													onChange={value => {
 														setFormData({ ...formData, creditItem: value })
@@ -1638,17 +1593,7 @@ export function OperationModal({
 											</div>
 										</div>
 
-										{/* Контрагент */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>Контрагент</label>
-											<TreeSelect
-												data={counterAgentsTree}
-												value={formData.counterparty}
-												onChange={value => setFormData({ ...formData, counterparty: value })}
-												placeholder='Не выбран'
-												className='flex-1'
-											/>
-										</div>
+
 
 										{/* Назначение */}
 										<div className={styles.formRowStart}>
@@ -1656,7 +1601,7 @@ export function OperationModal({
 												Назначение <span className={styles.required}>*</span>
 											</label>
 											<div className={styles.fieldWrapper}>
-												<textarea
+												<TextArea
 													value={formData.purpose}
 													onChange={e => {
 														setFormData({ ...formData, purpose: e.target.value })

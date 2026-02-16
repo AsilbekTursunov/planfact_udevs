@@ -1,0 +1,56 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.input {
+  width: fit-content;
+  padding: 0.5rem 0.75rem;
+  font-size: 13px;
+  color: #0f172a;
+  border: 1px solid #e9ebef;
+  border-radius: 5px;
+  background-color: white;
+  transition: all 0.2s;
+
+  &::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px #0F51B9;
+    border-color: #0F51B9;
+  }
+
+  &:disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  &.error {
+    border-color: #dc3545;
+    
+    &:focus {
+      box-shadow: 0 0 0 1px #dc3545;
+      border-color: #dc3545;
+    }
+  }
+
+  // Type specific styles
+  &[type="date"] {
+    &::-webkit-calendar-picker-indicator {
+      opacity: 0.6;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+}

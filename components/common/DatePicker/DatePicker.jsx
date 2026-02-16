@@ -7,17 +7,19 @@ import { ru } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import '@/styles/datepicker.css'
 import styles from './DatePicker.module.scss'
+import { cn } from '@/app/lib/utils'
+import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 
-export function DatePicker({ value, onChange, placeholder = 'Выберите дату', showCheckbox = false, checkboxLabel = '', checkboxValue = false, onCheckboxChange }) {
+export function DatePicker({ value, onChange, placeholder = 'Выберите дату', showCheckbox = false, checkboxLabel = '', checkboxValue = false, onCheckboxChange, className }) {
   const [isOpen, setIsOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0, width: 0, ready: false })
   const datePickerRef = useRef(null)
   const containerRef = useRef(null)
-  
+
   // Convert string date to Date object
   const dateValue = value ? (typeof value === 'string' ? new Date(value) : value) : null
-  
+
   // Format date for display (DD.MM.YYYY)
   const formatDate = (date) => {
     if (!date) return ''
@@ -40,11 +42,11 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
       const rect = containerRef.current.getBoundingClientRect()
       const viewportHeight = window.innerHeight
       const pickerHeight = 350 // Approximate height of the calendar
-      
+
       // Check if there's enough space below
       const spaceBelow = viewportHeight - rect.bottom
       const shouldOpenAbove = spaceBelow < pickerHeight && rect.top > spaceBelow
-      
+
       setPickerPosition({
         top: shouldOpenAbove ? rect.top - pickerHeight - 8 : rect.bottom + 8,
         left: rect.left,
@@ -71,35 +73,35 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
 
   const handleInputChange = (e) => {
     let newValue = e.target.value
-    
+
     // Remove all non-digit characters
     const digitsOnly = newValue.replace(/\D/g, '')
-    
+
     // Auto-format as user types
     let formatted = ''
     if (digitsOnly.length > 0) {
       // Add day (first 2 digits)
       formatted = digitsOnly.substring(0, 2)
-      
+
       if (digitsOnly.length >= 3) {
         // Add dot and month
         formatted += '.' + digitsOnly.substring(2, 4)
       }
-      
+
       if (digitsOnly.length >= 5) {
         // Add dot and year
         formatted += '.' + digitsOnly.substring(4, 8)
       }
     }
-    
+
     setInputValue(formatted)
-    
+
     // Try to parse the complete date (DD.MM.YYYY)
     if (digitsOnly.length === 8) {
       const day = parseInt(digitsOnly.substring(0, 2), 10)
       const month = parseInt(digitsOnly.substring(2, 4), 10)
       const year = parseInt(digitsOnly.substring(4, 8), 10)
-      
+
       // Validate date
       if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
         const date = new Date(year, month - 1, day)
@@ -128,8 +130,8 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
 
   return (
     <div className={styles.container} ref={containerRef}>
-      <div className={styles.inputWrapper}>
-        <input 
+      <div className={cn(styles.inputWrapper, className)}>
+        <input
           type="text"
           value={inputValue}
           placeholder={placeholder}
@@ -137,7 +139,7 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
           onChange={handleInputChange}
           onBlur={handleInputBlur}
         />
-        <button 
+        <button
           type="button"
           className={styles.calendarButton}
           onClick={() => setIsOpen(!isOpen)}
@@ -147,21 +149,17 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
           </svg>
         </button>
       </div>
-      
+
       {showCheckbox && (
-        <label className={styles.checkboxLabel}>
-          <input 
-            type="checkbox" 
-            className={styles.checkbox}
-            checked={checkboxValue}
-            onChange={(e) => onCheckboxChange?.(e.target.checked)}
-          />
-          <span>{checkboxLabel}</span>
-        </label>
+        <OperationCheckbox
+          checked={checkboxValue}
+          onChange={(e) => onCheckboxChange?.(e.target.checked)}
+          label={checkboxLabel}
+        />
       )}
-      
+
       {isOpen && pickerPosition.ready && typeof document !== 'undefined' && createPortal(
-        <div 
+        <div
           className={styles.pickerWrapper}
           style={{
             position: 'fixed',

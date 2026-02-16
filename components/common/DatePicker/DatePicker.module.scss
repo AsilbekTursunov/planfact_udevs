@@ -9,9 +9,12 @@
 .inputWrapper {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex: 1;
+  gap: 0.5rem; 
+  height: 38px;
   position: relative;
+  border: 1px solid #e9ebef;
+  overflow: hidden;
+  border-radius: 5px;
 }
 
 .input {
@@ -20,10 +23,7 @@
   font-size: 13px;
   color: #0f172a;
   background-color: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
   cursor: pointer;
-  
   &::placeholder {
     color: #9ca3af;
   }
@@ -42,8 +42,7 @@
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
-  background-color: white;
-  border: 1px solid #d1d5db;
+  background-color: white; 
   border-radius: 0.25rem;
   cursor: pointer;
   transition: all 0.2s;

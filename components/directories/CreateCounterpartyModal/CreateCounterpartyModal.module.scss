@@ -19,7 +19,7 @@
   left: 50%;
   top: 50%;
   z-index: 1001;
-  width: 550px;
+  width: 670px;
   max-height: 90vh;
   background-color: white;
   border-radius: 0.5rem;
@@ -128,13 +128,12 @@
 
 .formRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
 }
 
 .label {
-  width: 160px;
-  padding-top: 0.625rem;
+  width: 160px; 
   font-size: 14px;
   color: #0f172a;
   flex-shrink: 0;
@@ -150,13 +149,36 @@
   flex-direction: column;
 }
 
-.input {
-  flex: 1;
-  padding: 0.625rem 0.875rem;
+// Реквизиты
+.requisites {
+  color: #1f98ad!important;
   font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.requisitesContainer { 
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  gap: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &.active { 
+    max-height: 500px;
+    opacity: 1;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+}
+
+.requisitesInput{
+  width: 200px !important;
+}
+
+.input {
+  width: 100%; 
   color: #0f172a;
 
   &::placeholder {
@@ -347,5 +369,41 @@
   &:hover {
     border-color: #0E73F6;
     color: #0E73F6;
+  }
+}
+
+.multiInputContainer { 
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inputWithAction {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.inputWrapper {
+  flex: 1;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 50%;
+
+  &:hover {
+    background-color: #f3f4f6;
+    color: #6b7280;
   }
 }

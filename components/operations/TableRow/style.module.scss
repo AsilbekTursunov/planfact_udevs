@@ -1,0 +1,96 @@
+.tableRow {
+  border-bottom: 1px solid #f3f4f6;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  background-color: white;
+  position: relative;
+
+  &:hover {
+    background-color: #f0f4f8 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+
+  &.selected {
+    background-color: #eff6ff !important;
+    border-left: 3px solid #0F51B9;
+    
+    &:hover {
+      background-color: #dbeafe !important;
+    }
+  }
+}
+
+.tableCell {
+  padding: 0.5rem 0.625rem;
+  font-size: 12px;
+  color: #374151;
+  white-space: nowrap;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.1s ease;
+  background-color: inherit;
+  line-height: 1.4;
+  vertical-align: middle;
+  
+  &:last-child:not(.tableCellActions) {
+    padding-right: 1rem;
+  }
+}
+
+.tableCellIndex {
+  width: 50px; 
+  padding-left: 1rem;
+}
+
+
+
+.dateCell {
+  width: 120px;
+}
+
+.accountCell {
+  font-size: 12px; 
+  color: #334155;
+}
+
+.typeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.counterpartyCell {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.statusCell {
+  font-size: 13px;
+  color: #334155;
+}
+
+.tableCellActions {
+  position: sticky;
+  right: 0;
+  background-color: white;
+  z-index: 20;
+  min-width: 48px;
+  width: 48px;
+  text-align: left;
+  padding: 0.625rem 0.5rem;
+  vertical-align: middle;
+  isolation: auto;
+  
+  .tableRow:hover & {
+    background-color: #f9fafb !important;
+  }
+  
+  .tableRow.selected & {
+    background-color: #eff6ff !important;
+  }
+  
+  .tableRow.selected:hover & {
+    background-color: #dbeafe !important;
+  }
+}
