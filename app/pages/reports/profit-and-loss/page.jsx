@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from 'react'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
+import { DateRangePickerModal } from '@/components/common/DateRangePickerModal/DateRangePickerModal'
+import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar'
 import { getProfitAndLoss } from '@/lib/api/ucode/profitAndLoss'
 import styles from './profit-and-loss.module.scss'
+import '@/styles/report-filters.css'
 
 export default function ProfitAndLossPage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
@@ -191,51 +194,29 @@ export default function ProfitAndLossPage() {
     <div className={styles.container}>
       <div className={styles.contentWrapper}>
         {/* Filter Sidebar */}
-        <div className={`${styles.filterSidebar} ${isFilterOpen ? styles.filterSidebarOpen : ''}`}>
-          <div className={styles.filterSidebarContent}>
-            <div className={styles.filterSidebarHeader}>
-              <h2 className={styles.filterSidebarTitle}>Фильтры</h2>
-              <button 
-                onClick={() => setIsFilterOpen(false)}
-                className={styles.filterSidebarClose}
-              >
-                ✕
-              </button>
-            </div>
+        <ReportFilterSidebar
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
+          periodOptions={periodOptions}
+          selectedPeriod={selectedPeriod}
+          onPeriodChange={setSelectedPeriod}
+          entityOptions={entityOptions}
+          selectedEntity={selectedEntity}
+          onEntityChange={setSelectedEntity}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+        />
 
-            {/* Период */}
-            <div className={styles.filterSection}>
-              <h3 className={styles.filterSectionTitle}>Период</h3>
-              <GroupedSelect
-                data={periodOptions}
-                value={selectedPeriod}
-                onChange={(value) => setSelectedPeriod(value)}
-                placeholder="Выберите период"
-              />
-            </div>
-
-            {/* Юридическое лицо */}
-            <div className={styles.filterSection}>
-              <h3 className={styles.filterSectionTitle}>Юридическое лицо</h3>
-              <GroupedSelect
-                data={entityOptions}
-                value={selectedEntity}
-                onChange={(value) => setSelectedEntity(value)}
-                placeholder="Выберите организацию"
-              />
-            </div>
-
-            {/* Диапазон дат */}
-            <div className={styles.filterSection}>
-              <h3 className={styles.filterSectionTitle}>Диапазон дат</h3>
-              <DateRangePicker
-                selectedRange={dateRange}
-                onChange={setDateRange}
-                placeholder="Выберите период"
-              />
-            </div>
+        {/* Filter Toggle Bar */}
+        {!isFilterOpen && (
+          <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
+            <button className={styles.filterToggleBarButton}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </div>
-        </div>
+        )}
 
         {/* Main Content */}
         <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
@@ -260,18 +241,6 @@ export default function ProfitAndLossPage() {
                   placeholder="Способ построения"
                   className={styles.groupingSelect}
                 />
-                <button
-                  className={`${styles.filterToggleButton} ${isFilterOpen ? styles.filterToggleButtonActive : ''}`}
-                  onClick={() => setIsFilterOpen(!isFilterOpen)}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                  <span>Отображение</span>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
                 <button className={styles.moreButton}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="8" cy="3" r="1" fill="currentColor"/>

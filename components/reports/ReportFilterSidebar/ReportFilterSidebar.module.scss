@@ -1,0 +1,184 @@
+// Unified filter sidebar styles for reports
+// Copied from OperationsFiltersSidebar to ensure 100% consistency
+
+:global {
+  @keyframes fadeSlideIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeSlideOut {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes fadeSlideOutUp {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes fadeSlideRight {
+    0% {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+.sidebar {
+  width: 230px;
+  background-color: #f5f5f5;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  z-index: 10;
+}
+
+.sidebarContent {
+  padding: 1.5rem 0.8rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0;
+  position: relative;
+}
+
+.sidebarTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.sidebarCloseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #0F51B9;
+  font-size: 20px;
+  transition: all 0.2s;
+  border-radius: 4px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #e5e7eb;
+  }
+}
+
+.filterSection {
+  margin-bottom: 1.5rem;
+}
+
+.filterSectionTitle {
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.875rem;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: #6b7280;
+  }
+}
+
+.filterTabs {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background-color: white;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  width: 198px;
+}
+
+.filterTab {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0%;
+  text-align: center;
+  border-radius: 6px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  
+  &.active {
+    background-color: white;
+    color: #0F51B9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transform: scale(1);
+  }
+  
+  &.inactive {
+    background-color: transparent;
+    color: #6b7280;
+    transform: scale(0.98);
+    
+    &:hover {
+      color: #374151;
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+  }
+}
+
+.filterContent {
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

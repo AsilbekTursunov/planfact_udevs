@@ -336,19 +336,22 @@ export default function CounterpartiesPage() {
         </FilterSection>
       </FilterSidebar>
 
-      <div className={styles.content}>
+      {/* Filter Toggle Bar */}
+      {!isFilterOpen && (
+        <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
+          <button className={styles.filterToggleButton}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <div className={cn(styles.content, isFilterOpen && styles.contentWithFilter)}>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerContent}>
             <div className={styles.titleRow}>
-              <button
-                className={cn(styles.filterToggleButton, isFilterOpen && styles.filterToggleButtonActive)}
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-              >
-                <svg className={styles.filterToggleIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
             <h1 className={styles.title}>Контрагенты</h1>
               <button 
                 className={styles.createButton}

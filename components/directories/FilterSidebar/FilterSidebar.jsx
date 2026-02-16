@@ -1,9 +1,12 @@
 "use client"
 
+import { useState } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './FilterSidebar.module.scss'
 
 export function FilterSidebar({ isOpen, onClose, children }) {
+  const [activeTab, setActiveTab] = useState('general')
+
   return (
     <div className={cn(styles.sidebar, isOpen ? styles.open : styles.closed)}>
       <div className={styles.content}>
@@ -13,14 +16,35 @@ export function FilterSidebar({ isOpen, onClose, children }) {
             onClick={onClose}
             className={styles.closeButton}
           >
-            <svg className={styles.closeIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         </div>
-        <div className={styles.childrenContainer}>
-          {children}
+
+        {/* Табы фильтров */}
+        <div className={styles.filterTabs}>
+          <button 
+            className={cn(styles.filterTab, activeTab === 'general' ? styles.active : styles.inactive)}
+            onClick={() => setActiveTab('general')}
+          >
+            Общие
+          </button>
+          <button 
+            className={cn(styles.filterTab, activeTab === 'quick' ? styles.inactive : styles.inactive)}
+            onClick={() => setActiveTab('quick')}
+            disabled
+            style={{ opacity: 0.5, cursor: 'not-allowed' }}
+          >
+            Быстрые
+          </button>
         </div>
+
+        {activeTab === 'general' && (
+          <div className={styles.childrenContainer}>
+            {children}
+          </div>
+        )}
       </div>
     </div>
   )

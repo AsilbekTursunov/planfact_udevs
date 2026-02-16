@@ -3,20 +3,34 @@
 }
 
 .button {
-  width: 100%;
+  width: 198px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  font-size: 13px;
-  color: #334155;
-  background-color: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
+  padding: 8px 12px;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0%;
+  color: #98A2B3;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   transition: all 0.2s;
+  text-align: left;
+  cursor: pointer;
+  gap: 8px;
 
   &:hover:not(:disabled) {
-    border-color: #9ca3af;
+    background-color: #f3f4f6;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #0e73f6;
+    box-shadow: none;
   }
 
   &.disabled {
@@ -41,9 +55,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0%;
+  color: #98A2B3;
   
   &.empty {
-    color: #9ca3af;
+    color: #98A2B3;
   }
 }
 
@@ -59,14 +79,20 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background-color: #e5e7eb;
-  border-radius: 0.25rem;
+  gap: 6px;
+  padding: 4px 10px;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
   font-size: 12px;
-  color: #334155;
+  line-height: 18px;
+  letter-spacing: 0%;
+  background-color: #EFF8FF;
+  color: #175CD3;
+  border: 1px solid #B2DDFF;
+  border-radius: 16px;
   white-space: nowrap;
-  max-width: 150px;
+  max-width: 110px;
+  height: 26px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -75,28 +101,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 14px;
+  height: 14px;
   padding: 0;
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
-  transition: color 0.2s;
+  color: #175CD3;
+  transition: all 0.2s;
   flex-shrink: 0;
   user-select: none;
+  border-radius: 50%;
   
   &:hover {
-    color: #334155;
+    background-color: #B2DDFF;
+    color: #175CD3;
   }
   
   &:focus {
     outline: none;
-    color: #334155;
+    background-color: #B2DDFF;
+    color: #175CD3;
   }
 }
 
 .chipRemoveIcon {
-  width: 0.875rem;
-  height: 0.875rem;
+  width: 10px;
+  height: 10px;
+  stroke-width: 2.5;
 }
 
 .chipMore {
@@ -111,10 +143,11 @@
 }
 
 .buttonIcon {
-  width: 1rem;
-  height: 1rem;
+  width: 16px;
+  height: 16px;
   color: #9ca3af;
   transition: transform 0.2s;
+  flex-shrink: 0;
 
   &.open {
     transform: rotate(180deg);
@@ -190,18 +223,21 @@
 }
 
 .checkbox {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 0.25rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
   border: 2px solid;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  background-color: white;
+  flex-shrink: 0;
 
   &.checked {
-    background-color: #6366f1;
-    border-color: #6366f1;
+    background-color: white;
+    border-color: #307FE2;
+    border-width: 2px;
   }
 
   &.unchecked {
@@ -214,14 +250,20 @@
 }
 
 .checkboxIcon {
-  width: 10px;
-  height: 10px;
-  color: white;
+  width: 14px;
+  height: 14px;
+  color: #307FE2;
+  stroke-width: 3;
 }
 
 .optionText {
-  font-size: 13px;
-  color: #334155;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: #1f2937;
 }
 
 :global {

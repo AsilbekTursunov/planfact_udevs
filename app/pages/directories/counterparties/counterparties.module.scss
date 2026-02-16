@@ -1,14 +1,48 @@
 .container {
   display: flex;
-  height: calc(100vh - 64px);
   background-color: #f9fafb; // slate-50
   position: fixed;
-  top: 64px;
-  left: 90px;
-  right: 0;
-  bottom: 0;
+  inset: 58px 0 0 83px;
   overflow: hidden;
-  width: auto;
+}
+
+.filterToggleBar {
+  width: 24px;
+  background-color: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  flex-shrink: 0;
+  
+  &:hover {
+    background-color: #f3f4f6;
+    
+    .filterToggleButton {
+      color: #0E73F6;
+    }
+  }
+  
+  .filterToggleButton {
+    width: 24px;
+    height: 40px;
+    background-color: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #98A2B3;
+    transition: all 0.2s;
+    
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
 }
 
 .content {
@@ -18,19 +52,28 @@
   height: 100%;
   overflow: hidden;
   width: 100%;
+  transition: margin-left 0.3s ease;
+}
+
+.contentWithFilter {
+  margin-left: 230px;
 }
 
 .header {
   background-color: white;
-  border-bottom: 1px solid #e5e7eb; // slate-200
-  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
 }
 
 .headerContent {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .titleRow {
@@ -95,7 +138,7 @@
   padding: 0.5rem 1.25rem;
   font-size: 14px;
   font-weight: 500;
-  background-color: #6366f1;
+  background-color: #0e73f6;
   color: white;
   border: none;
   border-radius: 0.375rem;
@@ -103,7 +146,7 @@
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #138496;
+    background-color: #0c5fd4;
   }
 }
 
@@ -409,11 +452,10 @@
 .footer {
   position: fixed;
   bottom: 0;
-  left: 90px; // Sidebar width (from layout.jsx pl-[90px])
+  left: 83px; // Sidebar width
   right: 0;
-  width: calc(100% - 90px);
   background-color: white;
-  border-top: 1px solid #e5e7eb; // slate-200
+  border-top: 1px solid #e5e7eb;
   padding: 0.75rem 1.5rem;
   display: flex;
   align-items: center;
@@ -421,12 +463,11 @@
   flex-shrink: 0;
   z-index: 10;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-  transition: left 0.3s ease, width 0.3s ease;
+  transition: left 0.3s ease;
 }
 
 .footerWithFilter {
-  left: 370px; // Sidebar width (90px) + FilterSidebar width (280px)
-  width: calc(100% - 370px);
+  left: 313px; // Sidebar width (83px) + FilterSidebar width (230px)
 }
 
 .footerText {

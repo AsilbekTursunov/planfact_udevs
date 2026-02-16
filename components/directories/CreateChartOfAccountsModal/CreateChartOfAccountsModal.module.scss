@@ -108,8 +108,8 @@
   }
 
   &.active {
-    color: #6366f1;
-    border-bottom-color: #6366f1;
+    color: #0E73F6;
+    border-bottom-color: #0E73F6;
   }
 
   &.inactive {
@@ -165,7 +165,7 @@
 
   &:focus {
     outline: none;
-    border-color: #6366f1;
+    border-color: #0E73F6;
   }
 
   &.inputError {
@@ -202,7 +202,7 @@
 
   &:focus {
     outline: none;
-    border-color: #6366f1;
+    border-color: #0E73F6;
   }
 }
 
@@ -230,7 +230,7 @@
 .cancelButton {
   padding: 0.75rem 1.5rem;
   font-size: 15px;
-  color: #6366f1;
+  color: #0E73F6;
   background: none;
   border: none;
   font-weight: 500;
@@ -239,7 +239,7 @@
   border-radius: 0.25rem;
 
   &:hover:not(:disabled) {
-    color: #138496;
+    color: #0c5fd4;
   }
 
   &:disabled {
@@ -251,7 +251,7 @@
 .submitButton {
   padding: 0.75rem 2rem;
   font-size: 15px;
-  background-color: #6366f1;
+  background-color: #0E73F6;
   color: white;
   border: none;
   border-radius: 0.25rem;
@@ -260,7 +260,7 @@
   transition: background-color 0.2s;
 
   &:hover:not(:disabled) {
-    background-color: #138496;
+    background-color: #0c5fd4;
   }
 
   &:disabled {
