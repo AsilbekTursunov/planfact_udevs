@@ -183,9 +183,9 @@ export const useBankAccountsPlanFact = (params = {}) => {
       }
     },
     enabled: true,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnMount: false, // Don't refetch on component mount if data exists
+    staleTime: 0, // Always consider data stale
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnMount: true, // Always refetch on component mount
     refetchOnWindowFocus: false, // Don't refetch on window focus
     retry: false,
   })

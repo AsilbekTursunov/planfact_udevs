@@ -9,6 +9,7 @@ import {
 	useLegalEntitiesPlanFact,
 	useOperationsList,
 	useDeleteOperation,
+	useChartOfAccountsPlanFact,
 } from '@/hooks/useDashboard'
 import { OperationsFiltersSidebar } from '@/components/operations/OperationsFiltersSidebar/OperationsFiltersSidebar'
 import { OperationsHeader } from '@/components/operations/OperationsHeader/OperationsHeader'
@@ -155,6 +156,10 @@ export default function OperationsPage() {
 		limit: 100,
 	})
 	const { data: legalEntitiesData } = useLegalEntitiesPlanFact({
+		page: 1,
+		limit: 100,
+	})
+	const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({
 		page: 1,
 		limit: 100,
 	})

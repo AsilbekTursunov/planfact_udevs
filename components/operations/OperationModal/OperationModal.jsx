@@ -329,124 +329,68 @@ export function OperationModal({
 		}))
 	}, [legalEntitiesData])
 
-	// Transform chart of accounts data - show full tree filtered by type
+	// Transform chart of accounts data - show only children of relevant root based on tab
 	const chartOfAccountsTree = useMemo(() => {
-		// New API returns hierarchical data with children already built
 		const rootItems = chartOfAccountsData?.data?.data?.data || []
 		if (rootItems.length === 0) return []
 
-
-		// Recursive function to filter and transform tree based on active tab
-		const filterAndTransformTree = (item, skipTypeCheck = false) => {
-			// Check if item has tip (type) - skip for manually created nodes
-			if (!skipTypeCheck && (!item.tip || !Array.isArray(item.tip) || item.tip.length === 0)) {
-				return null
-			}
-
-			const tipText = item.tip ? item.tip[0] : ''
-
-			// For income tab, only show items with "Доход" type
-			if (!skipTypeCheck && activeTab === 'income' && !tipText.includes('Доход')) {
-				return null
-			}
-
-			// For payment tab, only show items with "Расход" type
-			if (!skipTypeCheck && activeTab === 'payment' && !tipText.includes('Расход')) {
-				return null
-			}
-
-			// For accrual tab, show Актив, Капитал, Обязательства
-			if (!skipTypeCheck && activeTab === 'accrual') {
-				const isValidType = tipText.includes('Актив') ||
-					tipText.includes('Капитал') ||
-					tipText.includes('Обязательства')
-				if (!isValidType) {
-					return null
-				}
-			}
-
-			// Process children recursively
+		// Recursive function to transform tree
+		const convertToTreeNode = (item) => {
 			const children = item.children || []
-			const transformedChildren = children
-				.map(child => filterAndTransformTree(child, false))
-				.filter(Boolean) // Remove null items
+			const transformedChildren = children.map(child => convertToTreeNode(child))
 
-			// Build tree node
-			const treeNode = {
-				value: item.guid || item.value || item.nazvanie, // Use guid, value, or name
-				title: item.nazvanie || item.title || 'Без названия',
-				selectable: item.selectable !== undefined ? item.selectable : true,
-				expanded: item.expanded !== undefined ? item.expanded : false,
-				tip: item.tip,
+			return {
+				value: item.guid || item.nazvanie,
+				title: item.nazvanie || 'Без названия',
+				selectable: true,
 				children: transformedChildren.length > 0 ? transformedChildren : undefined,
 			}
-
-			return treeNode
 		}
 
-		// Find the root item that matches the active tab
-		let matchingRootItem = null
-		let headerTitle = ''
-
+		// For income tab - show only children of "Доходы"
 		if (activeTab === 'income') {
-			matchingRootItem = rootItems.find(item =>
-				item.nazvanie === 'Доходы' ||
-				(item.tip && item.tip[0] && item.tip[0].includes('Доход'))
-			)
-			headerTitle = 'Доходы'
-		} else if (activeTab === 'payment') {
-			matchingRootItem = rootItems.find(item =>
-				item.nazvanie === 'Расходы' ||
-				(item.tip && item.tip[0] && item.tip[0].includes('Расход'))
-			)
-			headerTitle = 'Расходы'
+			const incomeRoot = rootItems.find(item => item.nazvanie === 'Доходы')
+			if (incomeRoot && incomeRoot.children) {
+				return incomeRoot.children.map(child => convertToTreeNode(child))
+			}
+			return []
 		}
 
-		// For income and payment tabs, return children wrapped in a header node
-		if ((activeTab === 'income' || activeTab === 'payment') && matchingRootItem) {
-			const children = matchingRootItem.children || []
-			const transformedChildren = children
-				.map(child => filterAndTransformTree(child, false))
-				.filter(Boolean)
-
-			// Create a single root node with the type as title
-			const treeWithHeader = [{
-				value: `header_${activeTab}`,
-				title: headerTitle,
-				selectable: false,
-				expanded: true, // Always expanded
-				tip: matchingRootItem.tip,
-				children: transformedChildren
-			}]
-
-			console.log('=== Transformed Tree (with header) ===')
-			console.log('Tree:', treeWithHeader)
-
-			return treeWithHeader
+		// For payment tab - show only children of "Расходы"
+		if (activeTab === 'payment') {
+			const expenseRoot = rootItems.find(item => item.nazvanie === 'Расходы')
+			if (expenseRoot && expenseRoot.children) {
+				return expenseRoot.children.map(child => convertToTreeNode(child))
+			}
+			return []
 		}
 
-		// For accrual tab, transform all root items
-		const transformedTree = rootItems
-			.map(item => filterAndTransformTree(item, false))
-			.filter(Boolean) // Remove null items
+		// For accrual tab - show children of Актив, Обязательства, Капитал
+		if (activeTab === 'accrual') {
+			const result = []
+			const allowedRoots = ['Актив', 'Обязательства', 'Капитал']
+			
+			allowedRoots.forEach(rootName => {
+				const root = rootItems.find(item => item.nazvanie === rootName)
+				if (root && root.children) {
+					// Add children of this root
+					root.children.forEach(child => {
+						result.push(convertToTreeNode(child))
+					})
+				}
+			})
+			
+			return result
+		}
 
-		console.log('=== Transformed Tree ===')
-		console.log('Tree:', transformedTree)
-		console.log('Tree length:', transformedTree.length)
+		// For transfer tab - no chart of accounts needed
+		if (activeTab === 'transfer') {
+			return []
+		}
 
-		return transformedTree
+		// Default - show all
+		return rootItems.map(item => convertToTreeNode(item))
 	}, [chartOfAccountsData, activeTab])
-
-	// Debug: log the tree structure
-	useEffect(() => {
-		console.log('=== Chart of Accounts Tree ===')
-		console.log('Active Tab:', activeTab)
-		console.log('Tree:', JSON.stringify(chartOfAccountsTree, null, 2))
-		console.log('Tree length:', chartOfAccountsTree.length)
-	}, [chartOfAccountsTree, activeTab])
-
-	// Remove the old filteredChartOfAccountsTree since filtering is now done in chartOfAccountsTree
-	const filteredChartOfAccountsTree = chartOfAccountsTree
 
 	const bankAccounts = useMemo(() => {
 		const items = bankAccountsData?.data?.data?.data || []
@@ -695,21 +639,35 @@ export function OperationModal({
 				data_obnovleniya: now.toISOString(),
 			}
 
-			// Add optional fields only if they have values (don't send empty strings or null)
-			if (formData.accountAndLegalEntity) {
-				requestData.my_accounts_id = formData.accountAndLegalEntity
-			}
-			if (formData.counterparty) {
-				requestData.counterparties_id = formData.counterparty
-			}
-			if (formData.chartOfAccount) {
-				requestData.chart_of_accounts_id = formData.chartOfAccount
-			}
-			if (formData.legalEntity) {
-				requestData.legal_entity_id = formData.legalEntity
-			}
-			if (currencyId) {
-				requestData.currenies_id = currencyId
+			// Special handling for transfer operations
+			if (activeTab === 'transfer') {
+				// For transfer, use fromAccount as my_accounts_id and toAccount as my_accounts_id_2
+				requestData.my_accounts_id = formData.fromAccount
+				requestData.my_accounts_id_2 = formData.toAccount
+				requestData.summa = parseFloat(formData.fromAmount) || 0
+				
+				// Get currency from fromAccount
+				const fromAccount = bankAccounts.find(acc => acc.guid === formData.fromAccount)
+				if (fromAccount && fromAccount.currenies_id) {
+					requestData.currenies_id = fromAccount.currenies_id
+				}
+			} else {
+				// Add optional fields only if they have values (don't send empty strings or null)
+				if (formData.accountAndLegalEntity) {
+					requestData.my_accounts_id = formData.accountAndLegalEntity
+				}
+				if (formData.counterparty) {
+					requestData.counterparties_id = formData.counterparty
+				}
+				if (formData.chartOfAccount) {
+					requestData.chart_of_accounts_id = formData.chartOfAccount
+				}
+				if (formData.legalEntity) {
+					requestData.legal_entity_id = formData.legalEntity
+				}
+				if (currencyId) {
+					requestData.currenies_id = currencyId
+				}
 			}
 
 			// Remove empty strings
@@ -764,11 +722,20 @@ export function OperationModal({
 			)
 
 			// Use fetch to call the API endpoint
+			// Get auth token from localStorage
+			const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+			
+			const headers = {
+				'Content-Type': 'application/json',
+			}
+			
+			if (authToken) {
+				headers['Authorization'] = `Bearer ${authToken}`
+			}
+			
 			const response = await fetch(endpoint, {
 				method,
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers,
 				body: JSON.stringify({ data: requestData }),
 			})
 
@@ -1036,7 +1003,7 @@ export function OperationModal({
 									<div className={styles.formRow}>
 										<label className={styles.label}>Статья</label>
 										<TreeSelect
-											data={filteredChartOfAccountsTree}
+											data={chartOfAccountsTree}
 											alwaysExpanded={true}
 											value={formData.chartOfAccount}
 											onChange={value => setFormData({ ...formData, chartOfAccount: value })}
@@ -1189,7 +1156,7 @@ export function OperationModal({
 									<div className={styles.formRow}>
 										<label className={styles.label}>Статья</label>
 										<TreeSelect
-											data={filteredChartOfAccountsTree}
+											data={chartOfAccountsTree}
 											alwaysExpanded={true}
 											value={formData.chartOfAccount}
 											onChange={value => setFormData({ ...formData, chartOfAccount: value })}
@@ -1506,7 +1473,7 @@ export function OperationModal({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<TreeSelect
-													data={filteredChartOfAccountsTree}
+													data={chartOfAccountsTree}
 													alwaysExpanded={true}
 													value={formData.expenseItem}
 													onChange={value => {
@@ -1575,7 +1542,7 @@ export function OperationModal({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<TreeSelect
-													data={filteredChartOfAccountsTree}
+													data={chartOfAccountsTree}
 													alwaysExpanded={true}
 													value={formData.creditItem}
 													onChange={value => {

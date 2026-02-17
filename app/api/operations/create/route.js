@@ -3,7 +3,7 @@ import { apiConfig } from '@/lib/config/api'
 
 /**
  * POST /api/operations/create
- * Create a new operation using v2/items/operations endpoint
+ * Create a new operation using invoke_function with create_operation method
  */
 export async function POST(request) {
   try {
@@ -22,24 +22,12 @@ export async function POST(request) {
     }
 
     const baseURL = apiConfig.ucode.baseURL
-    // Get token from Authorization header (set by axios interceptor)
     const authHeader = request.headers.get('authorization')
     const authToken = authHeader?.replace('Bearer ', '') || apiConfig.ucode.authToken
     const projectId = apiConfig.ucode.projectId
+    const appId = apiConfig.ucode.appId || projectId
     const environmentId = apiConfig.ucode['environment-id']
 
-    // Build URL with query parameters
-    const queryParams = new URLSearchParams()
-    queryParams.append('project-id', projectId)
-    queryParams.append('environment-id', environmentId)
-
-    const url = `${baseURL}/v2/items/operations?${queryParams.toString()}`
-
-    console.log('Create operation request:', {
-      url,
-      data: JSON.stringify(data, null, 2)
-    })
-    
     // Validate required fields
     if (!data.tip || !Array.isArray(data.tip) || data.tip.length === 0) {
       return NextResponse.json(
@@ -63,19 +51,43 @@ export async function POST(request) {
       )
     }
 
+    // Build request body for invoke_function
+    const requestBody = {
+      auth: {
+        type: 'apikey',
+        data: {}
+      },
+      data: {
+        app_id: appId,
+        environment_id: environmentId,
+        project_id: projectId,
+        method: 'create_operation',
+        user_id: '',
+        object_data: data
+      }
+    }
+
+    const url = `${baseURL}/v2/invoke_function/planfact-plan-fact`
+
+    console.log('Create operation request:', {
+      url,
+      body: JSON.stringify(requestBody, null, 2)
+    })
+
     // Prepare headers
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'API-KEY',
-      'environment-id': environmentId,
-      'X-API-KEY': 'P-7LpJciQKbkwuC2ecwefamfEQhoe5F8Bc',
+    }
+
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`
     }
 
     const response = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ data }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!response.ok) {
