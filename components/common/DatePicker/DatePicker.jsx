@@ -9,6 +9,7 @@ import '@/styles/datepicker.css'
 import styles from './DatePicker.module.scss'
 import { cn } from '@/app/lib/utils'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
+import { ExclamationIcon } from '../../../constants/icons'
 
 export function DatePicker({ value, onChange, placeholder = 'Выберите дату', showCheckbox = false, checkboxLabel = '', checkboxValue = false, onCheckboxChange, className }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -149,6 +150,10 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
           </svg>
         </button>
       </div>
+
+      {/* <div>
+        <ExclamationIcon />
+      </div> */}
 
       {showCheckbox && (
         <OperationCheckbox

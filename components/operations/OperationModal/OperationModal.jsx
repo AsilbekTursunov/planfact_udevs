@@ -369,7 +369,7 @@ export function OperationModal({
 		if (activeTab === 'accrual') {
 			const result = []
 			const allowedRoots = ['Актив', 'Обязательства', 'Капитал']
-			
+
 			allowedRoots.forEach(rootName => {
 				const root = rootItems.find(item => item.nazvanie === rootName)
 				if (root && root.children) {
@@ -379,7 +379,7 @@ export function OperationModal({
 					})
 				}
 			})
-			
+
 			return result
 		}
 
@@ -645,7 +645,7 @@ export function OperationModal({
 				requestData.my_accounts_id = formData.fromAccount
 				requestData.my_accounts_id_2 = formData.toAccount
 				requestData.summa = parseFloat(formData.fromAmount) || 0
-				
+
 				// Get currency from fromAccount
 				const fromAccount = bankAccounts.find(acc => acc.guid === formData.fromAccount)
 				if (fromAccount && fromAccount.currenies_id) {
@@ -724,15 +724,15 @@ export function OperationModal({
 			// Use fetch to call the API endpoint
 			// Get auth token from localStorage
 			const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-			
+
 			const headers = {
 				'Content-Type': 'application/json',
 			}
-			
+
 			if (authToken) {
 				headers['Authorization'] = `Bearer ${authToken}`
 			}
-			
+
 			const response = await fetch(endpoint, {
 				method,
 				headers,
@@ -1115,6 +1115,10 @@ export function OperationModal({
 													placeholder='0'
 													className={cn(styles.input, errors.amount && styles.error)}
 												/>
+												<div>
+													{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
+													{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+												</div>
 												{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
 													{getAccountCurrency(formData.accountAndLegalEntity)}
 												</div>}
@@ -1264,7 +1268,7 @@ export function OperationModal({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<div className={styles.inputGroup}>
-													<input
+													<Input
 														type='text'
 														value={formatAmount(formData.fromAmount)}
 														onChange={e => {
