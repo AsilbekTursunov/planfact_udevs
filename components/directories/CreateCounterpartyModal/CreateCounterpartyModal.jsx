@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import Input from '@/components/shared/Input'
+import TextArea from '@/components/shared/TextArea'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
 import { useChartOfAccountsPlanFact, useCreateCounterparty, useCreateCounterpartiesGroup, useCounterpartiesGroupsV2, useUpdateCounterpartiesGroup, useDeleteCounterpartiesGroups } from '@/hooks/useDashboard'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
@@ -323,8 +324,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
           attributes: {}
         }
 
-        // await createMutation.mutateAsync(submitData)
-        console.log(submitData)
+        await createMutation.mutateAsync(submitData) 
 
         // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
@@ -612,7 +612,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                     Название <span className={styles.required}>*</span>
                   </label>
                   <div className={styles.inputContainer}>
-                    <input
+                      <Input
                       type="text"
                       value={groupFormData.nazvanie_gruppy}
                       onChange={(e) => setGroupFormData({ ...groupFormData, nazvanie_gruppy: e.target.value })}
@@ -628,7 +628,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                 <div className={styles.formRow}>
                   <label className={styles.label}>Комментарий</label>
                   <div className={styles.inputContainer}>
-                    <textarea
+                      <TextArea
                       value={groupFormData.opisanie_gruppy}
                       onChange={(e) => setGroupFormData({ ...groupFormData, opisanie_gruppy: e.target.value })}
                       placeholder="Пояснение к группе контрагентов"

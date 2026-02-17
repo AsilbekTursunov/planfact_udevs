@@ -8,28 +8,31 @@ import { useDeleteMyAccounts, useBankAccountsPlanFact, useLegalEntitiesPlanFact 
 import CreateMyAccountModal from '@/components/directories/CreateMyAccountModal/CreateMyAccountModal'
 import { AccountMenu } from '@/components/directories/AccountMenu/AccountMenu'
 import { DeleteAccountConfirmModal } from '@/components/directories/DeleteAccountConfirmModal/DeleteAccountConfirmModal'
+import Input from '@/components/shared/Input'
 import { cn } from '@/app/lib/utils'
 import styles from './accounts.module.scss'
+import { SearchBar } from '../../../../components/directories/SearchBar/SearchBar'
+import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
 
 export default function AccountsPage() {
   // Block body scroll for this page only
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     document.body.style.height = '100vh'
-    
+
     return () => {
       document.body.style.overflow = ''
       document.body.style.height = ''
     }
   }, [])
-  
+
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState(null)
   const [deletingAccount, setDeletingAccount] = useState(null)
   const deleteMutation = useDeleteMyAccounts()
-  
+
   const [accountingMethod, setAccountingMethod] = useState('cash')
   const [isMethodDropdownOpen, setIsMethodDropdownOpen] = useState(false)
   const methodDropdownRef = useRef(null)
@@ -43,7 +46,7 @@ export default function AccountsPage() {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
-  
+
   const [filters, setFilters] = useState({
     nalichnye: true,
     beznalichnye: true,
@@ -61,20 +64,20 @@ export default function AccountsPage() {
     page: 1,
     limit: 100,
   })
-  
+
   const legalEntitiesItems = useMemo(() => {
     const items = legalEntitiesData?.data?.data?.data || []
     return Array.isArray(items) ? items : []
   }, [legalEntitiesData])
-  
+
   // Fetch bank accounts using new invoke_function API
   const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useBankAccountsPlanFact({
     page: 1,
     limit: 100,
   })
-  
+
   console.log('Bank accounts data:', bankAccountsData)
-  
+
   // Extract bank accounts from response - correct path is data.data.data
   const bankAccountsItems = useMemo(() => {
     const items = bankAccountsData?.data?.data?.data || []
@@ -113,11 +116,11 @@ export default function AccountsPage() {
   // Filter bank accounts on frontend based on selected filters
   const filteredBankAccountsItems = useMemo(() => {
     if (!bankAccountsItems || bankAccountsItems.length === 0) return []
-    
+
     return bankAccountsItems.filter(item => {
       // Note: New API doesn't return 'tip' field, so type filtering is disabled
       // If you need type filtering, it should be added to the API
-      
+
       // Filter by search query
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase()
@@ -125,15 +128,15 @@ export default function AccountsPage() {
         const accountNumber = (item.nomer_scheta || '').toLowerCase()
         if (!name.includes(query) && !accountNumber.includes(query)) return false
       }
-      
+
       // Filter by selected accounts
       if (selectedAccounts.length > 0) {
         if (!selectedAccounts.includes(item.guid)) return false
       }
-      
+
       // Note: New API doesn't return 'legal_entity_id' field
       // Legal entity filtering is disabled for now
-      
+
       return true
     })
   }, [bankAccountsItems, searchQuery, selectedAccounts])
@@ -144,17 +147,18 @@ export default function AccountsPage() {
     // Define only the fields we want to display
     const standardFields = [
       'nazvanie',
-      'nomer_scheta',
       'nachalьnyy_ostatok',
       'balans',
-      'currenies_kod',
+      "tip",
+      "legal_entity_id",
+      'currenies_kod'
     ]
-    
+
     return standardFields
   }, [])
 
   const isRowSelected = (id) => selectedRows.includes(id)
-  
+
   const getAllSelectableIds = () => {
     return filteredBankAccountsItems.map(item => item.guid)
   }
@@ -171,18 +175,18 @@ export default function AccountsPage() {
       setSelectedRows(getAllSelectableIds())
     }
   }
-  
+
   const toggleRowSelection = (id) => {
-      if (selectedRows.includes(id)) {
-        setSelectedRows(prev => prev.filter(rid => rid !== id))
-      } else {
-        setSelectedRows(prev => [...prev, id])
-      }
+    if (selectedRows.includes(id)) {
+      setSelectedRows(prev => prev.filter(rid => rid !== id))
+    } else {
+      setSelectedRows(prev => [...prev, id])
+    }
   }
 
   const handleDeleteConfirm = async () => {
     if (!deletingAccount) return
-    
+
     try {
       await deleteMutation.mutateAsync([deletingAccount.guid])
       setDeletingAccount(null)
@@ -200,7 +204,8 @@ export default function AccountsPage() {
 
   const formatFieldValue = (item, field) => {
     const value = item[field]
-    
+
+
     switch (field) {
       case 'nazvanie':
         return value || '–'
@@ -210,12 +215,12 @@ export default function AccountsPage() {
         // Use current_balance from API, but if it's 0 and nachalьnyy_ostatok exists, use that
         const currentBalance = item.current_balance
         const initialBalance = item.nachalьnyy_ostatok
-        
+
         // If current_balance is 0 or null/undefined, fallback to initial balance
-        const balance = (currentBalance !== null && currentBalance !== undefined && currentBalance !== 0) 
-          ? currentBalance 
+        const balance = (currentBalance !== null && currentBalance !== undefined && currentBalance !== 0)
+          ? currentBalance
           : (initialBalance ?? 0)
-        
+
         return typeof balance === 'number' ? balance.toLocaleString('ru-RU') : '–'
       case 'nachalьnyy_ostatok':
         // Display initial balance from nachalьnyy_ostatok field
@@ -231,12 +236,12 @@ export default function AccountsPage() {
         }
         return '–'
       case 'currenies_id':
-        return item.currenies_id_data 
+        return item.currenies_id_data
           ? `${item.currenies_id_data.kod || ''} (${item.currenies_id_data.nazvanie || ''})`.trim()
           : value
       case 'legal_entity_id':
-        return item.legal_entity_id_data 
-          ? item.legal_entity_id_data.nazvanie || value
+        return item.legal_entity_id
+          ? item.legal_entity_name || value
           : '–'
       case 'komentariy':
         // Remove HTML tags if present
@@ -259,26 +264,26 @@ export default function AccountsPage() {
     <div className={styles.container}>
       <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
         <FilterSection title="Тип">
-          <div className="space-y-2.5">
-            <FilterCheckbox 
-              checked={filters.nalichnye} 
-              onChange={() => toggleFilter('nalichnye')} 
-              label="Наличный" 
+          <div className="space-y-2.5 flex flex-col items-start">
+            <OperationCheckbox
+              checked={filters.nalichnye}
+              onChange={() => toggleFilter('nalichnye')}
+              label="Наличный"
             />
-            <FilterCheckbox 
-              checked={filters.beznalichnye} 
-              onChange={() => toggleFilter('beznalichnye')} 
-              label="Безналичный" 
+            <OperationCheckbox
+              checked={filters.beznalichnye}
+              onChange={() => toggleFilter('beznalichnye')}
+              label="Безналичный"
             />
-            <FilterCheckbox 
-              checked={filters.kartaFizlica} 
-              onChange={() => toggleFilter('kartaFizlica')} 
-              label="Карта физлица" 
+            <OperationCheckbox
+              checked={filters.kartaFizlica}
+              onChange={() => toggleFilter('kartaFizlica')}
+              label="Карта физлица"
             />
-            <FilterCheckbox 
-              checked={filters.elektronnye} 
-              onChange={() => toggleFilter('elektronnye')} 
-              label="Электронный" 
+            <OperationCheckbox
+              checked={filters.elektronnye}
+              onChange={() => toggleFilter('elektronnye')}
+              label="Электронный"
             />
           </div>
         </FilterSection>
@@ -293,7 +298,7 @@ export default function AccountsPage() {
               placeholder="Выберите счета"
               disabled={accountsOptions.length === 0}
             />
-            
+
             <DropdownFilter
               label="Юрлица"
               options={entities}
@@ -311,7 +316,7 @@ export default function AccountsPage() {
         <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
           <button className={styles.filterToggleButton}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -321,29 +326,23 @@ export default function AccountsPage() {
         <div className={styles.header}>
           <div className={styles.headerContent}>
             <div className={styles.titleRow}>
-            <h1 className={styles.title}>Мои счета</h1>
-              <button 
+              <h1 className={styles.title}>Мои счета</h1>
+              <button
                 onClick={() => setIsCreateModalOpen(true)}
                 className={styles.createButton}
               >
                 Создать
               </button>
-              
+
               {/* Search - pushed to the right */}
               <div className={styles.headerActionsRight}>
-              {/* Search */}
-              <div className={styles.searchContainer}>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Поиск по названию"
-                  className={styles.searchInput}
-                />
-                <svg className={styles.searchIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="m21 21-4.35-4.35"></path>
-                </svg>
+                {/* Search */}
+                <div className={styles.searchContainer}>
+                  <SearchBar
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Поиск по названию"
+                  />
                 </div>
               </div>
             </div>
@@ -360,18 +359,19 @@ export default function AccountsPage() {
                   </th>
                   {allFields.map((field) => (
                     <th key={field} className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
+                      <button className={styles.tableHeaderButton}>
                         {field === 'nazvanie' ? 'Название' :
-                         field === 'nomer_scheta' ? 'Номер счета' :
-                         field === 'nachalьnyy_ostatok' ? 'Начальный остаток' :
-                         field === 'balans' ? 'Текущий баланс' :
-                         field === 'currenies_kod' ? 'Валюта' :
-                         field}
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
+                          field === 'nachalьnyy_ostatok' ? 'Начальный остаток' :
+                            field === 'balans' ? 'Текущий остаток' :
+                              field === 'currenies_kod' ? 'Валюта' :
+                                field === 'tip' ? 'Тип' :
+                                  field === 'legal_entity_id' ? 'Юрлицо' :
+                                    field}
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </th>
                   ))}
                   <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
                 </tr>
@@ -391,8 +391,8 @@ export default function AccountsPage() {
                   </tr>
                 ) : (
                   filteredBankAccountsItems.map((item, index) => (
-                    <tr 
-                      key={item.guid} 
+                    <tr
+                      key={item.guid}
                       className={styles.tableRow}
                     >
                       <td className={cn(styles.tableCell, styles.tableCellIndex)}>
@@ -401,7 +401,7 @@ export default function AccountsPage() {
                       {allFields.map((field) => (
                         <td key={field} className={cn(styles.tableCell, field === 'komentariy' && styles.commentCell)}>
                           {formatFieldValue(item, field)}
-                      </td>
+                        </td>
                       ))}
                       <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                         <AccountMenu
@@ -413,6 +413,7 @@ export default function AccountsPage() {
                     </tr>
                   ))
                 )}
+
               </tbody>
             </table>
           </div>

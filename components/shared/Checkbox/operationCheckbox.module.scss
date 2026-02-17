@@ -18,7 +18,7 @@
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  border: 1px solid #e2e8f0; // Light grey border
+  border: 2px solid #e2e8f0; // Light grey border
   background-color: white;
   display: flex;
   align-items: center;
@@ -31,12 +31,12 @@
 }
 
 .hiddenInput:checked + .customCheckbox {
-  background-color: #1E98AD; // Teal color from debit icon
-  border-color: #1E98AD;
+  background-color: white; // Teal color from debit icon
+  border-color: #307FE2;
 }
 
 .checkmark {
-  color: white;
+  color: #307FE2;
   width: 30px;
   height: 30px;
   display: block;

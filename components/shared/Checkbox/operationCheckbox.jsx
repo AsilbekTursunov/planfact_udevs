@@ -14,7 +14,7 @@ const OperationCheckbox = ({ checked, onChange, className, ...props }) => {
         {...props}
       />
       <div className={styles.customCheckbox}>
-        {checked && <LuCheck className={styles.checkmark} strokeWidth={2} />}
+        {checked && <LuCheck className={styles.checkmark} strokeWidth={3} />}
       </div>
       {props.label && <span className={styles.label}>{props.label}</span>}
     </label>

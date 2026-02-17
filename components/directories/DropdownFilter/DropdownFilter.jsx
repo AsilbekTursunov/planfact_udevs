@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './DropdownFilter.module.scss'
+import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 
 export function DropdownFilter({ label, options, selectedValues, onChange, placeholder = "Выберите...", grouped = false, disabled = false }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -25,7 +26,7 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
       const dropdownHeight = Math.min(options.length * 40 + 16, 300)
       const spaceBelow = window.innerHeight - rect.bottom
       const spaceAbove = rect.top
-      
+
       setOpenUpward(spaceBelow < dropdownHeight && spaceAbove > spaceBelow)
     }
   }, [isOpen, options.length])
@@ -39,23 +40,23 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
   }
 
   const selectedCount = selectedValues.length
-  
+
   // Get selected items for chips
   const selectedItems = options.filter(opt => selectedValues.includes(opt.value))
-  
+
   const removeChip = (e, value) => {
     e.stopPropagation()
     onChange(selectedValues.filter(v => v !== value))
   }
 
   // Group options by group field if grouped is true
-  const groupedOptions = grouped 
+  const groupedOptions = grouped
     ? options.reduce((acc, option) => {
-        const group = option.group || 'Без группы'
-        if (!acc[group]) acc[group] = []
-        acc[group].push(option)
-        return acc
-      }, {})
+      const group = option.group || 'Без группы'
+      if (!acc[group]) acc[group] = []
+      acc[group].push(option)
+      return acc
+    }, {})
     : { 'all': options }
 
   return (
@@ -68,7 +69,7 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
         <div className={styles.buttonContent}>
           {selectedCount > 0 ? (
             <div className={styles.chipsContainer}>
-              {selectedItems.slice(0, 2).map((item) => (
+              {selectedItems.map((item) => (
                 <span key={item.value} className={styles.chip}>
                   {item.label}
                   <span
@@ -89,18 +90,15 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
                   </span>
                 </span>
               ))}
-              {selectedCount > 2 && (
-                <span className={styles.chipMore}>+{selectedCount - 2}</span>
-              )}
             </div>
           ) : (
             <span className={cn(styles.buttonText, styles.empty)}>{placeholder}</span>
           )}
         </div>
-        <svg 
-          className={cn(styles.buttonIcon, isOpen && styles.open)} 
-          fill="none" 
-          viewBox="0 0 24 24" 
+        <svg
+          className={cn(styles.buttonIcon, isOpen && styles.open)}
+          fill="none"
+          viewBox="0 0 24 24"
           stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -108,7 +106,7 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
       </button>
 
       {isOpen && (
-        <div 
+        <div
           className={cn(
             styles.dropdown,
             openUpward ? styles.openUpward : styles.openDownward
@@ -122,32 +120,16 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
                     {groupName}
                   </div>
                 )}
-                {groupItems.map((option) => (
-                  <label 
-                    key={option.value} 
-                    className={styles.option}
-                  >
-                    <div className={styles.checkboxContainer}>
-                      <input
-                        type="checkbox"
-                        checked={selectedValues.includes(option.value)}
-                        onChange={() => toggleOption(option.value)}
-                        className={styles.checkboxInput}
-                      />
-                      <div className={cn(
-                        styles.checkbox,
-                        selectedValues.includes(option.value) ? styles.checked : styles.unchecked
-                      )}>
-                        {selectedValues.includes(option.value) && (
-                          <svg className={styles.checkboxIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <span className={styles.optionText}>{option.label}</span>
-                  </label>
-                ))}
+                <div className='flex flex-col items-start gap-3'>
+                  {groupItems.map((option) => (
+                    <OperationCheckbox
+                      key={option.value}
+                      checked={selectedValues.includes(option.value)}
+                      onChange={() => toggleOption(option.value)}
+                      label={option.label}
+                    />
+                  ))}
+                </div>
               </div>
             ))}
           </div>

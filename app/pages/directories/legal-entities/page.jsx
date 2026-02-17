@@ -8,6 +8,7 @@ import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityMo
 import LegalEntityMenu from '@/components/directories/LegalEntityMenu/LegalEntityMenu'
 import DeleteLegalEntityConfirmModal from '@/components/directories/DeleteLegalEntityConfirmModal/DeleteLegalEntityConfirmModal'
 import styles from './legal-entities.module.scss'
+import { SearchBar } from '../../../../components/directories/SearchBar/SearchBar'
 
 export default function LegalEntitiesPage() {
   const queryClient = useQueryClient()
@@ -16,7 +17,7 @@ export default function LegalEntitiesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingLegalEntity, setEditingLegalEntity] = useState(null)
   const [deletingLegalEntity, setDeletingLegalEntity] = useState(null)
-  
+
   const deleteMutation = useDeleteLegalEntities()
 
   // Fetch legal entities using new invoke_function API
@@ -24,9 +25,9 @@ export default function LegalEntitiesPage() {
     page: 1,
     limit: 100,
   })
-  
+
   console.log('Legal entities data:', legalEntitiesData)
-  
+
   // Extract legal entities from response - correct path is data.data.data
   const legalEntitiesItems = useMemo(() => {
     const items = legalEntitiesData?.data?.data?.data || []
@@ -48,7 +49,7 @@ export default function LegalEntitiesPage() {
   }, [legalEntitiesItems])
 
   const isRowSelected = (id) => selectedRows.includes(id)
-  
+
   const toggleRowSelection = (id) => {
     if (selectedRows.includes(id)) {
       setSelectedRows(prev => prev.filter(rid => rid !== id))
@@ -69,9 +70,9 @@ export default function LegalEntitiesPage() {
 
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return entities
-    
+
     const query = searchQuery.toLowerCase()
-    return entities.filter(item => 
+    return entities.filter(item =>
       item.shortName.toLowerCase().includes(query) ||
       item.fullName.toLowerCase().includes(query) ||
       item.inn.includes(query)
@@ -116,27 +117,21 @@ export default function LegalEntitiesPage() {
           <div className={styles.headerInner}>
             <div className={styles.titleRow}>
               <h1 className={styles.title}>Мои юрлица</h1>
-              <button 
+              <button
                 onClick={() => setIsCreateModalOpen(true)}
                 className={styles.createButton}
               >
                 Создать
               </button>
             </div>
-            
+
             {/* Search */}
             <div className={styles.searchContainer}>
-              <input
-                type="text"
+              <SearchBar
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={setSearchQuery}
                 placeholder="Поиск по названию"
-                className={styles.searchInput}
               />
-              <svg className={styles.searchIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
             </div>
           </div>
         </div>
@@ -165,7 +160,7 @@ export default function LegalEntitiesPage() {
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className={styles.tbody}>
                 {isLoadingLegalEntities ? (
                   <tr>
                     <td colSpan={6} className={styles.td} style={{ textAlign: 'center', padding: '2rem' }}>

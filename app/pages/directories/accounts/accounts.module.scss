@@ -102,8 +102,7 @@
 }
 
 .header {
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: white; 
   padding: 10px 24px;
   height: 52px;
   display: flex;
@@ -271,16 +270,12 @@
   position: relative;
 }
 
-.searchInput {
-  width: 240px;
+.searchInput { 
   padding-left: 2.25rem;
   padding-right: 1rem;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-  font-size: 13px;
-  color: #0f172a;
-  border: 1px solid #d1d5db; // slate-300
-  border-radius: 0.25rem;
+  font-size: 13px; 
 
   &::placeholder {
     color: #9ca3af; // slate-400
@@ -306,11 +301,12 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  position: relative;
   padding-bottom: 80px;
-  margin: 1.5rem 1.5rem 0 1.5rem;
+  padding: 0rem 1.5rem 0 1.5rem;
   min-height: 0;
-  
-  /* Стилизация скроллбара для Webkit (Chrome, Safari, Edge) */
+  background-color: #fff;
+   
   &::-webkit-scrollbar {
     width: 8px;
   }
@@ -339,12 +335,10 @@
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
-.tableWrapper {
-  overflow-x: auto;
-  overflow-y: visible;
-  background-color: white;
-  border-radius: 0.25rem;
-  border: 1px solid #e5e7eb;
+.tableWrapper { 
+  overflow-y: auto; 
+  border-radius: 0.25rem; 
+  position: relative;
 }
 
 .table {

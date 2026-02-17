@@ -1,13 +1,12 @@
 "use client"
-
-import React, { useState, useRef, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { FilterSidebar, FilterSection, FilterCheckbox } from '@/components/directories/FilterSidebar/FilterSidebar'
+import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
 import { DropdownFilter } from '@/components/directories/DropdownFilter/DropdownFilter'
 import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
 import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
-import { useCounterpartiesV2, useCounterpartiesGroupsV2, useDeleteCounterparties, useDeleteCounterpartiesGroups, useChartOfAccountsPlanFact, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
+import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useChartOfAccountsPlanFact, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
 import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
 import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
 import EditCounterpartyGroupModal from '@/components/directories/EditCounterpartyGroupModal/EditCounterpartyGroupModal'
@@ -17,26 +16,31 @@ import { DeleteCounterpartyConfirmModal } from '@/components/directories/DeleteC
 import { DeleteGroupConfirmModal } from '@/components/directories/DeleteGroupConfirmModal/DeleteGroupConfirmModal'
 import { cn } from '@/app/lib/utils'
 import styles from './counterparties.module.scss'
+import { BsList, BsListNested } from 'react-icons/bs'
+import { CgAddR, CgRemoveR } from 'react-icons/cg'
+import { TbCurrencyRubel } from 'react-icons/tb'
+import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
 
 export default function CounterpartiesPage() {
   // Block body scroll for this page only
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     document.body.style.height = '100vh'
-    
+
     return () => {
       document.body.style.overflow = ''
       document.body.style.height = ''
     }
   }, [])
-  
+
   const router = useRouter()
   const queryClient = useQueryClient()
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedRows, setSelectedRows] = useState([])
-  
+  const [viewMode, setViewMode] = useState('nested')
+
   const [filters, setFilters] = useState({
     // Group filters
     client: true,
@@ -55,60 +59,57 @@ export default function CounterpartiesPage() {
   // Build filters object for API request
   const filtersForAPI = useMemo(() => {
     const apiFilters = {}
-    
+
     // Group filter - gruppa is an array in API
     const selectedGroups = []
     if (filters.client) selectedGroups.push('Клиент')
     if (filters.employee) selectedGroups.push('Сотрудник')
     if (filters.supplier) selectedGroups.push('Поставщик')
-    
+
     // Only add gruppa filter if not all groups are selected
     if (selectedGroups.length > 0 && selectedGroups.length < 3) {
       apiFilters.gruppa = selectedGroups
     }
-    
+
     // Counterparties groups filter
     if (filters.selectedGroups && filters.selectedGroups.length > 0) {
       apiFilters.counterparties_group_id = filters.selectedGroups
     }
-    
+
     // Selected counterparties filter - фильтруем по guid (массив GUID)
     if (filters.selectedCounterparties && filters.selectedCounterparties.length > 0) {
       apiFilters.guid = filters.selectedCounterparties
     }
-    
+
     // Selected chart of accounts filter - фильтруем по chart_of_accounts_id
     if (filters.selectedChartOfAccounts && filters.selectedChartOfAccounts.length > 0) {
       apiFilters.chart_of_accounts_id = filters.selectedChartOfAccounts
     }
-    
+
     // Type filter (Плательщик, Получатель, Смешанный) - фильтруем на фронтенде
     // Не добавляем в API фильтр, так как тип определяется на основе статей
-    
+
     return apiFilters
   }, [filters])
-  
+
   // Fetch counterparties using new invoke_function API
   const { data: counterpartiesData, isLoading: isLoadingCounterparties } = useCounterpartiesPlanFact({
     page: 1,
     limit: 100,
   })
-  
-  console.log('Counterparties data:', counterpartiesData)
-  
+
   // Extract counterparties from response
   const counterpartiesItems = useMemo(() => {
     const items = counterpartiesData?.data?.data?.data || []
-    console.log('Counterparties items:', items)
     return Array.isArray(items) ? items : []
   }, [counterpartiesData])
-  
+
   // Fetch counterparties groups using new invoke_function API
   const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
     page: 1,
     limit: 100,
   })
-  
+
   const counterpartiesGroupsItems = useMemo(() => {
     const items = counterpartiesGroupsData?.data?.data?.data || []
     return Array.isArray(items) ? items : []
@@ -116,10 +117,9 @@ export default function CounterpartiesPage() {
 
   // Fetch chart of accounts for filter
   const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })
-  const chartOfAccountsRaw = chartOfAccountsData?.data?.data?.data || []
-
   // Flatten hierarchical structure to array
   const chartOfAccounts = useMemo(() => {
+    const chartOfAccountsRaw = chartOfAccountsData?.data?.data?.data || []
     const flatten = (items) => {
       let result = []
       items.forEach(item => {
@@ -131,7 +131,7 @@ export default function CounterpartiesPage() {
       return result
     }
     return Array.isArray(chartOfAccountsRaw) ? flatten(chartOfAccountsRaw) : []
-  }, [chartOfAccountsRaw])
+  }, [chartOfAccountsData])
 
   // Prepare options for filters
   const counterpartiesOptions = useMemo(() => {
@@ -184,6 +184,7 @@ export default function CounterpartiesPage() {
   // Convert counterparties API data to component format with grouping
   const { groupedCounterparties, flatCounterparties } = useMemo(() => {
     const items = counterpartiesItems.map((item, index) => {
+
       return {
         id: item.guid || `counterparty-${index}`,
         guid: item.guid,
@@ -206,7 +207,7 @@ export default function CounterpartiesPage() {
         rawData: item
       }
     })
-    
+
     // Применяем фильтры
     const filteredItems = items
 
@@ -215,34 +216,53 @@ export default function CounterpartiesPage() {
     const ungrouped = []
 
     filteredItems.forEach(item => {
-        if (item.counterparties_group_id) {
-          if (!groupsMap.has(item.counterparties_group_id)) {
-            // Find the group data from counterpartiesGroupsItems
-            const groupData = counterpartiesGroupsItems.find(g => g.guid === item.counterparties_group_id)
-            groupsMap.set(item.counterparties_group_id, {
-              id: `group-${item.counterparties_group_id}`,
-              guid: item.counterparties_group_id,
-              nazvanie: item.counterparties_group || 'Без названия группы',
-              data_sozdaniya: groupData?.data_sozdaniya ? new Date(groupData.data_sozdaniya).toLocaleDateString('ru-RU') : null,
-              isGroup: true,
-              items: []
-            })
-          }
-          groupsMap.get(item.counterparties_group_id).items.push(item)
-        } else {
-          ungrouped.push(item)
+      if (item.counterparties_group_id) {
+        if (!groupsMap.has(item.counterparties_group_id)) {
+          // Find the group data from counterpartiesGroupsItems
+          const groupData = counterpartiesGroupsItems.find(g => g.guid === item.counterparties_group_id)
+          groupsMap.set(item.counterparties_group_id, {
+            id: `group-${item.counterparties_group_id}`,
+            guid: item.counterparties_group_id,
+            nazvanie: item.counterparties_group || 'Без названия группы',
+            data_sozdaniya: groupData?.data_sozdaniya ? new Date(groupData.data_sozdaniya).toLocaleDateString('ru-RU') : null,
+            isGroup: true,
+            items: []
+          })
         }
-      })
-
-      const grouped = Array.from(groupsMap.values())
-      
-      return {
-        groupedCounterparties: [...grouped, ...ungrouped],
-        flatCounterparties: filteredItems
+        groupsMap.get(item.counterparties_group_id).items.push(item)
+      } else {
+        ungrouped.push(item)
       }
-    }, [counterpartiesItems, filters.selectedTypes, counterpartiesGroupsItems])
+    })
+
+    const grouped = Array.from(groupsMap.values())
+
+    return {
+      groupedCounterparties: [...grouped, ...ungrouped],
+      flatCounterparties: filteredItems
+    }
+  }, [counterpartiesItems, filters.selectedTypes, counterpartiesGroupsItems])
 
   const totalCounterparties = flatCounterparties.length
+
+  // Calculate totals for footer
+  const { totalReceivables, totalPayables, totalIncome, totalExpenses, totalDifference } = useMemo(() => {
+    return flatCounterparties.reduce((acc, item) => {
+      acc.totalReceivables += (item.receivables || 0)
+      acc.totalPayables += (item.payables || 0)
+      acc.totalIncome += (item.debitorka || 0)
+      acc.totalExpenses += (item.kreditorka || 0)
+      return acc
+    }, {
+      totalReceivables: 0,
+      totalPayables: 0,
+      totalIncome: 0,
+      totalExpenses: 0
+    })
+  }, [flatCounterparties])
+
+  const difference = totalIncome - totalExpenses
+
   const [expandedGroups, setExpandedGroups] = useState(new Set())
   const [editingCounterparty, setEditingCounterparty] = useState(null)
   const [deletingCounterparty, setDeletingCounterparty] = useState(null)
@@ -296,29 +316,29 @@ export default function CounterpartiesPage() {
         </FilterSection>
 
         <FilterSection title="Группа">
-          <div className="space-y-2.5">
-            <FilterCheckbox 
-              checked={filters.client} 
-              onChange={() => toggleFilter('client')} 
-              label="Клиент" 
+          <div className="space-y-2.5 flex flex-col items-start">
+            <OperationCheckbox
+              checked={filters.client}
+              onChange={() => toggleFilter('client')}
+              label="Клиент"
             />
-            <FilterCheckbox 
-              checked={filters.employee} 
-              onChange={() => toggleFilter('employee')} 
-              label="Сотрудник" 
+            <OperationCheckbox
+              checked={filters.employee}
+              onChange={() => toggleFilter('employee')}
+              label="Сотрудник"
             />
-            <FilterCheckbox 
-              checked={filters.supplier} 
-              onChange={() => toggleFilter('supplier')} 
-              label="Поставщик" 
+            <OperationCheckbox
+              checked={filters.supplier}
+              onChange={() => toggleFilter('supplier')}
+              label="Поставщик"
             />
           </div>
         </FilterSection>
 
         <FilterSection title="Группы контрагентов">
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 flex flex-col items-start">
             {counterpartiesGroupsItems.map((group) => (
-              <FilterCheckbox
+              <OperationCheckbox
                 key={group.guid}
                 checked={filters.selectedGroups.includes(group.guid)}
                 onChange={() => {
@@ -341,7 +361,7 @@ export default function CounterpartiesPage() {
         <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
           <button className={styles.filterToggleButton}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -352,19 +372,37 @@ export default function CounterpartiesPage() {
         <div className={styles.header}>
           <div className={styles.headerContent}>
             <div className={styles.titleRow}>
-            <h1 className={styles.title}>Контрагенты</h1>
-              <button 
-                className={styles.createButton}
-                onClick={() => setIsCreateModalOpen(true)}
-              >
-                Создать
-              </button>
-              <div className={styles.searchContainer}>
-              <SearchBar 
-                value={searchQuery} 
-                onChange={setSearchQuery} 
-                placeholder="Поиск по названию или ИНН" 
-              />
+              <div className='flex gap-5 flex-1'>
+                <h1 className={styles.title}>Контрагенты</h1>
+                <button
+                  className={styles.createButton}
+                  onClick={() => setIsCreateModalOpen(true)}
+                >
+                  Создать
+                </button>
+              </div>
+              <div className={styles.headerSearchContainer}>
+                <div className={styles.filterBox}>
+                  <button
+                    className={cn(styles.filterIcon, viewMode === 'list' && styles.active)}
+                    onClick={() => setViewMode('list')}
+                  >
+                    <BsList size={18} />
+                  </button>
+                  <button
+                    className={cn(styles.filterIcon, viewMode === 'nested' && styles.active)}
+                    onClick={() => setViewMode('nested')}
+                  >
+                    <BsListNested size={18} />
+                  </button>
+                </div>
+                <div className={styles.searchContainer}>
+                  <SearchBar
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Поиск по названию или ИНН"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -453,37 +491,43 @@ export default function CounterpartiesPage() {
                       Загрузка...
                     </td>
                   </tr>
-                ) : groupedCounterparties.length === 0 ? (
+                ) : (viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 ? (
                   <tr className={styles.emptyRow}>
                     <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
                       Нет данных
                     </td>
                   </tr>
                 ) : (
-                  groupedCounterparties.map((item, itemIndex) => {
+                      (viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item, itemIndex) => {
                     if (item.isGroup) {
                       const isExpanded = expandedGroups.has(item.guid)
                       const isLastChild = (index) => index === item.items.length - 1
                       return (
                         <React.Fragment key={item.id}>
-                          <tr className={cn(styles.tableRow, styles.groupRow)}>
+                          <tr className={cn(styles.tableRow, styles.groupRow)} onClick={() => toggleGroup(item.guid)}>
                             <td className={cn(styles.tableCell, styles.tableCellIndex)}>
-                              <button
-                                className={styles.expandButton}
-                                onClick={() => toggleGroup(item.guid)}
-                              >
-                                <svg 
-                                  className={cn(styles.expandIcon, isExpanded && styles.expanded)} 
-                                  fill="none" 
-                                  viewBox="0 0 24 24" 
-                                  stroke="currentColor" 
-                                  strokeWidth={2}
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                                </svg>
-                              </button>
+                              {itemIndex + 1}
                             </td>
-                            <td className={cn(styles.tableCell, styles.text, styles.groupCell)}>{item.nazvanie}</td>
+                            <td className={cn(styles.tableCell, styles.text)}>
+                              <div className={styles.groupCell}>
+                                <button
+                                  className={styles.expandButton}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleGroup(item.guid)
+                                  }}
+                                >
+                                  {isExpanded ? (
+                                    <CgRemoveR size={20} className={styles.expandIcon} />
+                                  ) : (
+                                    <CgAddR size={20} className={styles.expandIcon} />
+                                  )}
+                                </button>
+                                <span className={styles.groupNameText}>
+                                  {`${item.nazvanie} (${item.items.length})`}
+                                </span>
+                              </div>
+                            </td>
                             <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
                             <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
                             <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
@@ -504,8 +548,8 @@ export default function CounterpartiesPage() {
                             </td>
                           </tr>
                           {isExpanded && item.items.map((counterparty, childIndex) => (
-                            <tr 
-                              key={counterparty.id} 
+                            <tr
+                              key={counterparty.id}
                               className={cn(
                                 styles.tableRow,
                                 styles.childRow,
@@ -515,7 +559,7 @@ export default function CounterpartiesPage() {
                               style={{ cursor: 'pointer' }}
                             >
                               <td className={cn(styles.tableCell, styles.tableCellIndex)} onClick={(e) => e.stopPropagation()}>
-                                {childIndex + 1}
+
                               </td>
                               <td className={cn(styles.tableCell, styles.text)}>{counterparty.nazvanie}</td>
                               <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.gruppa || '–'}</td>
@@ -538,8 +582,8 @@ export default function CounterpartiesPage() {
                       )
                     } else {
                       return (
-                        <tr 
-                          key={item.id} 
+                        <tr
+                          key={item.id}
                           className={cn(
                             styles.tableRow,
                             isRowSelected(item.id) && styles.selected
@@ -564,12 +608,13 @@ export default function CounterpartiesPage() {
                               onEdit={(cp) => setEditingCounterparty(cp)}
                               onDelete={(cp) => setDeletingCounterparty(cp)}
                             />
-                      </td>
-                    </tr>
+                          </td>
+                        </tr>
                       )
                     }
                   })
                 )}
+
               </tbody>
             </table>
           </div>
@@ -580,7 +625,59 @@ export default function CounterpartiesPage() {
           <div className={styles.footerText}>
             <span className={styles.footerTextBold}>
               {totalCounterparties} {totalCounterparties === 1 ? 'контрагент' : totalCounterparties < 5 ? 'контрагента' : 'контрагентов'}
+            </span>
+          </div>
+
+          <div className={styles.footerDivider} />
+
+          <div className={styles.footerItem}>
+            <span className={styles.footerLabel}>Дебиторка</span>
+            <div className={styles.footerValueContainer}>
+              <span className={styles.footerValue}>{totalReceivables.toLocaleString('ru-RU')}</span>
+              <TbCurrencyRubel className={styles.footerCurrencyIcon} />
+            </div>
+          </div>
+
+          <div className={styles.footerDivider} />
+
+          <div className={styles.footerItem}>
+            <span className={styles.footerLabel}>Кредиторка</span>
+            <div className={styles.footerValueContainer}>
+              <span className={styles.footerValue}>{totalPayables.toLocaleString('ru-RU')}</span>
+              <TbCurrencyRubel className={styles.footerCurrencyIcon} />
+            </div>
+          </div>
+
+          <div className={styles.footerDivider} />
+
+          <div className={styles.footerItem}>
+            <span className={styles.footerLabel}>Поступления</span>
+            <div className={styles.footerValueContainer}>
+              <span className={styles.footerValue}>{totalIncome.toLocaleString('ru-RU')}</span>
+              <TbCurrencyRubel className={styles.footerCurrencyIcon} />
+            </div>
+          </div>
+
+          <div className={styles.footerDivider} />
+
+          <div className={styles.footerItem}>
+            <span className={styles.footerLabel}>Выплаты</span>
+            <div className={styles.footerValueContainer}>
+              <span className={styles.footerValue}>{totalExpenses.toLocaleString('ru-RU')}</span>
+              <TbCurrencyRubel className={styles.footerCurrencyIcon} />
+            </div>
+          </div>
+
+          <div className={styles.footerDivider} />
+
+          <div className={styles.footerItem}>
+            <span className={styles.footerLabel}>Разница</span>
+            <div className={styles.footerValueContainer}>
+              <span className={cn(styles.footerValue, difference > 0 ? styles.positive : difference < 0 ? styles.negative : '')}>
+                {difference > 0 ? '+' : ''}{difference.toLocaleString('ru-RU')}
               </span>
+              <TbCurrencyRubel className={cn(styles.footerCurrencyIcon, difference > 0 ? styles.positive : difference < 0 ? styles.negative : '')} />
+            </div>
           </div>
         </div>
       </div>

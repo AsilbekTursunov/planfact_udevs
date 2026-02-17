@@ -53,6 +53,7 @@
   overflow: hidden;
   width: 100%;
   transition: margin-left 0.3s ease;
+  background-color: white;
 }
 
 .contentWithFilter {
@@ -60,8 +61,7 @@
 }
 
 .header {
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
+  background-color: white; 
   padding: 10px 24px;
   height: 52px;
   display: flex;
@@ -79,15 +79,50 @@
 .titleRow {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  width: 100%;
+  gap: 1rem; 
+ width: 100%;
 }
 
 .searchContainer {
   margin-left: auto;
+  display: flex; 
   flex-shrink: 0;
-  max-width: 300px;
-  width: 100%;
+  gap: 1rem;
+  height: 100%;
+  max-width: 500px; 
+}
+
+.headerSearchContainer{ 
+  display: flex;
+  align-items: center;
+  align-self: flex-end;
+}
+
+.filterBox {
+  display: flex;
+  align-items: center; 
+  padding: 10px;
+ 
+}
+.filterIcon { 
+  color: #98A2B3; 
+  padding: 5px;
+  border: 1px solid #e5e7eb;
+  cursor: pointer; 
+   &:first-child {
+    border-radius: 6px 0 0 6px;
+    border-left: 0.1px solid #e5e7eb;
+  }
+
+  &:last-child {
+    border-radius: 0 6px 6px 0;
+    border-left: 0.1px solid #e5e7eb;
+  }
+
+  &.active {
+    border-color: #0F51B9;
+    color: #0F51B9; 
+  }
 }
 
 .filterToggleButton {
@@ -160,11 +195,11 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: #f9fafb;
+  background-color: #fff;
   display: flex;
+  padding: 0px 1rem;
   flex-direction: column;
-  min-height: 0;
-  padding: 1.5rem 1.5rem 60px 1.5rem;
+  min-height: 0;  
   width: 100%;
   
   /* Стилизация скроллбара для Webkit (Chrome, Safari, Edge) */
@@ -197,9 +232,7 @@
 }
 
 .tableWrapper {
-  background-color: white;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
+  background-color: white;  
   overflow-x: auto;
   overflow-y: visible;
   margin: 0;
@@ -207,33 +240,29 @@
 }
 
 .table {
-  width: 100%;
-  background-color: white;
+  width: 100%; 
   table-layout: auto;
   min-width: max-content;
   overflow: visible;
 }
 
-.tableHead {
-  background-color: white;
+.tableHead { 
+  background-color: #f9fafb;
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.tableHeaderRow {
-  border-bottom: 1px solid #e5e7eb;
-}
+ 
 
 .tableHeaderCell {
   padding: 0.5rem 0.625rem;
   text-align: left;
   white-space: nowrap;
   min-width: fit-content;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
-  color: #9ca3af;
-  background-color: white;
+  color: #9ca3af; 
 
   &:has(.tableHeaderButton) {
     font-weight: 600;
@@ -254,9 +283,8 @@
 .tableHeaderButton {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 11px;
-  font-weight: 600;
+  gap: 0.25rem; 
+  font-weight: 550;
   color: #334155;
   background: none;
   border: none;
@@ -321,13 +349,18 @@
   border-bottom: 1px solid #f3f4f6;
   transition: background-color 0.2s;
   cursor: pointer;
-
-  &:hover {
-    background-color: #f9fafb;
-  }
+  width: 100%; 
 
   &.selected {
     background-color: #e3f2fd;
+  }
+
+  &:nth-child(odd) {
+    background-color: #fff;
+  }
+
+  &:hover {
+    background-color: #f0f4f8;
   }
 }
 
@@ -336,6 +369,7 @@
   font-size: 12px;
   color: #0f172a;
   white-space: nowrap;
+  height: 40px;   
 
   &.text {
     font-size: 12px;
@@ -400,7 +434,10 @@
 .groupCell {
   font-weight: 500;
   color: #0f172a;
-  padding-left: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 100%; /* Ensure it takes full height if possible, though td padding restricts it. aligned via flex */
 }
 
 .groupCellContent {
@@ -418,18 +455,18 @@
 
 .childRow {
   background-color: #fafafa;
-  position: relative;
+  position: relative; 
 }
 
 .expandButton {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: #6b7280; // Default gray
   transition: color 0.2s;
   position: relative;
   z-index: 2;
@@ -440,13 +477,12 @@
 }
 
 .expandIcon {
-  width: 1rem;
+  width: 1rem; // 20px
   height: 1rem;
-  transition: transform 0.2s;
-
-  &.expanded {
-    transform: rotate(90deg);
-  }
+  color: #D0D5DD; // Blue color as requested/implied by active styles? Or just keep generic? User said #022565 for filter buttons. For this button, previous was gray.
+  // User "change this button icon to CgAddR and CgRemoveR". Didn't specify color.
+  // But usually these icons look good in primary color or gray. 
+  // I will leave color control to expandButton or explicit color.
 }
 
 .footer {
@@ -478,6 +514,59 @@
 .footerTextBold {
   font-weight: 600;
   color: #0f172a; // slate-900
+  white-space: nowrap;
+}
+
+.footerDivider {
+  width: 1px;
+  height: 24px;
+  background-color: #e5e7eb;
+}
+
+.footerItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.footerLabel {
+  font-size: 11px;
+  color: #6b7280; // gray-500
+  font-weight: 500;
+}
+
+.footerValueContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.footerValue {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  
+  &.positive {
+    color: #10b981; // emerald-500
+  }
+  
+  &.negative {
+    color: #ef4444; // red-500
+  }
+}
+
+.footerCurrencyIcon {
+  width: 13px;
+  height: 13px;
+  color: #9ca3af;
+  
+  &.positive {
+    color: #10b981;
+  }
+  
+  &.negative {
+    color: #ef4444;
+  }
 }
 
 .filterDropdown {
@@ -530,8 +619,7 @@
 
 .tableCellActions {
   position: sticky;
-  right: 0;
-  background-color: white;
+  right: 0; 
   border-left: 1px solid #e5e7eb;
   box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
   z-index: 20;
@@ -557,25 +645,22 @@
   .tableRow.selected:hover & {
     background-color: #dbeafe !important;
   }
-  
-  .groupRow & {
-    background-color: #f9fafb;
-  }
-  
-  .groupRow:hover & {
-    background-color: #f0f4f8 !important;
-  }
+   
 }
 
 
 // Index column styles
 .tableHeaderCellIndex {
-  width: 2.5rem;
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
   text-align: center;
 }
 
 .tableCellIndex {
-  width: 2.5rem;
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
   text-align: center;
   font-weight: 500;
   color: #6b7280;

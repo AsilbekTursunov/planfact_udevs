@@ -4,11 +4,12 @@
 
 .button {
   width: 198px;
-  height: 34px;
+  min-height: 34px;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 4px 12px; // Reduced vertical padding slightly as chips have their own height/padding
   font-family: Inter, sans-serif;
   font-weight: 500;
   font-size: 12px;
@@ -183,9 +184,7 @@
   padding: 0.5rem;
 }
 
-.group {
-  // Group container
-}
+
 
 .groupHeader {
   padding: 0.375rem 0.75rem;

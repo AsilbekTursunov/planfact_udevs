@@ -16,7 +16,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
   const createMutation = useCreateMyAccount()
   const updateMutation = useUpdateMyAccount()
   const isEdit = !!account && !!account.guid
-  
+
   const [formData, setFormData] = useState({
     nazvanie: '',
     tip: [],
@@ -26,7 +26,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
     komentariy: '',
     legal_entity_id: null
   })
-  
+
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
@@ -35,13 +35,13 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
   // Fetch currencies
   const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
-  
+
   // Fetch legal entities using new invoke_function API
   const { data: legalEntitiesData, isLoading: loadingLegalEntities } = useLegalEntitiesPlanFact({
     page: 1,
     limit: 100,
   })
-  
+
   // Transform currencies data
   const currencies = useMemo(() => {
     return (currenciesData?.data?.data?.response || currenciesData?.data?.response || []).map(item => ({
@@ -75,7 +75,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       requestAnimationFrame(() => {
         setIsVisible(true)
       })
-      
+
       // Initialize form data
       if (isEdit && account && account.guid) {
         // Editing existing account
@@ -83,7 +83,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           nazvanie: account.nazvanie || '',
           tip: Array.isArray(account.tip) ? account.tip : [],
           nachalьnyy_ostatok: account.nachalьnyy_ostatok || '',
-          data_sozdaniya: account.data_sozdaniya 
+          data_sozdaniya: account.data_sozdaniya
             ? new Date(account.data_sozdaniya).toISOString().split('T')[0]
             : new Date().toISOString().split('T')[0],
           currenies_id: account.currenies_id || '',
@@ -118,19 +118,15 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
   const validateForm = () => {
     const newErrors = {}
-    
+
     if (!formData.nazvanie.trim()) {
       newErrors.nazvanie = 'Укажите название'
     }
-    
-    if (!formData.tip || formData.tip.length === 0) {
-      newErrors.tip = 'Выберите тип счета'
+
+    if (!formData.legal_entity_id) {
+      newErrors.legal_entity_id = 'Выберите юрлицо'
     }
-    
-    if (!formData.currenies_id) {
-      newErrors.currenies_id = 'Выберите валюту счета'
-    }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -144,7 +140,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
         nazvanie: formData.nazvanie.trim(),
         tip: formData.tip,
         ...(formData.nachalьnyy_ostatok && { nachalьnyy_ostatok: Number(formData.nachalьnyy_ostatok) }),
-        ...(formData.data_sozdaniya && { 
+        ...(formData.data_sozdaniya && {
           data_sozdaniya: new Date(formData.data_sozdaniya + 'T19:00:00.000Z').toISOString()
         }),
         ...(formData.currenies_id && { currenies_id: formData.currenies_id }),
@@ -159,7 +155,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       } else {
         await createMutation.mutateAsync(submitData)
       }
-      
+
       handleClose()
     } catch (error) {
       console.error(`Error ${isEdit ? 'updating' : 'creating'} account:`, error)
@@ -173,11 +169,11 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
   const modalContent = (
     <>
-      <div 
+      <div
         className={cn(styles.overlay, isClosing && styles.closing, !isClosing && isVisible && styles.opening)}
         onClick={handleClose}
       />
-      <div 
+      <div
         className={cn(styles.modal, isClosing && styles.closing, !isClosing && isVisible && styles.opening)}
         onClick={(e) => e.stopPropagation()}
       >
@@ -188,7 +184,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div> 
+        </div>
         <div className={styles.content}>
           <div className={styles.form}>
             {/* Название */}
@@ -212,7 +208,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
             {/* Юрлицо */}
             <div className={styles.formRow}>
-              <label className={styles.label}>Юрлицо</label>
+              <label className={styles.label}>Юрлицо <span className={styles.required}>*</span></label>
               <div className={styles.inputContainer}>
                 <GroupedSelect
                   data={legalEntities}
@@ -228,13 +224,16 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   createButtonText="Создать юрлицо"
                   className="flex-1"
                 />
+                {errors.legal_entity_id && (
+                  <div className={styles.errorMessage}>{errors.legal_entity_id}</div>
+                )}
               </div>
             </div>
 
             {/* Тип */}
             <div className={styles.formRow}>
               <label className={styles.label}>
-                Выберите тип счета <span className={styles.required}>*</span>
+                Выберите тип счета
               </label>
               <div className={styles.inputContainer}>
                 <GroupedSelect
@@ -246,10 +245,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   labelKey="label"
                   valueKey="value"
                   className="flex-1"
-                />
-                {errors.tip && (
-                  <div className={styles.errorMessage}>{errors.tip}</div>
-                )}
+                /> 
               </div>
             </div>
 
@@ -262,7 +258,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                     type="number"
                     value={formData.nachalьnyy_ostatok}
                     onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: e.target.value })}
-                    placeholder="0" 
+                    placeholder="0"
                     className={styles.input}
                     onWheel={(e) => e.target.blur()}
                   />
@@ -279,7 +275,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
             {/* Валюта */}
             <div className={styles.formRow}>
               <label className={styles.label}>
-                Выберите валюту счета <span className={styles.required}>*</span>
+                Выберите валюту счета
               </label>
               <div className={styles.inputContainer}>
                 <GroupedSelect
@@ -292,10 +288,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   valueKey="guid"
                   loading={loadingCurrencies}
                   className="flex-1"
-                />
-                {errors.currenies_id && (
-                  <div className={styles.errorMessage}>{errors.currenies_id}</div>
-                )}
+                /> 
               </div>
             </div>
 
@@ -323,7 +316,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           <button className={styles.cancelButton} onClick={handleClose}>
             Отменить
           </button>
-          <button 
+          <button
             className={styles.saveButton}
             onClick={handleSubmit}
             disabled={isSubmitting}
@@ -349,6 +342,6 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       />
     </>
   )
-  
+
   return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null
 }
