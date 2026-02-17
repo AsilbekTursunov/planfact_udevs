@@ -591,7 +591,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                 <div className={styles.formRow}>
                   <label className={styles.label}>Комментарий</label>
                   <div className={styles.inputContainer}>
-                    <textarea
+                    <TextArea
                       value={formData.komentariy}
                       onChange={(e) => setFormData({ ...formData, komentariy: e.target.value })}
                       placeholder="Пояснение к контрагенту"
