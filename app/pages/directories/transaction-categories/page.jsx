@@ -27,11 +27,15 @@ function CategoryTreeItem({
 	styles,
 	cn,
 	isLast = false,
+	parentPath = '',
 }) {
 	const hasChildren = category.children && category.children.length > 0
 	const isExpanded = expandedCategories.includes(category.id)
 	const isClosing = closingCategories.includes(category.id)
 	const isSelected = selectedCategory === category.id
+	
+	// Create unique path for this item
+	const currentPath = parentPath ? `${parentPath}/${category.id}` : category.id
 
 	// Debug: log category data for children
 	// if (level > 0) {
@@ -166,7 +170,7 @@ function CategoryTreeItem({
 					<div className={styles.childrenInner}>
 						{category.children.map((child, childIndex) => (
 							<CategoryTreeItem
-								key={child.id}
+								key={`${currentPath}/${childIndex}/${child.id}`}
 								category={child}
 								level={level + 1}
 								categoryIndex={childIndex}
@@ -181,6 +185,7 @@ function CategoryTreeItem({
 								styles={styles}
 								cn={cn}
 								isLast={childIndex === category.children.length - 1 && !child.children}
+								parentPath={currentPath}
 							/>
 						))}
 					</div>
@@ -192,7 +197,7 @@ function CategoryTreeItem({
 
 export default function TransactionCategoriesPage() {
 	const [activeTab, setActiveTab] = useState('income')
-	const [expandedCategories, setExpandedCategories] = useState([1, 2, 3])
+	const [expandedCategories, setExpandedCategories] = useState([])
 	const [closingCategories, setClosingCategories] = useState([])
 	const [selectedCategory, setSelectedCategory] = useState(null)
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -200,6 +205,7 @@ export default function TransactionCategoriesPage() {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 	const [categoryToEdit, setCategoryToEdit] = useState(null)
 	const [categoryToDelete, setCategoryToDelete] = useState(null)
+	const [searchQuery, setSearchQuery] = useState('')
 
 	const deleteMutation = useDeleteChartOfAccounts()
 
@@ -243,8 +249,8 @@ export default function TransactionCategoriesPage() {
 		{ key: 'capital', label: 'Капитал' },
 	]
 
-	// Map tab keys to API tip values
-	const tabToTipMap = useMemo(
+	// Map tab keys to root category names from API
+	const tabToRootNameMap = useMemo(
 		() => ({
 			income: 'Доходы',
 			expense: 'Расходы',
@@ -261,10 +267,10 @@ export default function TransactionCategoriesPage() {
 		error: chartOfAccountsError,
 	} = useChartOfAccountsPlanFact({
 		page: 1,
-		limit: 100
+		limit: 100,
+		search: searchQuery.trim() || undefined, // Передаем search только если есть значение
 	})
 
-	// Compatibility aliases (old variable names used in JSX below)
 	const isLoadingChartOfAccountsV2 = isLoadingChartOfAccounts
 	const chartOfAccountsErrorV2 = chartOfAccountsError
  
@@ -272,195 +278,54 @@ export default function TransactionCategoriesPage() {
 		return chartOfAccountsData?.data?.data?.data || []
 	}, [chartOfAccountsData])
 
-	// Flatten tree to match existing page logic (flat list with parent links in chart_of_accounts_id_2)
-	const chartOfAccountsItems = useMemo(() => {
-		if (!Array.isArray(chartOfAccountsTree)) return []
-
-		const flat = []
-		const visit = (node, isRootWithEmptyGuid = false) => {
-			if (!node || typeof node !== 'object') return
-
-			const { children, ...item } = node
-			const childrenArr = Array.isArray(children) ? children : []
-
-			// If this is a root node with empty guid (like "Доходы", "Расходы"), 
-			// don't add it but mark its children as root items
-			if (!item.guid && childrenArr.length > 0) {
-				// This is a root group node - traverse children and mark them as root items
-				childrenArr.forEach(child => visit(child, true))
-				return
-			}
-
-			// Add item if it has a guid
-			if (item.guid) {
-				// If parent had empty guid, clear the parent reference so this becomes a root item
-				if (isRootWithEmptyGuid) {
-					item.chart_of_accounts_id_2 = null
-				}
-				flat.push(item)
-			}
-
-			// Traverse children normally
-			childrenArr.forEach(child => visit(child, false))
-		}
-
-		chartOfAccountsTree.forEach(node => visit(node, false))
-		return flat
-	}, [chartOfAccountsTree])
-
-	// Filter items by active tab
-	const filteredItems = useMemo(() => {
-		if (!tabToTipMap[activeTab]) return chartOfAccountsItems
-		const tipValue = tabToTipMap[activeTab]
-
-		// Build child map once for all items
-		const childMap = new Map()
-		chartOfAccountsItems.forEach(item => {
-			if (item.chart_of_accounts_id_2) {
-				if (!childMap.has(item.chart_of_accounts_id_2)) {
-					childMap.set(item.chart_of_accounts_id_2, [])
-				}
-				childMap.get(item.chart_of_accounts_id_2).push(item)
-			}
-		})
-
-		// Helper to check if item or any of its descendants match the filter
-		const hasMatchingDescendants = item => {
-			const children = childMap.get(item.guid) || []
-
-			// If item has children, check if any child matches (groups should be included if they have matching children)
-			if (children.length > 0) {
-				return children.some(child => hasMatchingDescendants(child))
-			}
-
-			// If no children (leaf node), check if item itself matches the filter
-			if (item.tip && Array.isArray(item.tip) && item.tip.length > 0) {
-				return item.tip.includes(tipValue)
-			}
-
-			return false
-		}
-
-		const filtered = chartOfAccountsItems.filter(item => hasMatchingDescendants(item))
-
-		return filtered
-	}, [chartOfAccountsItems, activeTab, tabToTipMap])
-
-	// Convert chart of accounts items to category format for display
-	// Build proper hierarchy: items with chart_of_accounts_id_2 are children
-	const chartOfAccountsCategories = useMemo(() => {
-		if (filteredItems.length === 0) {
-			console.log('No filtered items, returning empty array')
+	// Get the root node for active tab and convert its children to display format
+	const categories = useMemo(() => {
+		if (!Array.isArray(chartOfAccountsTree) || chartOfAccountsTree.length === 0) {
 			return []
 		}
 
-		// Create a map of all items by guid for quick lookup (from ALL items)
-		const allItemsMap = new Map()
-		chartOfAccountsItems.forEach(item => {
-			allItemsMap.set(item.guid, item)
-		})
+		const rootName = tabToRootNameMap[activeTab]
+		if (!rootName) return []
 
-		// Create a set of filtered item GUIDs for quick lookup
-		const filteredItemsSet = new Set(filteredItems.map(item => item.guid))
+		// Find the root node for this tab (e.g., "Доходы", "Расходы")
+		const rootNode = chartOfAccountsTree.find(node => node.nazvanie === rootName)
+		if (!rootNode || !rootNode.children) {
+			return []
+		}
 
-		// Build child items map: parentGuid -> [children]
-		// This includes ALL parent-child relationships from filtered items
-		const childItemsMap = new Map()
-		const allChildGuids = new Set()
-
-		filteredItems.forEach(item => {
-			if (item.chart_of_accounts_id_2) {
-				// This item has a parent
-				const parentGuid = item.chart_of_accounts_id_2
-				// Check if parent exists in ALL items (to handle cross-category relationships)
-				// But only add as child if parent is also in filtered items (same category)
-				if (allItemsMap.has(parentGuid) && filteredItemsSet.has(parentGuid)) {
-					// Parent exists in data AND is in filtered items, add this item as child
-					if (!childItemsMap.has(parentGuid)) {
-						childItemsMap.set(parentGuid, [])
-					}
-					childItemsMap.get(parentGuid).push(item)
-					allChildGuids.add(item.guid)
-				}
-			}
-		})
-
-		//
-
-		// Find items that should be displayed as root items
-		// These are items that are in filtered items AND either:
-		// 1. Have no parent (chart_of_accounts_id_2 is null)
-		// 2. Have a parent that is NOT in filtered items
-		// 3. Are NOT already added as children (to avoid duplicates)
-		const rootItems = []
-
-		filteredItems.forEach(item => {
-			// Skip if this item is already a child
-			if (allChildGuids.has(item.guid)) {
-				return
-			}
-
-			if (!item.chart_of_accounts_id_2) {
-				// No parent - definitely a root item
-				rootItems.push(item)
-			} else {
-				// Has parent - check if parent is in filtered items
-				const parentGuid = item.chart_of_accounts_id_2
-				const parentInFiltered = filteredItemsSet.has(parentGuid)
-
-				if (!parentInFiltered) {
-					// Parent is not in filtered items, so this item is a root item in the filtered view
-					rootItems.push(item)
-				}
-				// If parent is in filtered items, this item should have been added as child above
-				// If it wasn't, there might be a data inconsistency, but we'll treat it as root
-			}
-		})
-
-		// Build category tree recursively
-		// This function builds the tree and includes all children, even nested ones
-		const buildCategory = (item, level = 0) => {
-			const directChildren = childItemsMap.get(item.guid) || []
-
-			// Recursively build children, which will include their own children
-			const children = directChildren.map(child => buildCategory(child, level + 1))
-
-			const isStatic = item.static === true
-
+		// Recursively convert API structure to display format
+		const convertToCategory = (node, level = 0) => {
+			const isStatic = node.static === true
+			
 			const category = {
-				id: item.guid,
-				guid: item.guid, // Ensure guid is correctly set from API response
-				name: item.nazvanie,
-				hasMenu: true, // Always show menu
-				hasLock: isStatic, // Show lock icon for static items
-				isStatic: isStatic, // Store static flag
-				children: children.length > 0 ? children : undefined,
-				// Additional data from API response
-				balans: item.balans,
-				komentariy: item.komentariy,
-				tip: item.tip,
-				tip_operatsii: item.tip_operatsii,
-				chart_of_accounts_id_2: item.chart_of_accounts_id_2,
-				level: level, // Store level for debugging
+				id: node.guid || `temp-${node.nazvanie}-${level}`,
+				guid: node.guid,
+				name: node.nazvanie,
+				hasMenu: !!node.guid, // Only show menu if item has guid
+				hasLock: isStatic,
+				isStatic: isStatic,
+				children: node.children ? node.children.map(child => convertToCategory(child, level + 1)) : undefined,
+				balans: node.balans,
+				komentariy: node.komentariy,
+				tip: node.tip,
+				tip_operatsii: node.tip_operatsii,
+				chart_of_accounts_id_2: node.chart_of_accounts_id_2,
+				level: level,
 			}
 
 			return category
 		}
 
-		const categories = rootItems.map(item => buildCategory(item, 0))
+		// Return children of root node (hide root itself as per documentation)
+		return rootNode.children.map(child => convertToCategory(child, 0))
+	}, [chartOfAccountsTree, activeTab, tabToRootNameMap])
 
-		return categories
-	}, [filteredItems, chartOfAccountsItems])
-
-	// Use chart of accounts data
-	const categories = chartOfAccountsCategories
-
-	console.log('categories:', categories)
 	const handleTabChange = tabKey => {
 		setActiveTab(tabKey)
 		setExpandedCategories([])
 		setClosingCategories([])
 		setSelectedCategory(null)
+		setSearchQuery('') // Clear search when changing tabs
 	}
 
 	return (
@@ -476,7 +341,13 @@ export default function TransactionCategoriesPage() {
 							</button>
 						</div>
 						<div className={styles.searchContainer}>
-							<input type='text' placeholder='Поиск по названию' className={styles.searchInput} />
+							<input 
+								type='text' 
+								placeholder='Поиск по названию' 
+								className={styles.searchInput}
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+							/>
 							<svg
 								className={styles.searchIcon}
 								fill='none'
@@ -524,11 +395,13 @@ export default function TransactionCategoriesPage() {
 							{!isLoadingChartOfAccountsV2 &&
 								!chartOfAccountsErrorV2 &&
 								categories.length === 0 && (
-									<div className={styles.emptyState}>Нет данных для отображения</div>
+									<div className={styles.emptyState}>
+										{searchQuery ? 'Ничего не найдено' : 'Нет данных для отображения'}
+									</div>
 								)}
 							{categories.map((category, categoryIndex) => (
 								<CategoryTreeItem
-									key={`${activeTab}-${category.id}`}
+									key={`${activeTab}/${categoryIndex}/${category.id}`}
 									category={category}
 									level={0}
 									categoryIndex={categoryIndex}
@@ -552,6 +425,7 @@ export default function TransactionCategoriesPage() {
 									styles={styles}
 									cn={cn}
 									isLast={categoryIndex === categories.length - 1}
+									parentPath={activeTab}
 								/>
 							))}
 						</div>
