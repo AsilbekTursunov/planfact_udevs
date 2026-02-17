@@ -84,16 +84,17 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: .625rem;
 }
 
 .formRow {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  gap: 0.5rem; 
 }
 
 .label {
+  width: 30%;
   font-size: 14px;
   font-weight: 500;
   color: #0f172a;
@@ -102,26 +103,21 @@
   gap: 0.25rem;
 }
 
+ 
+
 .required {
   color: #dc2626;
 }
 
 .inputContainer {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
 .input {
-  padding: 0.625rem 0.75rem;
-  font-size: 14px;
-  color: #0f172a;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  transition: all 0.2s;
-  width: 100%;
-
+  flex: 1 !important;
   &:focus {
     outline: none;
     border-color: #6366f1;
@@ -150,9 +146,15 @@
   }
 }
 
+
+.datePicker {
+  flex: 1 !important;
+}
+
 .inputGroup {
   display: flex;
-  gap: 0.75rem;
+  flex: 1;
+  gap: 0.625rem;
   align-items: center;
 }
 

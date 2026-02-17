@@ -273,13 +273,7 @@
 }
 
 .input { 
-  width: 230px;
-  border: 1px solid #e9ebef;
-  padding: 0.5rem 0.75rem;
-  font-size: 13px;
-  color: #0f172a;
-  border-radius: 5px;
-  background-color: white;
+  width: 230px !important;  
   transition: all 0.2s;
   &::placeholder {
     color: #9ca3af;

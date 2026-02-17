@@ -13,12 +13,13 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 20px;
 }
 
 .header {
   background-color: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 10px 24px;
+  // border-bottom: 1px solid #e5e7eb;
+  padding: 10px 0px;
   height: 52px;
   display: flex;
   align-items: center;
@@ -99,7 +100,7 @@
 .tableWrapper {
   flex: 1;
   overflow: auto;
-  background-color: #f9fafb; /* slate-50 */
+  // background-color: #f9fafb; /* slate-50 */
   
   /* Styled scrollbar */
   &::-webkit-scrollbar {
@@ -123,10 +124,8 @@
 }
 
 .tableOuter {
-  background-color: #ffffff;
-  margin: 1.5rem 1.5rem 80px 1.5rem;
-  border-radius: 0.25rem;
-  border: 1px solid #e5e7eb; /* slate-200 */
+  background-color: #ffffff; 
+  border-radius: 0.25rem; 
   overflow-x: auto;
   overflow-y: visible;
 }

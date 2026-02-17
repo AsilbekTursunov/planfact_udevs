@@ -6,6 +6,8 @@ import { cn } from '@/app/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCreateLegalEntity, useUpdateLegalEntity } from '@/hooks/useDashboard'
 import styles from './CreateLegalEntityModal.module.scss'
+import Input from '@/components/shared/Input'
+import TextArea from '@/components/shared/TextArea'
 
 export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = null }) {
   const queryClient = useQueryClient()
@@ -167,7 +169,7 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
                 Название <span className={styles.required}>*</span>
               </label>
               <div className={styles.inputContainer}>
-                <input 
+                <Input 
                   type="text" 
                   value={formData.nazvanie}
                   onChange={(e) => setFormData({ ...formData, nazvanie: e.target.value })}
@@ -182,7 +184,7 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
             <div className={styles.formRow}>
               <label className={styles.label}>Полное название</label>
               <div className={styles.inputContainer}>
-                <input 
+                <Input 
                   type="text" 
                   value={formData.polnoe_nazvanie}
                   onChange={(e) => setFormData({ ...formData, polnoe_nazvanie: e.target.value })}
@@ -197,7 +199,7 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
               <label className={styles.label}>ИНН/КПП</label>
               <div className={styles.inputContainer}>
                 <div className={styles.innKppContainer}>
-                  <input 
+                  <Input 
                     type="number" 
                     value={formData.inn}
                     onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
@@ -206,7 +208,7 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
                     onWheel={(e) => e.target.blur()}
                   />
                   <span className={styles.slash}>/</span>
-                  <input 
+                  <Input 
                     type="number" 
                     value={formData.kpp}
                     onChange={(e) => setFormData({ ...formData, kpp: e.target.value })}
@@ -222,7 +224,7 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
             <div className={styles.formRow}>
               <label className={styles.label}>Комментарий</label>
               <div className={styles.inputContainer}>
-                <textarea 
+                <TextArea 
                   value={formData.komentariy}
                   onChange={(e) => setFormData({ ...formData, komentariy: e.target.value })}
                   placeholder="Дайте краткое пояснение этому юрлицу, если это необходимо"

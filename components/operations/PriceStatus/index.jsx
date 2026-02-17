@@ -4,6 +4,7 @@ import styles from './style.module.scss'
 import { BsCurrencyDollar } from 'react-icons/bs'
 import { TbCurrencyRubel } from 'react-icons/tb'
 import { PiCurrencyKztDuotone } from 'react-icons/pi'
+import { CreditIcon, DebitIcon } from '../../../constants/icons'
 
 const PriceStatus = ({ amount, type, confirmed, accrual, currency }) => {
   return (
@@ -17,15 +18,11 @@ const PriceStatus = ({ amount, type, confirmed, accrual, currency }) => {
     >
       {/* Debit icon (Дебет) - if confirmed and not both confirmed & accrual */}
       {confirmed && !(confirmed && accrual) && (
-        <div className={styles.debitIcon}>
-          <span className={styles.text}> Д </span>
-        </div>
+        <DebitIcon />
       )}
       {/* Credit icon (Кредит) - if accrual and not both confirmed & accrual */}
       {accrual && !(confirmed && accrual) && (
-        <div className={styles.creditIcon}>
-          <span className={styles.text}> К </span>
-        </div>
+        <CreditIcon />
       )}
       <span className={styles.amountText}>{amount}</span>
       <span className={styles.currency}>{

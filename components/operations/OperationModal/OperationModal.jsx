@@ -20,6 +20,7 @@ import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import styles from './OperationModal.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
+import { CreditIcon, DebitIcon } from '../../../constants/icons'
 
 export function OperationModal({
 	operation,
@@ -39,10 +40,6 @@ export function OperationModal({
 		return operation?.rawData?.guid || operation?.guid || null
 	}, [isNew, operation])
 
-	console.log('=== OperationModal Debug ===')
-	console.log('isNew:', isNew)
-	console.log('operation:', operation)
-	console.log('operationGuid:', operationGuid)
 
 	// Fetch full operation data if editing existing operation
 	const { data: fullOperationData, isLoading: isLoadingOperation, refetch } = useOperation(operationGuid, {
@@ -74,8 +71,6 @@ export function OperationModal({
 		return operation
 	}, [isNew, operation, fullOperationData])
 
-	console.log('Final operationData:', operationData)
-	console.log('Full operation data response:', fullOperationData)
 
 	// Current active tab
 	const [activeTab, setActiveTab] = useState(modalType || 'income')
@@ -824,6 +819,8 @@ export function OperationModal({
 
 	if (!operationData && !isNew) return null
 
+	console.log(formData?.confirmPayment, formData?.accrualDate)
+
 	return (
 		<>
 			{/* Overlay */}
@@ -921,7 +918,7 @@ export function OperationModal({
 									{/* Дата оплаты */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
-											Дата оплаты 
+											Дата оплаты
 										</label>
 										<div className={styles.fieldWrapper}>
 											<DatePicker
@@ -979,7 +976,7 @@ export function OperationModal({
 									{/* Сумма new form value summa */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
-											Сумма 
+											Сумма
 										</label>
 										<div className={styles.fieldWrapper}>
 											<div className={styles.inputGroup}>
@@ -991,9 +988,13 @@ export function OperationModal({
 															setErrors({ ...errors, amount: null })
 														}
 													}}
-													placeholder='0' 
+													placeholder='0'
 													className={styles.input}
 												/>
+												<div>
+													{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
+													{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+												</div>
 												{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
 													{getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
 												</div>}
@@ -1075,7 +1076,7 @@ export function OperationModal({
 									{/* Дата оплаты */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
-											Дата оплаты  
+											Дата оплаты
 										</label>
 										<div className={styles.fieldWrapper}>
 											<DatePicker
@@ -1095,7 +1096,7 @@ export function OperationModal({
 													setFormData({ ...formData, confirmPayment: checked })
 												}
 												className={[styles.datePicker, errors.paymentDate ? styles.error : ''].join(' ')}
-											/> 
+											/>
 										</div>
 									</div>
 
@@ -1131,7 +1132,7 @@ export function OperationModal({
 									{/* Сумма */}
 									<div className={styles.formRow}>
 										<label className={styles.label}>
-											Сумма  
+											Сумма
 										</label>
 										<div className={styles.fieldWrapper}>
 											<div className={styles.inputGroup}>
@@ -1309,7 +1310,7 @@ export function OperationModal({
 													{getAccountCurrency(formData.fromAccount) && <div className={styles.currencyDisplay}>
 														{getAccountCurrency(formData.fromAccount)}
 													</div>}
-												</div> 
+												</div>
 											</div>
 										</div>
 									</div>
@@ -1455,7 +1456,7 @@ export function OperationModal({
 													}}
 													placeholder='Выберите дату'
 													className={[styles.datePicker, errors.accrualDate ? styles.error : ''].join(' ')}
-												/> 
+												/>
 											</div>
 										</div>
 

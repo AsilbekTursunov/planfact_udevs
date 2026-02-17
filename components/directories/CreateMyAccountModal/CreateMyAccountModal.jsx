@@ -9,6 +9,7 @@ import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityModal/CreateLegalEntityModal'
 import styles from './CreateMyAccountModal.module.scss'
+import Input from '@/components/shared/Input'
 
 export default function CreateMyAccountModal({ isOpen, onClose, account = null }) {
   const queryClient = useQueryClient()
@@ -187,8 +188,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div>
-
+        </div> 
         <div className={styles.content}>
           <div className={styles.form}>
             {/* Название */}
@@ -197,7 +197,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                 Название <span className={styles.required}>*</span>
               </label>
               <div className={styles.inputContainer}>
-                <input
+                <Input
                   type="text"
                   value={formData.nazvanie}
                   onChange={(e) => setFormData({ ...formData, nazvanie: e.target.value })}
@@ -258,11 +258,11 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
               <div className={styles.formRow}>
                 <label className={styles.label}>Начальный остаток</label>
                 <div className={styles.inputGroup}>
-                  <input
+                  <Input
                     type="number"
                     value={formData.nachalьnyy_ostatok}
                     onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: e.target.value })}
-                    placeholder="0"
+                    placeholder="0" 
                     className={styles.input}
                     onWheel={(e) => e.target.blur()}
                   />
@@ -270,6 +270,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                     value={formData.data_sozdaniya}
                     onChange={(value) => setFormData({ ...formData, data_sozdaniya: value })}
                     placeholder="Выберите дату"
+                    className={styles.datePicker}
                   />
                 </div>
               </div>
