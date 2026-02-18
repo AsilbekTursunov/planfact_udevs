@@ -20,10 +20,12 @@
   top: 50%;
   z-index: 1001;
   background-color: white;
+  overflow: hidden;
   border-radius: 0.5rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   transition: all 0.25s;
   width: 800px;
+  transform:  translateX(-50%) translateY(-50%);
   max-width: 90vw;
   max-height: 90vh;
   display: flex;
@@ -44,15 +46,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 2rem;
+  padding: .625rem 1rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .title {
   font-size: 20px;
   font-weight: 700;
-  color: #0f172a;
-  background-color: #E2E2E2;
+  color: #0f172a; 
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }

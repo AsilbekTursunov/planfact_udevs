@@ -1053,3 +1053,12 @@
   font-weight: 500;
   color: #6b7280;
 }
+
+.clickableCell {
+  cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover {
+    color: #0E73F6;
+  }
+}

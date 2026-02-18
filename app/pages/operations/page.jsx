@@ -189,7 +189,7 @@ export default function OperationsPage() {
 			const newOps = operationsListData.data.data.data
 
 			// Only update if we actually have new data
-			if (newOps.length === 0) вreturn
+			if (newOps.length === 0) return
 
 			if (page === 1) {
 				// First page - replace all operations
