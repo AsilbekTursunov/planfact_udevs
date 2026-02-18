@@ -58,6 +58,8 @@ export default function CashFlowReportPage() {
 
         // Calculate date range for last 6 months
         const endDate = new Date()
+        // Add 1 day to include today's operations
+        endDate.setDate(endDate.getDate() + 1)
         const startDate = new Date()
         startDate.setMonth(startDate.getMonth() - 6)
 

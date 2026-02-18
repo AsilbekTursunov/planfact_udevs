@@ -3,7 +3,7 @@ import { apiConfig } from '@/lib/config/api'
 
 /**
  * PUT /api/operations/update
- * Update an existing operation using v2/items/operations endpoint
+ * Update an existing operation using invoke_function with update_operation method
  */
 export async function PUT(request) {
   try {
@@ -33,34 +33,49 @@ export async function PUT(request) {
     }
 
     const baseURL = apiConfig.ucode.baseURL
+    const authHeader = request.headers.get('authorization')
+    const authToken = authHeader?.replace('Bearer ', '') || apiConfig.ucode.authToken
     const projectId = apiConfig.ucode.projectId
+    const appId = apiConfig.ucode.appId || projectId
     const environmentId = apiConfig.ucode['environment-id']
 
-    // Build URL with query parameters
-    const queryParams = new URLSearchParams()
-    queryParams.append('project-id', projectId)
-    queryParams.append('environment-id', environmentId)
+    // Build request body for invoke_function
+    const requestBody = {
+      auth: {
+        type: 'apikey',
+        data: {}
+      },
+      data: {
+        app_id: appId,
+        environment_id: environmentId,
+        project_id: projectId,
+        method: 'update_operation',
+        user_id: '',
+        object_data: data
+      }
+    }
 
-    const url = `${baseURL}/v2/items/operations?${queryParams.toString()}`
+    const url = `${baseURL}/v2/invoke_function/planfact-plan-fact`
 
     console.log('Update operation request:', {
       url,
-      data: JSON.stringify(data, null, 2)
+      body: JSON.stringify(requestBody, null, 2)
     })
 
     // Prepare headers
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'API-KEY',
-      'environment-id': environmentId,
-      'X-API-KEY': 'P-7LpJciQKbkwuC2ecwefamfEQhoe5F8Bc',
+    }
+
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`
     }
 
     const response = await fetch(url, {
-      method: 'PUT',
+      method: 'POST',
       headers,
-      body: JSON.stringify({ data }),
+      body: JSON.stringify(requestBody),
     })
 
     if (!response.ok) {

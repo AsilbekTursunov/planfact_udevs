@@ -684,8 +684,6 @@ export function OperationModal({
 			// Determine if this is create or update
 			const isUpdate = !isNew && (operationData?.rawData?.guid || operationData?.guid)
 			const updateGuid = operationData?.rawData?.guid || operationData?.guid
-			const endpoint = isUpdate ? '/api/operations/update' : '/api/operations/create'
-			const method = isUpdate ? 'PUT' : 'POST'
 
 			console.log('=== Submit Operation Debug ===')
 			console.log('isNew:', isNew)
@@ -693,8 +691,6 @@ export function OperationModal({
 			console.log('updateGuid:', updateGuid)
 			console.log('operationData:', operationData)
 			console.log('operationData.rawData:', operationData?.rawData)
-			console.log('endpoint:', endpoint)
-			console.log('method:', method)
 
 			// For update, add guid to request data
 			if (isUpdate && updateGuid) {
@@ -709,9 +705,25 @@ export function OperationModal({
 				requestData.payment_confirmed = formData.confirmPayment || false
 			}
 
+			// Build request body for invoke_function API
+			const apiRequestBody = {
+				auth: {
+					type: 'apikey',
+					data: {}
+				},
+				data: {
+					app_id: process.env.NEXT_PUBLIC_APP_ID || '',
+					environment_id: process.env.NEXT_PUBLIC_ENVIRONMENT_ID || '',
+					project_id: process.env.NEXT_PUBLIC_PROJECT_ID || '',
+					method: isUpdate ? 'update_operation' : 'create_operation',
+					user_id: '',
+					object_data: requestData
+				}
+			}
+
 			console.log(
 				`${isUpdate ? 'Updating' : 'Creating'} operation with data:`,
-				JSON.stringify({ data: requestData }, null, 2),
+				JSON.stringify(apiRequestBody, null, 2),
 			)
 			console.log('Form data:', formData)
 			console.log(
@@ -721,9 +733,9 @@ export function OperationModal({
 					: 'none',
 			)
 
-			// Use fetch to call the API endpoint
-			// Get auth token from localStorage
+			// Call API directly
 			const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
+			const apiUrl = 'https://api.admin.u-code.io/v2/invoke_function/planfact-plan-fact'
 
 			const headers = {
 				'Content-Type': 'application/json',
@@ -733,10 +745,10 @@ export function OperationModal({
 				headers['Authorization'] = `Bearer ${authToken}`
 			}
 
-			const response = await fetch(endpoint, {
-				method,
+			const response = await fetch(apiUrl, {
+				method: 'POST',
 				headers,
-				body: JSON.stringify({ data: requestData }),
+				body: JSON.stringify(apiRequestBody),
 			})
 
 			const result = await response.json()

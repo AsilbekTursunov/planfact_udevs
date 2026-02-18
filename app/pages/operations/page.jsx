@@ -175,7 +175,7 @@ export default function OperationsPage() {
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList({
 		date_range: {
 			start_date: '2026-01-01',
-			end_date: '2026-12-31',
+			end_date: '2027-01-01T23:59:59Z', // Включаем весь день 2026-12-31 с временем
 		},
 		page: page,
 		limit: limit,
@@ -189,7 +189,7 @@ export default function OperationsPage() {
 			const newOps = operationsListData.data.data.data
 
 			// Only update if we actually have new data
-			if (newOps.length === 0) return
+			if (newOps.length === 0) вreturn
 
 			if (page === 1) {
 				// First page - replace all operations
