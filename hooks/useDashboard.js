@@ -481,9 +481,6 @@ export const useDeleteChartOfAccounts = () => {
       queryClient.invalidateQueries({ queryKey: ['chartOfAccountsV2'] })
       showSuccessNotification('Учетная статья успешно удалена!')
     },
-    onError: (error) => {
-      showErrorNotification(error.message || 'Ошибка при удалении учетной статьи')
-    },
   })
 }
 

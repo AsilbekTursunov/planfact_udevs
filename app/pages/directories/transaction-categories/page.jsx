@@ -693,12 +693,23 @@ export default function TransactionCategoriesPage() {
 					if (categoryToDelete?.guid) {
 						try {
 							await deleteMutation.mutateAsync({ guid: categoryToDelete.guid })
-							showSuccessNotification('Учетная статья успешно удалена!')
 							setIsDeleteModalOpen(false)
 							setCategoryToDelete(null)
 						} catch (error) {
-							console.error('Error deleting category:', error)
-							showErrorNotification(error.message || 'Не удалось удалить учетную статью')
+							// Close modal first
+							setIsDeleteModalOpen(false)
+							setCategoryToDelete(null)
+							
+							// Extract error message from API response
+							let errorMessage = 'Не удалось удалить учетную статью'
+							if (error.response?.data?.data) {
+								errorMessage = error.response.data.data
+							} else if (error.message) {
+								errorMessage = error.message
+							}
+							
+							// Show error notification at top center
+							showErrorNotification(errorMessage, { position: 'top-center' })
 						}
 					}
 				}}
