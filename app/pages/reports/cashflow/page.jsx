@@ -12,12 +12,15 @@ import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/Re
 import { getCashFlowReport } from '@/lib/api/ucode/cashflow'
 import styles from './cashflow.module.scss'
 import '@/styles/report-filters.css'
+import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
+import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 
 export default function CashFlowReportPage() {
   const [expanded, setExpanded] = useState({})
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [loading, setLoading] = useState(true)
   const [reportData, setReportData] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Filter states
   const [selectedPeriod, setSelectedPeriod] = useState('all')
@@ -101,7 +104,6 @@ export default function CashFlowReportPage() {
     if (!reportData?.legend) return []
     return reportData.legend.map(item => item.key)
   }, [reportData])
-
   // Transform API data into hierarchical structure
   const data = useMemo(() => {
     if (!reportData?.rows) return []
@@ -195,18 +197,7 @@ export default function CashFlowReportPage() {
                 <button
                   className={styles.expandButton}
                 >
-                  {isExpanded ? (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round" />
-                      <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round" />
-                        <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M8 5.33337L8 10.6667" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
+                  {isExpanded ? <ExpendClose /> : <ExpendOpen />}
                 </button>
               )}
               <span className={row.depth === 0 ? styles.boldText : ''}>{value}</span>
@@ -328,11 +319,15 @@ export default function CashFlowReportPage() {
                     <circle cx="8" cy="13" r="1" fill="currentColor" />
                   </svg>
                 </button>
+                <button onClick={() => setIsModalOpen(true)} style={{ marginLeft: '10px', padding: '5px' }}>
+                  Test Modal
+                </button>
               </div>
             </div>
           </div>
+          <OperationCashFlowModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
           <div className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`}>
-            <table className={styles.table}> 
+            <table className={styles.table}>
               <thead className={styles.thead}>
                 {table.getHeaderGroups().map(headerGroup => {
                   console.log(headerGroup)

@@ -1208,7 +1208,7 @@ export function OperationModal({
 										{/* Дата оплаты */}
 										<div className={styles.formRow}>
 											<label className={styles.label}>
-												Дата оплаты <span className={styles.required}>*</span>
+												Дата оплаты
 											</label>
 											<div className={styles.fieldWrapper}>
 												<DatePicker
@@ -1228,7 +1228,6 @@ export function OperationModal({
 													}
 													className={[styles.datePicker, errors.fromDate ? styles.error : ''].join(' ')}
 												/>
-
 											</div>
 										</div>
 
@@ -1264,7 +1263,7 @@ export function OperationModal({
 										{/* Сумма списания */}
 										<div className={styles.formRow}>
 											<label className={styles.label}>
-												Сумма списания <span className={styles.required}>*</span>
+												Сумма списания
 											</label>
 											<div className={styles.fieldWrapper}>
 												<div className={styles.inputGroup}>
@@ -1297,7 +1296,7 @@ export function OperationModal({
 										{/* Дата */}
 										<div className={styles.formRow}>
 											<label className={styles.label}>
-												Дата <span className={styles.required}>*</span>
+												Дата
 											</label>
 											<div className={styles.fieldWrapper}>
 												<DatePicker
@@ -1414,7 +1413,7 @@ export function OperationModal({
 										{/* Дата начисления */}
 										<div className={styles.formRow}>
 											<label className={styles.label}>
-												Дата начисления <span className={styles.required}>*</span>
+												Дата начисления 
 											</label>
 											<div className={styles.fieldWrapper}>
 												<DatePicker
@@ -1499,7 +1498,7 @@ export function OperationModal({
 										{/* Сумма */}
 										<div className={styles.formRow}>
 											<label className={styles.label}>
-												Сумма <span className={styles.required}>*</span>
+												Сумма 
 											</label>
 											<div className={styles.fieldWrapper}>
 												<div className={styles.inputGroup}>

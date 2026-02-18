@@ -33,7 +33,7 @@ export default function OperationsPage() {
 	}, [])
 
 	// Filter states
-	const [isFilterOpen, setIsFilterOpen] = useState(false)
+	const [isFilterOpen, setIsFilterOpen] = useState(true)
 	const [selectedFilters, setSelectedFilters] = useState({
 		postupleniye: true,
 		vyplata: true,

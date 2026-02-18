@@ -16,10 +16,11 @@ import { DeleteCounterpartyConfirmModal } from '@/components/directories/DeleteC
 import { DeleteGroupConfirmModal } from '@/components/directories/DeleteGroupConfirmModal/DeleteGroupConfirmModal'
 import { cn } from '@/app/lib/utils'
 import styles from './counterparties.module.scss'
-import { BsList, BsListNested } from 'react-icons/bs'
-import { CgAddR, CgRemoveR } from 'react-icons/cg'
+import { BsList } from 'react-icons/bs'
 import { TbCurrencyRubel } from 'react-icons/tb'
 import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
+import { LuListTree } from 'react-icons/lu'
+import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 
 export default function CounterpartiesPage() {
   // Block body scroll for this page only
@@ -35,7 +36,7 @@ export default function CounterpartiesPage() {
 
   const router = useRouter()
   const queryClient = useQueryClient()
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedRows, setSelectedRows] = useState([])
@@ -98,11 +99,14 @@ export default function CounterpartiesPage() {
     limit: 100,
   })
 
+
+
   // Extract counterparties from response
   const counterpartiesItems = useMemo(() => {
     const items = counterpartiesData?.data?.data?.data || []
     return Array.isArray(items) ? items : []
   }, [counterpartiesData])
+
 
   // Fetch counterparties groups using new invoke_function API
   const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
@@ -110,10 +114,13 @@ export default function CounterpartiesPage() {
     limit: 100,
   })
 
+
   const counterpartiesGroupsItems = useMemo(() => {
     const items = counterpartiesGroupsData?.data?.data?.data || []
     return Array.isArray(items) ? items : []
   }, [counterpartiesGroupsData])
+
+  console.log('counterpartiesGroupsData', counterpartiesGroupsData)
 
   // Fetch chart of accounts for filter
   const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })
@@ -132,6 +139,7 @@ export default function CounterpartiesPage() {
     }
     return Array.isArray(chartOfAccountsRaw) ? flatten(chartOfAccountsRaw) : []
   }, [chartOfAccountsData])
+
 
   // Prepare options for filters
   const counterpartiesOptions = useMemo(() => {
@@ -241,7 +249,8 @@ export default function CounterpartiesPage() {
       groupedCounterparties: [...grouped, ...ungrouped],
       flatCounterparties: filteredItems
     }
-  }, [counterpartiesItems, filters.selectedTypes, counterpartiesGroupsItems])
+  }, [counterpartiesItems, counterpartiesGroupsItems])
+
 
   const totalCounterparties = flatCounterparties.length
 
@@ -393,7 +402,7 @@ export default function CounterpartiesPage() {
                     className={cn(styles.filterIcon, viewMode === 'nested' && styles.active)}
                     onClick={() => setViewMode('nested')}
                   >
-                    <BsListNested size={18} />
+                    <LuListTree size={18} />
                   </button>
                 </div>
                 <div className={styles.searchContainer}>
@@ -518,9 +527,9 @@ export default function CounterpartiesPage() {
                                   }}
                                 >
                                   {isExpanded ? (
-                                    <CgRemoveR size={20} className={styles.expandIcon} />
+                                    <ExpendClose />
                                   ) : (
-                                    <CgAddR size={20} className={styles.expandIcon} />
+                                      <ExpendOpen />
                                   )}
                                 </button>
                                 <span className={styles.groupNameText}>

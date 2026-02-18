@@ -461,7 +461,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                       labelKey="label"
                       valueKey="guid"
                       className="flex-1"
-                      showGroupActions={true}
+                      showGroupActions={false}
                       onEditGroup={(item) => setEditingGroup(item.rawData)}
                       onDeleteGroup={(item) => setDeletingGroup(item.rawData)}
                     />

@@ -2,8 +2,6 @@
 
 import React, { useState, useEffect } from 'react'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
-import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
-import { DateRangePickerModal } from '@/components/common/DateRangePickerModal/DateRangePickerModal'
 import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar'
 import { getProfitAndLoss } from '@/lib/api/ucode/profitAndLoss'
 import styles from './profit-and-loss.module.scss'
@@ -13,7 +11,7 @@ export default function ProfitAndLossPage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [reportData, setReportData] = useState(null)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   
   // Filter states
