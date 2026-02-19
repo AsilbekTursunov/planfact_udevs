@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
-import { useChartOfAccountsPlanFact, useUpdateCounterparty, useCounterpartiesGroupsV2 } from '@/hooks/useDashboard'
+import { useChartOfAccountsPlanFact, useUpdateCounterparty, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import styles from '../CreateCounterpartyModal/CreateCounterpartyModal.module.scss'
@@ -56,8 +56,8 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
   }, [chartOfAccountsRaw])
 
   // Get counterparties groups for dropdown
-  const { data: counterpartiesGroupsData } = useCounterpartiesGroupsV2({ data: {} })
-  const counterpartiesGroups = counterpartiesGroupsData?.data?.data?.response || []
+  const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({ page: 1, limit: 100 })
+  const counterpartiesGroups = counterpartiesGroupsData?.data?.data?.data || []
 
   // Transform chart of accounts for GroupedSelect
   const chartOfAccountsOptions = useMemo(() => {

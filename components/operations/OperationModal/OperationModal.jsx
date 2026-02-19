@@ -240,6 +240,11 @@ export function OperationModal({
 		const counterparties = counterpartiesData?.data?.data?.data || []
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
 
+		console.log('🔍 Building counterAgentsTree:')
+		console.log('counterpartiesGroupsData:', counterpartiesGroupsData)
+		console.log('groups extracted:', groups)
+		console.log('counterparties extracted:', counterparties)
+
 		if (counterparties.length === 0) return []
 
 		// Build child items map: groupGuid -> [counterparties]
@@ -255,21 +260,22 @@ export function OperationModal({
 			}
 		})
 
+		console.log('childItemsMap:', childItemsMap)
+
 		// Find root items (groups with children and ungrouped counterparties)
 		const rootItems = []
 
 		// Add groups with their children
 		groups.forEach(group => {
 			const children = childItemsMap.get(group.guid) || []
-			// Add group only if it has children
-			if (children.length > 0) {
-				rootItems.push({
-					guid: group.guid,
-					nazvanie: group.nazvanie_gruppy || 'Без названия',
-					isGroup: true,
-					children: children,
-				})
-			}
+			console.log(`Group "${group.nazvanie_gruppy}" (${group.guid}):`, children.length, 'children')
+			// Add all groups, even if they don't have children
+			rootItems.push({
+				guid: group.guid,
+				nazvanie: group.nazvanie_gruppy || 'Без названия',
+				isGroup: true,
+				children: children,
+			})
 		})
 
 		// Add ungrouped counterparties as root items

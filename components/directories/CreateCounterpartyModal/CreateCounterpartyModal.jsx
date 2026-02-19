@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
-import { useChartOfAccountsPlanFact, useCreateCounterparty, useCreateCounterpartiesGroup, useCounterpartiesGroupsV2, useUpdateCounterpartiesGroup, useDeleteCounterpartiesGroups } from '@/hooks/useDashboard'
+import { useChartOfAccountsPlanFact, useCreateCounterparty, useCreateCounterpartiesGroup, useCounterpartiesGroupsPlanFact, useUpdateCounterpartiesGroup, useDeleteCounterpartiesGroups } from '@/hooks/useDashboard'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import EditCounterpartyGroupModal from '@/components/directories/EditCounterpartyGroupModal/EditCounterpartyGroupModal'
@@ -70,8 +70,8 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
   }, [chartOfAccountsRaw])
 
   // Get counterparties groups for dropdown
-  const { data: counterpartiesGroupsData } = useCounterpartiesGroupsV2({ data: {} })
-  const counterpartiesGroups = counterpartiesGroupsData?.data?.data?.response || []
+  const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({ page: 1, limit: 100 })
+  const counterpartiesGroups = counterpartiesGroupsData?.data?.data?.data || []
 
   // Transform chart of accounts for GroupedSelect
   const chartOfAccountsOptions = useMemo(() => {
