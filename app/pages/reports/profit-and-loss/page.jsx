@@ -37,18 +37,18 @@ export default function ProfitAndLossPage() {
   const [selectedEntity, setSelectedEntity] = useState('all')
   const [selectedAccounts, setSelectedAccounts] = useState([]) // Multiple selection
   const [selectedCounterparties, setSelectedCounterparties] = useState([]) // Multiple selection
-  const [dateRange, setDateRange] = useState(getDefaultDateRange())
+  const [dateRange, setDateRange] = useState(getDefaultDateRange()) // Default to last 6 months
   const [selectedGrouping, setSelectedGrouping] = useState('monthly')
   
   // Accounting method: true = Accrual (начисление), false = Cash (кассовый)
   const [isCalculation] = useState(true)
   
-  // Profit types filter - all enabled by default
+  // Profit types filter - all disabled by default
   const [profitTypes, setProfitTypes] = useState({
-    operational: true,  // isOperatingProfit
-    ebitda: true,       // isEbitda
-    ebit: true,         // isEbit
-    ebt: true           // isEbt
+    operational: false,  // isOperatingProfit
+    ebitda: false,       // isEbitda
+    ebit: false,         // isEbit
+    ebt: false           // isEbt
   })
   
   const toggleProfitType = (type) => {
@@ -154,29 +154,36 @@ export default function ProfitAndLossPage() {
   // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
+      // If no date range selected, don't fetch
+      if (!dateRange || !dateRange.start || !dateRange.end) {
+        setLoading(false)
+        setReportData(null)
+        return
+      }
+      
       try {
         setLoading(true)
         
-        // If no date range selected, don't fetch
-        if (!dateRange || !dateRange.start || !dateRange.end) {
-          setLoading(false)
-          return
-        }
-        
         // Format dates for API (expects YYYY-MM-DD strings)
-        const formatDate = (date) => {
+        const formatDate = (date, isEndDate = false) => {
           const year = date.getFullYear()
           const month = String(date.getMonth() + 1).padStart(2, '0')
           const day = String(date.getDate()).padStart(2, '0')
           return `${year}-${month}-${day}`
         }
         
+        // For end date, we need to include the whole day
+        // So we add 1 day to make it inclusive
+        const endDateAdjusted = new Date(dateRange.end)
+        endDateAdjusted.setDate(endDateAdjusted.getDate() + 1)
+        
         const startDate = formatDate(dateRange.start)
-        const endDate = formatDate(dateRange.end)
+        const endDate = formatDate(endDateAdjusted)
         
         console.log('📅 Date Range being sent to API:', {
           startDate,
           endDate,
+          originalEndDate: formatDate(dateRange.end),
           dateRangeObject: dateRange
         })
         
@@ -229,7 +236,22 @@ export default function ProfitAndLossPage() {
         console.log('📥 P&L API Response:', response)
         
         if (response?.data?.data?.data) {
-          setReportData(response.data.data.data)
+          const apiData = response.data.data.data
+          
+          // Combine revenue and rows into a single array
+          // Revenue comes first, then expenses and other rows
+          const combinedRows = [
+            ...(apiData.revenue || []),
+            ...(apiData.rows || [])
+          ]
+          
+          // Update reportData with combined rows
+          setReportData({
+            ...apiData,
+            rows: combinedRows
+          })
+          
+          console.log('📊 Combined rows:', combinedRows)
         } else {
           console.error('Data not found in expected path')
         }
@@ -409,6 +431,84 @@ export default function ProfitAndLossPage() {
             </div>
             
             <div className={styles.loading}>Загрузка данных...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Empty state when no date range selected
+  if (!dateRange || !reportData) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.contentWrapper}>
+          {/* Filter Sidebar */}
+          <ReportFilterSidebar
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            periodOptions={periodOptions}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+            entityOptions={entityOptions}
+            selectedEntity={selectedEntity}
+            onEntityChange={setSelectedEntity}
+            accountOptions={accounts}
+            selectedAccounts={selectedAccounts}
+            onAccountsChange={setSelectedAccounts}
+            counterpartyOptions={counterparties}
+            selectedCounterparties={selectedCounterparties}
+            onCounterpartiesChange={setSelectedCounterparties}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            profitTypes={profitTypes}
+            onProfitTypesChange={toggleProfitType}
+          />
+
+          {/* Filter Toggle Bar */}
+          {!isFilterOpen && (
+            <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
+              <button className={styles.filterToggleBarButton}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Main Content - Empty State */}
+          <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
+            <div className={styles.header}>
+              <div className={styles.headerContent}>
+                <div className={styles.titleRow}>
+                  <h1 className={styles.title}>Отчет о прибылях и убытках (P&L)</h1> 
+                </div>
+                <div className={styles.headerRight}>
+                  <GroupedSelect
+                    data={groupingOptions}
+                    value={selectedGrouping}
+                    onChange={(value) => setSelectedGrouping(value)}
+                    placeholder="Способ построения"
+                    className={styles.groupingSelect}
+                  />
+                  <button className={styles.moreButton}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="8" cy="3" r="1" fill="currentColor"/>
+                      <circle cx="8" cy="8" r="1" fill="currentColor"/>
+                      <circle cx="8" cy="13" r="1" fill="currentColor"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.emptyState}>
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '16px', opacity: 0.3 }}>
+                <path d="M8 16C8 11.5817 11.5817 8 16 8H48C52.4183 8 56 11.5817 56 16V48C56 52.4183 52.4183 56 48 56H16C11.5817 56 8 52.4183 8 48V16Z" stroke="currentColor" strokeWidth="2"/>
+                <path d="M16 24H48M16 32H48M16 40H32" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              <p style={{ fontSize: '16px', color: '#667085', marginBottom: '8px' }}>Выберите период для отображения отчета</p>
+              <p style={{ fontSize: '14px', color: '#98A2B3' }}>Используйте фильтры слева для настройки параметров отчета</p>
+            </div>
           </div>
         </div>
       </div>

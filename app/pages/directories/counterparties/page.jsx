@@ -40,7 +40,7 @@ export default function CounterpartiesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedRows, setSelectedRows] = useState([])
-  const [viewMode, setViewMode] = useState('nested')
+  const [viewMode, setViewMode] = useState('list') // 'list' | 'nested' | 'groups'
 
   const [filters, setFilters] = useState({
     // Group filters
@@ -251,6 +251,19 @@ export default function CounterpartiesPage() {
     }
   }, [counterpartiesItems, counterpartiesGroupsItems])
 
+  // Create array of only groups for 'groups' view mode
+  const counterpartiesGroups = useMemo(() => {
+    return counterpartiesGroupsItems.map((group, index) => ({
+      id: `group-${group.guid}`,
+      guid: group.guid,
+      nazvanie: group.nazvanie_gruppy || 'Без названия',
+      opisanie_gruppy: group.opisanie_gruppy || null,
+      data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya).toLocaleDateString('ru-RU') : null,
+      isGroup: true,
+      items: [] // Empty for groups-only view
+    }))
+  }, [counterpartiesGroupsItems])
+
 
   const totalCounterparties = flatCounterparties.length
 
@@ -395,14 +408,25 @@ export default function CounterpartiesPage() {
                   <button
                     className={cn(styles.filterIcon, viewMode === 'list' && styles.active)}
                     onClick={() => setViewMode('list')}
+                    title="Список"
                   >
                     <BsList size={18} />
                   </button>
                   <button
                     className={cn(styles.filterIcon, viewMode === 'nested' && styles.active)}
                     onClick={() => setViewMode('nested')}
+                    title="Вложенный вид"
                   >
                     <LuListTree size={18} />
+                  </button>
+                  <button
+                    className={cn(styles.filterIcon, viewMode === 'groups' && styles.active)}
+                    onClick={() => setViewMode('groups')}
+                    title="Только группы"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
                   </button>
                 </div>
                 <div className={styles.searchContainer}>
@@ -500,14 +524,14 @@ export default function CounterpartiesPage() {
                       Загрузка...
                     </td>
                   </tr>
-                ) : (viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 ? (
+                ) : (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 ? (
                   <tr className={styles.emptyRow}>
                     <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
                       Нет данных
                     </td>
                   </tr>
                 ) : (
-                      (viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item, itemIndex) => {
+                      (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item, itemIndex) => {
                     if (item.isGroup) {
                       const isExpanded = expandedGroups.has(item.guid)
                       const isLastChild = (index) => index === item.items.length - 1

@@ -151,13 +151,6 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
     }))
   }, [counterpartiesGroups])
 
-  // Group options for counterparties groups
-  const groupOptions = [
-    { guid: 'client', label: 'Клиент' },
-    { guid: 'supplier', label: 'Поставщик' },
-    { guid: 'employee', label: 'Сотрудник' }
-  ]
-
   useEffect(() => {
     if (isOpen) {
       setIsClosing(false)
@@ -340,15 +333,6 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
     }
   }
 
-  const handleGroupChange = (value) => {
-    const groupMap = {
-      'client': 'Клиент',
-      'supplier': 'Поставщик',
-      'employee': 'Сотрудник'
-    }
-    setFormData({ ...formData, gruppa: value ? [groupMap[value]] : [] })
-  }
-
   if (!isOpen && !isVisible) return null
 
   const modalContent = (
@@ -429,22 +413,6 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                       onChange={(e) => setFormData({ ...formData, polnoe_imya: e.target.value })}
                       placeholder="Например, ООО «Васильев и партнеры»"
                       className={styles.input}
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formRow}>
-                  <label className={styles.label}>Группа</label>
-                  <div className={styles.inputContainer}>
-                    <GroupedSelect
-                      data={groupOptions}
-                      value={formData.gruppa.length > 0 ? groupOptions.find(g => formData.gruppa.includes(g.label))?.guid : ''}
-                      onChange={handleGroupChange}
-                      placeholder="Выберите группу контрагентов"
-                      groupBy={false}
-                      labelKey="label"
-                      valueKey="guid"
-                      className="flex-1"
                     />
                   </div>
                 </div>
