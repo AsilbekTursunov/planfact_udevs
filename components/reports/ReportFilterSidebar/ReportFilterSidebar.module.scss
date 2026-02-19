@@ -182,3 +182,65 @@
   }
 }
 
+
+// Checkbox Group
+.checkboxGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.checkboxInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.checkboxCustom {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid #0E73F6;
+  border-radius: 8px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  
+  .checkboxLabel:hover & {
+    border-color: #0a5dd6;
+  }
+  
+  svg {
+    opacity: 0;
+    transform: scale(0.7);
+    transition: all 0.2s;
+    color: #0E73F6;
+  }
+  
+  .checkboxInput:checked + & svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.checkboxText {
+  font-size: 13px;
+  font-weight: 500;
+  color: #344054;
+  line-height: 1.4;
+}

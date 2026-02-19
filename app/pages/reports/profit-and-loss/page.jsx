@@ -19,6 +19,21 @@ export default function ProfitAndLossPage() {
   const [selectedEntity, setSelectedEntity] = useState('all')
   const [dateRange, setDateRange] = useState(null)
   const [selectedGrouping, setSelectedGrouping] = useState('monthly')
+  
+  // Profit types filter
+  const [profitTypes, setProfitTypes] = useState({
+    operational: true,
+    ebitda: true,
+    ebit: true,
+    ebt: true
+  })
+  
+  const toggleProfitType = (type) => {
+    setProfitTypes(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }))
+  }
 
   // Mock data for selects
   const groupingOptions = [
@@ -203,6 +218,8 @@ export default function ProfitAndLossPage() {
           onEntityChange={setSelectedEntity}
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
+          profitTypes={profitTypes}
+          onProfitTypesChange={toggleProfitType}
         />
 
         {/* Filter Toggle Bar */}
