@@ -8,11 +8,15 @@ import { useChartOfAccountsPlanFact, useUpdateCounterparty, useCounterpartiesGro
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import styles from '../CreateCounterpartyModal/CreateCounterpartyModal.module.scss'
+import Input from '@/components/shared/Input'
+import TextArea from '@/components/shared/TextArea'
+import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
+import { GoPlusCircle, GoTrash } from 'react-icons/go'
 
 export default function EditCounterpartyModal({ isOpen, onClose, counterparty }) {
   const queryClient = useQueryClient()
   const updateMutation = useUpdateCounterparty()
-  
+
   const [formData, setFormData] = useState({
     nazvanie: '',
     polnoe_imya: '',
@@ -30,6 +34,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const [details, setDetails] = useState(false)
 
   // Get chart of accounts for articles dropdowns
   const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })
@@ -67,14 +72,14 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
   // Build tree for chart of accounts - separate trees for income and expenses
   const chartOfAccountsTreeIncome = useMemo(() => {
     if (!Array.isArray(chartOfAccountsRaw) || chartOfAccountsRaw.length === 0) return []
-    
+
     // Find the root item with tip "Доходы"
-    const incomeRoot = chartOfAccountsRaw.find(item => 
+    const incomeRoot = chartOfAccountsRaw.find(item =>
       Array.isArray(item.tip) && item.tip.some(t => t && t.includes('Доход'))
     )
-    
+
     if (!incomeRoot || !incomeRoot.children) return []
-    
+
     // Convert to TreeSelect format
     const convertToTreeFormat = (items) => {
       return items.map(item => ({
@@ -83,25 +88,25 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
         selectable: !!item.guid, // Only selectable if has guid
         expanded: false,
         tip: item.tip,
-        children: item.children && item.children.length > 0 
+        children: item.children && item.children.length > 0
           ? convertToTreeFormat(item.children)
           : undefined
       }))
     }
-    
+
     return convertToTreeFormat(incomeRoot.children)
   }, [chartOfAccountsRaw])
 
   const chartOfAccountsTreeExpense = useMemo(() => {
     if (!Array.isArray(chartOfAccountsRaw) || chartOfAccountsRaw.length === 0) return []
-    
+
     // Find the root item with tip "Расходы"
-    const expenseRoot = chartOfAccountsRaw.find(item => 
+    const expenseRoot = chartOfAccountsRaw.find(item =>
       Array.isArray(item.tip) && item.tip.some(t => t && t.includes('Расход'))
     )
-    
+
     if (!expenseRoot || !expenseRoot.children) return []
-    
+
     // Convert to TreeSelect format
     const convertToTreeFormat = (items) => {
       return items.map(item => ({
@@ -110,12 +115,12 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
         selectable: !!item.guid, // Only selectable if has guid
         expanded: false,
         tip: item.tip,
-        children: item.children && item.children.length > 0 
+        children: item.children && item.children.length > 0
           ? convertToTreeFormat(item.children)
           : undefined
       }))
     }
-    
+
     return convertToTreeFormat(expenseRoot.children)
   }, [chartOfAccountsRaw])
 
@@ -131,10 +136,10 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
     if (isOpen && counterparty) {
       setIsClosing(false)
       setIsVisible(true)
-      
+
       // Get rawData once for all functions
       const rawData = counterparty.rawData || counterparty
-      
+
       // Extract UUID from _data fields if they exist, otherwise use direct field
       const getChartOfAccountsId = (field) => {
         // First check rawData
@@ -194,8 +199,12 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
         counterparties_group_id: getCounterpartiesGroupId(),
         gruppa: counterparty.gruppa || [],
         inn: counterparty.inn ? String(counterparty.inn) : '',
-        kpp: counterparty.kpp ? String(counterparty.kpp) : '',
-        nomer_scheta: counterparty.nomer_scheta ? String(counterparty.nomer_scheta) : '',
+        kpp: counterparty.kpp
+          ? (Array.isArray(counterparty.kpp) ? counterparty.kpp.map((v, i) => ({ id: Date.now() + i, value: v })) : [{ id: Date.now(), value: String(counterparty.kpp) }])
+          : [{ id: Date.now(), value: '' }],
+        nomer_scheta: counterparty.nomer_scheta
+          ? (Array.isArray(counterparty.nomer_scheta) ? counterparty.nomer_scheta.map((v, i) => ({ id: Date.now() + i + 100, value: v })) : [{ id: Date.now() + 100, value: String(counterparty.nomer_scheta) }])
+          : [{ id: Date.now() + 100, value: '' }],
         primenyat_stat_i_po_umolchaniyu: counterparty.primenyat_stat_i_po_umolchaniyu || false,
         chart_of_accounts_id: getChartOfAccountsId('chart_of_accounts_id'),
         chart_of_accounts_id_2: getChartOfAccountsId('chart_of_accounts_id_2'),
@@ -218,13 +227,57 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
     }, 300)
   }
 
+  const handleAddKpp = (e) => {
+    e.preventDefault()
+    setFormData(prev => ({
+      ...prev,
+      kpp: [...prev.kpp, { id: Date.now(), value: '' }]
+    }))
+  }
+
+  const handleRemoveKpp = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      kpp: prev.kpp.filter(item => item.id !== id)
+    }))
+  }
+
+  const handleKppChange = (id, value) => {
+    setFormData(prev => ({
+      ...prev,
+      kpp: prev.kpp.map(item => item.id === id ? { ...item, value } : item)
+    }))
+  }
+
+  const handleAddAccount = (e) => {
+    e.preventDefault()
+    setFormData(prev => ({
+      ...prev,
+      nomer_scheta: [...prev.nomer_scheta, { id: Date.now(), value: '' }]
+    }))
+  }
+
+  const handleRemoveAccount = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      nomer_scheta: prev.nomer_scheta.filter(item => item.id !== id)
+    }))
+  }
+
+  const handleAccountChange = (id, value) => {
+    setFormData(prev => ({
+      ...prev,
+      nomer_scheta: prev.nomer_scheta.map(item => item.id === id ? { ...item, value } : item)
+    }))
+  }
+
   const validateForm = () => {
     const newErrors = {}
-    
+
     if (!formData.nazvanie.trim()) {
       newErrors.nazvanie = 'Укажите название'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -247,7 +300,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
 
       const rawData = counterparty.rawData || counterparty
       const now = new Date()
-      
+
       // Parse data_sozdaniya from rawData - it might be in different formats
       let dataSozdaniya = null
       if (rawData.data_sozdaniya) {
@@ -259,7 +312,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
           }
         }
       }
-      
+
       const submitData = {
         guid: rawData.guid || counterparty.guid,
         nazvanie: formData.nazvanie.trim(),
@@ -267,8 +320,27 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
         ...(formData.gruppa && formData.gruppa.length > 0 && { gruppa: formData.gruppa }),
         ...(tip.length > 0 && { tip }),
         ...(formData.inn && { inn: Number(formData.inn) }),
-        ...(formData.kpp && { kpp: Number(formData.kpp) }),
-        ...(formData.nomer_scheta && { nomer_scheta: Number(formData.nomer_scheta) }),
+        ...(formData.inn && { inn: Number(formData.inn) }),
+        ...(formData.kpp.length > 0 && {
+          kpp: formData.kpp
+            .filter(k => k.value && String(k.value).trim() !== '')
+            .map(k => Number(k.value))
+            .slice(0, formData.kpp.length > 1 ? undefined : 1) // If only 1, take first element? No backend expects array or single? 
+          // Let's mimic Create logic: if > 1 array, else single number
+        }),
+        // Actually let's do it cleaner:
+        ...(() => {
+          const kppValues = formData.kpp.filter(k => k.value && String(k.value).trim() !== '').map(k => k.value)
+          if (kppValues.length > 1) return { kpp: kppValues.map(Number) }
+          if (kppValues.length === 1) return { kpp: Number(kppValues[0]) }
+          return {}
+        })(),
+        ...(() => {
+          const accValues = formData.nomer_scheta.filter(a => a.value && String(a.value).trim() !== '').map(a => a.value)
+          if (accValues.length > 1) return { nomer_scheta: accValues.map(Number) }
+          if (accValues.length === 1) return { nomer_scheta: Number(accValues[0]) }
+          return {}
+        })(),
         ...(formData.counterparties_group_id && { counterparties_group_id: formData.counterparties_group_id }),
         primenyat_stat_i_po_umolchaniyu: formData.primenyat_stat_i_po_umolchaniyu,
         ...(formData.chart_of_accounts_id && { chart_of_accounts_id: formData.chart_of_accounts_id }),
@@ -280,10 +352,10 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
       }
 
       await updateMutation.mutateAsync(submitData)
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
-      
+
       handleClose()
     } catch (error) {
       console.error('Error updating counterparty:', error)
@@ -297,12 +369,12 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
 
   const modalContent = (
     <>
-      <div 
+      <div
         className={cn(styles.overlay, isClosing ? styles.closing : styles.opening)}
         onClick={handleClose}
       />
 
-      <div 
+      <div
         className={cn(styles.modal, isClosing ? styles.closing : styles.opening)}
       >
         <div className={styles.header}>
@@ -321,7 +393,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
                 Название <span className={styles.required}>*</span>
               </label>
               <div className={styles.inputContainer}>
-                <input
+                <Input
                   type="text"
                   value={formData.nazvanie}
                   onChange={(e) => setFormData({ ...formData, nazvanie: e.target.value })}
@@ -337,7 +409,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
             <div className={styles.formRow}>
               <label className={styles.label}>Полное название</label>
               <div className={styles.inputContainer}>
-                <input
+                <Input
                   type="text"
                   value={formData.polnoe_imya}
                   onChange={(e) => setFormData({ ...formData, polnoe_imya: e.target.value })}
@@ -364,60 +436,96 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
             </div>
 
             <div className={styles.formRow}>
-              <label className={styles.label}>
-                ИНН
-                <span className={styles.infoIcon}>?</span>
-              </label>
-              <div className={styles.inputContainer}>
-                <input
-                  type="number"
-                  value={formData.inn}
-                  onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
-                  placeholder="Укажите ИНН"
-                  className={styles.input}
-                  onWheel={(e) => e.target.blur()}
-                />
+              <label className={styles.label}></label>
+              <div onClick={() => setDetails(!details)} className={styles.requisites}>
+                <p>Реквизиты</p>
+              </div>
+            </div>
+
+            <div className={cn(styles.requisitesContainer, details && styles.active)}>
+              <div className={styles.formRow}>
+                <label className={styles.label}>
+                  ИНН
+                  <span className={styles.infoIcon}>?</span>
+                </label>
+                <div className={styles.inputContainer}>
+                  <Input
+                    type="number"
+                    value={formData.inn}
+                    onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
+                    placeholder="Укажите ИНН"
+                    className={cn(styles.input, styles.requisitesInput)}
+                    onWheel={(e) => e.target.blur()}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <label className={styles.label}>КПП</label>
+                <div className={styles.multiInputContainer}>
+                  {formData.kpp && formData.kpp.map((item, index) => (
+                    <div key={item.id} className={styles.inputWithAction}>
+                      <div className={styles.inputWrapper}>
+                        <Input
+                          type="number"
+                          value={item.value}
+                          onChange={(e) => handleKppChange(item.id, e.target.value)}
+                          placeholder="Укажите КПП"
+                          className={cn(styles.input, styles.requisitesInput)}
+                          onWheel={(e) => e.target.blur()}
+                        />
+                      </div>
+                      {index === 0 ? (
+                        <button className={styles.actionButton} onClick={handleAddKpp}>
+                          <GoPlusCircle size={20} />
+                        </button>
+                      ) : (
+                        <button className={styles.actionButton} onClick={(e) => { e.preventDefault(); handleRemoveKpp(item.id); }}>
+                          <GoTrash size={18} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <label className={styles.label}>Номер счета</label>
+                <div className={styles.multiInputContainer}>
+                  {formData.nomer_scheta && formData.nomer_scheta.map((item, index) => (
+                    <div key={item.id} className={styles.inputWithAction}>
+                      <div className={styles.inputWrapper}>
+                        <Input
+                          type="text"
+                          value={item.value}
+                          onChange={(e) => handleAccountChange(item.id, e.target.value)}
+                          placeholder="Укажите номер счета"
+                          className={cn(styles.input, styles.requisitesInput)}
+                        />
+                      </div>
+                      {index === 0 ? (
+                        <button className={styles.actionButton} onClick={handleAddAccount}>
+                          <GoPlusCircle size={20} />
+                        </button>
+                      ) : (
+                        <button className={styles.actionButton} onClick={(e) => { e.preventDefault(); handleRemoveAccount(item.id); }}>
+                          <GoTrash size={18} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
             <div className={styles.formRow}>
-              <label className={styles.label}>КПП</label>
-              <div className={styles.inputContainer}>
-                <input
-                  type="number"
-                  value={formData.kpp}
-                  onChange={(e) => setFormData({ ...formData, kpp: e.target.value })}
-                  placeholder="Укажите КПП"
-                  className={styles.input}
-                  onWheel={(e) => e.target.blur()}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <label className={styles.label}>Номер счета</label>
-              <div className={styles.inputContainer}>
-                <input
-                  type="text"
-                  value={formData.nomer_scheta}
-                  onChange={(e) => setFormData({ ...formData, nomer_scheta: e.target.value })}
-                  placeholder="Укажите номер счета"
-                  className={styles.input}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={formData.primenyat_stat_i_po_umolchaniyu}
-                  onChange={(e) => setFormData({ ...formData, primenyat_stat_i_po_umolchaniyu: e.target.checked })}
-                  className={styles.checkbox}
-                />
-                Применять статьи по умолчанию ?
-                <span className={styles.infoIcon}>?</span>
-              </label>
+              <label className={styles.label}></label>
+              <OperationCheckbox
+                checked={formData.primenyat_stat_i_po_umolchaniyu}
+                onChange={(e) => setFormData({ ...formData, primenyat_stat_i_po_umolchaniyu: e.target.checked })}
+                label="Применять статьи по умолчанию ?"
+              />
+              <span className={styles.infoIcon}>?</span>
             </div>
 
             {formData.primenyat_stat_i_po_umolchaniyu && (
@@ -451,11 +559,11 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
             <div className={styles.formRow}>
               <label className={styles.label}>Комментарий</label>
               <div className={styles.inputContainer}>
-                <textarea
+                <TextArea
                   value={formData.komentariy}
                   onChange={(e) => setFormData({ ...formData, komentariy: e.target.value })}
                   placeholder="Пояснение к контрагенту"
-                  className={styles.textarea}
+                  // className={styles.textarea}
                   rows={4}
                 />
               </div>
@@ -468,21 +576,22 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
 
           <div className={styles.footer}>
             <div className={styles.footerRight}>
-              <button 
+              <button
+                type="button"
+                onClick={handleClose}
+                className={styles.cancelButton}
+                disabled={isSubmitting}
+              >
+                Отменить
+              </button>
+              <button
                 type="submit"
                 className={styles.submitButton}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Сохранение...' : 'Сохранить'}
               </button>
-              <button 
-                type="button"
-                onClick={handleClose} 
-                className={styles.cancelButton}
-                disabled={isSubmitting}
-              >
-                Отменить
-              </button>
+
             </div>
           </div>
         </form>

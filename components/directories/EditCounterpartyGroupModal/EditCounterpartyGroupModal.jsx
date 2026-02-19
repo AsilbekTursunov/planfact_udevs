@@ -5,6 +5,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
 import { useUpdateCounterpartiesGroup } from '@/hooks/useDashboard'
 import styles from '../CreateCounterpartyModal/CreateCounterpartyModal.module.scss'
+import Input from '@/components/shared/Input'
+import TextArea from '@/components/shared/TextArea'
 
 export default function EditCounterpartyGroupModal({ isOpen, onClose, group }) {
   const queryClient = useQueryClient()
@@ -108,7 +110,7 @@ export default function EditCounterpartyGroupModal({ isOpen, onClose, group }) {
                 Название группы <span className={styles.required}>*</span>
               </label>
               <div className={styles.inputContainer}>
-                <input
+                <Input
                   type="text"
                   value={formData.nazvanie_gruppy}
                   onChange={(e) => setFormData({ ...formData, nazvanie_gruppy: e.target.value })}
@@ -124,7 +126,7 @@ export default function EditCounterpartyGroupModal({ isOpen, onClose, group }) {
             <div className={styles.formRow}>
               <label className={styles.label}>Описание группы</label>
               <div className={styles.inputContainer}>
-                <textarea
+                <TextArea
                   value={formData.opisanie_gruppy}
                   onChange={(e) => setFormData({ ...formData, opisanie_gruppy: e.target.value })}
                   placeholder="Введите описание группы"

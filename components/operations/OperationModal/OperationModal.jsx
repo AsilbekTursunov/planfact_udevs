@@ -453,7 +453,6 @@ export function OperationModal({
 	// Handle form submission
 	const handleSubmit = async () => {
 		setIsSubmitting(true)
-		console.log('formData.confirmPayment', formData)
 		// if ('formData.confirmPayment') return
 		try {
 			// Validation for income tab
@@ -616,6 +615,7 @@ export function OperationModal({
 				}
 			}
 
+
 			// Build request data object
 			const requestData = {
 				tip: [tipMap[activeTab] || 'Поступление'],
@@ -625,18 +625,19 @@ export function OperationModal({
 				oplata_podtverzhdena: formData.confirmPayment || false,
 				payment_confirmed: formData.confirmPayment || false, // Добавляем новое поле
 				payment_accrual: formData.confirmAccrual || false, // Добавляем новое поле
-				summa: parseFloat(formData.amount) || 0,
+				summa: parseFloat(formData.amount?.toString().replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '')) || 0,
 				opisanie: formData.purpose || '',
 				data_sozdaniya: now.toISOString(),
 				data_obnovleniya: now.toISOString(),
 			}
+
 
 			// Special handling for transfer operations
 			if (activeTab === 'transfer') {
 				// For transfer, use fromAccount as my_accounts_id and toAccount as my_accounts_id_2
 				requestData.my_accounts_id = formData.fromAccount
 				requestData.my_accounts_id_2 = formData.toAccount
-				requestData.summa = parseFloat(formData.fromAmount) || 0
+				requestData.summa = parseFloat(formData.fromAmount?.toString().replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '')) || 0
 
 				// Get currency from fromAccount
 				const fromAccount = bankAccounts.find(acc => acc.guid === formData.fromAccount)
@@ -790,7 +791,6 @@ export function OperationModal({
 
 	if (!operationData && !isNew) return null
 
-	console.log(formData?.confirmPayment, formData?.accrualDate)
 
 	return (
 		<>
