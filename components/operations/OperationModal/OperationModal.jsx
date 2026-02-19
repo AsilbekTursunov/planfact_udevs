@@ -241,15 +241,8 @@ export function OperationModal({
 
 		if (counterparties.length === 0) return []
 
-		// Create a map of groups by guid
-		const groupsMap = new Map()
-		groups.forEach(group => {
-			groupsMap.set(group.guid, group)
-		})
-
 		// Build child items map: groupGuid -> [counterparties]
 		const childItemsMap = new Map()
-		const allChildGuids = new Set()
 
 		counterparties.forEach(item => {
 			if (item.counterparties_group_id) {
@@ -258,17 +251,16 @@ export function OperationModal({
 					childItemsMap.set(groupGuid, [])
 				}
 				childItemsMap.get(groupGuid).push(item)
-				allChildGuids.add(item.guid)
 			}
 		})
 
-		// Find root items (groups and ungrouped counterparties)
+		// Find root items (groups with children and ungrouped counterparties)
 		const rootItems = []
 
-		// Add groups with their children - only if they have children
+		// Add groups with their children
 		groups.forEach(group => {
 			const children = childItemsMap.get(group.guid) || []
-			// Only add group if it has children
+			// Add group only if it has children
 			if (children.length > 0) {
 				rootItems.push({
 					guid: group.guid,
@@ -291,7 +283,7 @@ export function OperationModal({
 			}
 		})
 
-		// Build tree structure recursively
+		// Build tree structure
 		const buildTree = item => {
 			const treeNode = {
 				value: item.guid,
