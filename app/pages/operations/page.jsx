@@ -174,8 +174,8 @@ export default function OperationsPage() {
 
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList({
 		date_range: {
-			start_date: '2026-01-01',
-			end_date: '2027-01-01T23:59:59Z', // Включаем весь день 2026-12-31 с временем
+			start_date: '2025-01-01',
+			end_date: '2026-12-31T23:59:59Z', // Включаем весь день 2026-12-31 с временем
 		},
 		page: page,
 		limit: limit,
@@ -868,6 +868,44 @@ export default function OperationsPage() {
 					isClosing={isModalClosing}
 					isOpening={isModalOpening}
 					onClose={closeOperationModal}
+					onSuccess={(operationData, isUpdate) => {
+						console.log('=== onSuccess callback ===')
+						console.log('operationData:', operationData)
+						console.log('isUpdate:', isUpdate)
+						
+						if (isUpdate) {
+							// Обновляем существующую операцию в списке
+							setAllOperations(prev => {
+								console.log('Previous operations count:', prev.length)
+								const updated = prev.map(op => {
+									if (op.guid === operationData.guid) {
+										console.log('Found and updating operation:', op.guid)
+										// Создаем новый объект с обновленными данными
+										const updatedOp = { 
+											...op, 
+											...operationData,
+											// Убеждаемся что guid сохранен
+											guid: op.guid
+										}
+										console.log('Updated operation:', updatedOp)
+										return updatedOp
+									}
+									return op
+								})
+								console.log('Updated operations count:', updated.length)
+								return updated
+							})
+						} else {
+							// Добавляем новую операцию в начало списка
+							console.log('Adding new operation to beginning of list')
+							setAllOperations(prev => {
+								console.log('Previous operations count:', prev.length)
+								const newList = [operationData, ...prev]
+								console.log('New operations count:', newList.length)
+								return newList
+							})
+						}
+					}}
 				/>
 			)}
 

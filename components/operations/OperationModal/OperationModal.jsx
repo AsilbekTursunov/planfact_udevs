@@ -28,6 +28,7 @@ export function OperationModal({
 	isClosing,
 	isOpening,
 	onClose,
+	onSuccess,
 	preselectedCounterparty = null,
 }) {
 	const queryClient = useQueryClient()
@@ -616,17 +617,17 @@ export function OperationModal({
 			}
 
 
-			// Build request data object
+			// Build request data object with all fields
 			const requestData = {
 				tip: [tipMap[activeTab] || 'Поступление'],
 				data_operatsii: paymentDate.toISOString(),
 				data_nachisleniya:
 					activeTab === 'accrual' ? accrualDate.toISOString() : paymentDate.toISOString(),
-				oplata_podtverzhdena: formData.confirmPayment || false,
-				payment_confirmed: formData.confirmPayment || false, // Добавляем новое поле
-				payment_accrual: formData.confirmAccrual || false, // Добавляем новое поле
 				summa: parseFloat(formData.amount?.toString().replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '')) || 0,
 				opisanie: formData.purpose || '',
+				oplata_podtverzhdena: formData.confirmPayment || false,
+				payment_confirmed: formData.confirmPayment || false,
+				payment_accrual: formData.confirmAccrual || false,
 				data_sozdaniya: now.toISOString(),
 				data_obnovleniya: now.toISOString(),
 			}
@@ -635,42 +636,30 @@ export function OperationModal({
 			// Special handling for transfer operations
 			if (activeTab === 'transfer') {
 				// For transfer, use fromAccount as my_accounts_id and toAccount as my_accounts_id_2
-				requestData.my_accounts_id = formData.fromAccount
-				requestData.my_accounts_id_2 = formData.toAccount
+				requestData.my_accounts_id = formData.fromAccount || null
+				requestData.my_accounts_id_2 = formData.toAccount || null
 				requestData.summa = parseFloat(formData.fromAmount?.toString().replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '')) || 0
 
 				// Get currency from fromAccount
 				const fromAccount = bankAccounts.find(acc => acc.guid === formData.fromAccount)
 				if (fromAccount && fromAccount.currenies_id) {
 					requestData.currenies_id = fromAccount.currenies_id
+				} else {
+					requestData.currenies_id = null
 				}
 			} else {
-				// Add optional fields only if they have values (don't send empty strings or null)
-				if (formData.accountAndLegalEntity) {
-					requestData.my_accounts_id = formData.accountAndLegalEntity
-				}
-				if (formData.counterparty) {
-					requestData.counterparties_id = formData.counterparty
-				}
-				if (formData.chartOfAccount) {
-					requestData.chart_of_accounts_id = formData.chartOfAccount
-				}
-				if (formData.legalEntity) {
-					requestData.legal_entity_id = formData.legalEntity
-				}
-				if (currencyId) {
-					requestData.currenies_id = currencyId
-				}
+				// Add fields with null if not provided (for dropdowns)
+				requestData.my_accounts_id = formData.accountAndLegalEntity || null
+				requestData.counterparties_id = formData.counterparty || null
+				requestData.chart_of_accounts_id = formData.chartOfAccount || null
+				requestData.legal_entity_id = formData.legalEntity || null
+				requestData.currenies_id = currencyId || null
 			}
 
-			// Remove empty strings
+			// Convert empty strings to null, but keep null values
 			Object.keys(requestData).forEach(key => {
-				if (
-					requestData[key] === '' ||
-					requestData[key] === null ||
-					requestData[key] === undefined
-				) {
-					delete requestData[key]
+				if (requestData[key] === '' || requestData[key] === undefined) {
+					requestData[key] = null
 				}
 			})
 
@@ -685,17 +674,15 @@ export function OperationModal({
 			console.log('operationData:', operationData)
 			console.log('operationData.rawData:', operationData?.rawData)
 
-			// For update, add guid to request data
+			// For update, add guid and preserve original creation date
 			if (isUpdate && updateGuid) {
 				requestData.guid = updateGuid
 				console.log('Adding guid to request:', updateGuid)
+				
 				// Keep original creation date for update
 				if (operationData.rawData?.data_sozdaniya) {
 					requestData.data_sozdaniya = operationData.rawData.data_sozdaniya
 				}
-				// Always send payment_accrual and payment_confirmed for updates
-				requestData.payment_accrual = formData.confirmAccrual || false
-				requestData.payment_confirmed = formData.confirmPayment || false
 			}
 
 			// Build request body for invoke_function API
@@ -705,9 +692,9 @@ export function OperationModal({
 					data: {}
 				},
 				data: {
-					app_id: process.env.NEXT_PUBLIC_APP_ID || '',
-					environment_id: process.env.NEXT_PUBLIC_ENVIRONMENT_ID || '',
-					project_id: process.env.NEXT_PUBLIC_PROJECT_ID || '',
+					app_id: '3ed54a59-5eda-4cfe-b4ae-8a201c1ea4ed',
+					environment_id: 'fc258dff-47c0-4ab1-9beb-91a045b4847c',
+					project_id: '3ed54a59-5eda-4cfe-b4ae-8a201c1ea4ed',
 					method: isUpdate ? 'update_operation' : 'create_operation',
 					user_id: '',
 					object_data: requestData
@@ -754,15 +741,21 @@ export function OperationModal({
 				)
 			}
 
+			console.log('API Response:', result)
+
 			showSuccessNotification(`Операция успешно ${isUpdate ? 'обновлена' : 'создана'}!`)
-			// Инвалидируем запросы для обновления списка операций
-			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
-			queryClient.invalidateQueries({ queryKey: ['operations'] })
-			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-			// Invalidate the specific operation query to ensure fresh data on next open
-			if (updateGuid) {
-				queryClient.invalidateQueries({ queryKey: ['operation', updateGuid] })
+			
+			// Вызываем callback для обновления локального состояния
+			if (onSuccess) {
+				const operationData = isUpdate 
+					? { ...requestData, guid: updateGuid, data_obnovleniya: now.toISOString() }
+					: (result?.data?.data || { ...requestData, guid: result?.data?.guid, data_sozdaniya: now.toISOString() })
+				onSuccess(operationData, isUpdate)
 			}
+			
+			// Обновляем связанные запросы в фоне (только dashboard)
+			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+			
 			onClose()
 		} catch (error) {
 			console.error(

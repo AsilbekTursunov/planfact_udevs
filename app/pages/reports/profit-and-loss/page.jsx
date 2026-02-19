@@ -43,13 +43,30 @@ export default function ProfitAndLossPage() {
   // Accounting method: true = Accrual (начисление), false = Cash (кассовый)
   const [isCalculation] = useState(true)
   
-  // Profit types filter - all disabled by default
+  // Profit types filter - default to all disabled, load from localStorage after mount
   const [profitTypes, setProfitTypes] = useState({
     operational: false,  // isOperatingProfit
     ebitda: false,       // isEbitda
     ebit: false,         // isEbit
     ebt: false           // isEbt
   })
+  
+  // Load profit types from localStorage after component mounts (client-side only)
+  useEffect(() => {
+    const saved = localStorage.getItem('profitAndLoss_profitTypes')
+    if (saved) {
+      try {
+        setProfitTypes(JSON.parse(saved))
+      } catch (e) {
+        console.error('Error parsing saved profit types:', e)
+      }
+    }
+  }, [])
+  
+  // Save profit types to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('profitAndLoss_profitTypes', JSON.stringify(profitTypes))
+  }, [profitTypes])
   
   const toggleProfitType = (type) => {
     setProfitTypes(prev => ({
@@ -226,14 +243,8 @@ export default function ProfitAndLossPage() {
           apiParams.contrAgentId = selectedCounterparties
         }
         
-        console.log('📤 Sending to P&L API:', JSON.stringify(apiParams, null, 2))
-        console.log('📤 Selected accounts:', selectedAccounts)
-        console.log('📤 Selected counterparties:', selectedCounterparties)
         
         const response = await getProfitAndLoss(apiParams)
-        console.log('📥 P&L API Full Response:', JSON.stringify(response, null, 2))
-        
-        console.log('📥 P&L API Response:', response)
         
         if (response?.data?.data?.data) {
           const apiData = response.data.data.data

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dashboardAPI } from '@/lib/api/dashboard'
 import { chartOfAccountsAPI } from '@/lib/api/ucode/chartOfAccounts'
-import { getOperations } from '@/lib/api/ucode/operations'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
 
 // Get dashboard data
@@ -50,8 +49,45 @@ export const useCreateOperation = () => {
   
   return useMutation({
     mutationFn: dashboardAPI.createOperation,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operations'] })
+    onMutate: async (newOperation) => {
+      // Отменяем текущие запросы
+      await queryClient.cancelQueries({ queryKey: ['operationsList'] })
+      
+      // Сохраняем предыдущее состояние
+      const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
+      
+      return { previousData }
+    },
+    onSuccess: (response, variables) => {
+      // Добавляем новую операцию в кеш
+      queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
+        if (!old?.data?.data?.data) return old
+        
+        const newOp = response?.data?.data || variables
+        
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              data: [newOp, ...old.data.data.data]
+            }
+          }
+        }
+      })
+      
+      showSuccessNotification('Операция успешно создана!')
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      showErrorNotification(error.message || 'Ошибка при создании операции')
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
@@ -63,8 +99,52 @@ export const useUpdateOperation = () => {
   
   return useMutation({
     mutationFn: ({ id, data }) => dashboardAPI.updateOperation(id, data),
+    onMutate: async ({ id, data }) => {
+      // Отменяем текущие запросы
+      await queryClient.cancelQueries({ queryKey: ['operationsList'] })
+      await queryClient.cancelQueries({ queryKey: ['operation', id] })
+      
+      // Сохраняем предыдущее состояние
+      const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
+      const previousOperation = queryClient.getQueryData(['operation', id])
+      
+      // Оптимистично обновляем операцию в списке
+      queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
+        if (!old?.data?.data?.data) return old
+        
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              data: old.data.data.data.map(op => 
+                op.guid === id 
+                  ? { ...op, ...data, data_obnovleniya: new Date().toISOString() }
+                  : op
+              )
+            }
+          }
+        }
+      })
+      
+      return { previousData, previousOperation }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operations'] })
+      showSuccessNotification('Операция успешно обновлена!')
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      if (context?.previousOperation) {
+        queryClient.setQueryData(['operation', variables.id], context.previousOperation)
+      }
+      showErrorNotification(error.message || 'Ошибка при обновлении операции')
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
@@ -76,14 +156,48 @@ export const useDeleteOperation = () => {
   
   return useMutation({
     mutationFn: dashboardAPI.deleteOperation,
+    onMutate: async (guidsToDelete) => {
+      // Отменяем текущие запросы
+      await queryClient.cancelQueries({ queryKey: ['operationsList'] })
+      
+      // Сохраняем предыдущее состояние для отката
+      const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
+      
+      // Оптимистично обновляем кеш - удаляем операции из списка
+      queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
+        if (!old?.data?.data?.data) return old
+        
+        const guidsArray = Array.isArray(guidsToDelete) ? guidsToDelete : [guidsToDelete]
+        
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              data: old.data.data.data.filter(op => !guidsArray.includes(op.guid))
+            }
+          }
+        }
+      })
+      
+      return { previousData }
+    },
+    onError: (error, variables, context) => {
+      // Откатываем изменения при ошибке
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      showErrorNotification(error.message || 'Ошибка при удалении операции')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['operations'] })
-      queryClient.invalidateQueries({ queryKey: ['operationsList'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       showSuccessNotification('Операция успешно удалена!')
     },
-    onError: (error) => {
-      showErrorNotification(error.message || 'Ошибка при удалении операции')
+    onSettled: () => {
+      // Обновляем связанные запросы в фоне
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
@@ -198,17 +312,15 @@ export const useCurrencies = (params = {}) => {
     queryFn: async () => {
       console.log('useCurrencies: Making request with params:', params)
       try {
-        const response = await fetch('/api/currencies?' + new URLSearchParams({
-          data: JSON.stringify({ limit: params.limit || 100, offset: params.offset || 0 })
-        }))
-        const result = await response.json()
+        const { currenciesAPI } = await import('@/lib/api/ucode/currencies')
+        const result = await currenciesAPI.getCurrenciesInvokeFunction(params)
         console.log('useCurrencies: Response received:', result)
         return result
       } catch (error) {
         console.error('useCurrencies: Error:', error)
         return {
           status: 'ERROR',
-          data: { data: { count: 0, response: [] } }
+          data: { data: [] }
         }
       }
     },
@@ -286,6 +398,7 @@ export const useCreateCounterparty = () => {
   return useMutation({
     mutationFn: dashboardAPI.createCounterparty,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
       queryClient.invalidateQueries({ queryKey: ['counterparties'] })
       showSuccessNotification('Контрагент успешно создан!')
@@ -338,6 +451,7 @@ export const useCreateCounterpartiesGroup = () => {
   return useMutation({
     mutationFn: dashboardAPI.createCounterpartiesGroup,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
       showSuccessNotification('Группа контрагентов успешно создана!')
     },
@@ -353,6 +467,7 @@ export const useUpdateCounterpartiesGroup = () => {
   return useMutation({
     mutationFn: dashboardAPI.updateCounterpartiesGroup,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
       showSuccessNotification('Группа контрагентов успешно обновлена!')
@@ -368,13 +483,73 @@ export const useDeleteCounterpartiesGroups = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: dashboardAPI.deleteCounterpartiesGroups,
+    onMutate: async (guidsToDelete) => {
+      // Отменяем текущие запросы
+      await queryClient.cancelQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
+      
+      // Сохраняем предыдущее состояние для отката
+      const previousData = queryClient.getQueriesData({ queryKey: ['counterpartiesGroupsPlanFact'] })
+      
+      // Оптимистично удаляем группы из кеша
+      const guidsArray = Array.isArray(guidsToDelete) ? guidsToDelete : [guidsToDelete]
+      
+      queryClient.setQueriesData({ queryKey: ['counterpartiesGroupsPlanFact'] }, (old) => {
+        if (!old) return old
+        
+        // Handle structure: { data: { data: { data: [...] } } }
+        if (old.data?.data?.data && Array.isArray(old.data.data.data)) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              data: {
+                ...old.data.data,
+                data: old.data.data.data.filter(item => !guidsArray.includes(item.guid))
+              }
+            }
+          }
+        }
+        
+        // Handle structure: { data: { data: [...] } }
+        if (old.data?.data && Array.isArray(old.data.data)) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              data: old.data.data.filter(item => !guidsArray.includes(item.guid))
+            }
+          }
+        }
+        
+        // Handle structure: { data: [...] }
+        if (Array.isArray(old.data)) {
+          return {
+            ...old,
+            data: old.data.filter(item => !guidsArray.includes(item.guid))
+          }
+        }
+        
+        return old
+      })
+      
+      return { previousData }
+    },
+    onError: (error, variables, context) => {
+      // Откатываем изменения при ошибке
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      showErrorNotification(error.message || 'Ошибка при удалении групп контрагентов')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
-      queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
       showSuccessNotification('Группы контрагентов успешно удалены!')
     },
-    onError: (error) => {
-      showErrorNotification(error.message || 'Ошибка при удалении групп контрагентов')
+    onSettled: () => {
+      // Обновляем связанные запросы в фоне
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
     },
   })
 }
@@ -385,6 +560,7 @@ export const useUpdateCounterparty = () => {
   return useMutation({
     mutationFn: dashboardAPI.updateCounterparty,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
       queryClient.invalidateQueries({ queryKey: ['counterparties'] })
       showSuccessNotification('Контрагент успешно обновлен!')
@@ -400,13 +576,73 @@ export const useDeleteCounterparties = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: dashboardAPI.deleteCounterparties,
+    onMutate: async (guidsToDelete) => {
+      // Отменяем текущие запросы
+      await queryClient.cancelQueries({ queryKey: ['counterpartiesPlanFact'] })
+      
+      // Сохраняем предыдущее состояние для отката
+      const previousData = queryClient.getQueriesData({ queryKey: ['counterpartiesPlanFact'] })
+      
+      // Оптимистично удаляем контрагентов из кеша
+      const guidsArray = Array.isArray(guidsToDelete) ? guidsToDelete : [guidsToDelete]
+      
+      queryClient.setQueriesData({ queryKey: ['counterpartiesPlanFact'] }, (old) => {
+        if (!old) return old
+        
+        // Handle structure: { data: { data: { data: [...] } } }
+        if (old.data?.data?.data && Array.isArray(old.data.data.data)) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              data: {
+                ...old.data.data,
+                data: old.data.data.data.filter(item => !guidsArray.includes(item.guid))
+              }
+            }
+          }
+        }
+        
+        // Handle structure: { data: { data: [...] } }
+        if (old.data?.data && Array.isArray(old.data.data)) {
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              data: old.data.data.filter(item => !guidsArray.includes(item.guid))
+            }
+          }
+        }
+        
+        // Handle structure: { data: [...] }
+        if (Array.isArray(old.data)) {
+          return {
+            ...old,
+            data: old.data.filter(item => !guidsArray.includes(item.guid))
+          }
+        }
+        
+        return old
+      })
+      
+      return { previousData }
+    },
+    onError: (error, variables, context) => {
+      // Откатываем изменения при ошибке
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      showErrorNotification(error.message || 'Ошибка при удалении контрагента(ов)')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
-      queryClient.invalidateQueries({ queryKey: ['counterparties'] })
       showSuccessNotification('Контрагент(ы) успешно удален(ы)!')
     },
-    onError: (error) => {
-      showErrorNotification(error.message || 'Ошибка при удалении контрагента(ов)')
+    onSettled: () => {
+      // Обновляем связанные запросы в фоне
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
+      queryClient.invalidateQueries({ queryKey: ['counterparties'] })
     },
   })
 }
@@ -702,3 +938,260 @@ export const useOperation = (guid, options = {}) => {
   })
 }
 
+
+// ============================================
+// НОВАЯ АРХИТЕКТУРА ДЛЯ ОПЕРАЦИЙ
+// ============================================
+
+import { operationsAPI } from '@/lib/api/ucode/operations'
+
+/**
+ * Получить список операций с фильтрацией и пагинацией
+ * @param {Object} params - Параметры запроса
+ * @param {Object} params.dateRange - Диапазон дат {startDate, endDate}
+ * @param {number} params.page - Номер страницы
+ * @param {number} params.limit - Количество элементов
+ * @param {Object} params.filters - Фильтры операций
+ * @param {boolean} params.enabled - Включить/выключить запрос
+ */
+export const useOperationsListNew = (params = {}) => {
+  const { enabled = true, ...queryParams } = params
+  
+  return useQuery({
+    queryKey: ['operationsListNew', queryParams],
+    queryFn: () => operationsAPI.getList(queryParams),
+    enabled,
+    staleTime: 30 * 1000, // 30 секунд
+    gcTime: 5 * 60 * 1000, // 5 минут
+    placeholderData: (previousData) => previousData,
+    retry: 1
+  })
+}
+
+/**
+ * Получить операцию по GUID
+ * @param {string} guid - GUID операции
+ * @param {boolean} enabled - Включить/выключить запрос
+ */
+export const useOperationByGuid = (guid, enabled = true) => {
+  return useQuery({
+    queryKey: ['operation', guid],
+    queryFn: () => operationsAPI.getByGuid(guid),
+    enabled: enabled && !!guid,
+    staleTime: 60 * 1000, // 1 минута
+    gcTime: 10 * 60 * 1000 // 10 минут
+  })
+}
+
+/**
+ * Создать операцию
+ */
+export const useCreateOperationNew = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (operationData) => operationsAPI.create(operationData),
+    onMutate: async (newOperation) => {
+      // Отменяем текущие запросы
+      await queryClient.cancelQueries({ queryKey: ['operationsList'] })
+      
+      // Сохраняем предыдущее состояние
+      const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
+      
+      return { previousData }
+    },
+    onSuccess: (response, variables) => {
+      // Добавляем новую операцию в кеш
+      queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
+        if (!old?.data?.data?.data) return old
+        
+        // Получаем созданную операцию из ответа
+        const newOp = response?.data?.data || variables
+        
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              data: [newOp, ...old.data.data.data] // Добавляем в начало списка
+            }
+          }
+        }
+      })
+      
+      showSuccessNotification('Операция успешно создана!')
+    },
+    onError: (error, variables, context) => {
+      // Откатываем изменения при ошибке
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      console.error('Error creating operation:', error)
+      showErrorNotification(error.details?.description || 'Ошибка при создании операции')
+    },
+    onSettled: () => {
+      // Обновляем связанные запросы в фоне
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    }
+  })
+}
+
+/**
+ * Обновить операцию
+ */
+export const useUpdateOperationNew = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (operationData) => operationsAPI.update(operationData),
+    onMutate: async (updatedOperation) => {
+      // Отменяем текущие запросы
+      await queryClient.cancelQueries({ queryKey: ['operationsList'] })
+      await queryClient.cancelQueries({ queryKey: ['operation', updatedOperation.guid] })
+      
+      // Сохраняем предыдущее состояние
+      const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
+      const previousOperation = queryClient.getQueryData(['operation', updatedOperation.guid])
+      
+      // Оптимистично обновляем операцию в списке
+      queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
+        if (!old?.data?.data?.data) return old
+        
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              data: old.data.data.data.map(op => 
+                op.guid === updatedOperation.guid 
+                  ? { ...op, ...updatedOperation, data_obnovleniya: new Date().toISOString() }
+                  : op
+              )
+            }
+          }
+        }
+      })
+      
+      // Обновляем кеш конкретной операции
+      queryClient.setQueryData(['operation', updatedOperation.guid], (old) => {
+        return {
+          ...old,
+          data: {
+            ...old?.data,
+            ...updatedOperation,
+            data_obnovleniya: new Date().toISOString()
+          }
+        }
+      })
+      
+      return { previousData, previousOperation }
+    },
+    onSuccess: (data, variables) => {
+      showSuccessNotification('Операция успешно обновлена!')
+    },
+    onError: (error, variables, context) => {
+      // Откатываем изменения при ошибке
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      if (context?.previousOperation) {
+        queryClient.setQueryData(['operation', variables.guid], context.previousOperation)
+      }
+      console.error('Error updating operation:', error)
+      showErrorNotification(error.details?.description || 'Ошибка при обновлении операции')
+    },
+    onSettled: (data, error, variables) => {
+      // Обновляем связанные запросы в фоне
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    }
+  })
+}
+
+/**
+ * Удалить операции
+ */
+export const useDeleteOperationsNew = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (guids) => operationsAPI.delete(guids),
+    onMutate: async (guidsToDelete) => {
+      // Отменяем текущие запросы
+      await queryClient.cancelQueries({ queryKey: ['operationsList'] })
+      
+      // Сохраняем предыдущее состояние
+      const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
+      
+      // Оптимистично удаляем операции из списка
+      const guidsArray = Array.isArray(guidsToDelete) ? guidsToDelete : [guidsToDelete]
+      
+      queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
+        if (!old?.data?.data?.data) return old
+        
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              data: old.data.data.data.filter(op => !guidsArray.includes(op.guid))
+            }
+          }
+        }
+      })
+      
+      return { previousData }
+    },
+    onSuccess: () => {
+      showSuccessNotification('Операции успешно удалены!')
+    },
+    onError: (error, variables, context) => {
+      // Откатываем изменения при ошибке
+      if (context?.previousData) {
+        context.previousData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+      console.error('Error deleting operations:', error)
+      showErrorNotification(error.details?.description || 'Ошибка при удалении операций')
+    },
+    onSettled: () => {
+      // Обновляем связанные запросы в фоне
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    }
+  })
+}
+
+/**
+ * Экспортировать операции
+ */
+export const useExportOperations = () => {
+  return useMutation({
+    mutationFn: (params) => operationsAPI.export(params),
+    onSuccess: () => {
+      showSuccessNotification('Экспорт успешно выполнен!')
+    },
+    onError: (error) => {
+      console.error('Error exporting operations:', error)
+      showErrorNotification(error.details?.description || 'Ошибка при экспорте операций')
+    }
+  })
+}
+
+/**
+ * Получить структуру таблицы операций
+ */
+export const useOperationsTableStructure = () => {
+  return useQuery({
+    queryKey: ['operationsTableStructure'],
+    queryFn: () => operationsAPI.getTableStructure(),
+    staleTime: Infinity, // Структура таблицы не меняется
+    gcTime: Infinity
+  })
+}

@@ -80,27 +80,18 @@ export function OperationsTable({ operations = [], onRowClick }) {
         throw new Error('GUID операции не найден')
       }
 
-      const response = await fetch('/api/operations/delete', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ids: [guid] }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok || result.status === 'ERROR') {
-        throw new Error(result.data || result.description || 'Ошибка при удалении операции')
-      }
+      // Используем новый API через invoke_function
+      const { operationsAPI } = await import('@/lib/api/ucode/operations')
+      await operationsAPI.delete([guid])
 
       showSuccessNotification('Операция успешно удалена!')
       setDeleteModalOpen(false)
       setOperationToDelete(null)
       
-      // Refresh the page to update the list
-      if (window.location) {
-        window.location.reload()
+      // Обновляем кеш React Query вместо перезагрузки страницы
+      if (typeof window !== 'undefined' && window.queryClient) {
+        window.queryClient.invalidateQueries({ queryKey: ['operationsList'] })
+        window.queryClient.invalidateQueries({ queryKey: ['operations'] })
       }
     } catch (error) {
       console.error('Error deleting operation:', error)
