@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -7,27 +7,23 @@ import {
 import { cn } from '@/app/lib/utils'
 import styles from './OperationCashFlowModal.module.scss'
 
+const defaultData = {
+  period: '01 — 28 фев ’26',
+  totalAmount: '69 895 051 ₽',
+  operations: [
+    {
+      id: 1,
+      date: '17 фев ’26',
+      type: 'income',
+      counterparty: '',
+      article: 'Выручка от продаж',
+      articleSub: 'jhgjhv',
+      amount: '+767 767 €'
+    }
+  ]
+}
+
 const OperationCashFlowModal = ({ isOpen, onClose, data }) => {
-  const [isClosing, setIsClosing] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
-
-  // Dummy data if no data provided
-  const defaultData = {
-    period: '01 — 28 фев ’26',
-    totalAmount: '69 895 051 ₽',
-    operations: [
-      {
-        id: 1,
-        date: '17 фев ’26',
-        type: 'income',
-        counterparty: '',
-        article: 'Выручка от продаж',
-        articleSub: 'jhgjhv',
-        amount: '+767 767 €'
-      }
-    ]
-  }
-
   const { period, totalAmount, operations } = data || defaultData
 
   const columns = useMemo(() => [
@@ -43,7 +39,7 @@ const OperationCashFlowModal = ({ isOpen, onClose, data }) => {
         return type === 'income' ? (
           <div className={styles.typeIcon}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         ) : null
@@ -78,43 +74,21 @@ const OperationCashFlowModal = ({ isOpen, onClose, data }) => {
     getCoreRowModel: getCoreRowModel(),
   })
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsClosing(false)
-      setIsVisible(true)
-      document.body.style.overflow = 'hidden'
-    } else {
-       document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isOpen])
-
-  const handleClose = () => {
-    setIsClosing(true)
-    setTimeout(() => {
-      setIsVisible(false)
-      onClose()
-      document.body.style.overflow = ''
-    }, 250)
-  }
-
-  if (!isOpen && !isVisible) return null
+  if (!isOpen) return null
 
   return (
     <>
-      <div 
-        className={cn(styles.overlay, isClosing ? styles.closing : styles.opening)}
-        onClick={handleClose}
+      <div
+        className={styles.overlay}
+        onClick={onClose}
       />
 
-      <div className={cn(styles.modal, isClosing ? styles.closing : styles.opening)}>
+      <div className={styles.modal}>
         <div className={styles.header}>
           <div className={styles.title}>
             Операции по показателю «Операционный поток»
           </div>
-          <button onClick={handleClose} className={styles.closeButton}>
+          <button onClick={onClose} className={styles.closeButton}>
             <svg className={styles.closeIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -143,9 +117,9 @@ const OperationCashFlowModal = ({ isOpen, onClose, data }) => {
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                       </th>
                     ))}
                   </tr>
@@ -167,10 +141,10 @@ const OperationCashFlowModal = ({ isOpen, onClose, data }) => {
         </div>
 
         <div className={styles.footer}>
-          <a onClick={() => {}} className={styles.openLink}>
+          <a onClick={() => { }} className={styles.openLink}>
             Открыть в разделе Операции
           </a>
-          <button onClick={handleClose} className={styles.closeFooterButton}>
+          <button onClick={onClose} className={styles.closeFooterButton}>
             Закрыть
           </button>
         </div>

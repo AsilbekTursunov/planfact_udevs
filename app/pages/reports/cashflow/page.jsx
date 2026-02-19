@@ -219,7 +219,10 @@ export default function CashFlowReportPage() {
           const value = getValue()
           const isTopLevel = row.depth === 0
           return (
-            <span className={isTopLevel ? styles.boldNumber : ''}>
+            <span
+              className={`${isTopLevel ? styles.boldNumber : ''} ${styles.clickableCell}`}
+              onClick={() => setIsModalOpen(true)}
+            >
               {formatNumber(value)}
             </span>
           )
@@ -235,7 +238,10 @@ export default function CashFlowReportPage() {
           const value = getValue()
           const isTopLevel = row.depth === 0
           return (
-            <span className={isTopLevel ? styles.boldNumber : ''}>
+            <span
+              className={`${isTopLevel ? styles.boldNumber : ''} ${styles.clickableCell}`}
+              onClick={() => setIsModalOpen(true)}
+            >
               {formatNumber(value)}
             </span>
           )
@@ -321,13 +327,10 @@ export default function CashFlowReportPage() {
                     <circle cx="8" cy="13" r="1" fill="currentColor" />
                   </svg>
                 </button>
-                <button onClick={() => setIsModalOpen(true)} style={{ marginLeft: '10px', padding: '5px' }}>
-                  Test Modal
-                </button>
               </div>
             </div>
           </div>
-          <OperationCashFlowModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
           <div className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`}>
             <table className={styles.table}>
               <thead className={styles.thead}>
@@ -375,6 +378,7 @@ export default function CashFlowReportPage() {
           </div>
         </div>
       </div>
+      <OperationCashFlowModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   )
 }

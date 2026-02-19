@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './DropdownFilter.module.scss'
-import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
+import { FiCheck } from 'react-icons/fi'
 
 export function DropdownFilter({ label, options, selectedValues, onChange, placeholder = "Выберите...", grouped = false, disabled = false }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -20,8 +20,10 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  useEffect(() => {
-    if (isOpen && dropdownRef.current) {
+  const handleToggle = () => {
+    if (disabled) return
+
+    if (!isOpen && dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect()
       const dropdownHeight = Math.min(options.length * 40 + 16, 300)
       const spaceBelow = window.innerHeight - rect.bottom
@@ -29,27 +31,11 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
 
       setOpenUpward(spaceBelow < dropdownHeight && spaceAbove > spaceBelow)
     }
-  }, [isOpen, options.length])
 
-  const toggleOption = (value) => {
-    if (selectedValues.includes(value)) {
-      onChange(selectedValues.filter(v => v !== value))
-    } else {
-      onChange([...selectedValues, value])
-    }
+    setIsOpen(!isOpen)
   }
 
-  const selectedCount = selectedValues.length
-
-  // Get selected items for chips
-  const selectedItems = options.filter(opt => selectedValues.includes(opt.value))
-
-  const removeChip = (e, value) => {
-    e.stopPropagation()
-    onChange(selectedValues.filter(v => v !== value))
-  }
-
-  // Group options by group field if grouped is true
+  // Group options logic
   const groupedOptions = grouped
     ? options.reduce((acc, option) => {
       const group = option.group || 'Без группы'
@@ -59,30 +45,104 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
     }, {})
     : { 'all': options }
 
+  const handleOptionClick = (option, groupName, groupItems) => {
+    if (grouped && option.value === "") {
+      // Parent clicked: Toggle all children
+      const childItems = groupItems.filter(item => item.value !== "")
+      const childValues = childItems.map(item => item.value)
+      const allSelected = childValues.every(val => selectedValues.includes(val))
+
+      if (allSelected) {
+        // Deselect all children of this group
+        onChange(selectedValues.filter(val => !childValues.includes(val)))
+      } else {
+        // Select all children (union)
+        const newValues = [...new Set([...selectedValues, ...childValues])]
+        onChange(newValues)
+      }
+    } else {
+      // Normal option clicked
+      if (selectedValues.includes(option.value)) {
+        onChange(selectedValues.filter(v => v !== option.value))
+      } else {
+        onChange([...selectedValues, option.value])
+      }
+    }
+  }
+
+  const removeChip = (e, valueToUnselect) => {
+    e.stopPropagation()
+    // Check if it's a group removal (we might need a different identifiers for chips)
+    // For now, let's assume we pass the value(s) to remove
+    if (Array.isArray(valueToUnselect)) {
+      // Removing a group
+      onChange(selectedValues.filter(v => !valueToUnselect.includes(v)))
+    } else {
+      onChange(selectedValues.filter(v => v !== valueToUnselect))
+    }
+  }
+
+  // Calculate display items (Chips)
+  const renderChips = () => {
+    if (!grouped) {
+      return options
+        .filter(opt => selectedValues.includes(opt.value))
+        .map(opt => ({ label: opt.label, value: opt.value }))
+    }
+
+    const chips = []
+
+    Object.entries(groupedOptions).forEach(([groupName, groupItems]) => {
+      const childItems = groupItems.filter(i => i.value !== "")
+      const childValues = childItems.map(i => i.value)
+      const selectedChildren = childItems.filter(i => selectedValues.includes(i.value))
+
+      if (selectedChildren.length === childItems.length && childItems.length > 0) {
+        // All selected -> Show Group Chip
+        // Find parent label if exists, else use groupName
+        const parentOpt = groupItems.find(i => i.value === "")
+        const label = parentOpt ? `${parentOpt.label} (${selectedChildren.length})` : `${groupName} (${selectedChildren.length})`
+
+        chips.push({
+          label,
+          value: childValues, // Pass array for removal
+          isGroup: true
+        })
+      } else {
+        // Partially selected -> Show individual chips
+        selectedChildren.forEach(child => {
+          chips.push({
+            label: child.label,
+            value: child.value,
+            isGroup: false
+          })
+        })
+      }
+    })
+
+    return chips
+  }
+
+  const displayChips = renderChips()
+
   return (
     <div className={styles.container} ref={dropdownRef}>
       <button
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className={cn(styles.button, disabled && styles.disabled)}
         disabled={disabled}
       >
         <div className={styles.buttonContent}>
-          {selectedCount > 0 ? (
+          {displayChips.length > 0 ? (
             <div className={styles.chipsContainer}>
-              {selectedItems.map((item) => (
-                <span key={item.value} className={styles.chip}>
-                  {item.label}
+              {displayChips.map((chip, idx) => (
+                <span key={idx} className={styles.chip}>
+                  {chip.label}
                   <span
-                    onClick={(e) => removeChip(e, item.value)}
+                    onClick={(e) => removeChip(e, chip.value)}
                     className={styles.chipRemove}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        removeChip(e, item.value)
-                      }
-                    }}
                   >
                     <svg className={styles.chipRemoveIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -115,19 +175,22 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
           <div className={styles.dropdownContent}>
             {Object.entries(groupedOptions).map(([groupName, groupItems]) => (
               <div key={groupName} className={styles.group}>
-                {grouped && (
-                  <div className={styles.groupHeader}>
-                    {groupName}
-                  </div>
-                )}
-                <div className='flex flex-col items-start gap-3'>
+                <div className='flex flex-col items-start'>
                   {groupItems.map((option) => (
-                    <OperationCheckbox
-                      key={option.value}
-                      checked={selectedValues.includes(option.value)}
-                      onChange={() => toggleOption(option.value)}
-                      label={option.label}
-                    />
+                    <div
+                      key={option.value || option.label}
+                      onClick={() => handleOptionClick(option, groupName, groupItems)}
+                      className={cn(
+                        styles.option,
+                        option.value !== "" && selectedValues.includes(option.value) && styles.selected,
+                        option.value === "" && grouped ? styles.parent : grouped ? styles.child : ""
+                      )}
+                    >
+                      <p>{option.label}</p>
+                      {option.value !== "" && selectedValues.includes(option.value) && (
+                        <FiCheck color='#0E73F6' />
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
