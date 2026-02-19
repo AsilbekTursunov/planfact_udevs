@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar'
 import { getProfitAndLoss } from '@/lib/api/ucode/profitAndLoss'
+import { bankAccountsAPI } from '@/lib/api/ucode/bankAccounts'
+import { counterpartiesAPI } from '@/lib/api/ucode/counterparties'
 import styles from './profit-and-loss.module.scss'
 import '@/styles/report-filters.css'
 
@@ -14,18 +16,39 @@ export default function ProfitAndLossPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   
+  // Data from API
+  const [accounts, setAccounts] = useState([])
+  const [counterparties, setCounterparties] = useState([])
+  
+  // Calculate default date range (last 6 months)
+  const getDefaultDateRange = () => {
+    const end = new Date()
+    const start = new Date()
+    start.setMonth(start.getMonth() - 6)
+    
+    return {
+      start: start,
+      end: end
+    }
+  }
+  
   // Filter states
   const [selectedPeriod, setSelectedPeriod] = useState('all')
   const [selectedEntity, setSelectedEntity] = useState('all')
-  const [dateRange, setDateRange] = useState(null)
+  const [selectedAccounts, setSelectedAccounts] = useState([]) // Multiple selection
+  const [selectedCounterparties, setSelectedCounterparties] = useState([]) // Multiple selection
+  const [dateRange, setDateRange] = useState(getDefaultDateRange())
   const [selectedGrouping, setSelectedGrouping] = useState('monthly')
   
-  // Profit types filter
+  // Accounting method: true = Accrual (начисление), false = Cash (кассовый)
+  const [isCalculation] = useState(true)
+  
+  // Profit types filter - all enabled by default
   const [profitTypes, setProfitTypes] = useState({
-    operational: true,
-    ebitda: true,
-    ebit: true,
-    ebt: true
+    operational: true,  // isOperatingProfit
+    ebitda: true,       // isEbitda
+    ebit: true,         // isEbit
+    ebt: true           // isEbt
   })
   
   const toggleProfitType = (type) => {
@@ -37,17 +60,16 @@ export default function ProfitAndLossPage() {
 
   // Mock data for selects
   const groupingOptions = [
-    { guid: 'monthly', label: 'По месяцам' },
-    { guid: 'quarterly', label: 'По кварталам' },
-    { guid: 'yearly', label: 'По годам' }
+    { guid: 'daily', label: 'День' },
+    { guid: 'weekly', label: 'Неделя' },
+    { guid: 'monthly', label: 'Месяц' }
   ]
   
   const periodOptions = [
     { guid: 'all', label: 'Весь период' },
-    { guid: 'q1', label: '1 квартал 2026' },
-    { guid: 'q2', label: '2 квартал 2026' },
-    { guid: 'h1', label: 'Полугодие 2026' },
-    { guid: 'year', label: 'Год 2026' }
+    { guid: 'day', label: 'День' },
+    { guid: 'week', label: 'Неделя' },
+    { guid: 'month', label: 'Месяц' }
   ]
 
   const entityOptions = [
@@ -57,17 +79,91 @@ export default function ProfitAndLossPage() {
     { guid: 'entity3', label: 'ИП Иванов И.И.' }
   ]
 
+  // Fetch accounts and counterparties on mount
+  useEffect(() => {
+    const fetchFiltersData = async () => {
+      console.log('🔵 Starting to fetch filters data...')
+      try {
+        // Fetch bank accounts (not chart of accounts)
+        console.log('� Fetching bank accounts...')
+        const accountsResponse = await bankAccountsAPI.getBankAccountsInvokeFunction({ limit: 1000 })
+        console.log('� Full bank accounts response:', JSON.stringify(accountsResponse, null, 2))
+        
+        // Try different possible data paths
+        let accountsData = null
+        if (accountsResponse?.data?.data?.data) {
+          accountsData = accountsResponse.data.data.data
+          console.log('� Found bank accounts at data.data.data')
+        } else if (accountsResponse?.data?.data) {
+          accountsData = accountsResponse.data.data
+          console.log('� Found bank accounts at data.data')
+        } else if (accountsResponse?.data) {
+          accountsData = accountsResponse.data
+          console.log('� Found bank accounts at data')
+        }
+        
+        if (accountsData && Array.isArray(accountsData)) {
+          const accountsList = accountsData.map(acc => ({
+            guid: acc.guid,
+            label: acc.nazvanie || acc.name || acc.nomer_scheta || 'Unnamed'
+          }))
+          console.log('✅ Bank accounts list:', accountsList)
+          setAccounts(accountsList)
+        } else {
+          console.log('⚠️ No bank accounts data found or not an array:', accountsData)
+        }
+
+        // Fetch counterparties
+        console.log('👥 Fetching counterparties...')
+        const counterpartiesResponse = await counterpartiesAPI.getCounterpartiesInvokeFunction({ limit: 1000 })
+        console.log('👥 Full counterparties response:', JSON.stringify(counterpartiesResponse, null, 2))
+        
+        // Try different possible data paths
+        let counterpartiesData = null
+        if (counterpartiesResponse?.data?.data?.data) {
+          counterpartiesData = counterpartiesResponse.data.data.data
+          console.log('👥 Found counterparties at data.data.data')
+        } else if (counterpartiesResponse?.data?.data) {
+          counterpartiesData = counterpartiesResponse.data.data
+          console.log('👥 Found counterparties at data.data')
+        } else if (counterpartiesResponse?.data) {
+          counterpartiesData = counterpartiesResponse.data
+          console.log('👥 Found counterparties at data')
+        }
+        
+        if (counterpartiesData && Array.isArray(counterpartiesData)) {
+          const counterpartiesList = counterpartiesData.map(cp => ({
+            guid: cp.guid,
+            label: cp.nazvanie || cp.polnoe_imya || cp.name || 'Unnamed'
+          }))
+          console.log('✅ Counterparties list:', counterpartiesList)
+          setCounterparties(counterpartiesList)
+        } else {
+          console.log('⚠️ No counterparties data found or not an array:', counterpartiesData)
+        }
+      } catch (error) {
+        console.error('❌ Error fetching filters data:', error)
+        console.error('❌ Error details:', error.message)
+        console.error('❌ Error stack:', error.stack)
+      }
+    }
+
+    fetchFiltersData()
+  }, [])
+
   // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
         
-        // Calculate date range for last 6 months
-        const endDate = new Date()
-        const startDate = new Date()
-        startDate.setMonth(startDate.getMonth() - 6)
+        // If no date range selected, don't fetch
+        if (!dateRange || !dateRange.start || !dateRange.end) {
+          setLoading(false)
+          return
+        }
         
+        // Format dates for API (expects YYYY-MM-DD strings)
         const formatDate = (date) => {
           const year = date.getFullYear()
           const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -75,43 +171,90 @@ export default function ProfitAndLossPage() {
           return `${year}-${month}-${day}`
         }
         
-        const response = await getProfitAndLoss({
-          periodStartDate: formatDate(startDate),
-          periodEndDate: formatDate(endDate),
-          periodType: selectedGrouping,
-          currencyCode: 'RUB'
+        const startDate = formatDate(dateRange.start)
+        const endDate = formatDate(dateRange.end)
+        
+        console.log('📅 Date Range being sent to API:', {
+          startDate,
+          endDate,
+          dateRangeObject: dateRange
         })
         
-        console.log('P&L API Response:', response)
+        // Map selectedPeriod to periodType for API
+        const getPeriodType = () => {
+          switch (selectedPeriod) {
+            case 'day':
+              return 'daily'
+            case 'week':
+              return 'weekly'
+            case 'month':
+              return 'monthly'
+            case 'all':
+            default:
+              return selectedGrouping // Use grouping from header if "all" selected
+          }
+        }
+        
+        const apiParams = {
+          periodStartDate: startDate,
+          periodEndDate: endDate,
+          periodType: getPeriodType(),
+          currencyCode: 'RUB',
+          isCalculation: isCalculation,
+          isGrossProfit: false,
+          isOperatingProfit: profitTypes.operational,
+          isEbitda: profitTypes.ebitda,
+          isEbit: profitTypes.ebit,
+          isEbt: profitTypes.ebt,
+          reportGenMethod: 0,
+          includeTrendData: true,
+          aggregationMode: 'autoAggregate',
+        }
+        
+        // Only add filter arrays if they have values
+        if (selectedAccounts.length > 0) {
+          apiParams.accountId = selectedAccounts
+        }
+        if (selectedCounterparties.length > 0) {
+          apiParams.contrAgentId = selectedCounterparties
+        }
+        
+        console.log('📤 Sending to P&L API:', JSON.stringify(apiParams, null, 2))
+        console.log('📤 Selected accounts:', selectedAccounts)
+        console.log('📤 Selected counterparties:', selectedCounterparties)
+        
+        const response = await getProfitAndLoss(apiParams)
+        console.log('📥 P&L API Full Response:', JSON.stringify(response, null, 2))
+        
+        console.log('📥 P&L API Response:', response)
         
         if (response?.data?.data?.data) {
-          console.log('Setting P&L report data:', response.data.data.data)
           setReportData(response.data.data.data)
         } else {
           console.error('Data not found in expected path')
         }
       } catch (error) {
         console.error('Error fetching P&L report:', error)
+        console.error('Error response:', error.response?.data)
+        console.error('Error status:', error.response?.status)
       } finally {
         setLoading(false)
       }
     }
     
     fetchData()
-  }, [selectedGrouping])
+  }, [selectedGrouping, isCalculation, profitTypes, dateRange, selectedPeriod, selectedAccounts, selectedCounterparties])
 
   // Auto-expand first level items on initial load
   useEffect(() => {
     if (!isInitialLoad || !reportData) return
     
-    const revenue = reportData?.revenue || []
-    const expenses = reportData?.expenses || []
-    const allItems = [...revenue, ...expenses]
+    const rows = reportData?.rows || []
     
     const firstLevelIds = new Set()
-    allItems.forEach(item => {
-      if (item.level === 0 && item.details && item.details.length > 0) {
-        firstLevelIds.add(item.id)
+    rows.forEach(row => {
+      if (row.level === 0 && row.details && row.details.length > 0) {
+        firstLevelIds.add(row.id)
       }
     })
     
@@ -122,10 +265,7 @@ export default function ProfitAndLossPage() {
   }, [reportData, isInitialLoad])
 
   const legend = reportData?.legend || []
-  const revenue = reportData?.revenue || []
-  const expenses = reportData?.expenses || []
-  const grossProfit = reportData?.grossProfit || 0
-  const netProfit = reportData?.netProfit || 0
+  const rows = reportData?.rows || []
 
   // Toggle row expansion
   const toggleRow = (id) => {
@@ -148,18 +288,21 @@ export default function ProfitAndLossPage() {
     const isExpanded = expandedRows.has(item.id)
     const indent = item.level * 24
 
+    // Determine row styling based on type
+    const isPercentRow = item.type === 'percent'
+    const isResultRow = item.type === 'result'
+    const isTotalRow = item.type === 'total'
+
     return (
       <React.Fragment key={item.id}>
-        <tr className={styles.tr}>
+        <tr className={`${styles.tr} ${isTotalRow ? styles.totalRow : ''}`}>
           <td className={styles.td} style={{ paddingLeft: `${indent + 16}px` }}>
             <div 
               className={`${styles.cellContent} ${hasChildren ? styles.clickable : ''}`}
               onClick={() => hasChildren && toggleRow(item.id)}
             >
               {hasChildren && (
-                <button
-                  className={styles.expandButton}
-                >
+                <button className={styles.expandButton}>
                   {isExpanded ? (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round"/>
@@ -174,19 +317,26 @@ export default function ProfitAndLossPage() {
                   )}
                 </button>
               )}
-              <span className={item.level === 0 ? styles.boldText : ''}>{item.name}</span>
+              <span className={item.level === 0 || isResultRow || isTotalRow ? styles.boldText : ''}>
+                {item.name}
+              </span>
             </div>
           </td>
-          {legend.map(period => (
-            <td key={period.key} className={styles.td}>
-              <span className={item.level === 0 ? styles.boldNumber : ''}>
-                {item.values?.[period.key]?.toLocaleString('ru-RU') || 0}
-              </span>
-            </td>
-          ))}
+          {legend.map(period => {
+            const value = item.values?.[period.key] || 0
+            const displayValue = value === 0 ? '–' : isPercentRow ? `${value.toFixed(1)}%` : value.toLocaleString('ru-RU')
+            
+            return (
+              <td key={period.key} className={styles.td}>
+                <span className={item.level === 0 || isResultRow || isTotalRow ? styles.boldNumber : ''}>
+                  {displayValue}
+                </span>
+              </td>
+            )
+          })}
           <td className={styles.td}>
-            <span className={item.level === 0 ? styles.boldNumber : ''}>
-              {item.totalValue?.toLocaleString('ru-RU') || 0}
+            <span className={item.level === 0 || isResultRow || isTotalRow ? styles.boldNumber : ''}>
+              {item.totalValue === 0 ? '–' : isPercentRow ? `${item.totalValue.toFixed(1)}%` : item.totalValue.toLocaleString('ru-RU')}
             </span>
           </td>
         </tr>
@@ -198,7 +348,69 @@ export default function ProfitAndLossPage() {
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>Загрузка данных...</div>
+        <div className={styles.contentWrapper}>
+          {/* Filter Sidebar */}
+          <ReportFilterSidebar
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            periodOptions={periodOptions}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+            entityOptions={entityOptions}
+            selectedEntity={selectedEntity}
+            onEntityChange={setSelectedEntity}
+            accountOptions={accounts}
+            selectedAccounts={selectedAccounts}
+            onAccountsChange={setSelectedAccounts}
+            counterpartyOptions={counterparties}
+            selectedCounterparties={selectedCounterparties}
+            onCounterpartiesChange={setSelectedCounterparties}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            profitTypes={profitTypes}
+            onProfitTypesChange={toggleProfitType}
+          />
+
+          {/* Filter Toggle Bar */}
+          {!isFilterOpen && (
+            <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
+              <button className={styles.filterToggleBarButton}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Main Content with Loading */}
+          <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
+            <div className={styles.header}>
+              <div className={styles.headerContent}>
+                <div className={styles.titleRow}>
+                  <h1 className={styles.title}>Отчет о прибылях и убытках (P&L)</h1> 
+                </div>
+                <div className={styles.headerRight}>
+                  <GroupedSelect
+                    data={groupingOptions}
+                    value={selectedGrouping}
+                    onChange={(value) => setSelectedGrouping(value)}
+                    placeholder="Способ построения"
+                    className={styles.groupingSelect}
+                  />
+                  <button className={styles.moreButton}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="8" cy="3" r="1" fill="currentColor"/>
+                      <circle cx="8" cy="8" r="1" fill="currentColor"/>
+                      <circle cx="8" cy="13" r="1" fill="currentColor"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className={styles.loading}>Загрузка данных...</div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -216,6 +428,12 @@ export default function ProfitAndLossPage() {
           entityOptions={entityOptions}
           selectedEntity={selectedEntity}
           onEntityChange={setSelectedEntity}
+          accountOptions={accounts}
+          selectedAccounts={selectedAccounts}
+          onAccountsChange={setSelectedAccounts}
+          counterpartyOptions={counterparties}
+          selectedCounterparties={selectedCounterparties}
+          onCounterpartiesChange={setSelectedCounterparties}
           dateRange={dateRange}
           onDateRangeChange={setDateRange}
           profitTypes={profitTypes}
@@ -273,11 +491,8 @@ export default function ProfitAndLossPage() {
                 </tr>
               </thead>
               <tbody className={styles.tbody}>
-                {/* Revenue Section */}
-                {revenue?.map(item => renderRow(item))}
-
-                {/* Expenses Section */}
-                {expenses?.map(item => renderRow(item))}
+                {/* Render all rows from API */}
+                {rows?.map(row => renderRow(row))}
               </tbody>
             </table>
           </div>

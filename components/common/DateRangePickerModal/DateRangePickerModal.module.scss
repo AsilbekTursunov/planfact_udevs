@@ -143,38 +143,65 @@
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   border: 1px solid #e5e7eb;
   z-index: 9999;
-  width: 359px;
-  transform-origin: top center;
-  overflow: visible;
+  width: 400px;
+  max-width: 90vw;
+  max-height: 500px;
+  transform-origin: left center;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   
   &.openUpward {
-    transform-origin: bottom center;
+    transform-origin: left center;
   }
 }
 
 .datePickerModalContent {
   padding: 1rem;
-  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .datePickerModalBody {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  overflow-y: auto;
   flex: 1;
+  min-height: 0;
+  padding-right: 8px;
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #F9FAFB;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #D0D5DD;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #98A2B3;
+    }
+  }
 }
 
 .quickRanges {
-  flex: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
 .quickRangeButton {
@@ -266,6 +293,7 @@
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .datePickerActionButton {

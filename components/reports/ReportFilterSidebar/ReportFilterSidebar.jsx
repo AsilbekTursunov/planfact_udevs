@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
+import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { DateRangePickerModal } from '@/components/common/DateRangePickerModal/DateRangePickerModal'
 import styles from './ReportFilterSidebar.module.scss'
 import '@/styles/report-filters.css'
@@ -17,6 +18,14 @@ export function ReportFilterSidebar({
   entityOptions,
   selectedEntity,
   onEntityChange,
+  // Account filter
+  accountOptions,
+  selectedAccounts,
+  onAccountsChange,
+  // Counterparty filter
+  counterpartyOptions,
+  selectedCounterparties,
+  onCounterpartiesChange,
   // Date range filter
   dateRange,
   onDateRangeChange,
@@ -87,24 +96,59 @@ export function ReportFilterSidebar({
               </div>
             )}
 
-            {/* Юридическое лицо */}
-            {entityOptions && (
-              <div className={styles.filterSection}>
-                <h3 className={styles.filterSectionTitle}>
-                  Юридическое лицо
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                </h3>
-                <GroupedSelect
-                  data={entityOptions}
-                  value={selectedEntity}
-                  onChange={onEntityChange}
-                  placeholder="Все организации"
+            {/* Счет - всегда показываем */}
+            <div className={styles.filterSection}>
+              <h3 className={styles.filterSectionTitle}>
+                Счет
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </h3>
+              {accountOptions && accountOptions.length > 0 ? (
+                <MultiSelect
+                  data={accountOptions}
+                  value={selectedAccounts}
+                  onChange={onAccountsChange}
+                  placeholder="Все счета"
                 />
-              </div>
-            )}
+              ) : (
+                <MultiSelect
+                  data={[]}
+                  value={[]}
+                  onChange={() => {}}
+                  placeholder="Загрузка..."
+                  loading={true}
+                />
+              )}
+            </div>
+
+            {/* Контрагент - всегда показываем */}
+            <div className={styles.filterSection}>
+              <h3 className={styles.filterSectionTitle}>
+                Контрагент
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </h3>
+              {counterpartyOptions && counterpartyOptions.length > 0 ? (
+                <MultiSelect
+                  data={counterpartyOptions}
+                  value={selectedCounterparties}
+                  onChange={onCounterpartiesChange}
+                  placeholder="Все контрагенты"
+                />
+              ) : (
+                <MultiSelect
+                  data={[]}
+                  value={[]}
+                  onChange={() => {}}
+                  placeholder="Загрузка..."
+                  loading={true}
+                />
+              )}
+            </div>
 
             {/* Диапазон дат */}
             <div className={styles.filterSection}>

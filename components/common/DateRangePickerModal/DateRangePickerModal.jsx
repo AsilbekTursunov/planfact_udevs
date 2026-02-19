@@ -14,9 +14,7 @@ export function DateRangePickerModal({
   const [activeInput, setActiveInput] = useState(null)
   const [tempStartDate, setTempStartDate] = useState(null)
   const [tempEndDate, setTempEndDate] = useState(null)
-  const [isClosing, setIsClosing] = useState(false)
-  const [openUpward, setOpenUpward] = useState(false)
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 0))
+  const [openUpward, setOpenUpward] = useState(false) // Всегда открываем вниз
   const [mounted, setMounted] = useState(false)
   
   const pickerRef = useRef(null)
@@ -29,16 +27,6 @@ export function DateRangePickerModal({
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  // Debug logging
-  useEffect(() => {
-    if (isModalOpen) {
-      console.log('DateRangePickerModal - isModalOpen:', isModalOpen)
-      console.log('DateRangePickerModal - mounted:', mounted)
-      console.log('DateRangePickerModal - pickerRef.current:', pickerRef.current)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModalOpen])
 
   const quickDateRanges = [
     { label: 'Просроченные', getValue: () => ({ start: new Date(2025, 0, 1), end: new Date() }) },
@@ -62,27 +50,9 @@ export function DateRangePickerModal({
     { label: 'Этот год', getValue: () => ({ start: new Date(2026, 0, 1), end: new Date(2026, 11, 31) }) }
   ]
 
-  const calculateOpenDirection = useCallback((ref, modalHeight) => {
-    if (!ref?.current) return false
-    const buttonRect = ref.current.getBoundingClientRect()
-    const spaceBelow = window.innerHeight - buttonRect.bottom
-    const spaceAbove = buttonRect.top
-    return spaceBelow < modalHeight || (spaceAbove > spaceBelow && spaceAbove > 100)
-  }, [])
-
-  useEffect(() => {
-    if (isModalOpen && pickerRef.current) {
-      const modalHeight = 250
-      const shouldOpenUpward = calculateOpenDirection(pickerRef, modalHeight)
-      setOpenUpward(shouldOpenUpward)
-    }
-  }, [isModalOpen, calculateOpenDirection])
-
   const closeModal = useCallback(() => {
-    setIsClosing(true)
     setTimeout(() => {
       setIsModalOpen(false)
-      setIsClosing(false)
       setActiveInput(null)
       setTempStartDate(null)
       setTempEndDate(null)
@@ -136,65 +106,56 @@ export function DateRangePickerModal({
   const handleReset = () => {
     setTempStartDate(null)
     setTempEndDate(null)
+    // Reset to default range (last 6 months) instead of null
+    const end = new Date()
+    const start = new Date()
+    start.setMonth(start.getMonth() - 6)
+    onChange({ start, end })
     closeModal()
+  }
+
+  const handleOpenModal = () => {
+    if (!isModalOpen) {
+      justOpenedRef.current = true
+      setIsModalOpen(true)
+      if (selectedRange) {
+        setTempStartDate(selectedRange.start)
+        setTempEndDate(selectedRange.end)
+      } else {
+        setTempStartDate(null)
+        setTempEndDate(null)
+      }
+      setActiveInput(null)
+    }
   }
 
   return (
     <div className={styles.container}>
-      {selectedRange ? (
-        <div className={styles.dateRangeDisplay}>
-          <div className={styles.dateRangeDisplayInner}>
-            <svg className={styles.dateRangeIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <span className={styles.dateRangeText}>{formatDateRange(selectedRange)}</span>
-            <button 
-              onClick={() => onChange(null)}
-              className={styles.dateRangeClear}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className={styles.datePickerButton} ref={pickerRef}>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation()
-              console.log('Button clicked, current isModalOpen:', isModalOpen)
-              if (!isModalOpen) {
-                justOpenedRef.current = true
-                setIsModalOpen(true)
-                setTempStartDate(null)
-                setTempEndDate(null)
-                setActiveInput(null)
-                console.log('Opening modal')
-              } else {
-                closeModal()
-                console.log('Closing modal')
-              }
-            }}
-            className={styles.datePickerButtonInner}
-          >
-            <svg className={styles.datePickerIcon} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_1_53706)">
-                <path d="M12 1.33325V2.66659M4 1.33325V2.66659" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M1.6665 8.16216C1.6665 5.25729 1.6665 3.80486 2.50125 2.90243C3.336 2 4.6795 2 7.3665 2H8.63317C11.3202 2 12.6637 2 13.4984 2.90243C14.3332 3.80486 14.3332 5.25729 14.3332 8.16216V8.5045C14.3332 11.4094 14.3332 12.8618 13.4984 13.7642C12.6637 14.6667 11.3202 14.6667 8.63317 14.6667H7.3665C4.6795 14.6667 3.336 14.6667 2.50125 13.7642C1.6665 12.8618 1.6665 11.4094 1.6665 8.5045V8.16216Z" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 5.33325H14" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </g>
-              <defs>
-                <clipPath id="clip0_1_53706">
-                  <rect width="16" height="16" fill="white"/>
-                </clipPath>
-              </defs>
-            </svg>
-            {placeholder}
-          </button>
+      <div className={styles.datePickerButton} ref={pickerRef}>
+        <button 
+          onClick={(e) => {
+            e.stopPropagation()
+            handleOpenModal()
+          }}
+          className={styles.datePickerButtonInner}
+        >
+          <svg className={styles.datePickerIcon} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g clipPath="url(#clip0_1_53706)">
+              <path d="M12 1.33325V2.66659M4 1.33325V2.66659" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1.6665 8.16216C1.6665 5.25729 1.6665 3.80486 2.50125 2.90243C3.336 2 4.6795 2 7.3665 2H8.63317C11.3202 2 12.6637 2 13.4984 2.90243C14.3332 3.80486 14.3332 5.25729 14.3332 8.16216V8.5045C14.3332 11.4094 14.3332 12.8618 13.4984 13.7642C12.6637 14.6667 11.3202 14.6667 8.63317 14.6667H7.3665C4.6795 14.6667 3.336 14.6667 2.50125 13.7642C1.6665 12.8618 1.6665 11.4094 1.6665 8.5045V8.16216Z" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 5.33325H14" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </g>
+            <defs>
+              <clipPath id="clip0_1_53706">
+                <rect width="16" height="16" fill="white"/>
+              </clipPath>
+            </defs>
+          </svg>
+          {selectedRange ? formatDateRange(selectedRange) : placeholder}
+        </button>
+      </div>
 
-          {mounted && isModalOpen && createPortal(
+      {mounted && isModalOpen && createPortal(
             <div 
               ref={modalRef}
               className={cn(
@@ -204,25 +165,23 @@ export function DateRangePickerModal({
               style={{ 
                 top: (() => {
                   if (!pickerRef.current) {
-                    console.log('pickerRef.current is null')
-                    return 'auto'
+                    return '100px'
                   }
                   const buttonRect = pickerRef.current.getBoundingClientRect()
-                  console.log('Button rect:', buttonRect)
-                  const modalHeight = 250
-                  const topPos = openUpward 
-                    ? (buttonRect.top - modalHeight - 8) + 'px'
-                    : (buttonRect.bottom + 8) + 'px'
-                  console.log('Modal top position:', topPos)
-                  return topPos
+                  const modalHeight = 400
+                  // Центрируем модалку по вертикали относительно кнопки
+                  const topPos = buttonRect.top + (buttonRect.height / 2) - (modalHeight / 2)
+                  return Math.max(10, topPos) + 'px' // Минимум 10px от верха экрана
                 })(),
                 left: (() => {
-                  if (!pickerRef.current) return 'auto'
+                  if (!pickerRef.current) return '100px'
                   const buttonRect = pickerRef.current.getBoundingClientRect()
-                  const leftPos = buttonRect.left + 'px'
-                  console.log('Modal left position:', leftPos)
+                  // Позиционируем справа от кнопки с отступом 8px
+                  const leftPos = (buttonRect.right + 8) + 'px'
                   return leftPos
-                })()
+                })(),
+                width: '400px',
+                height: '400px'
               }}
             >
               <div className={styles.datePickerModalContent}>
@@ -310,8 +269,6 @@ export function DateRangePickerModal({
             </div>,
             document.body
           )}
-        </div>
-      )}
     </div>
   )
 }
