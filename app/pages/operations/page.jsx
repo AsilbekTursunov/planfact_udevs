@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, Fragment, useMemo } from 'react'
 import { cn } from '@/app/lib/utils'
 import {
-	useCounterpartiesPlanFact,
 	useCounterpartiesGroupsPlanFact,
 	useMyAccountsV2,
 	useLegalEntitiesPlanFact,
@@ -59,98 +58,21 @@ export default function OperationsPage() {
 	const [selectedCounterAgents, setSelectedCounterAgents] = useState({})
 	const [selectedFinancialAccounts, setSelectedFinancialAccounts] = useState({})
 
-	// Build filters object for API request using correct API keys
+	// No filtering - filters are just UI elements
 	const filtersForAPI = useMemo(() => {
-		const filters = {}
-
-		// Type filters - tip is an array in API, so we build array of selected types
-		const selectedTypes = []
-		if (selectedFilters.postupleniye) selectedTypes.push('Поступление')
-		if (selectedFilters.vyplata) selectedTypes.push('Выплата')
-		if (selectedFilters.peremeshcheniye) selectedTypes.push('Перемещение')
-		if (selectedFilters.nachisleniye) selectedTypes.push('Начисление')
-		if (selectedFilters.otmena) selectedTypes.push('Отмена')
-		if (selectedFilters.postavka) selectedTypes.push('Поставка')
-
-		// Only add tip filter if not all types are selected (to avoid unnecessary filtering)
-		if (selectedTypes.length > 0 && selectedTypes.length < 6) {
-			filters.tip = selectedTypes
-		}
-
-		// Payment confirmation filter - oplata_podtverzhdena
-		if (!dateFilters.podtverzhdena && !dateFilters.nePodtverzhdena) {
-			// Both unchecked - don't filter
-		} else if (dateFilters.podtverzhdena && !dateFilters.nePodtverzhdena) {
-			filters.oplata_podtverzhdena = true
-		} else if (!dateFilters.podtverzhdena && dateFilters.nePodtverzhdena) {
-			filters.oplata_podtverzhdena = false
-		}
-		// If both are checked, don't add filter (show all)
-
-		// Date ranges - API doesn't support date range filtering
-		// We'll filter on frontend after receiving data
-		// Commenting out date filters for now
-		/*
-		if (selectedDatePaymentRange?.start && selectedDatePaymentRange.start !== '') {
-			filters.data_operatsii = selectedDatePaymentRange.start
-		}
-	  
-		if (selectedDateStartRange?.start && selectedDateStartRange.start !== '') {
-			filters.data_nachisleniya = selectedDateStartRange.start
-		}
-		*/
-
-		// Counter agents - counterparties_id (array of IDs)
-		const selectedCounterAgentGuids = Object.keys(selectedCounterAgents).filter(
-			guid => selectedCounterAgents[guid],
-		)
-		if (selectedCounterAgentGuids.length > 0) {
-			filters.counterparties_id = selectedCounterAgentGuids
-		}
-
-		// Financial accounts (chart of accounts) - chart_of_accounts_id (array of IDs)
-		const selectedFinancialAccountGuids = Object.keys(selectedFinancialAccounts).filter(
-			guid => selectedFinancialAccounts[guid],
-		)
-		if (selectedFinancialAccountGuids.length > 0) {
-			filters.chart_of_accounts_id = selectedFinancialAccountGuids
-		}
-
-		return filters
-	}, [
-		selectedFilters,
-		dateFilters,
-		selectedDatePaymentRange,
-		selectedDateStartRange,
-		selectedCounterAgents,
-		selectedFinancialAccounts,
-	])
+		return {} // Empty object - no filters sent to API
+	}, [])
 
 	// Log filters for debugging
 	useEffect(() => {
 		console.log('Filters for API:', filtersForAPI)
 	}, [filtersForAPI])
 
-	// Reset pagination when filters change
-	useEffect(() => {
-		setPage(1)
-		setAllOperations([])
-		setHasMore(true)
-	}, [
-		selectedFilters,
-		dateFilters,
-		selectedDatePaymentRange,
-		selectedDateStartRange,
-		selectedLegalEntities,
-		selectedCounterAgents,
-		selectedFinancialAccounts,
-	])
+	// Don't reset pagination on filter changes - filters are just UI
+	// Pagination only resets manually or on data refresh
 
 	// Fetch data from API - using V2 endpoints
-	const { data: counterAgentsData } = useCounterpartiesPlanFact({
-		page: 1,
-		limit: 100,
-	})
+	// Fetch data from API - using groups endpoint which includes children
 	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
 		page: 1,
 		limit: 100,
@@ -175,7 +97,7 @@ export default function OperationsPage() {
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList({
 		date_range: {
 			start_date: '2025-01-01',
-			end_date: '2026-12-31T23:59:59Z', // Включаем весь день 2026-12-31 с временем
+			end_date: '2026-12-31T23:59:59Z',
 		},
 		page: page,
 		limit: limit,
@@ -237,68 +159,33 @@ export default function OperationsPage() {
 		return () => tableWrapper.removeEventListener('scroll', handleScroll)
 	}, [hasMore, isLoadingOperations, isLoadingMore])
 
-	// Extract and transform data from API responses - build tree structure for filter
+	// Extract and transform data from API responses - use groups with children
 	const counterAgents = useMemo(() => {
-		const counterparties = counterAgentsData?.data?.data?.data || []
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
 
-		// Create a map of groups by guid
-		const groupsMap = new Map()
+		// Build flat list from groups and their children for filter sidebar
+		const flatList = []
+		
 		groups.forEach(group => {
-			groupsMap.set(group.guid, group)
+			if (group.children && Array.isArray(group.children)) {
+				group.children.forEach(child => {
+					flatList.push({
+						guid: child.guid,
+						label: child.nazvanie || '',
+						group: group.nazvanie_gruppy || 'Без группы',
+					})
+				})
+			}
 		})
+		
+		return flatList
+	}, [counterpartiesGroupsData])
 
-		// Build flat list for filter sidebar (backward compatibility)
-		return counterparties.map(item => ({
-			guid: item.guid,
-			label: item.nazvanie || '',
-			group: item.counterparties_group_id_data?.nazvanie_gruppy || 'Без группы',
-		}))
-	}, [counterAgentsData, counterpartiesGroupsData])
-
-	// Extract operations list from API response (v2/items/operations format)
+	// Extract operations list from API response - no filtering
 	const operationsItems = allOperations
 
-	// Filter operations by date ranges on frontend (since API doesn't support it)
-	const filteredOperationsItems = useMemo(() => {
-		if (!operationsItems || operationsItems.length === 0) return []
-
-		return operationsItems.filter(item => {
-			// Filter by data_operatsii range
-			if (selectedDatePaymentRange?.start || selectedDatePaymentRange?.end) {
-				const operationDate = item.data_operatsii ? new Date(item.data_operatsii) : null
-				if (!operationDate) return false
-
-				if (selectedDatePaymentRange.start) {
-					const startDate = new Date(selectedDatePaymentRange.start)
-					if (operationDate < startDate) return false
-				}
-
-				if (selectedDatePaymentRange.end) {
-					const endDate = new Date(selectedDatePaymentRange.end)
-					if (operationDate > endDate) return false
-				}
-			}
-
-			// Filter by data_nachisleniya range
-			if (selectedDateStartRange?.start || selectedDateStartRange?.end) {
-				const accrualDate = item.data_nachisleniya ? new Date(item.data_nachisleniya) : null
-				if (!accrualDate) return false
-
-				if (selectedDateStartRange.start) {
-					const startDate = new Date(selectedDateStartRange.start)
-					if (accrualDate < startDate) return false
-				}
-
-				if (selectedDateStartRange.end) {
-					const endDate = new Date(selectedDateStartRange.end)
-					if (accrualDate > endDate) return false
-				}
-			}
-
-			return true
-		})
-	}, [operationsItems, selectedDatePaymentRange, selectedDateStartRange])
+	// No frontend filtering - just pass through all operations
+	const filteredOperationsItems = operationsItems
 
 	// Transform operations data for display
 	const operations = useMemo(() => {
