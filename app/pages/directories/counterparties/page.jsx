@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
@@ -41,6 +41,14 @@ export default function CounterpartiesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedRows, setSelectedRows] = useState([])
   const [viewMode, setViewMode] = useState('list') // 'list' | 'nested' | 'groups'
+  
+  // Pagination state
+  const [page, setPage] = useState(1)
+  const [allCounterparties, setAllCounterparties] = useState([])
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const contentRef = useRef(null)
+  const tableWrapperRef = useRef(null)
 
   const [filters, setFilters] = useState({
     // Group filters
@@ -93,19 +101,77 @@ export default function CounterpartiesPage() {
     return apiFilters
   }, [filters])
 
-  // Fetch counterparties using new invoke_function API
-  const { data: counterpartiesData, isLoading: isLoadingCounterparties } = useCounterpartiesPlanFact({
-    page: 1,
-    limit: 100,
+  // Fetch counterparties using new invoke_function API with pagination
+  const { data: counterpartiesData, isLoading: isLoadingCounterparties, isFetching } = useCounterpartiesPlanFact({
+    page: page,
+    limit: 20,
   })
 
+  // Update counterparties when new data arrives
+  useEffect(() => {
+    if (counterpartiesData?.data?.data?.data) {
+      const newItems = counterpartiesData.data.data.data
+      
+      // Only update if we actually have new data
+      if (newItems.length === 0) return
+      
+      if (page === 1) {
+        // First page - replace all
+        setAllCounterparties(newItems)
+      } else {
+        // Subsequent pages - append
+        setAllCounterparties(prev => {
+          const existingGuids = new Set(prev.map(item => item.guid))
+          const uniqueNewItems = newItems.filter(item => !existingGuids.has(item.guid))
+          
+          // Only append if we have new unique items
+          if (uniqueNewItems.length > 0) {
+            return [...prev, ...uniqueNewItems]
+          }
+          return prev
+        })
+      }
+      
+      // Check if there are more items
+      if (newItems.length < 20) {
+        setHasMore(false)
+      }
+      setIsLoadingMore(false)
+    }
+  }, [counterpartiesData, page])
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1)
+    setAllCounterparties([])
+    setHasMore(true)
+    setIsLoadingMore(false)
+  }, [filtersForAPI])
 
-  // Extract counterparties from response
+  // Infinite scroll handler
+  useEffect(() => {
+    const tableWrapper = tableWrapperRef.current
+    if (!tableWrapper) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = tableWrapper
+      // Load more when scrolled to the bottom (with small threshold)
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10
+
+      if (isAtBottom && hasMore && !isLoadingCounterparties && !isLoadingMore) {
+        setIsLoadingMore(true)
+        setPage(prev => prev + 1)
+      }
+    }
+
+    tableWrapper.addEventListener('scroll', handleScroll)
+    return () => tableWrapper.removeEventListener('scroll', handleScroll)
+  }, [hasMore, isLoadingCounterparties, isLoadingMore])
+
+  // Extract counterparties from accumulated data
   const counterpartiesItems = useMemo(() => {
-    const items = counterpartiesData?.data?.data?.data || []
-    return Array.isArray(items) ? items : []
-  }, [counterpartiesData])
+    return Array.isArray(allCounterparties) ? allCounterparties : []
+  }, [allCounterparties])
 
 
   // Fetch counterparties groups using new invoke_function API
@@ -389,7 +455,7 @@ export default function CounterpartiesPage() {
         </div>
       )}
 
-      <div className={cn(styles.content, isFilterOpen && styles.contentWithFilter)}>
+      <div ref={contentRef} className={cn(styles.content, isFilterOpen && styles.contentWithFilter)}>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerContent}>
@@ -419,7 +485,7 @@ export default function CounterpartiesPage() {
                   >
                     <LuListTree size={18} />
                   </button>
-                  <button
+                  {/* <button
                     className={cn(styles.filterIcon, viewMode === 'groups' && styles.active)}
                     onClick={() => setViewMode('groups')}
                     title="Только группы"
@@ -427,7 +493,7 @@ export default function CounterpartiesPage() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
-                  </button>
+                  </button> */}
                 </div>
                 <div className={styles.searchContainer}>
                   <SearchBar
@@ -443,7 +509,7 @@ export default function CounterpartiesPage() {
 
         {/* Table Container */}
         <div className={styles.tableContainer}>
-          <div className={styles.tableWrapper}>
+          <div ref={tableWrapperRef} className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead className={styles.tableHead}>
                 <tr className={styles.tableHeaderRow}>
@@ -518,7 +584,7 @@ export default function CounterpartiesPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoadingCounterparties ? (
+                {isLoadingCounterparties && page === 1 ? (
                   <tr className={styles.emptyRow}>
                     <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
                       Загрузка...
@@ -651,6 +717,38 @@ export default function CounterpartiesPage() {
               </tbody>
             </table>
           </div>
+          
+          {/* Loading indicator */}
+          {isFetching && hasMore && page > 1 && (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              padding: '20px',
+              color: '#6b7280'
+            }}>
+              <svg 
+                style={{ animation: 'spin 1s linear infinite' }} 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor"
+              >
+                <circle cx="12" cy="12" r="10" strokeWidth="3" stroke="#e5e7eb" />
+                <path 
+                  d="M12 2a10 10 0 0 1 10 10" 
+                  strokeWidth="3" 
+                  strokeLinecap="round"
+                />
+              </svg>
+              <style jsx>{`
+                @keyframes spin {
+                  from { transform: rotate(0deg); }
+                  to { transform: rotate(360deg); }
+                }
+              `}</style>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

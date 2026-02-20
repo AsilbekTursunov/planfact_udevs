@@ -384,11 +384,12 @@ export const useCounterpartiesPlanFact = (params = {}) => {
       }
     },
     enabled: true,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Don't cache, always fetch fresh for pagination
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     retry: false,
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching
   })
 }
 

@@ -50,10 +50,39 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   width: 100%;
   transition: margin-left 0.3s ease;
   background-color: white;
+  
+  /* Стилизация скроллбара для Webkit (Chrome, Safari, Edge) */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+    transition: background 0.2s;
+    
+    &:hover {
+      background: #94a3b8;
+    }
+    
+    &:active {
+      background: #64748b;
+    }
+  }
+  
+  /* Стилизация скроллбара для Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
 .contentWithFilter {
@@ -191,42 +220,14 @@
 
 .tableContainer {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: visible;
   overflow-x: hidden;
   background-color: #fff;
   display: flex;
-  padding: 0px 1rem;
+  padding: 0px 1rem 80px 1rem; // Added 80px bottom padding
   flex-direction: column;
   min-height: 0;  
   width: 100%;
-  
-  /* Стилизация скроллбара для Webkit (Chrome, Safari, Edge) */
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-    transition: background 0.2s;
-    
-    &:hover {
-      background: #94a3b8;
-    }
-    
-    &:active {
-      background: #64748b;
-    }
-  }
-  
-  /* Стилизация скроллбара для Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
 .tableWrapper {

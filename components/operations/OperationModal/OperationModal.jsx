@@ -654,7 +654,7 @@ export function OperationModal({
 					requestData.currenies_id = null
 				}
 			} else {
-				// Add fields with null if not provided (for dropdowns)
+				// Add fields, use null for empty values
 				requestData.my_accounts_id = formData.accountAndLegalEntity || null
 				requestData.counterparties_id = formData.counterparty || null
 				requestData.chart_of_accounts_id = formData.chartOfAccount || null
@@ -662,7 +662,7 @@ export function OperationModal({
 				requestData.currenies_id = currencyId || null
 			}
 
-			// Convert empty strings to null, but keep null values
+			// Convert empty strings to null
 			Object.keys(requestData).forEach(key => {
 				if (requestData[key] === '' || requestData[key] === undefined) {
 					requestData[key] = null
@@ -739,7 +739,8 @@ export function OperationModal({
 
 			const result = await response.json()
 
-			if (result.status === 'ERROR') {
+			// Check for error status - API can return ERROR, INVALID_ARGUMENT, etc.
+			if (result.status && result.status !== 'CREATED' && result.status !== 'OK' && result.status !== 'SUCCESS') {
 				throw new Error(
 					result.data ||
 					result.description ||
@@ -753,14 +754,37 @@ export function OperationModal({
 			
 			// Вызываем callback для обновления локального состояния
 			if (onSuccess) {
-				const operationData = isUpdate 
-					? { ...requestData, guid: updateGuid, data_obnovleniya: now.toISOString() }
-					: (result?.data?.data || { ...requestData, guid: result?.data?.guid, data_sozdaniya: now.toISOString() })
+				let operationData
+				if (isUpdate) {
+					// For update, merge request data with guid and timestamps
+					operationData = { 
+						...requestData, 
+						guid: updateGuid, 
+						data_obnovleniya: now.toISOString() 
+					}
+				} else {
+					// For create, use data from API response
+					const apiData = result?.data?.data?.data || result?.data?.data
+					if (apiData && typeof apiData === 'object') {
+						operationData = apiData
+					} else {
+						// Fallback if API doesn't return full data
+						operationData = { 
+							...requestData, 
+							guid: result?.data?.guid || apiData?.guid,
+							data_sozdaniya: now.toISOString(),
+							data_obnovleniya: now.toISOString()
+						}
+					}
+				}
+				console.log('Calling onSuccess with operationData:', operationData)
 				onSuccess(operationData, isUpdate)
 			}
 			
-			// Обновляем связанные запросы в фоне (только dashboard)
+			// Обновляем связанные запросы в фоне
 			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
+			queryClient.invalidateQueries({ queryKey: ['operations'] })
 			
 			onClose()
 		} catch (error) {
