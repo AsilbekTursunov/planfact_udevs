@@ -168,10 +168,9 @@ export function DateRangePickerModal({
                     return '100px'
                   }
                   const buttonRect = pickerRef.current.getBoundingClientRect()
-                  const modalHeight = 400
-                  // Центрируем модалку по вертикали относительно кнопки
-                  const topPos = buttonRect.top + (buttonRect.height / 2) - (modalHeight / 2)
-                  return Math.max(10, topPos) + 'px' // Минимум 10px от верха экрана
+                  // Открываем модалку ниже кнопки с отступом 8px
+                  const topPos = buttonRect.bottom + 8
+                  return topPos + 'px'
                 })(),
                 left: (() => {
                   if (!pickerRef.current) return '100px'
@@ -181,7 +180,7 @@ export function DateRangePickerModal({
                   return leftPos
                 })(),
                 width: '400px',
-                height: '400px'
+                maxHeight: '500px'
               }}
             >
               <div className={styles.datePickerModalContent}>

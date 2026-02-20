@@ -7,7 +7,6 @@ import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import {
-	useCounterpartiesPlanFact,
 	useCounterpartiesGroupsPlanFact,
 	useChartOfAccountsPlanFact,
 	useBankAccountsPlanFact,
@@ -211,11 +210,7 @@ export function OperationModal({
 		setErrors({})
 	}, [activeTab])
 
-	// Fetch data from API - using V2 endpoints
-	const { data: counterpartiesData, isLoading: loadingCounterparties } = useCounterpartiesPlanFact({
-		page: 1,
-		limit: 100,
-	})
+	// Fetch data from API - using groups endpoint which includes children
 	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
 		page: 1,
 		limit: 100,
@@ -236,87 +231,63 @@ export function OperationModal({
 
 
 	// Build tree structure for counterparties (groups and their children)
+	// Use data directly from API - groups already contain children
 	const counterAgentsTree = useMemo(() => {
-		const counterparties = counterpartiesData?.data?.data?.data || []
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
 
-		console.log('🔍 Building counterAgentsTree:')
-		console.log('counterpartiesGroupsData:', counterpartiesGroupsData)
-		console.log('groups extracted:', groups)
-		console.log('counterparties extracted:', counterparties)
+		console.log('🔍 Building counterAgentsTree from API groups:')
+		console.log('groups from API:', groups)
 
-		if (counterparties.length === 0) return []
+		if (groups.length === 0) return []
 
-		// Build child items map: groupGuid -> [counterparties]
-		const childItemsMap = new Map()
-
-		counterparties.forEach(item => {
-			if (item.counterparties_group_id) {
-				const groupGuid = item.counterparties_group_id
-				if (!childItemsMap.has(groupGuid)) {
-					childItemsMap.set(groupGuid, [])
+		// Build tree structure directly from API response
+		const buildTree = item => {
+			// Check if this is a group with children
+			if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+				return {
+					value: item.guid,
+					title: item.nazvanie_gruppy || 'Без названия',
+					selectable: false, // Groups are not selectable
+					children: item.children.map(child => ({
+						value: child.guid,
+						title: child.nazvanie || 'Без названия',
+						selectable: true,
+					}))
 				}
-				childItemsMap.get(groupGuid).push(item)
 			}
-		})
+			
+			// This is a standalone item (no children)
+			return {
+				value: item.guid,
+				title: item.nazvanie_gruppy || item.nazvanie || 'Без названия',
+				selectable: true,
+			}
+		}
 
-		console.log('childItemsMap:', childItemsMap)
+		const tree = groups.map(buildTree)
+		console.log('Built tree:', tree)
+		return tree
+	}, [counterpartiesGroupsData])
 
-		// Find root items (groups with children and ungrouped counterparties)
-		const rootItems = []
-
-		// Add groups with their children
+	// Also keep flat list for backward compatibility (if needed)
+	const counterAgents = useMemo(() => {
+		const groups = counterpartiesGroupsData?.data?.data?.data || []
+		const flatList = []
+		
 		groups.forEach(group => {
-			const children = childItemsMap.get(group.guid) || []
-			console.log(`Group "${group.nazvanie_gruppy}" (${group.guid}):`, children.length, 'children')
-			// Add all groups, even if they don't have children
-			rootItems.push({
-				guid: group.guid,
-				nazvanie: group.nazvanie_gruppy || 'Без названия',
-				isGroup: true,
-				children: children,
-			})
-		})
-
-		// Add ungrouped counterparties as root items
-		counterparties.forEach(item => {
-			if (!item.counterparties_group_id) {
-				rootItems.push({
-					guid: item.guid,
-					nazvanie: item.nazvanie || 'Без названия',
-					isGroup: false,
-					children: [],
+			if (group.children && Array.isArray(group.children)) {
+				group.children.forEach(child => {
+					flatList.push({
+						guid: child.guid,
+						label: child.nazvanie || '',
+						group: group.nazvanie_gruppy || 'Без группы',
+					})
 				})
 			}
 		})
-
-		// Build tree structure
-		const buildTree = item => {
-			const treeNode = {
-				value: item.guid,
-				title: item.nazvanie || item.nazvanie_gruppy || 'Без названия',
-				selectable: !item.isGroup, // Groups are not selectable, only counterparties
-				children:
-					item.children && item.children.length > 0
-						? item.children.map(child => ({
-							value: child.guid,
-							title: child.nazvanie || 'Без названия',
-							selectable: true,
-						}))
-						: undefined,
-			}
-			return treeNode
-		}
-
-		return rootItems.map(buildTree)
-	}, [counterpartiesData, counterpartiesGroupsData])
-
-	// Also keep flat list for backward compatibility (if needed)
-	const counterAgents = (counterpartiesData?.data?.data?.data || []).map(item => ({
-		guid: item.guid,
-		label: item.nazvanie || '',
-		group: item.counterparties_group_id_data?.nazvanie_gruppy || 'Без группы',
-	}))
+		
+		return flatList
+	}, [counterpartiesGroupsData])
 
 	// Transform legal entities data
 	const legalEntities = useMemo(() => {
