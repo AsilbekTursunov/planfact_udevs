@@ -107,63 +107,99 @@ export default function CounterpartiesPage() {
   const { data: counterpartiesData, isLoading: isLoadingCounterparties, isFetching } = useCounterpartiesPlanFact({
     page: page,
     limit: 20,
-  })
+  }, true) // Always enable the query
 
   // Update counterparties when new data arrives
   useEffect(() => {
-    if (counterpartiesData?.data?.data?.data) {
-      const newItems = counterpartiesData.data.data.data
-      
-      console.log('✅ New items received:', newItems.length, 'for page', page)
-      
-      // Only update if we actually have new data
-      if (newItems.length === 0) {
-        console.log('⚠️ No new items, stopping pagination')
-        setHasMore(false)
-        setIsLoadingMore(false)
-        isLoadingRef.current = false
-        return
-      }
-      
-      if (page === 1) {
-        // First page - replace all
-        console.log('🔄 First page - replacing all items')
-        setAllCounterparties(newItems)
-      } else {
-        // Subsequent pages - append
-        console.log('➕ Appending to existing list')
-        setAllCounterparties(prev => {
-          const existingGuids = new Set(prev.map(item => item.guid))
-          const uniqueNewItems = newItems.filter(item => !existingGuids.has(item.guid))
-          
-          console.log('  - Existing:', prev.length, 'New unique:', uniqueNewItems.length)
-          
-          // Only append if we have new unique items
-          if (uniqueNewItems.length > 0) {
-            return [...prev, ...uniqueNewItems]
-          }
-          return prev
-        })
-      }
-      
-      // Check if there are more items
-      if (newItems.length < 20) {
-        console.log('📊 Last page reached (received', newItems.length, '< 20)')
-        setHasMore(false)
-      } else {
-        console.log('📊 More pages available')
-      }
-      
-      // Reset loading flags with a small delay to prevent immediate re-trigger
-      console.log('✓ Resetting loading flags')
-      setIsLoadingMore(false)
-      
-      // Add delay before allowing next load to prevent double-trigger on fast scroll
-      setTimeout(() => {
-        isLoadingRef.current = false
-      }, 300)
+    console.log('📦 counterpartiesData changed:', {
+      hasData: !!counterpartiesData,
+      page,
+      dataPath: counterpartiesData?.data?.data?.data?.length,
+      allCounterpartiesLength: allCounterparties.length,
+      isFetching
+    })
+    
+    // Skip if still fetching or no data
+    if (isFetching || !counterpartiesData?.data?.data?.data) {
+      console.log('⏳ Skipping update - still fetching or no data')
+      return
     }
-  }, [counterpartiesData, page])
+    
+    const newItems = counterpartiesData.data.data.data
+    
+    console.log('✅ New items received:', newItems.length, 'for page', page)
+    
+    // Only update if we actually have new data
+    if (newItems.length === 0) {
+      console.log('⚠️ No new items, stopping pagination')
+      setHasMore(false)
+      setIsLoadingMore(false)
+      isLoadingRef.current = false
+      return
+    }
+    
+    if (page === 1) {
+      // First page - replace all
+      console.log('🔄 First page - setting items')
+      setAllCounterparties(newItems)
+      // Reset refs for fresh start
+      lastPageRef.current = 1
+      isLoadingRef.current = false
+    } else {
+      // Subsequent pages - append
+      console.log('➕ Appending to existing list')
+      setAllCounterparties(prev => {
+        // If prev is empty but we're on page > 1, something went wrong - reset to page 1
+        if (prev.length === 0) {
+          console.log('⚠️ Empty list on page', page, '- resetting to page 1')
+          setPage(1)
+          return prev
+        }
+        
+        const existingGuids = new Set(prev.map(item => item.guid))
+        const uniqueNewItems = newItems.filter(item => !existingGuids.has(item.guid))
+        
+        console.log('  - Existing:', prev.length, 'New unique:', uniqueNewItems.length)
+        
+        // Only append if we have new unique items
+        if (uniqueNewItems.length > 0) {
+          return [...prev, ...uniqueNewItems]
+        }
+        return prev
+      })
+    }
+    
+    // Check if there are more items
+    if (newItems.length < 20) {
+      console.log('📊 Last page reached (received', newItems.length, '< 20)')
+      setHasMore(false)
+    } else {
+      console.log('📊 More pages available')
+    }
+    
+    // Reset loading flags with a small delay to prevent immediate re-trigger
+    console.log('✓ Resetting loading flags')
+    setIsLoadingMore(false)
+    
+    // Add delay before allowing next load to prevent double-trigger on fast scroll
+    setTimeout(() => {
+      isLoadingRef.current = false
+    }, 300)
+  }, [counterpartiesData, page, isFetching])
+
+  // Reset state when component mounts (e.g., when returning from detail page)
+  useEffect(() => {
+    console.log('🔄 CounterpartiesPage mounted - resetting state')
+    setPage(1)
+    setAllCounterparties([])
+    setHasMore(true)
+    setIsLoadingMore(false)
+    isLoadingRef.current = false
+    lastPageRef.current = 1
+    
+    // Invalidate queries to force fresh data fetch
+    queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
+  }, [queryClient]) // Empty dependency array - runs only on mount
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -304,8 +340,8 @@ export default function CounterpartiesPage() {
 
   // Convert counterparties API data to component format with grouping
   const { groupedCounterparties, flatCounterparties } = useMemo(() => {
+    // For flat list view - use counterpartiesItems
     const items = counterpartiesItems.map((item, index) => {
-
       return {
         id: item.guid || `counterparty-${index}`,
         guid: item.guid,
@@ -319,9 +355,8 @@ export default function CounterpartiesPage() {
         counterparties_group: item.group_name || null,
         komentariy: item.komentariy || null,
         data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya).toLocaleDateString('ru-RU') : null,
-        // Используем правильные ключи из API
-        receivables: item.receivables || 0,  // Дебиторка
-        payables: item.payables || 0,        // Кредиторка
+        receivables: item.receivables || 0,
+        payables: item.payables || 0,
         debitorka: item.debitorka || 0,
         kreditorka: item.kreditorka || 0,
         profit: item.profit || 0,
@@ -329,38 +364,44 @@ export default function CounterpartiesPage() {
       }
     })
 
-    // Применяем фильтры
-    const filteredItems = items
+    // For nested view - use counterpartiesGroupsItems with children
+    const groupedFromAPI = counterpartiesGroupsItems
+      .filter(group => group.children && group.children.length > 0) // Only groups with children
+      .map(group => {
+        const children = group.children.map((item, index) => ({
+          id: item.guid || `counterparty-${index}`,
+          guid: item.guid,
+          nazvanie: item.nazvanie || 'Без названия',
+          polnoe_imya: item.polnoe_imya || null,
+          gruppa: item.group_name || null,
+          inn: item.inn ? String(item.inn) : null,
+          kpp: item.kpp ? String(item.kpp) : null,
+          nomer_scheta: item.nomer_scheta ? String(item.nomer_scheta) : null,
+          counterparties_group_id: item.counterparties_group_id || null,
+          counterparties_group: item.group_name || null,
+          komentariy: item.komentariy || null,
+          data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya).toLocaleDateString('ru-RU') : null,
+          receivables: item.receivables || 0,
+          payables: item.payables || 0,
+          debitorka: item.debitorka || 0,
+          kreditorka: item.kreditorka || 0,
+          profit: item.profit || 0,
+          rawData: item
+        }))
 
-    // Group by counterparties_group_id
-    const groupsMap = new Map()
-    const ungrouped = []
-
-    filteredItems.forEach(item => {
-      if (item.counterparties_group_id) {
-        if (!groupsMap.has(item.counterparties_group_id)) {
-          // Find the group data from counterpartiesGroupsItems
-          const groupData = counterpartiesGroupsItems.find(g => g.guid === item.counterparties_group_id)
-          groupsMap.set(item.counterparties_group_id, {
-            id: `group-${item.counterparties_group_id}`,
-            guid: item.counterparties_group_id,
-            nazvanie: item.counterparties_group || 'Без названия группы',
-            data_sozdaniya: groupData?.data_sozdaniya ? new Date(groupData.data_sozdaniya).toLocaleDateString('ru-RU') : null,
-            isGroup: true,
-            items: []
-          })
+        return {
+          id: `group-${group.guid}`,
+          guid: group.guid,
+          nazvanie: group.nazvanie_gruppy || 'Без названия группы',
+          data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya).toLocaleDateString('ru-RU') : null,
+          isGroup: true,
+          items: children
         }
-        groupsMap.get(item.counterparties_group_id).items.push(item)
-      } else {
-        ungrouped.push(item)
-      }
-    })
-
-    const grouped = Array.from(groupsMap.values())
+      })
 
     return {
-      groupedCounterparties: [...grouped, ...ungrouped],
-      flatCounterparties: filteredItems
+      groupedCounterparties: groupedFromAPI,
+      flatCounterparties: items
     }
   }, [counterpartiesItems, counterpartiesGroupsItems])
 

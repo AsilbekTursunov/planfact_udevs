@@ -367,7 +367,7 @@ export const useCounterpartiesV2 = (params = {}) => {
 }
 
 // Get counterparties using invoke_function planfact-plan-fact (POST)
-export const useCounterpartiesPlanFact = (params = {}) => {
+export const useCounterpartiesPlanFact = (params = {}, enabled = true) => {
   return useQuery({
     queryKey: ['counterpartiesPlanFact', params],
     queryFn: async () => {
@@ -383,13 +383,12 @@ export const useCounterpartiesPlanFact = (params = {}) => {
         return { status: 'ERROR', data: { data: [] } }
       }
     },
-    enabled: true,
-    staleTime: 0, // Don't cache, always fetch fresh for pagination
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
+    enabled: enabled,
+    staleTime: 1000, // Consider data fresh for 1 second to prevent duplicate requests
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+    refetchOnMount: 'always', // Always refetch when component mounts
     refetchOnWindowFocus: false,
     retry: false,
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching
   })
 }
 
