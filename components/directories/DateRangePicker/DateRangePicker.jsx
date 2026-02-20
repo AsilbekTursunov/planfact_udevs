@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import styles from './DateRangePicker.module.scss'
+import { CalendarIcon } from '../../../constants/icons'
 
 export function DateRangePicker({ selectedRange, onChange, placeholder = "Выберите период" }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -21,12 +22,12 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
       // Проверяем, что клик был вне pickerRef И вне modalRef
       const isOutsidePicker = pickerRef.current && !pickerRef.current.contains(event.target)
       const isOutsideModal = modalRef.current && !modalRef.current.contains(event.target)
-      
+
       if (isOutsidePicker && isOutsideModal) {
         closeModal()
       }
     }
-    
+
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside)
       return () => document.removeEventListener("mousedown", handleClickOutside)
@@ -38,21 +39,21 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
       const rect = pickerRef.current.getBoundingClientRect()
       const modalWidth = activeInput ? 600 : 440
       const modalHeight = 400
-      
+
       // Позиционируем справа от кнопки
       let left = rect.right + 8
       let top = rect.top
-      
+
       // Проверяем, не выходит ли модалка за правый край экрана
       if (left + modalWidth > window.innerWidth) {
         // Если не помещается справа, открываем слева
         left = rect.left - modalWidth - 8
       }
-      
+
       // Проверяем, не выходит ли модалка за нижний край экрана
       const spaceBelow = window.innerHeight - rect.top
       const openUpward = spaceBelow < modalHeight && rect.top > spaceBelow
-      
+
       if (openUpward) {
         top = rect.bottom - modalHeight
       }
@@ -76,20 +77,24 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
 
   const quickDateRanges = [
     { label: 'Просроченные', getValue: () => ({ start: new Date(2025, 0, 1), end: new Date() }) },
-    { label: 'Вчера', getValue: () => {
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
-      return { start: yesterday, end: yesterday }
-    }},
+    {
+      label: 'Вчера', getValue: () => {
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        return { start: yesterday, end: yesterday }
+      }
+    },
     { label: 'Прошлая неделя', getValue: () => ({ start: new Date(2026, 0, 5), end: new Date(2026, 0, 11) }) },
     { label: 'Прошлый месяц', getValue: () => ({ start: new Date(2025, 11, 1), end: new Date(2025, 11, 31) }) },
     { label: 'Прошлый квартал', getValue: () => ({ start: new Date(2025, 9, 1), end: new Date(2025, 11, 31) }) },
     { label: 'Прошлый год', getValue: () => ({ start: new Date(2025, 0, 1), end: new Date(2025, 11, 31) }) },
     { label: 'Будущие', getValue: () => ({ start: new Date(), end: new Date(2026, 11, 31) }) },
-    { label: 'Сегодня', getValue: () => {
-      const today = new Date()
-      return { start: today, end: today }
-    }},
+    {
+      label: 'Сегодня', getValue: () => {
+        const today = new Date()
+        return { start: today, end: today }
+      }
+    },
     { label: 'Эта неделя', getValue: () => ({ start: new Date(2026, 0, 12), end: new Date(2026, 0, 18) }) },
     { label: 'Этот месяц', getValue: () => ({ start: new Date(2026, 0, 1), end: new Date(2026, 0, 31) }) },
     { label: 'Этот квартал', getValue: () => ({ start: new Date(2026, 0, 1), end: new Date(2026, 2, 31) }) },
@@ -112,7 +117,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
           <span className={styles.selectedRangeText}>{formatDateRange(selectedRange)}</span>
-          <button 
+          <button
             onClick={() => onChange(null)}
             className={styles.selectedRangeClear}
           >
@@ -120,7 +125,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
           </button>
         </div>
       ) : (
-        <button 
+          <button
           onClick={() => setIsOpen(!isOpen)}
           className={styles.button}
         >
@@ -135,23 +140,23 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
       )}
 
       {isOpen && typeof document !== 'undefined' && createPortal(
-        <div 
+        <div
           ref={modalRef}
           className={styles.modal}
-          style={{ 
+          style={{
             top: dropdownPosition.top + 'px',
             left: dropdownPosition.left + 'px',
             width: activeInput ? '600px' : '440px',
-            animation: isClosing 
-              ? 'fadeSlideOut 0.2s ease-in' 
-              : dropdownPosition.openUpward 
-                ? 'fadeSlideUp 0.25s ease-out' 
+            animation: isClosing
+              ? 'fadeSlideOut 0.2s ease-in'
+              : dropdownPosition.openUpward
+                ? 'fadeSlideUp 0.25s ease-out'
                 : 'fadeSlideIn 0.25s ease-out'
           }}
         >
           <div className={styles.modalContent}>
             <h3 className={styles.modalTitle}>Укажите период</h3>
-            
+
             <div className={styles.modalBody}>
               <div className={styles.quickRanges}>
                 {quickDateRanges.map((range, idx) => (
@@ -172,7 +177,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
               {activeInput && (
                 <div className={styles.calendar}>
                   <div className={styles.calendarHeader}>
-                    <button 
+                    <button
                       onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
                       className={styles.calendarNavButton}
                     >
@@ -181,7 +186,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
                     <span className={styles.calendarMonth}>
                       {currentMonth.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }).replace(/^./, str => str.toUpperCase())}
                     </span>
-                    <button 
+                    <button
                       onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
                       className={styles.calendarNavButton}
                     >
@@ -205,8 +210,8 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
                       const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), dayNum)
                       const isCurrentMonth = dayNum > 0 && dayNum <= new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate()
                       const isToday = date.toDateString() === new Date(2026, 0, 14).toDateString()
-                      const isSelected = (tempStartDate && date.toDateString() === tempStartDate.toDateString()) || 
-                                         (tempEndDate && date.toDateString() === tempEndDate.toDateString())
+                      const isSelected = (tempStartDate && date.toDateString() === tempStartDate.toDateString()) ||
+                        (tempEndDate && date.toDateString() === tempEndDate.toDateString())
 
                       return (
                         <button
@@ -246,12 +251,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
                   activeInput === 'start' ? styles.active : styles.inactive
                 )}
               >
-                <svg className={styles.dateInputIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
+                <CalendarIcon className={styles.dateInputIcon} />
                 <span className={styles.dateInputText}>
                   {tempStartDate ? tempStartDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Начало периода'}
                 </span>
@@ -264,12 +264,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
                   activeInput === 'end' ? styles.active : styles.inactive
                 )}
               >
-                <svg className={styles.dateInputIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
+                <CalendarIcon className={styles.dateInputIcon} />
                 <span className={styles.dateInputText}>
                   {tempEndDate ? tempEndDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Конец периода'}
                 </span>

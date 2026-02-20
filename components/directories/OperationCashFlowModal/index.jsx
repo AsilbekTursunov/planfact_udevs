@@ -1,92 +1,65 @@
-import React, { useMemo } from 'react'
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-} from '@tanstack/react-table'
+import React from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './OperationCashFlowModal.module.scss'
+import { ExpenseArrow, IncomeArrow } from '../../../constants/icons'
 
-const defaultData = {
-  period: '01 — 28 фев ’26',
-  totalAmount: '69 895 051 ₽',
-  operations: [
-    {
-      id: 1,
-      date: '17 фев ’26',
-      type: 'income',
-      counterparty: '',
-      article: 'Выручка от продаж',
-      articleSub: 'jhgjhv',
-      amount: '+767 767 €'
-    }
-  ]
+/**
+ * Recursively flatten a row and its subRows into a flat list.
+ * Skips the root row itself — only its children are shown as "operations".
+ */
+const flattenRows = (row, depth = 0) => {
+  const result = [{ ...row, _depth: depth }]
+  if (Array.isArray(row.subRows) && row.subRows.length > 0) {
+    row.subRows.forEach(child => {
+      result.push(...flattenRows(child, depth + 1))
+    })
+  }
+  return result
 }
 
-const OperationCashFlowModal = ({ isOpen, onClose, data }) => {
-  const { period, totalAmount, operations } = data || defaultData
+const formatAmount = (value) => {
+  if (value === 0 || value === null || value === undefined) return '—'
+  const abs = new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.abs(value))
+  return (value > 0 ? '+' : '−') + abs + ' ₽'
+}
 
-  const columns = useMemo(() => [
-    {
-      accessorKey: 'date',
-      header: 'Дата ▾',
-    },
-    {
-      accessorKey: 'type',
-      header: 'Тип',
-      cell: ({ getValue }) => {
-        const type = getValue()
-        return type === 'income' ? (
-          <div className={styles.typeIcon}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        ) : null
-      }
-    },
-    {
-      accessorKey: 'counterparty',
-      header: 'Контрагент',
-    },
-    {
-      accessorKey: 'article',
-      header: 'Статья',
-      cell: ({ row }) => (
-        <>
-          <span className={styles.articleName}>{row.original.article}</span>
-          {row.original.articleSub && <span className={styles.articleSub}>{row.original.articleSub}</span>}
-        </>
-      )
-    },
-    {
-      accessorKey: 'amount',
-      header: 'Сумма',
-      cell: ({ getValue }) => (
-        <span className={cn(styles.amountCell, styles.positive)}>{getValue()}</span>
-      )
+const formatNumber = (value) => {
+  if (value === 0 || value === null || value === undefined) return '—'
+  return new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+
+
+const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
+  const getValue = (row) => {
+    if (selectedMonth?.key) {
+      return row.months?.[selectedMonth.key] ?? 0
     }
-  ], [])
+    return row.total ?? 0
+  }
 
-  const table = useReactTable({
-    data: operations,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  })
+  const rows = !data ? [] : flattenRows(data, 0).filter(row => getValue(row) !== 0)
+
+  const periodLabel = selectedMonth?.label || 'Итого'
+  const totalAmount = data ? formatNumber(getValue(data)) : '—'
 
   if (!isOpen) return null
 
   return (
     <>
-      <div
-        className={styles.overlay}
-        onClick={onClose}
-      />
+      <div className={styles.overlay} onClick={onClose} />
 
       <div className={styles.modal}>
+        {/* Header */}
         <div className={styles.header}>
           <div className={styles.title}>
-            Операции по показателю «Операционный поток»
+            {data?.name || 'Операции по показателю'}
           </div>
           <button onClick={onClose} className={styles.closeButton}>
             <svg className={styles.closeIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -95,10 +68,11 @@ const OperationCashFlowModal = ({ isOpen, onClose, data }) => {
           </button>
         </div>
 
+        {/* Summary */}
         <div className={styles.summary}>
           <div className={styles.summaryRow}>
             <span className={styles.summaryLabel}>Период отчета</span>
-            <span className={styles.summaryValue}>{period}</span>
+            <span className={styles.summaryValue}>{periodLabel}</span>
           </div>
           <div className={styles.summaryRow}>
             <span className={styles.summaryLabel}>Сумма операций</span>
@@ -106,40 +80,74 @@ const OperationCashFlowModal = ({ isOpen, onClose, data }) => {
           </div>
         </div>
 
+        {/* Table */}
         <div className={styles.content}>
           <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead className={styles.tableHeader}>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id} className={styles.tableRow}>
-                    {headerGroup.headers.map(header => (
-                      <th key={header.id} className={cn(styles.tableHeaderCell, header.column.id === 'amount' ? styles.tableHeaderCellRight : '')}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
+                <tr>
+                  <th className={styles.thDate}>Дата ▾</th>
+                  <th className={styles.thType}>Тип</th>
+                  <th className={styles.thCounterparty}>Контрагент</th>
+                  <th className={styles.thArticle}>Статья</th>
+                  <th className={styles.thAmount}>Сумма</th>
+                </tr>
               </thead>
               <tbody>
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className={styles.tableRow}>
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className={cn(styles.tableCell, styles[cell.column.id + 'Cell'])}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className={styles.emptyCell}>Нет данных</td>
                   </tr>
-                ))}
+                ) : (
+                  rows.map((row, idx) => {
+                    const value = getValue(row)
+                    const isIncome = value >= 0
+                    const isRoot = row._depth === 0
+
+                    return (
+                      <tr key={row.id ?? idx} className={styles.tableRow}>
+                        {/* Дата */}
+                        <td className={styles.tdDate}>{periodLabel}</td>
+
+                        {/* Тип */}
+                        <td className={styles.tdType}>
+                          {value !== 0 && (
+                            isIncome ? <IncomeArrow /> : <ExpenseArrow />
+                          )}
+                        </td>
+
+                        {/* Контрагент */}
+                        <td className={styles.tdCounterparty}>—</td>
+
+                        {/* Статья */}
+                        <td className={styles.tdArticle}>
+                          <span
+                            className={styles.articleName}
+                            style={{ fontWeight: 500 }}
+                          >
+                            {row.name}
+                          </span>
+                        </td>
+
+                        {/* Сумма */}
+                        <td className={styles.tdAmount}>
+                          <span className={cn(
+                            styles.amountValue,
+                            value > 0 ? styles.positive : value < 0 ? styles.negative : styles.neutral
+                          )}>
+                            {formatAmount(value)}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
+        {/* Footer */}
         <div className={styles.footer}>
           <a onClick={() => { }} className={styles.openLink}>
             Открыть в разделе Операции

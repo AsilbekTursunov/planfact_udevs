@@ -13,7 +13,7 @@ import { getCashFlowReport } from '@/lib/api/ucode/cashflow'
 import styles from './cashflow.module.scss'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
-import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
+import { ExpendClose, ExpendOpen } from '../../../../constants/icons' 
 
 export default function CashFlowReportPage() {
   const [expanded, setExpanded] = useState({})
@@ -21,6 +21,8 @@ export default function CashFlowReportPage() {
   const [loading, setLoading] = useState(true)
   const [reportData, setReportData] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedColumn, setSelectedColumn] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(null) // { key, label } or null for total
 
   // Filter states
   const [selectedPeriod, setSelectedPeriod] = useState('all')
@@ -31,7 +33,7 @@ export default function CashFlowReportPage() {
   // Mock data for selects
   const groupingOptions = [
     { guid: 'monthly', label: 'По месяцам' },
-    { guid: 'quarterly', label: 'По кварталам' },
+    { guid: 'quarterly', label: 'По кварталам' }, 
     { guid: 'yearly', label: 'По годам' }
   ]
 
@@ -101,6 +103,7 @@ export default function CashFlowReportPage() {
     fetchData()
   }, [selectedGrouping])
 
+
   // Extract months from legend
   const months = useMemo(() => {
     if (!reportData?.legend) return []
@@ -133,7 +136,7 @@ export default function CashFlowReportPage() {
       return node
     }
 
-    return reportData.rows.map(row => transformRow(row, 0))
+    return reportData?.rows?.map(row => transformRow(row, 0))
   }, [reportData, months])
 
   // Auto-expand every top-level row that has children on first load
@@ -221,7 +224,11 @@ export default function CashFlowReportPage() {
           return (
             <span
               className={`${isTopLevel ? styles.boldNumber : ''} ${styles.clickableCell}`}
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setSelectedColumn(row?.original)
+                setSelectedMonth({ key: month, label: formatMonth(month) })
+                setIsModalOpen(true)
+              }}
             >
               {formatNumber(value)}
             </span>
@@ -240,7 +247,11 @@ export default function CashFlowReportPage() {
           return (
             <span
               className={`${isTopLevel ? styles.boldNumber : ''} ${styles.clickableCell}`}
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                setSelectedColumn(row?.original)
+                setSelectedMonth(null)
+                setIsModalOpen(true)
+              }}
             >
               {formatNumber(value)}
             </span>
@@ -250,6 +261,8 @@ export default function CashFlowReportPage() {
     ],
     [months, reportData]
   )
+
+
 
   const table = useReactTable({
     data,
@@ -276,6 +289,8 @@ export default function CashFlowReportPage() {
       </div>
     )
   }
+
+  console.log(selectedColumn)
 
   return (
     <div className={styles.container}>
@@ -374,11 +389,11 @@ export default function CashFlowReportPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table> 
           </div>
         </div>
       </div>
-      <OperationCashFlowModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <OperationCashFlowModal data={selectedColumn} selectedMonth={selectedMonth} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   )
 }

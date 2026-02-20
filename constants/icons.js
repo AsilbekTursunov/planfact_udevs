@@ -63,3 +63,30 @@ export const AuthLogo = ({ color = '#ffff', width = '114', height = '28', ...pro
     <path d="M111.967 13.9051C111.977 13.9438 111.954 13.9821 111.916 13.9941L103.375 16.6631C103.684 17.066 103.894 17.2272 104.356 17.468C105.111 17.844 105.926 17.9056 106.691 17.6645C107.47 17.3962 108.103 16.8786 108.485 16.1442C108.493 16.1279 108.507 16.102 108.519 16.0779C108.533 16.0518 108.56 16.0353 108.589 16.0353L111.707 16.0281C111.76 16.028 111.798 16.0785 111.784 16.129C111.143 18.3655 110.17 19.82 107.651 20.6364C104.411 21.68 100.936 19.8873 99.8715 16.653C98.8271 13.4122 100.618 9.93725 103.851 8.8729C107.091 7.82923 110.566 9.62199 111.631 12.8562C111.672 12.9867 111.899 13.6496 111.967 13.9051ZM103.031 13.3379C102.884 13.6507 102.77 14.0087 102.724 14.3672C102.716 14.4231 102.77 14.4662 102.824 14.4492L107.976 12.8255C108.029 12.8087 108.049 12.7438 108.012 12.702C107.764 12.4198 107.465 12.2045 107.133 11.9999C106.412 11.6587 105.59 11.5765 104.804 11.8241C104.046 12.0859 103.42 12.6242 103.031 13.3379Z" fill={color} />
   </svg>
 )
+
+
+export const CalendarIcon = ({ size = 18, strokeWidth = 1.5, ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth={strokeWidth} {...props}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+)
+
+
+// Income arrow (← green)
+export const IncomeArrow = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675"
+      stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+// Expense arrow (→ red)
+export const ExpenseArrow = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4.16675 10.0001H15.8334M15.8334 10.0001L10.0001 4.16675M15.8334 10.0001L10.0001 15.8334"
+      stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
