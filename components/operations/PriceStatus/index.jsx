@@ -16,12 +16,12 @@ const PriceStatus = ({ amount, type, confirmed, accrual, currency }) => {
         type === 'transfer' && styles.neutral
       )}
     >
-      {/* Debit icon (Дебет) - if confirmed and not both confirmed & accrual */}
-      {confirmed && !(confirmed && accrual) && (
+      {/* Debit icon (Д) - показываем когда НЕ confirmed И accrual = true */}
+      {!confirmed && accrual && (
         <DebitIcon />
       )}
-      {/* Credit icon (Кредит) - if accrual and not both confirmed & accrual */}
-      {accrual && !(confirmed && accrual) && (
+      {/* Credit icon (К) - показываем когда confirmed = true И НЕ accrual */}
+      {confirmed && !accrual && (
         <CreditIcon />
       )}
       <span className={styles.amountText}>{amount}</span>

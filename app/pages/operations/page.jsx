@@ -276,8 +276,15 @@ export default function OperationsPage() {
 				accrualDate: formatDate(accrualDate),
 				operationDate: formatDate(operationDate),
 				paymentConfirmed: item.oplata_podtverzhdena,
-				payment_confirmed: item.payment_confirmed, // Добавляем новое поле
-				payment_accrual: item.payment_accrual, // Добавляем новое поле
+				// payment_confirmed - дебет (подтверждена оплата)
+				// payment_accrual - кредит (подтверждено начисление)
+				// Используем новые поля из API, с fallback на старые
+				payment_confirmed: item.payment_confirmed !== undefined 
+					? item.payment_confirmed 
+					: (item.oplata_podtverzhdena !== undefined ? item.oplata_podtverzhdena : false),
+				payment_accrual: item.payment_accrual !== undefined 
+					? item.payment_accrual 
+					: false,
 				amount: amountFormatted,
 				amountRaw: amount,
 				currency: item.currenies_kod || item.currenies_id_data?.nazvanie || '',
