@@ -49,6 +49,8 @@ export default function CounterpartiesPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const contentRef = useRef(null)
   const tableWrapperRef = useRef(null)
+  const isLoadingRef = useRef(false) // Prevent duplicate requests
+  const lastPageRef = useRef(1) // Track last loaded page
 
   const [filters, setFilters] = useState({
     // Group filters
@@ -112,17 +114,29 @@ export default function CounterpartiesPage() {
     if (counterpartiesData?.data?.data?.data) {
       const newItems = counterpartiesData.data.data.data
       
+      console.log('✅ New items received:', newItems.length, 'for page', page)
+      
       // Only update if we actually have new data
-      if (newItems.length === 0) return
+      if (newItems.length === 0) {
+        console.log('⚠️ No new items, stopping pagination')
+        setHasMore(false)
+        setIsLoadingMore(false)
+        isLoadingRef.current = false
+        return
+      }
       
       if (page === 1) {
         // First page - replace all
+        console.log('🔄 First page - replacing all items')
         setAllCounterparties(newItems)
       } else {
         // Subsequent pages - append
+        console.log('➕ Appending to existing list')
         setAllCounterparties(prev => {
           const existingGuids = new Set(prev.map(item => item.guid))
           const uniqueNewItems = newItems.filter(item => !existingGuids.has(item.guid))
+          
+          console.log('  - Existing:', prev.length, 'New unique:', uniqueNewItems.length)
           
           // Only append if we have new unique items
           if (uniqueNewItems.length > 0) {
@@ -134,9 +148,20 @@ export default function CounterpartiesPage() {
       
       // Check if there are more items
       if (newItems.length < 20) {
+        console.log('📊 Last page reached (received', newItems.length, '< 20)')
         setHasMore(false)
+      } else {
+        console.log('📊 More pages available')
       }
+      
+      // Reset loading flags with a small delay to prevent immediate re-trigger
+      console.log('✓ Resetting loading flags')
       setIsLoadingMore(false)
+      
+      // Add delay before allowing next load to prevent double-trigger on fast scroll
+      setTimeout(() => {
+        isLoadingRef.current = false
+      }, 300)
     }
   }, [counterpartiesData, page])
 
@@ -146,6 +171,8 @@ export default function CounterpartiesPage() {
     setAllCounterparties([])
     setHasMore(true)
     setIsLoadingMore(false)
+    isLoadingRef.current = false
+    lastPageRef.current = 1
   }, [filtersForAPI])
 
   // Infinite scroll handler
@@ -153,20 +180,40 @@ export default function CounterpartiesPage() {
     const tableWrapper = tableWrapperRef.current
     if (!tableWrapper) return
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = tableWrapper
-      // Load more when scrolled to the bottom (with small threshold)
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10
+    let scrollTimeout = null
 
-      if (isAtBottom && hasMore && !isLoadingCounterparties && !isLoadingMore) {
-        setIsLoadingMore(true)
-        setPage(prev => prev + 1)
+    const handleScroll = () => {
+      // Clear previous timeout
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
       }
+
+      // Debounce scroll events
+      scrollTimeout = setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = tableWrapper
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+        
+        // Load more when scrolled near bottom (with 10px threshold)
+        if (distanceFromBottom < 10 && hasMore && !isLoadingRef.current) {
+          const nextPage = lastPageRef.current + 1
+          console.log('🚀 TRIGGERING LOAD - Next page:', nextPage)
+          isLoadingRef.current = true
+          lastPageRef.current = nextPage
+          setIsLoadingMore(true)
+          setPage(nextPage)
+        }
+      }, 100) // 100ms debounce
     }
 
-    tableWrapper.addEventListener('scroll', handleScroll)
-    return () => tableWrapper.removeEventListener('scroll', handleScroll)
-  }, [hasMore, isLoadingCounterparties, isLoadingMore])
+    tableWrapper.addEventListener('scroll', handleScroll, { passive: true })
+    
+    return () => {
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
+      }
+      tableWrapper.removeEventListener('scroll', handleScroll)
+    }
+  }, [hasMore])
 
   // Extract counterparties from accumulated data
   const counterpartiesItems = useMemo(() => {
