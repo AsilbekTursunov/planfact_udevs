@@ -13,7 +13,8 @@ import { getCashFlowReport } from '@/lib/api/ucode/cashflow'
 import styles from './cashflow.module.scss'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
-import { ExpendClose, ExpendOpen } from '../../../../constants/icons' 
+import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
+import CustomDatePicker from '../../../../components/shared/DatePicker'
 
 export default function CashFlowReportPage() {
   const [expanded, setExpanded] = useState({})
@@ -33,7 +34,7 @@ export default function CashFlowReportPage() {
   // Mock data for selects
   const groupingOptions = [
     { guid: 'monthly', label: 'По месяцам' },
-    { guid: 'quarterly', label: 'По кварталам' }, 
+    { guid: 'quarterly', label: 'По кварталам' },
     { guid: 'yearly', label: 'По годам' }
   ]
 
@@ -389,7 +390,8 @@ export default function CashFlowReportPage() {
                   </tr>
                 ))}
               </tbody>
-            </table> 
+            </table>
+
           </div>
         </div>
       </div>

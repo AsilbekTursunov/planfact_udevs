@@ -6,6 +6,7 @@ import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { DateRangePickerModal } from '@/components/common/DateRangePickerModal/DateRangePickerModal'
 import styles from './ReportFilterSidebar.module.scss'
 import '@/styles/report-filters.css'
+import CustomDatePicker from '../../shared/DatePicker'
 
 export function ReportFilterSidebar({
   isOpen,
@@ -46,25 +47,25 @@ export function ReportFilterSidebar({
       <div className={styles.sidebarContent}>
         <div className={styles.sidebarHeader}>
           <h2 className={styles.sidebarTitle}>Фильтры</h2>
-          <button 
+          <button
             onClick={onClose}
             className={styles.sidebarCloseButton}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
 
         {/* Табы фильтров */}
         <div className={styles.filterTabs}>
-          <button 
+          <button
             className={`${styles.filterTab} ${activeTab === 'general' ? styles.active : styles.inactive}`}
             onClick={() => setActiveTab('general')}
           >
             Общие
           </button>
-          <button 
+          <button
             className={`${styles.filterTab} ${activeTab === 'quick' ? styles.inactive : styles.inactive}`}
             onClick={() => setActiveTab('quick')}
             disabled
@@ -83,8 +84,8 @@ export function ReportFilterSidebar({
                 <h3 className={styles.filterSectionTitle}>
                   Период
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </h3>
                 <GroupedSelect
@@ -101,8 +102,8 @@ export function ReportFilterSidebar({
               <h3 className={styles.filterSectionTitle}>
                 Счет
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </h3>
               {accountOptions && accountOptions.length > 0 ? (
@@ -116,7 +117,7 @@ export function ReportFilterSidebar({
                 <MultiSelect
                   data={[]}
                   value={[]}
-                  onChange={() => {}}
+                  onChange={() => { }}
                   placeholder="Загрузка..."
                   loading={true}
                 />
@@ -128,8 +129,8 @@ export function ReportFilterSidebar({
               <h3 className={styles.filterSectionTitle}>
                 Контрагент
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </h3>
               {counterpartyOptions && counterpartyOptions.length > 0 ? (
@@ -143,7 +144,7 @@ export function ReportFilterSidebar({
                 <MultiSelect
                   data={[]}
                   value={[]}
-                  onChange={() => {}}
+                  onChange={() => { }}
                   placeholder="Загрузка..."
                   loading={true}
                 />
@@ -155,14 +156,15 @@ export function ReportFilterSidebar({
               <h3 className={styles.filterSectionTitle}>
                 Диапазон дат
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               </h3>
-              <DateRangePickerModal
-                selectedRange={dateRange}
-                onChange={onDateRangeChange}
+              <CustomDatePicker
+                range
                 placeholder="Выберите период"
+                value={dateRange}
+                onChange={onDateRangeChange}
               />
             </div>
 
@@ -172,8 +174,8 @@ export function ReportFilterSidebar({
                 <h3 className={styles.filterSectionTitle}>
                   Группировка
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </h3>
                 <GroupedSelect
@@ -202,7 +204,7 @@ export function ReportFilterSidebar({
                     <span className={styles.checkboxCustom}>
                       {profitTypes.operational && (
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </span>
@@ -219,7 +221,7 @@ export function ReportFilterSidebar({
                     <span className={styles.checkboxCustom}>
                       {profitTypes.ebitda && (
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </span>
@@ -236,7 +238,7 @@ export function ReportFilterSidebar({
                     <span className={styles.checkboxCustom}>
                       {profitTypes.ebit && (
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </span>
@@ -253,7 +255,7 @@ export function ReportFilterSidebar({
                     <span className={styles.checkboxCustom}>
                       {profitTypes.ebt && (
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </span>

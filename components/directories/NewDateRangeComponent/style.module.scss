@@ -1,0 +1,158 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid $gray-200;
+  border-radius: $radius-md;
+  background-color: $gray-25;
+}
+
+.calendarWrapper {
+  position: absolute;
+  top: 0;
+  left: 101%;
+  z-index: 10;
+  background-color: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.input {
+  border: none;
+  outline: none;
+  background-color: transparent;
+  color: $gray-600;
+  font-size: 12px;
+  font-weight: 500;
+  width: 100%;
+}
+
+.modalContent {
+  position: absolute;
+  top: 120%;
+  left: 0;
+  z-index: 10;
+  background-color: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radius-md;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Quick presets */
+.presets {
+  display: flex;
+  width: 340px;
+  flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.presetGroup {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.presetBtn {
+  flex: 1;
+  padding: 5px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: $gray-700;
+  background: $gray-50;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition: all 0.15s;
+
+  &:hover {
+    background: $gray-100;
+    border-color: $gray-300;
+  }
+}
+
+.presetActive {
+  background: $primary !important;
+  color: $white !important;
+  border-color: $primary !important;
+}
+
+/* Date pickers row */
+.pickers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0px;
+  border-top: 1px solid $gray-200;
+  padding-top: 10px;
+}
+
+.separator {
+  font-size: 14px;
+  color: $gray-400;
+  flex-shrink: 0;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.resetBtn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $slate-800;
+  background: none;
+  box-shadow: 0px 0px 2px $gray-200;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: all 0.15s;
+
+
+
+  &:hover {
+    background: $gray-50;
+    border-color: $gray-300;
+    color: $gray-700;
+  }
+}
+
+.closeIcon{
+  cursor: pointer;
+  position: absolute;
+  right: 12px;
+  color: $gray-400;
+}
+
+.applyBtn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0px 0px 2px $gray-200;
+  color: $gray-25;
+  background: $primary;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: $primary-dark;
+    border-color: $primary-dark;
+  }
+}

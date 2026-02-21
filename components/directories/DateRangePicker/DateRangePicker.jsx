@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import styles from './DateRangePicker.module.scss'
 import { CalendarIcon } from '../../../constants/icons'
+import CustomDatePicker from '../../shared/DatePicker'
 
 export function DateRangePicker({ selectedRange, onChange, placeholder = "Выберите период" }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -103,7 +104,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
 
   const formatDateRange = (range) => {
     if (!range) return null
-    return `${range.start.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}–${range.end.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`
+    return `${range.start?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}–${range.end?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`
   }
 
   return (
@@ -184,7 +185,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
                       «
                     </button>
                     <span className={styles.calendarMonth}>
-                      {currentMonth.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }).replace(/^./, str => str.toUpperCase())}
+                      {currentMonth?.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }).replace(/^./, str => str.toUpperCase())}
                     </span>
                     <button
                       onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
@@ -244,7 +245,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
             </div>
 
             <div className={styles.dateInputs}>
-              <button
+              {/* <button
                 onClick={() => setActiveInput('start')}
                 className={cn(
                   styles.dateInput,
@@ -253,7 +254,7 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
               >
                 <CalendarIcon className={styles.dateInputIcon} />
                 <span className={styles.dateInputText}>
-                  {tempStartDate ? tempStartDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Начало периода'}
+                  {tempStartDate ? tempStartDate?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Начало периода'}
                 </span>
               </button>
               <span className={styles.dateInputSeparator}>—</span>
@@ -266,9 +267,20 @@ export function DateRangePicker({ selectedRange, onChange, placeholder = "Выб
               >
                 <CalendarIcon className={styles.dateInputIcon} />
                 <span className={styles.dateInputText}>
-                  {tempEndDate ? tempEndDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Конец периода'}
+                  {tempEndDate ? tempEndDate?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Конец периода'}
                 </span>
-              </button>
+              </button> */}
+              <CustomDatePicker value={tempStartDate} onChange={(value) => {
+                setTempStartDate(value)
+
+                console.log(tempStartDate);
+              }} />
+              <CustomDatePicker value={tempEndDate} onChange={(value) => {
+                setTempEndDate(value)
+
+                console.log(tempEndDate);
+              }} />
+
             </div>
 
             <div className={styles.modalActions}>

@@ -21,6 +21,7 @@ import { TbCurrencyRubel } from 'react-icons/tb'
 import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
 import { LuListTree } from 'react-icons/lu'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
+import NewDateRangeComponent from '../../../../components/directories/NewDateRangeComponent'
 
 export default function CounterpartiesPage() {
   // Block body scroll for this page only
@@ -41,7 +42,7 @@ export default function CounterpartiesPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedRows, setSelectedRows] = useState([])
   const [viewMode, setViewMode] = useState('list') // 'list' | 'nested' | 'groups'
-  
+
   // Pagination state
   const [page, setPage] = useState(1)
   const [allCounterparties, setAllCounterparties] = useState([])
@@ -118,17 +119,17 @@ export default function CounterpartiesPage() {
       allCounterpartiesLength: allCounterparties.length,
       isFetching
     })
-    
+
     // Skip if still fetching or no data
     if (isFetching || !counterpartiesData?.data?.data?.data) {
       console.log('⏳ Skipping update - still fetching or no data')
       return
     }
-    
+
     const newItems = counterpartiesData.data.data.data
-    
+
     console.log('✅ New items received:', newItems.length, 'for page', page)
-    
+
     // Only update if we actually have new data
     if (newItems.length === 0) {
       console.log('⚠️ No new items, stopping pagination')
@@ -137,7 +138,7 @@ export default function CounterpartiesPage() {
       isLoadingRef.current = false
       return
     }
-    
+
     if (page === 1) {
       // First page - replace all
       console.log('🔄 First page - setting items')
@@ -155,12 +156,12 @@ export default function CounterpartiesPage() {
           setPage(1)
           return prev
         }
-        
+
         const existingGuids = new Set(prev.map(item => item.guid))
         const uniqueNewItems = newItems.filter(item => !existingGuids.has(item.guid))
-        
+
         console.log('  - Existing:', prev.length, 'New unique:', uniqueNewItems.length)
-        
+
         // Only append if we have new unique items
         if (uniqueNewItems.length > 0) {
           return [...prev, ...uniqueNewItems]
@@ -168,7 +169,7 @@ export default function CounterpartiesPage() {
         return prev
       })
     }
-    
+
     // Check if there are more items
     if (newItems.length < 20) {
       console.log('📊 Last page reached (received', newItems.length, '< 20)')
@@ -176,11 +177,11 @@ export default function CounterpartiesPage() {
     } else {
       console.log('📊 More pages available')
     }
-    
+
     // Reset loading flags with a small delay to prevent immediate re-trigger
     console.log('✓ Resetting loading flags')
     setIsLoadingMore(false)
-    
+
     // Add delay before allowing next load to prevent double-trigger on fast scroll
     setTimeout(() => {
       isLoadingRef.current = false
@@ -196,7 +197,7 @@ export default function CounterpartiesPage() {
     setIsLoadingMore(false)
     isLoadingRef.current = false
     lastPageRef.current = 1
-    
+
     // Invalidate queries to force fresh data fetch
     queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
   }, [queryClient]) // Empty dependency array - runs only on mount
@@ -228,7 +229,7 @@ export default function CounterpartiesPage() {
       scrollTimeout = setTimeout(() => {
         const { scrollTop, scrollHeight, clientHeight } = tableWrapper
         const distanceFromBottom = scrollHeight - scrollTop - clientHeight
-        
+
         // Load more when scrolled near bottom (with 10px threshold)
         if (distanceFromBottom < 10 && hasMore && !isLoadingRef.current) {
           const nextPage = lastPageRef.current + 1
@@ -242,7 +243,7 @@ export default function CounterpartiesPage() {
     }
 
     tableWrapper.addEventListener('scroll', handleScroll, { passive: true })
-    
+
     return () => {
       if (scrollTimeout) {
         clearTimeout(scrollTimeout)
@@ -354,7 +355,7 @@ export default function CounterpartiesPage() {
         counterparties_group_id: item.counterparties_group_id || null,
         counterparties_group: item.group_name || null,
         komentariy: item.komentariy || null,
-        data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya).toLocaleDateString('ru-RU') : null,
+        data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
         receivables: item.receivables || 0,
         payables: item.payables || 0,
         debitorka: item.debitorka || 0,
@@ -380,7 +381,7 @@ export default function CounterpartiesPage() {
           counterparties_group_id: item.counterparties_group_id || null,
           counterparties_group: item.group_name || null,
           komentariy: item.komentariy || null,
-          data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya).toLocaleDateString('ru-RU') : null,
+          data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
           receivables: item.receivables || 0,
           payables: item.payables || 0,
           debitorka: item.debitorka || 0,
@@ -393,7 +394,7 @@ export default function CounterpartiesPage() {
           id: `group-${group.guid}`,
           guid: group.guid,
           nazvanie: group.nazvanie_gruppy || 'Без названия группы',
-          data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya).toLocaleDateString('ru-RU') : null,
+          data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
           isGroup: true,
           items: children
         }
@@ -412,7 +413,7 @@ export default function CounterpartiesPage() {
       guid: group.guid,
       nazvanie: group.nazvanie_gruppy || 'Без названия',
       opisanie_gruppy: group.opisanie_gruppy || null,
-      data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya).toLocaleDateString('ru-RU') : null,
+      data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
       isGroup: true,
       items: [] // Empty for groups-only view
     }))
@@ -484,10 +485,9 @@ export default function CounterpartiesPage() {
         </FilterSection>
 
         <FilterSection title="Период аналитики">
-          <DateRangePicker
-            selectedRange={filters.dateRange}
+          <NewDateRangeComponent
+            value={filters.dateRange}
             onChange={(range) => setFilters(prev => ({ ...prev, dateRange: range }))}
-            placeholder="Выберите период"
           />
         </FilterSection>
 
@@ -805,27 +805,27 @@ export default function CounterpartiesPage() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Loading indicator */}
           {isFetching && hasMore && page > 1 && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
               padding: '20px',
               color: '#6b7280'
             }}>
-              <svg 
-                style={{ animation: 'spin 1s linear infinite' }} 
-                width="20" 
-                height="20" 
-                viewBox="0 0 24 24" 
-                fill="none" 
+              <svg
+                style={{ animation: 'spin 1s linear infinite' }}
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
                 stroke="currentColor"
               >
                 <circle cx="12" cy="12" r="10" strokeWidth="3" stroke="#e5e7eb" />
-                <path 
-                  d="M12 2a10 10 0 0 1 10 10" 
-                  strokeWidth="3" 
+                <path
+                  d="M12 2a10 10 0 0 1 10 10"
+                  strokeWidth="3"
                   strokeLinecap="round"
                 />
               </svg>

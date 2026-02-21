@@ -1,0 +1,127 @@
+.calendar_wrapper {
+  .rmdp-wrapper {
+    box-shadow: none !important;
+    // background-color: $gray-50 !important;
+    .rmdp-calendar {
+
+      .sd {
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+
+      .rmdp-selected {
+        background-color: $gray-300 !important;
+        box-shadow: none !important;
+        border-radius: 0px;
+      }
+
+      .rmdp-range {
+        background-color: $gray-300 !important;
+        box-shadow: none !important;
+        border-radius: 0px;
+        color: $gray-500 !important;
+      }
+
+      .rmdp-week {
+        gap: 1px;
+      }
+
+      .rmdp-today {
+        background-color: $gray-400 !important;
+        box-shadow: none !important;
+        border-radius: 0px;
+
+      }
+
+      .rmdp-ym {
+        span {
+          background-color: transparent !important;
+          box-shadow: none !important;
+        }
+      }
+
+
+      .rmdp-day {
+        margin: 1px 0px !important;
+      }
+
+      .rmdp-day:hover {
+        background-color: $gray-400 !important;
+        box-shadow: none !important;
+        border-radius: 0px;
+      }
+
+      .rmdp-arrow {
+        display: none;
+      }
+
+      .rmdp-left {
+        &::before {
+          content: "«";
+          font-size: 18px;
+          position: absolute;
+          z-index: 100;
+          color: $gray-500 !important;
+        }
+      }
+
+      .rmdp-right {
+        &::before {
+          content: "»";
+          font-size: 18px;
+          position: absolute;
+
+          z-index: 100;
+          color: $gray-500 !important;
+
+        }
+      }
+
+      .rmdp-header-values {
+        span {
+          padding: 2px 5px;
+          border-radius: 0px;
+
+          &:hover {
+            background-color: $gray-400 !important;
+            box-shadow: none !important;
+            border-radius: 0px;
+          }
+        }
+      }
+
+      .rmdp-week {
+        .rmdp-day {
+
+          // &:first-child,
+          // &:last-child {
+          //   background-color: $gray-100 !important;
+          // }
+        }
+      }
+
+
+      .rmdp-header {
+        padding: 0px 0px;
+
+        .rmdp-arrow-container {
+          border: 1px solid $gray-300 !important;
+          border-radius: 4px;
+          display: flex;
+          width: 25px;
+          height: 25px;
+          align-items: center;
+          justify-content: center;
+
+          &:hover {
+            background-color: $gray-100 !important;
+            box-shadow: none !important;
+            border-radius: 0px;
+            overflow: hidden;
+            border-radius: 4px;
+          }
+        }
+      }
+    }
+  }
+}

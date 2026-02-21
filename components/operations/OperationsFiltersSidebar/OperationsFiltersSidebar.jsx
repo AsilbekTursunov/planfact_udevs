@@ -270,7 +270,7 @@ export function OperationsFiltersSidebar({
 
   const formatDateRange = (range) => {
     if (!range) return null
-    return `${range.start.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}–${range.end.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`
+    return `${range.start?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}–${range.end?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`
   }
 
   const quickDateRanges = [
@@ -585,7 +585,7 @@ export function OperationsFiltersSidebar({
                           </defs>
                         </svg>
                         <span className={styles.dateInputText}>
-                          {tempStartDate ? tempStartDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Начало периода'}
+                                  {tempStartDate ? tempStartDate?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Начало периода'}
                         </span>
                       </button>
                       <span className={styles.dateInputSeparator}>—</span>
@@ -610,7 +610,7 @@ export function OperationsFiltersSidebar({
                           </defs>
                         </svg>
                         <span className={styles.dateInputText}>
-                          {tempEndDate ? tempEndDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Конец периода'}
+                                  {tempEndDate ? tempEndDate?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Конец периода'}
                         </span>
                       </button>
                     </div>
@@ -1022,7 +1022,7 @@ export function OperationsFiltersSidebar({
               «
             </button>
             <span className={styles.calendarMonth}>
-              {currentMonth.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }).replace(/^./, str => str.toUpperCase())}
+              {currentMonth?.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }).replace(/^./, str => str.toUpperCase())}
             </span>
             <button 
               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}

@@ -155,7 +155,7 @@ export default function KontragentDetailPage() {
     if (dates.length === 0) return 'Нет операций'
     const first = dates[0]
     const last = dates[dates.length - 1]
-    return `${first.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })} – ${last.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`
+    return `${first?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })} – ${last?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`
   }, [operations, operationsItems])
 
   // Format counterparty info

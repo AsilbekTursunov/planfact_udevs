@@ -232,7 +232,7 @@ export default function AccountsPage() {
       case 'data_sozdaniya':
         if (value) {
           const date = new Date(value)
-          return date.toLocaleDateString('ru-RU')
+          return date?.toLocaleDateString('ru-RU')
         }
         return '–'
       case 'currenies_id':
