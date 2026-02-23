@@ -27,7 +27,8 @@ export function GroupedSelect({
   isLoadingMore = false,
   onSearch = null,
   searchDebounceMs = 500,
-  hasError = false
+  hasError = false,
+  autoHeight = false // New prop for auto height
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -141,7 +142,7 @@ export function GroupedSelect({
       </button>
 
       {isOpen && (
-        <div className={styles.dropdown}>
+        <div className={cn(styles.dropdown, autoHeight && styles.dropdownAutoHeight)}>
           {/* Search input - always visible */}
           <div className={styles.searchContainer}>
             <input
@@ -177,7 +178,7 @@ export function GroupedSelect({
           </div>
 
           {/* Options list */}
-          <div className={styles.optionsList} ref={listRef}>
+          <div className={cn(styles.optionsList, autoHeight && styles.optionsListAutoHeight)} ref={listRef}>
             {isEmpty ? (
               <div className={styles.emptyState}>
                 {isSearching ? 'Поиск...' : 'Ничего не найдено'}

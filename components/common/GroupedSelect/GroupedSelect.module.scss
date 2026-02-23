@@ -82,6 +82,11 @@
   overflow: hidden;
 }
 
+.dropdownAutoHeight {
+  max-height: fit-content;
+  min-height: fit-content;
+}
+
 .searchContainer {
   padding: 0.5rem;
   border-bottom: 1px solid #e5e7eb;
@@ -135,6 +140,12 @@
   max-height: 240px;
   flex: 1;
   min-height: 0;
+}
+
+.optionsListAutoHeight {
+  max-height: fit-content;
+  overflow-y: visible;
+  flex: 0 1 auto;
 }
 
 .emptyState {

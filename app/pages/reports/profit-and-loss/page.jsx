@@ -441,6 +441,7 @@ export default function ProfitAndLossPage() {
                     onChange={(value) => setIsCalculation(value === 'accrual')}
                     placeholder="Метод учета"
                     className={styles.accountingMethodSelect}
+                    autoHeight={true}
                   />
                   <button className={styles.moreButton}>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -519,6 +520,7 @@ export default function ProfitAndLossPage() {
                     onChange={(value) => setIsCalculation(value === 'accrual')}
                     placeholder="Метод учета"
                     className={styles.accountingMethodSelect}
+                    autoHeight={true}
                   />
                   <button className={styles.moreButton}>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -602,6 +604,7 @@ export default function ProfitAndLossPage() {
                   onChange={(value) => setIsCalculation(value === 'accrual')}
                   placeholder="Метод учета"
                   className={styles.accountingMethodSelect}
+                  autoHeight={true}
                 />
                 <button className={styles.moreButton}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
