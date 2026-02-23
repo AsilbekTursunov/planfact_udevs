@@ -124,6 +124,21 @@
   min-width: 180px;
 }
 
+.accountingMethodSelect {
+  min-width: 200px;
+  
+  // Override dropdown height for accounting method select
+  :global(.dropdown) {
+    max-height: none !important;
+    min-height: auto !important;
+  }
+  
+  :global(.optionsList) {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+}
+
 .filterToggleButton {
   display: flex;
   align-items: center;

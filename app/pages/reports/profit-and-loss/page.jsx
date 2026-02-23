@@ -41,7 +41,7 @@ export default function ProfitAndLossPage() {
   const [selectedGrouping, setSelectedGrouping] = useState('monthly')
   
   // Accounting method: true = Accrual (начисление), false = Cash (кассовый)
-  const [isCalculation] = useState(true)
+  const [isCalculation, setIsCalculation] = useState(true)
   
   // Profit types filter - default to all disabled, load from localStorage after mount
   const [profitTypes, setProfitTypes] = useState({
@@ -76,6 +76,11 @@ export default function ProfitAndLossPage() {
   }
 
   // Mock data for selects
+  const accountingMethodOptions = [
+    { guid: 'accrual', label: 'Метод начисления' },
+    { guid: 'cash', label: 'Кассовый метод' }
+  ]
+  
   const groupingOptions = [
     { guid: 'daily', label: 'День' },
     { guid: 'weekly', label: 'Неделя' },
@@ -430,6 +435,13 @@ export default function ProfitAndLossPage() {
                     placeholder="Способ построения"
                     className={styles.groupingSelect}
                   />
+                  <GroupedSelect
+                    data={accountingMethodOptions}
+                    value={isCalculation ? 'accrual' : 'cash'}
+                    onChange={(value) => setIsCalculation(value === 'accrual')}
+                    placeholder="Метод учета"
+                    className={styles.accountingMethodSelect}
+                  />
                   <button className={styles.moreButton}>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="8" cy="3" r="1" fill="currentColor"/>
@@ -500,6 +512,13 @@ export default function ProfitAndLossPage() {
                     onChange={(value) => setSelectedGrouping(value)}
                     placeholder="Способ построения"
                     className={styles.groupingSelect}
+                  />
+                  <GroupedSelect
+                    data={accountingMethodOptions}
+                    value={isCalculation ? 'accrual' : 'cash'}
+                    onChange={(value) => setIsCalculation(value === 'accrual')}
+                    placeholder="Метод учета"
+                    className={styles.accountingMethodSelect}
                   />
                   <button className={styles.moreButton}>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -576,6 +595,13 @@ export default function ProfitAndLossPage() {
                   onChange={(value) => setSelectedGrouping(value)}
                   placeholder="Способ построения"
                   className={styles.groupingSelect}
+                />
+                <GroupedSelect
+                  data={accountingMethodOptions}
+                  value={isCalculation ? 'accrual' : 'cash'}
+                  onChange={(value) => setIsCalculation(value === 'accrual')}
+                  placeholder="Метод учета"
+                  className={styles.accountingMethodSelect}
                 />
                 <button className={styles.moreButton}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
