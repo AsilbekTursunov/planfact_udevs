@@ -3,17 +3,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './MultiSelect.module.scss'
+import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 
-export function MultiSelect({ 
-  data = [], 
+export function MultiSelect({
+  data = [],
   value = [], // Array of selected values
-  onChange, 
+  onChange,
   placeholder = "Выберите...",
   labelKey = 'label',
   valueKey = 'guid',
   className = "",
   disabled = false,
   loading = false,
+  hideSelectAll = false,
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -32,7 +34,7 @@ export function MultiSelect({
   }, [])
 
   // Filter data by search
-  const filteredData = data.filter(item => 
+  const filteredData = data.filter(item =>
     item[labelKey]?.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -53,7 +55,7 @@ export function MultiSelect({
     const newValue = value.includes(itemValue)
       ? value.filter(v => v !== itemValue)
       : [...value, itemValue]
-    onChange(newValue)
+    onChange?.(newValue)
   }
 
   const handleSelectAll = () => {
@@ -78,12 +80,12 @@ export function MultiSelect({
           value.length === 0 && styles.empty
         )}
       >
-        <div className={styles.buttonContent}>
-          <span className={styles.buttonText}>{loading ? "Загрузка..." : getSelectedLabel()}</span>
-          <svg 
-            className={cn(styles.buttonIcon, isOpen && styles.open)} 
-            fill="none" 
-            viewBox="0 0 24 24" 
+        <div className={`${styles.buttonContent} line-clamp-1`}>
+          <span className={`${styles.buttonText}`}>{loading ? "Загрузка..." : getSelectedLabel()}</span>
+          <svg
+            className={cn(styles.buttonIcon, isOpen && styles.open)}
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -112,12 +114,12 @@ export function MultiSelect({
                 }}
                 className={styles.searchClearButton}
               >
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
                   strokeWidth="2"
                 >
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -128,7 +130,7 @@ export function MultiSelect({
           </div>
 
           {/* Select All */}
-          {filteredData.length > 0 && (
+          {filteredData.length > 0 && !hideSelectAll && (
             <div className={styles.selectAllContainer}>
               <label className={styles.checkboxLabel}>
                 <input
@@ -140,7 +142,7 @@ export function MultiSelect({
                 <span className={styles.checkboxCustom}>
                   {isAllSelected && (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </span>
@@ -157,22 +159,14 @@ export function MultiSelect({
               </div>
             ) : (
               filteredData.map((item) => (
-                <label key={item[valueKey]} className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
+                <div key={item[valueKey]} className={styles.checkboxLabel}>
+                  <OperationCheckbox
+                    key={item[valueKey]}
                     checked={value.includes(item[valueKey])}
                     onChange={() => handleToggle(item[valueKey])}
-                    className={styles.checkboxInput}
+                    label={item[labelKey]}
                   />
-                  <span className={styles.checkboxCustom}>
-                    {value.includes(item[valueKey]) && (
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </span>
-                  <span className={styles.checkboxText}>{item[labelKey]}</span>
-                </label>
+                </div>
               ))
             )}
           </div>

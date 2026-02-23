@@ -10,6 +10,8 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
   const [openUpward, setOpenUpward] = useState(false)
   const dropdownRef = useRef(null)
 
+  console.log(options, 'options')
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -44,6 +46,8 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
       return acc
     }, {})
     : { 'all': options }
+
+  console.log(groupedOptions, 'groupedOptions')
 
   const handleOptionClick = (option, groupName, groupItems) => {
     if (grouped && option.value === "") {

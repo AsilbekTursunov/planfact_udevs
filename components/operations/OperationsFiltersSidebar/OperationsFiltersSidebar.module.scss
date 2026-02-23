@@ -60,7 +60,8 @@
 
 .sidebarContent {
   padding: 1.5rem 0.8rem;
-  overflow-y: auto;
+  // overflow-y: auto;
+    overflow-x: visible;
   flex: 1;
 }
 
@@ -141,6 +142,9 @@
   }
 }
 
+.filterContentWrapper {
+  height: 100%;
+}
 .filterContent {
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -242,6 +246,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .filterOption {

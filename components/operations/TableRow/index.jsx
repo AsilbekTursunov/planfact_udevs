@@ -12,6 +12,7 @@ const OperationTableRow = ({
   openOperationModal,
   handleEditOperation,
   handleDeleteOperation,
+  handleCopyOperation,
 }) => {
   return (
     <tr
@@ -119,6 +120,7 @@ const OperationTableRow = ({
           operation={op}
           onEdit={handleEditOperation}
           onDelete={handleDeleteOperation}
+          onCopy={handleCopyOperation}
         />
       </td>
     </tr>

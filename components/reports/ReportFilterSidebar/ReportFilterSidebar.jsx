@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from 'react'
-import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { DateRangePickerModal } from '@/components/common/DateRangePickerModal/DateRangePickerModal'
 import styles from './ReportFilterSidebar.module.scss'
 import '@/styles/report-filters.css'
-import CustomDatePicker from '../../shared/DatePicker'
+import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
+import { DropdownFilter } from '../../directories/DropdownFilter/DropdownFilter'
+import NewDateRangeComponent from '../../directories/NewDateRangeComponent'
 
 export function ReportFilterSidebar({
   isOpen,
@@ -78,24 +79,20 @@ export function ReportFilterSidebar({
         {/* Контент табов */}
         {activeTab === 'general' && (
           <div className={styles.filterContent}>
-            {/* Период */}
-            {periodOptions && (
-              <div className={styles.filterSection}>
-                <h3 className={styles.filterSectionTitle}>
-                  Период
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </h3>
-                <GroupedSelect
-                  data={periodOptions}
-                  value={selectedPeriod}
-                  onChange={onPeriodChange}
-                  placeholder="Весь период"
-                />
-              </div>
-            )}
+            {/* Период / Диапазон дат */}
+            <div className={styles.filterSection}>
+              <h3 className={styles.filterSectionTitle}>
+                Период
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </h3>
+              <NewDateRangeComponent
+                value={dateRange}
+                onChange={onDateRangeChange}
+              />
+            </div>
 
             {/* Счет - всегда показываем */}
             <div className={styles.filterSection}>
@@ -110,8 +107,13 @@ export function ReportFilterSidebar({
                 <MultiSelect
                   data={accountOptions}
                   value={selectedAccounts}
-                  onChange={onAccountsChange}
+                  onChange={(value) => {
+                    onAccountsChange(value)
+                  }}
                   placeholder="Все счета"
+                  hideSelectAll={true}
+                  valueKey="value"
+
                 />
               ) : (
                 <MultiSelect
@@ -138,7 +140,9 @@ export function ReportFilterSidebar({
                   data={counterpartyOptions}
                   value={selectedCounterparties}
                   onChange={onCounterpartiesChange}
+                  hideSelectAll={true}
                   placeholder="Все контрагенты"
+                  valueKey="value"
                 />
               ) : (
                 <MultiSelect
@@ -151,22 +155,7 @@ export function ReportFilterSidebar({
               )}
             </div>
 
-            {/* Диапазон дат */}
-            <div className={styles.filterSection}>
-              <h3 className={styles.filterSectionTitle}>
-                Диапазон дат
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </h3>
-              <CustomDatePicker
-                range
-                placeholder="Выберите период"
-                value={dateRange}
-                onChange={onDateRangeChange}
-              />
-            </div>
+
 
             {/* Группировка (опционально) */}
             {groupingOptions && (

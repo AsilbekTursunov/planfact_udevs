@@ -1195,3 +1195,27 @@ export const useOperationsTableStructure = () => {
     gcTime: Infinity
   })
 }
+
+/**
+ * Получить отчет о движении денежных средств
+ */
+export const useCashFlowReport = (params = {}) => {
+  return useQuery({
+    queryKey: ['cashFlowReport', params],
+    queryFn: async () => {
+      console.log('useCashFlowReport: Making request with params:', params)
+      try {
+        const { getCashFlowReport } = await import('@/lib/api/ucode/cashflow')
+        const result = await getCashFlowReport(params)
+        console.log('useCashFlowReport: Response received:', result)
+        return result
+      } catch (error) {
+        console.error('useCashFlowReport: Error:', error)
+        return { status: 'ERROR', data: { data: { data: null } } }
+      }
+    },
+    enabled: true,
+    staleTime: 5 * 60 * 1000,
+    retry: false
+  })
+}

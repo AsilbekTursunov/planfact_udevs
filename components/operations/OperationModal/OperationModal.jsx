@@ -71,6 +71,9 @@ export function OperationModal({
 		return operation
 	}, [isNew, operation, fullOperationData])
 
+	// Determine if this is create or update
+	const isUpdate = !isNew && !operation?.isCopy && (operationData?.rawData?.guid || operationData?.guid)
+
 
 	// Current active tab
 	const [activeTab, setActiveTab] = useState(modalType || 'income')
@@ -102,8 +105,8 @@ export function OperationModal({
 
 	// Initialize form data from operation or defaults
 	const getInitialFormData = () => {
-		if (operationData && !isNew && operationData.rawData) {
-			// Editing existing operation - use rawData
+		if (operationData && (!isNew || operation?.isCopy) && operationData.rawData) {
+		// Editing existing operation or copying - use rawData
 			const raw = operationData.rawData
 			const paymentDate = raw.data_operatsii
 				? new Date(raw.data_operatsii).toISOString().split('T')[0]
@@ -176,7 +179,7 @@ export function OperationModal({
 
 	// Update form data when operationData changes (for editing)
 	useEffect(() => {
-		if (!isNew && operationData && !isLoadingOperation) {
+		if ((!isNew || operation?.isCopy) && operationData && !isLoadingOperation) {
 			console.log('Updating form data with operationData:', operationData)
 			const newFormData = getInitialFormData()
 			console.log('New form data:', newFormData)
@@ -255,7 +258,7 @@ export function OperationModal({
 					}))
 				}
 			}
-			
+
 			// This is a standalone item (no children)
 			return {
 				value: item.guid,
@@ -273,7 +276,7 @@ export function OperationModal({
 	const counterAgents = useMemo(() => {
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
 		const flatList = []
-		
+
 		groups.forEach(group => {
 			if (group.children && Array.isArray(group.children)) {
 				group.children.forEach(child => {
@@ -285,7 +288,7 @@ export function OperationModal({
 				})
 			}
 		})
-		
+
 		return flatList
 	}, [counterpartiesGroupsData])
 
@@ -640,22 +643,21 @@ export function OperationModal({
 				}
 			})
 
-			// Determine if this is create or update
-			const isUpdate = !isNew && (operationData?.rawData?.guid || operationData?.guid)
-			const updateGuid = operationData?.rawData?.guid || operationData?.guid
 
-			console.log('=== Submit Operation Debug ===')
-			console.log('isNew:', isNew)
-			console.log('isUpdate:', isUpdate)
-			console.log('updateGuid:', updateGuid)
-			console.log('operationData:', operationData)
-			console.log('operationData.rawData:', operationData?.rawData)
+			const updateGuid = (!isNew && !operation?.isCopy) ? (operationData?.rawData?.guid || operationData?.guid) : null
+
+			// console.log('=== Submit Operation Debug ===')
+			// console.log('isNew:', isNew)
+			// console.log('isUpdate:', isUpdate)
+			// console.log('updateGuid:', updateGuid)
+			// console.log('operationData:', operationData)
+			// console.log('operationData.rawData:', operationData?.rawData)
 
 			// For update, add guid and preserve original creation date
 			if (isUpdate && updateGuid) {
 				requestData.guid = updateGuid
 				console.log('Adding guid to request:', updateGuid)
-				
+
 				// Keep original creation date for update
 				if (operationData.rawData?.data_sozdaniya) {
 					requestData.data_sozdaniya = operationData.rawData.data_sozdaniya
@@ -722,16 +724,16 @@ export function OperationModal({
 			console.log('API Response:', result)
 
 			showSuccessNotification(`Операция успешно ${isUpdate ? 'обновлена' : 'создана'}!`)
-			
+
 			// Вызываем callback для обновления локального состояния
 			if (onSuccess) {
 				let operationData
 				if (isUpdate) {
 					// For update, merge request data with guid and timestamps
-					operationData = { 
-						...requestData, 
-						guid: updateGuid, 
-						data_obnovleniya: now.toISOString() 
+					operationData = {
+						...requestData,
+						guid: updateGuid,
+						data_obnovleniya: now.toISOString()
 					}
 				} else {
 					// For create, use data from API response
@@ -740,8 +742,8 @@ export function OperationModal({
 						operationData = apiData
 					} else {
 						// Fallback if API doesn't return full data
-						operationData = { 
-							...requestData, 
+						operationData = {
+							...requestData,
 							guid: result?.data?.guid || apiData?.guid,
 							data_sozdaniya: now.toISOString(),
 							data_obnovleniya: now.toISOString()
@@ -751,12 +753,12 @@ export function OperationModal({
 				console.log('Calling onSuccess with operationData:', operationData)
 				onSuccess(operationData, isUpdate)
 			}
-			
+
 			// Обновляем связанные запросы в фоне
 			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
 			queryClient.invalidateQueries({ queryKey: ['operations'] })
-			
+
 			onClose()
 		} catch (error) {
 			console.error(
@@ -808,9 +810,9 @@ export function OperationModal({
 						<div className={styles.headerTop}>
 							<div className={styles.headerLeft}>
 								<h2 className={styles.title}>
-									{isNew ? 'Создание операции' : 'Редактирование операции'}
+									{isNew || !isUpdate ? 'Создание операции' : 'Редактирование операции'}
 								</h2>
-								{!isNew && <div className={styles.headerDate}>
+								{!isNew || !isUpdate && <div className={styles.headerDate}>
 									<svg
 										className={styles.headerIcon}
 										fill='none'
@@ -1411,7 +1413,7 @@ export function OperationModal({
 										{/* Дата начисления */}
 										<div className={styles.formRow}>
 											<label className={styles.label}>
-												Дата начисления 
+												Дата начисления
 											</label>
 											<div className={styles.fieldWrapper}>
 												<DatePicker
@@ -1496,7 +1498,7 @@ export function OperationModal({
 										{/* Сумма */}
 										<div className={styles.formRow}>
 											<label className={styles.label}>
-												Сумма 
+												Сумма
 											</label>
 											<div className={styles.fieldWrapper}>
 												<div className={styles.inputGroup}>

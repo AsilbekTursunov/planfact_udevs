@@ -25,15 +25,15 @@ import NewDateRangeComponent from '../../../../components/directories/NewDateRan
 
 export default function CounterpartiesPage() {
   // Block body scroll for this page only
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    document.body.style.height = '100vh'
+  // useEffect(() => {
+  //   document.body.style.overflow = 'hidden'
+  //   document.body.style.height = '100vh'
 
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.height = ''
-    }
-  }, [])
+  //   return () => {
+  //     document.body.style.overflow = ''
+  //     document.body.style.height = ''
+  //   }
+  // }, [])
 
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -54,17 +54,12 @@ export default function CounterpartiesPage() {
   const lastPageRef = useRef(1) // Track last loaded page
 
   const [filters, setFilters] = useState({
-    // Group filters
     client: true,
     employee: true,
     supplier: true,
-    // Counterparties groups filter
     selectedGroups: [],
-    // Selected counterparties for filter
     selectedCounterparties: [],
-    // Selected chart of accounts for filter
     selectedChartOfAccounts: [],
-    // Date range filter
     dateRange: null
   })
 
@@ -72,7 +67,6 @@ export default function CounterpartiesPage() {
   const filtersForAPI = useMemo(() => {
     const apiFilters = {}
 
-    // Group filter - gruppa is an array in API
     const selectedGroups = []
     if (filters.client) selectedGroups.push('Клиент')
     if (filters.employee) selectedGroups.push('Сотрудник')
@@ -98,9 +92,6 @@ export default function CounterpartiesPage() {
       apiFilters.chart_of_accounts_id = filters.selectedChartOfAccounts
     }
 
-    // Type filter (Плательщик, Получатель, Смешанный) - фильтруем на фронтенде
-    // Не добавляем в API фильтр, так как тип определяется на основе статей
-
     return apiFilters
   }, [filters])
 
@@ -112,17 +103,9 @@ export default function CounterpartiesPage() {
 
   // Update counterparties when new data arrives
   useEffect(() => {
-    console.log('📦 counterpartiesData changed:', {
-      hasData: !!counterpartiesData,
-      page,
-      dataPath: counterpartiesData?.data?.data?.data?.length,
-      allCounterpartiesLength: allCounterparties.length,
-      isFetching
-    })
 
     // Skip if still fetching or no data
     if (isFetching || !counterpartiesData?.data?.data?.data) {
-      console.log('⏳ Skipping update - still fetching or no data')
       return
     }
 
@@ -270,7 +253,6 @@ export default function CounterpartiesPage() {
     return Array.isArray(items) ? items : []
   }, [counterpartiesGroupsData])
 
-  console.log('counterpartiesGroupsData', counterpartiesGroupsData)
 
   // Fetch chart of accounts for filter
   const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })

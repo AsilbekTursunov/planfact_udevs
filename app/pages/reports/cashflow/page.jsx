@@ -7,20 +7,17 @@ import {
   getExpandedRowModel,
   flexRender,
 } from '@tanstack/react-table'
+import { useBankAccountsPlanFact, useCounterpartiesGroupsPlanFact, useCashFlowReport } from '@/hooks/useDashboard'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar'
-import { getCashFlowReport } from '@/lib/api/ucode/cashflow'
 import styles from './cashflow.module.scss'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
-import CustomDatePicker from '../../../../components/shared/DatePicker'
 
 export default function CashFlowReportPage() {
   const [expanded, setExpanded] = useState({})
   const [isFilterOpen, setIsFilterOpen] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [reportData, setReportData] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedColumn, setSelectedColumn] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(null) // { key, label } or null for total
@@ -30,6 +27,8 @@ export default function CashFlowReportPage() {
   const [selectedEntity, setSelectedEntity] = useState('all')
   const [dateRange, setDateRange] = useState(null)
   const [selectedGrouping, setSelectedGrouping] = useState('monthly')
+  const [selectedBankAccounts, setSelectedBankAccounts] = useState([])
+  const [selectedCounterparties, setSelectedCounterparties] = useState([])
 
   // Mock data for selects
   const groupingOptions = [
@@ -53,56 +52,101 @@ export default function CashFlowReportPage() {
     { guid: 'entity3', label: 'ИП Иванов И.И.' }
   ]
 
-  // Fetch data from API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
 
-        // Calculate date range for last 6 months
-        const endDate = new Date()
-        // Add 1 day to include today's operations
-        endDate.setDate(endDate.getDate() + 1)
-        const startDate = new Date()
-        startDate.setMonth(startDate.getMonth() - 6)
 
-        const formatDate = (date) => {
-          const year = date.getFullYear()
-          const month = String(date.getMonth() + 1).padStart(2, '0')
-          const day = String(date.getDate()).padStart(2, '0')
-          return `${year}-${month}-${day}`
-        }
+  // Calculate dates based on period OR dateRange
+  const dateParams = useMemo(() => {
+    const formatDate = (date) => {
+      if (!date) return ''
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
 
-        const response = await getCashFlowReport({
-          periodStartDate: formatDate(startDate),
-          periodEndDate: formatDate(endDate),
-          periodType: selectedGrouping,
-          currencyCode: 'RUB'
-        })
+    let startStr = ''
+    let endStr = ''
 
-        console.log('API Response:', response)
-        console.log('Data path check:', {
-          'response.data': response?.data,
-          'response.data.data': response?.data?.data,
-          'response.data.data.data': response?.data?.data?.data
-        })
+    // 1. If dateRange is explicitly selected by user via custom DatePicker
+    if (dateRange && (Array.isArray(dateRange) ? dateRange.length > 0 : (dateRange.startDate || dateRange.start || dateRange.endDate || dateRange.end))) {
+      if (Array.isArray(dateRange) && dateRange.length >= 1 && dateRange[0]) {
+        startStr = formatDate(new Date(dateRange[0]))
+        endStr = formatDate(new Date(dateRange[dateRange.length - 1]))
+      } else if (typeof dateRange === 'object') {
+        const s = dateRange.startDate || dateRange.start
+        const e = dateRange.endDate || dateRange.end || s
+        if (s) startStr = formatDate(new Date(s))
+        if (e) endStr = formatDate(new Date(e))
+      }
+    }
+    // 2. Otherwise use selectedPeriod presets
+    else {
+      const today = new Date()
+      // Optional: Add 1 day to include today entirely if needed
+      // today.setDate(today.getDate() + 1)
+      const currentYear = today.getFullYear()
 
-        // Структура ответа: response.data.data.data
-        if (response?.data?.data?.data) {
-          console.log('Setting report data:', response.data.data.data)
-          setReportData(response.data.data.data)
-        } else {
-          console.error('Data not found in expected path')
-        }
-      } catch (error) {
-        console.error('Error fetching cash flow report:', error)
-      } finally {
-        setLoading(false)
+      switch (selectedPeriod) {
+        case 'q1':
+          startStr = `${currentYear}-01-01`
+          endStr = formatDate(new Date(currentYear, 3, 0)) // Last day of March
+          break
+        case 'q2':
+          startStr = `${currentYear}-04-01`
+          endStr = formatDate(new Date(currentYear, 6, 0)) // Last day of June
+          break
+        case 'h1':
+          startStr = `${currentYear}-01-01`
+          endStr = formatDate(new Date(currentYear, 6, 0)) // Last day of June
+          break
+        case 'year':
+          startStr = `${currentYear}-01-01`
+          endStr = `${currentYear}-12-31`
+          break
+        case 'all':
+        default:
+          endStr = formatDate(today)
+          const startParams = new Date(today)
+          startParams.setMonth(startParams.getMonth() - 6)
+          startStr = formatDate(startParams)
+          break
       }
     }
 
-    fetchData()
-  }, [selectedGrouping])
+    return {
+      periodStartDate: startStr,
+      periodEndDate: endStr,
+    }
+  }, [dateRange, selectedPeriod])
+
+  // Prepare query parameters
+  const reportQueryParams = useMemo(() => {
+    const params = {
+      ...dateParams,
+      periodType: selectedGrouping,
+      currencyCode: 'RUB',
+    }
+
+    if (selectedEntity && selectedEntity !== 'all') {
+      params.legalEntityId = [selectedEntity]
+    }
+
+    if (selectedBankAccounts && selectedBankAccounts.length > 0) {
+      params.accountId = selectedBankAccounts
+    }
+
+    if (selectedCounterparties && selectedCounterparties.length > 0) {
+      params.counterparties = selectedCounterparties
+    }
+
+    return params
+  }, [dateParams, selectedGrouping, selectedEntity, selectedBankAccounts, selectedCounterparties])
+
+  // Fetch report data
+  const { data: rawReportData, isLoading, isFetching } = useCashFlowReport(reportQueryParams)
+
+  const reportData = rawReportData?.data?.data?.data || null
+  const loading = isLoading || isFetching
 
 
   // Extract months from legend
@@ -262,6 +306,45 @@ export default function CashFlowReportPage() {
     ],
     [months, reportData]
   )
+  // bank accounts
+  const { data: bankAccountsData } = useBankAccountsPlanFact({
+    page: 1,
+    limit: 100,
+  })
+
+  const bankAccounts = useMemo(() => {
+    const items = bankAccountsData?.data?.data?.data || []
+
+    return items.map(item => ({
+      value: item.guid,
+      label: item.nazvanie || '',
+    }))
+  }, [bankAccountsData])
+
+
+  // counterparties groups
+  const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
+    page: 1,
+    limit: 100,
+  })
+
+
+
+  const counterpartiesGroupsItems = useMemo(() => {
+    const items = counterpartiesGroupsData?.data?.data?.data || []
+    return items.filter(item => item.children?.length > 0 ? items : null)
+  }, [counterpartiesGroupsData])
+
+
+  const counterpartiesGroupsOptions = useMemo(() => {
+    return counterpartiesGroupsItems.map(item => [{ value: '', label: item.nazvanie_gruppy, group: item.nazvanie_gruppy }, ...item.children.map(child => ({
+      value: child.guid,
+      label: child.nazvanie || '',
+      group: item.nazvanie_gruppy
+    }))]
+    ).flat()
+  }, [counterpartiesGroupsItems])
+
 
 
 
@@ -281,17 +364,15 @@ export default function CashFlowReportPage() {
     setSelectedPeriod('all')
     setSelectedEntity('all')
     setDateRange(null)
+    setSelectedBankAccounts([])
+    setSelectedCounterparties([])
   }
 
-  if (loading) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loading}>Загрузка данных...</div>
-      </div>
-    )
-  }
+  // Remove the full-page blocking loader. 
+  // We keep the old data visible by not returning early here.
+  // Instead, we just let the isFetching state show a small spinner indicator if needed.
+  // if (loading && !reportData) { ... }
 
-  console.log(selectedColumn)
 
   return (
     <div className={styles.container}>
@@ -302,12 +383,30 @@ export default function CashFlowReportPage() {
           onClose={() => setIsFilterOpen(false)}
           periodOptions={periodOptions}
           selectedPeriod={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
+          onPeriodChange={(val) => {
+            setSelectedPeriod(val)
+            setDateRange(null) // clear custom date when preset is chosen
+          }}
           entityOptions={entityOptions}
           selectedEntity={selectedEntity}
           onEntityChange={setSelectedEntity}
           dateRange={dateRange}
-          onDateRangeChange={setDateRange}
+          onDateRangeChange={(val) => {
+            setDateRange(val)
+            if (val) {
+              setSelectedPeriod(null) // clear preset when custom date is chosen
+            }
+          }}
+          accountOptions={bankAccounts}
+          selectedAccounts={selectedBankAccounts}
+          onAccountsChange={(value) => {
+            setSelectedBankAccounts(value)
+          }}
+          counterpartyOptions={counterpartiesGroupsOptions}
+          selectedCounterparties={selectedCounterparties}
+          onCounterpartiesChange={(value) => {
+            setSelectedCounterparties(value)
+          }}
         />
 
         {/* Filter Toggle Bar */}
@@ -348,7 +447,10 @@ export default function CashFlowReportPage() {
           </div>
 
           <div className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`}>
-            <table className={styles.table}>
+            {loading && !reportData ? (
+              <div className={styles.loadingOverlay}>Загрузка данных...</div>
+            ) : null}
+            <table className={`${styles.table} ${loading ? styles.tableLoading : ''}`}>
               <thead className={styles.thead}>
                 {table.getHeaderGroups().map(headerGroup => {
                   console.log(headerGroup)

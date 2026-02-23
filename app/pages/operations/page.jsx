@@ -94,29 +94,62 @@ export default function OperationsPage() {
 	const limit = 20
 	const tableWrapperRef = useRef(null)
 
+	const dateParams = useMemo(() => {
+		const formatDate = (date, endOfDay = false) => {
+			if (!date) return null
+			const d = new Date(date)
+			const year = d.getFullYear()
+			const month = String(d.getMonth() + 1).padStart(2, '0')
+			const day = String(d.getDate()).padStart(2, '0')
+			return `${year}-${month}-${day}${endOfDay ? 'T23:59:59Z' : 'T00:00:00Z'}`
+		}
+
+		let startDate = '2025-01-01T00:00:00Z'
+		let endDate = '2026-12-31T23:59:59Z'
+
+		if (selectedDatePaymentRange) {
+			const start = selectedDatePaymentRange.start || selectedDatePaymentRange.startDate
+			const end = selectedDatePaymentRange.end || selectedDatePaymentRange.endDate || start
+
+			if (start) startDate = formatDate(start, false)
+			if (end) endDate = formatDate(end, true)
+		}
+
+		return {
+			startDate,
+			endDate,
+		}
+	}, [selectedDatePaymentRange])
+
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList({
-		date_range: {
-			start_date: '2025-01-01',
-			end_date: '2026-12-31T23:59:59Z',
-		},
+		dateRange: dateParams,
 		page: page,
 		limit: limit,
 	})
 
 	console.log('operationsListData => ', operationsListData)
 
+	// Reset pagination when date filter changes
+	useEffect(() => {
+		setPage(1)
+		setHasMore(true)
+	}, [dateParams])
+
 	// Update operations when new data arrives
 	useEffect(() => {
-		if (operationsListData?.data?.data?.data) {
-			const newOps = operationsListData.data.data.data
-
-			// Only update if we actually have new data
-			if (newOps.length === 0) return
+		if (operationsListData?.data?.data?.data !== undefined) {
+			const newOps = operationsListData.data.data.data || []
 
 			if (page === 1) {
-				// First page - replace all operations
+				// First page - replace all operations (even if empty)
 				setAllOperations(newOps)
 			} else {
+				// Only update if we actually have new data for appended pages
+				if (newOps.length === 0) {
+					setHasMore(false)
+					setIsLoadingMore(false)
+					return
+				}
 				// Subsequent pages - append to existing operations
 				setAllOperations(prev => {
 					// Avoid duplicates by checking if operations already exist
@@ -132,9 +165,7 @@ export default function OperationsPage() {
 			}
 
 			// Check if there are more pages
-			if (newOps.length < limit) {
-				setHasMore(false)
-			}
+			setHasMore(newOps.length === limit)
 			setIsLoadingMore(false)
 		}
 	}, [operationsListData, page, limit])
@@ -165,7 +196,7 @@ export default function OperationsPage() {
 
 		// Build flat list from groups and their children for filter sidebar
 		const flatList = []
-		
+
 		groups.forEach(group => {
 			if (group.children && Array.isArray(group.children)) {
 				group.children.forEach(child => {
@@ -177,7 +208,7 @@ export default function OperationsPage() {
 				})
 			}
 		})
-		
+
 		return flatList
 	}, [counterpartiesGroupsData])
 
@@ -279,11 +310,11 @@ export default function OperationsPage() {
 				// payment_confirmed - дебет (подтверждена оплата)
 				// payment_accrual - кредит (подтверждено начисление)
 				// Используем новые поля из API, с fallback на старые
-				payment_confirmed: item.payment_confirmed !== undefined 
-					? item.payment_confirmed 
+				payment_confirmed: item.payment_confirmed !== undefined
+					? item.payment_confirmed
 					: (item.oplata_podtverzhdena !== undefined ? item.oplata_podtverzhdena : false),
-				payment_accrual: item.payment_accrual !== undefined 
-					? item.payment_accrual 
+				payment_accrual: item.payment_accrual !== undefined
+					? item.payment_accrual
 					: false,
 				amount: amountFormatted,
 				amountRaw: amount,
@@ -443,6 +474,44 @@ export default function OperationsPage() {
 		setIsDeleteModalOpen(true)
 	}
 
+	const handleCopyOperation = operation => {
+		// Open modal as "new" but with the copied operation's data
+		const copiedOperation = { ...operation };
+
+		// Strip the primary GUIDs completely
+		delete copiedOperation.guid;
+		delete copiedOperation.id;
+
+		if (copiedOperation.rawData) {
+			copiedOperation.rawData = { ...copiedOperation.rawData };
+			delete copiedOperation.rawData.guid;
+		}
+
+		setOpenModal({
+			...copiedOperation,
+			id: 'new',
+			isNew: true,
+			isCopy: true
+		})
+		setIsModalClosing(false)
+		setIsModalOpening(true)
+		openOperationModal(copiedOperation)
+
+		if (operation.typeCategory === 'transfer') {
+			setModalType('accrual')
+		} else if (operation.typeCategory === 'out') {
+			setModalType('payment')
+		} else if (operation.typeCategory === 'in') {
+			setModalType('income')
+		} else {
+			setModalType('payment')
+		}
+
+		setTimeout(() => {
+			setIsModalOpening(false)
+		}, 50)
+	}
+
 	const handleDeleteConfirm = async () => {
 		if (!operationToDelete) return
 
@@ -527,7 +596,6 @@ export default function OperationsPage() {
 		setSelectedCounterAgents(prev => ({ ...prev, [guid]: !prev[guid] }))
 	}
 
-	console.log(operations)
 
 
 	return (
@@ -646,7 +714,7 @@ export default function OperationsPage() {
 										<OperationCheckbox
 											checked={isAllSelected}
 											onChange={toggleSelectAll}
-										/> 
+										/>
 									</th>
 									<th className={styles.tableHeaderCell}>
 										<button className={styles.tableHeaderButton}>
@@ -696,7 +764,7 @@ export default function OperationsPage() {
 										{/* Today Operations */}
 										{operations
 											.filter(op => op.section === 'today')
-											.map((op, index) => (
+													.map(op => (
 												<OperationTableRow
 													key={op.id}
 													op={op}
@@ -705,6 +773,7 @@ export default function OperationsPage() {
 													openOperationModal={openOperationModal}
 													handleEditOperation={handleEditOperation}
 													handleDeleteOperation={handleDeleteOperation}
+															handleCopyOperation={handleCopyOperation}
 												/>
 											))}
 
@@ -720,7 +789,7 @@ export default function OperationsPage() {
 										{/* Yesterday Operations */}
 										{operations
 											.filter(op => op.section === 'yesterday')
-													.map((op) => (
+													.map(op => (
 														<OperationTableRow
 													key={op.id}
 															op={op}
@@ -729,6 +798,7 @@ export default function OperationsPage() {
 															openOperationModal={openOperationModal}
 															handleEditOperation={handleEditOperation}
 															handleDeleteOperation={handleDeleteOperation}
+															handleCopyOperation={handleCopyOperation}
 														/>
 											))}
 									</>
@@ -766,7 +836,7 @@ export default function OperationsPage() {
 						console.log('=== onSuccess callback ===')
 						console.log('operationData:', operationData)
 						console.log('isUpdate:', isUpdate)
-						
+
 						if (isUpdate) {
 							// Обновляем существующую операцию в списке
 							setAllOperations(prev => {
@@ -775,8 +845,8 @@ export default function OperationsPage() {
 									if (op.guid === operationData.guid) {
 										console.log('Found and updating operation:', op.guid)
 										// Создаем новый объект с обновленными данными
-										const updatedOp = { 
-											...op, 
+										const updatedOp = {
+											...op,
 											...operationData,
 											// Убеждаемся что guid сохранен
 											guid: op.guid
