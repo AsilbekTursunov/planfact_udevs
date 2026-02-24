@@ -5,13 +5,14 @@
 
 .button {
   width: 100%;
-  padding: 10px 16px;
-  background: #FFFFFF;
-  border: 1.5px solid #D0D5DD;
-  border-radius: 8px;
+  padding: 8px 12px !important;
+    background: $gray-25 !important;
+    border: 1.5px solid $gray-200 !important;
+    border-radius: 8px !important;
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
+  height: 36px;
 
   &:hover:not(.disabled) {
     border-color: #0E73F6;
@@ -34,6 +35,14 @@
   }
 }
 
+.categoryLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: $gray-700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .buttonContent {
   display: flex;
   flex: 1;
@@ -44,18 +53,18 @@
 
 .buttonText {
   flex: 1;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 400;
-  color: #344054;
+  color: $gray-400;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .buttonIcon {
-  width: 20px;
-  height: 20px;
-  color: #667085;
+  width: 16px;
+    height: 16px;
+    color: $gray-400;
   transition: transform 0.2s;
   flex-shrink: 0;
 
@@ -141,7 +150,7 @@
   align-items: center;
   gap: 12px;
   padding: 8px;
-    overflow: hidden;
+  overflow: hidden;
   cursor: pointer;
   border-radius: 6px;
   transition: background-color 0.15s;

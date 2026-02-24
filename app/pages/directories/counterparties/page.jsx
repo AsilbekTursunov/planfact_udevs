@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
-import { DropdownFilter } from '@/components/directories/DropdownFilter/DropdownFilter'
+import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
 import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
 import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useChartOfAccountsPlanFact, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
@@ -22,6 +22,14 @@ import OperationCheckbox from '../../../../components/shared/Checkbox/operationC
 import { LuListTree } from 'react-icons/lu'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 import NewDateRangeComponent from '../../../../components/directories/NewDateRangeComponent'
+import { formatDate } from '../../../../utils/formatDate'
+import Select from '@/components/common/Select'
+
+const calculationOptions = [
+  { value: "Cashflow", label: 'Учет по денежному потоку' },
+  { value: "Cash", label: 'Учет кассовым методом' },
+  { value: "Calculation", label: 'Учет методом начисления' },
+]
 
 export default function CounterpartiesPage() {
   // Block body scroll for this page only
@@ -54,12 +62,14 @@ export default function CounterpartiesPage() {
   const lastPageRef = useRef(1) // Track last loaded page
 
   const [filters, setFilters] = useState({
-    client: true,
-    employee: true,
-    supplier: true,
+    debitPaymentTypes: [],
+    creditPaymentTypes: [],
     selectedGroups: [],
     selectedCounterparties: [],
     selectedChartOfAccounts: [],
+    operationDateStart: "",
+    operationDateEnd: "",
+    calculationMethod: "Cashflow",
     dateRange: null
   })
 
@@ -67,14 +77,14 @@ export default function CounterpartiesPage() {
   const filtersForAPI = useMemo(() => {
     const apiFilters = {}
 
-    const selectedGroups = []
-    if (filters.client) selectedGroups.push('Клиент')
-    if (filters.employee) selectedGroups.push('Сотрудник')
-    if (filters.supplier) selectedGroups.push('Поставщик')
+    // Дебиторка filter
+    if (filters.debitorka && filters.debitorka.length > 0 && filters.debitorka.length < 3) {
+      apiFilters.debitorka = filters.debitorka
+    }
 
-    // Only add gruppa filter if not all groups are selected
-    if (selectedGroups.length > 0 && selectedGroups.length < 3) {
-      apiFilters.gruppa = selectedGroups
+    // Кредиторка filter
+    if (filters.kreditorka && filters.kreditorka.length > 0 && filters.kreditorka.length < 3) {
+      apiFilters.kreditorka = filters.kreditorka
     }
 
     // Counterparties groups filter
@@ -92,6 +102,10 @@ export default function CounterpartiesPage() {
       apiFilters.chart_of_accounts_id = filters.selectedChartOfAccounts
     }
 
+    if (filters.calculationMethod) {
+      apiFilters.calculationMethod = filters.calculationMethod
+    }
+
     return apiFilters
   }, [filters])
 
@@ -99,6 +113,13 @@ export default function CounterpartiesPage() {
   const { data: counterpartiesData, isLoading: isLoadingCounterparties, isFetching } = useCounterpartiesPlanFact({
     page: page,
     limit: 20,
+    debitPaymentTypes: filters.debitPaymentTypes,
+    creditPaymentTypes: filters.creditPaymentTypes,
+    operationDateStart: filters.operationDateStart,
+    operationDateEnd: filters.operationDateEnd,
+    calculationMethod: filters.calculationMethod,
+    contrAgentId: filters.selectedCounterparties,
+    operationCategoryId: filters.selectedChartOfAccounts,
   }, true) // Always enable the query
 
   // Update counterparties when new data arrives
@@ -235,11 +256,16 @@ export default function CounterpartiesPage() {
     }
   }, [hasMore])
 
-  // Extract counterparties from accumulated data
+  // Extract counterparties from accumulated data (for table rendering only)
   const counterpartiesItems = useMemo(() => {
     return Array.isArray(allCounterparties) ? allCounterparties : []
   }, [allCounterparties])
 
+  // Fetch counterparties specifically for filter dropdowns (unfiltered)
+  const { data: counterpartiesFilterData } = useCounterpartiesPlanFact({
+    page: 1,
+    limit: 1000,
+  })
 
   // Fetch counterparties groups using new invoke_function API
   const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
@@ -273,14 +299,15 @@ export default function CounterpartiesPage() {
   }, [chartOfAccountsData])
 
 
-  // Prepare options for filters
+  // Prepare options for filters using unfiltered counterparties
   const counterpartiesOptions = useMemo(() => {
-    if (!counterpartiesItems || counterpartiesItems.length === 0) return []
-    return counterpartiesItems.map(item => ({
+    const items = counterpartiesFilterData?.data?.data?.data || []
+    if (!items || items.length === 0) return []
+    return items.map(item => ({
       value: item.guid,
       label: item.nazvanie || 'Без названия'
     }))
-  }, [counterpartiesItems])
+  }, [counterpartiesFilterData])
 
   const chartOfAccountsOptions = useMemo(() => {
     if (!chartOfAccounts || chartOfAccounts.length === 0) return []
@@ -293,7 +320,7 @@ export default function CounterpartiesPage() {
 
   const toggleRowSelection = (id) => {
     setSelectedRows(prev => {
-      if (prev.includes(id)) {
+      if (prev?.includes(id)) {
         return prev.filter(rowId => rowId !== id)
       } else {
         return [...prev, id]
@@ -302,7 +329,7 @@ export default function CounterpartiesPage() {
   }
 
   const isRowSelected = (id) => {
-    return selectedRows.includes(id)
+    return selectedRows?.includes(id)
   }
 
   const allSelected = () => {
@@ -443,25 +470,28 @@ export default function CounterpartiesPage() {
     })
   }
 
+  console.log(chartOfAccountsOptions, 'chartOfAccountsOptions') 
+
   return (
     <div className={styles.container}>
       <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
         <FilterSection title="Параметры">
           <div className="space-y-2.5">
-            <DropdownFilter
-              label="Контрагенты"
-              options={counterpartiesOptions || []}
-              selectedValues={filters.selectedCounterparties}
+            <MultiSelect
+              data={counterpartiesOptions}
+              value={filters.selectedCounterparties}
               onChange={(values) => setFilters(prev => ({ ...prev, selectedCounterparties: values }))}
               placeholder="Выберите контрагентов"
+              valueKey="value"
+              hideSelectAll={true}
             />
-            <DropdownFilter
-              label="Статьи учета"
-              options={chartOfAccountsOptions || []}
-              selectedValues={filters.selectedChartOfAccounts}
+            <MultiSelect
+              data={chartOfAccountsOptions}
+              value={filters.selectedChartOfAccounts}
               onChange={(values) => setFilters(prev => ({ ...prev, selectedChartOfAccounts: values }))}
               placeholder="Выберите статьи учета"
-              grouped={true}
+              valueKey="value"
+              hideSelectAll={true}
             />
           </div>
         </FilterSection>
@@ -469,31 +499,60 @@ export default function CounterpartiesPage() {
         <FilterSection title="Период аналитики">
           <NewDateRangeComponent
             value={filters.dateRange}
-            onChange={(range) => setFilters(prev => ({ ...prev, dateRange: range }))}
+            onChange={(range) => {
+              const startDate = range?.start ? formatDate(new Date(range.start)) : ''
+              const endDate = range?.end ? formatDate(new Date(range.end)) : ''
+              setFilters(prev => ({
+                ...prev,
+                dateRange: range,
+                operationDateStart: startDate,
+                operationDateEnd: endDate,
+              }))
+            }}
           />
         </FilterSection>
 
-        <FilterSection title="Группа">
+        <FilterSection title="Дебиторка">
           <div className="space-y-2.5 flex flex-col items-start">
-            <OperationCheckbox
-              checked={filters.client}
-              onChange={() => toggleFilter('client')}
-              label="Клиент"
-            />
-            <OperationCheckbox
-              checked={filters.employee}
-              onChange={() => toggleFilter('employee')}
-              label="Сотрудник"
-            />
-            <OperationCheckbox
-              checked={filters.supplier}
-              onChange={() => toggleFilter('supplier')}
-              label="Поставщик"
-            />
+            {[{ label: 'Денежная', value: 'Cash' }, { label: 'Неденежная', value: 'NonCash' }, { label: 'Без дебиторки', value: 'WithoutCash' }].map(item => (
+              <OperationCheckbox
+                key={`deb-${item.value}`}
+                checked={filters.debitPaymentTypes?.includes(item.value)}
+                onChange={() => {
+                  setFilters(prev => ({
+                    ...prev,
+                    debitPaymentTypes: prev.debitPaymentTypes?.includes(item.value)
+                      ? prev.debitPaymentTypes?.filter(v => v !== item.value)
+                      : [...prev.debitPaymentTypes, item.value]
+                  }))
+                }}
+                label={item.label}
+              />
+            ))}
           </div>
         </FilterSection>
 
-        <FilterSection title="Группы контрагентов">
+        <FilterSection title="Кредиторка">
+          <div className="space-y-2.5 flex flex-col items-start">
+            {[{ label: 'Денежная', value: 'Cash' }, { label: 'Неденежная', value: 'NonCash' }, { label: 'Без кредиторки', value: 'WithoutCash' }].map(item => (
+              <OperationCheckbox
+                key={`kred-${item.value}`}
+                checked={filters.creditPaymentTypes?.includes(item.value)}
+                onChange={() => {
+                  setFilters(prev => ({
+                    ...prev,
+                    creditPaymentTypes: prev.creditPaymentTypes?.includes(item.value)
+                      ? prev.creditPaymentTypes?.filter(v => v !== item.value)
+                      : [...prev.creditPaymentTypes, item.value]
+                  }))
+                }}
+                label={item.label}
+              />
+            ))}
+          </div>
+        </FilterSection>
+
+        {/* <FilterSection title="Группы контрагентов">
           <div className="space-y-2.5 flex flex-col items-start">
             {counterpartiesGroupsItems.map((group) => (
               <OperationCheckbox
@@ -511,7 +570,7 @@ export default function CounterpartiesPage() {
               />
             ))}
           </div>
-        </FilterSection>
+        </FilterSection> */}
       </FilterSidebar>
 
       {/* Filter Toggle Bar */}
@@ -540,6 +599,20 @@ export default function CounterpartiesPage() {
                 </button>
               </div>
               <div className={styles.headerSearchContainer}>
+                {/* new filter */}
+                <div style={{ width: '250px' }}>
+                  <Select
+                    options={calculationOptions}
+                    value={calculationOptions.find(opt => opt.value === filters.calculationMethod) || null}
+                    onChange={(selected) => setFilters(prev => ({
+                      ...prev,
+                      calculationMethod: selected ? (prev.calculationMethod === selected.value ? "" : selected.value) : ""
+                    }))}
+                    placeholder="Выбирать"
+                    isSearchable={false}
+                    isClearable={true}
+                  />
+                </div>
                 <div className={styles.filterBox}>
                   <button
                     className={cn(styles.filterIcon, viewMode === 'list' && styles.active)}

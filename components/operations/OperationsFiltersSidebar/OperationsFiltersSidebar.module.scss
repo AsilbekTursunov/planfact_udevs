@@ -7,6 +7,7 @@
       opacity: 0;
       transform: translateY(-8px);
     }
+
     100% {
       opacity: 1;
       transform: translateY(0);
@@ -18,6 +19,7 @@
       opacity: 1;
       transform: translateY(0);
     }
+
     100% {
       opacity: 0;
       transform: translateY(-8px);
@@ -29,6 +31,7 @@
       opacity: 1;
       transform: translateY(0);
     }
+
     100% {
       opacity: 0;
       transform: translateY(8px);
@@ -40,6 +43,7 @@
       opacity: 0;
       transform: translateX(-8px);
     }
+
     100% {
       opacity: 1;
       transform: translateX(0);
@@ -61,7 +65,7 @@
 .sidebarContent {
   padding: 1.5rem 0.8rem;
   // overflow-y: auto;
-    overflow-x: visible;
+  overflow-x: visible;
   flex: 1;
 }
 
@@ -122,19 +126,19 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   border: none;
-  
+
   &.active {
     background-color: white;
     color: #0F51B9;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transform: scale(1);
   }
-  
+
   &.inactive {
     background-color: transparent;
     color: #6b7280;
     transform: scale(0.98);
-    
+
     &:hover {
       color: #374151;
       background-color: rgba(0, 0, 0, 0.02);
@@ -145,6 +149,7 @@
 .filterContentWrapper {
   height: 100%;
 }
+
 .filterContent {
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -154,6 +159,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -245,6 +251,7 @@
 .filterOptions {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -368,7 +375,7 @@
   transform-origin: top center;
   overflow: hidden;
   will-change: transform;
-  
+
   &.openUpward {
     animation: var(--modal-animation, fadeSlideInUp 0.2s ease-out);
     transform-origin: bottom center;
@@ -380,6 +387,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -430,7 +438,7 @@
   &:hover {
     background-color: #f3f4f6;
   }
-  
+
   &:active {
     transform: scale(0.98);
   }

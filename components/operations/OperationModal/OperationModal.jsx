@@ -106,7 +106,7 @@ export function OperationModal({
 	// Initialize form data from operation or defaults
 	const getInitialFormData = () => {
 		if (operationData && (!isNew || operation?.isCopy) && operationData.rawData) {
-		// Editing existing operation or copying - use rawData
+			// Editing existing operation or copying - use rawData
 			const raw = operationData.rawData
 			const paymentDate = raw.data_operatsii
 				? new Date(raw.data_operatsii).toISOString().split('T')[0]
@@ -810,9 +810,9 @@ export function OperationModal({
 						<div className={styles.headerTop}>
 							<div className={styles.headerLeft}>
 								<h2 className={styles.title}>
-									{isNew || !isUpdate ? 'Создание операции' : 'Редактирование операции'}
+									{isNew ? 'Создание операции' : 'Редактирование операции'}
 								</h2>
-								{!isNew || !isUpdate && <div className={styles.headerDate}>
+								{!isNew && <div className={styles.headerDate}>
 									<svg
 										className={styles.headerIcon}
 										fill='none'

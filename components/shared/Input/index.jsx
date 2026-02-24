@@ -2,11 +2,12 @@ import React, { forwardRef } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './style.module.scss'
 
-const Input = forwardRef(({ 
-  className, 
-  error, 
+const Input = forwardRef(({
+  className,
+  error,
   type = 'text',
-  ...props 
+  action = 'default',
+  ...props
 }, ref) => {
   return (
     <input
@@ -15,6 +16,7 @@ const Input = forwardRef(({
       className={cn(
         styles.input,
         error && styles.error,
+        action === 'filter' && styles.filter,
         className
       )}
       {...props}

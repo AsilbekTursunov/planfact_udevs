@@ -5,7 +5,7 @@ import { cn } from '@/app/lib/utils'
 import styles from './DropdownFilter.module.scss'
 import { FiCheck } from 'react-icons/fi'
 
-export function DropdownFilter({ label, options, selectedValues, onChange, placeholder = "Выберите...", grouped = false, disabled = false }) {
+export function DropdownFilter({ label, options, selectedValues = [], onChange, placeholder = "Выберите...", grouped = false, disabled = false }) {
   const [isOpen, setIsOpen] = useState(false)
   const [openUpward, setOpenUpward] = useState(false)
   const dropdownRef = useRef(null)
@@ -18,12 +18,14 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
         setIsOpen(false)
       }
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    // Use true to use capture phase
+    document.addEventListener("mousedown", handleClickOutside, true)
+    return () => document.removeEventListener("mousedown", handleClickOutside, true)
   }, [])
 
-  const handleToggle = () => {
+  const handleToggle = (e) => {
     if (disabled) return
+    if (e) e.stopPropagation()
 
     if (!isOpen && dropdownRef.current) {
       const rect = dropdownRef.current.getBoundingClientRect()
@@ -46,8 +48,6 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
       return acc
     }, {})
     : { 'all': options }
-
-  console.log(groupedOptions, 'groupedOptions')
 
   const handleOptionClick = (option, groupName, groupItems) => {
     if (grouped && option.value === "") {
@@ -190,7 +190,7 @@ export function DropdownFilter({ label, options, selectedValues, onChange, place
                         option.value === "" && grouped ? styles.parent : grouped ? styles.child : ""
                       )}
                     >
-                      <p>{option.label}</p>
+                      <p className={`${styles.optionText}  capitalize`}>{option.label}</p>
                       {option.value !== "" && selectedValues.includes(option.value) && (
                         <FiCheck color='#0E73F6' />
                       )}

@@ -18,6 +18,8 @@ import { DeleteConfirmModal } from '@/components/operations/OperationsTable/Dele
 import OperationTableRow from '@/components/operations/TableRow'
 import styles from './operations.module.scss'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
+import { formatDate } from '../../../utils/formatDate'
+import { useBankAccountsPlanFact } from '../../../hooks/useDashboard'
 
 export default function OperationsPage() {
 	// Block body scroll for this page only
@@ -33,14 +35,7 @@ export default function OperationsPage() {
 
 	// Filter states
 	const [isFilterOpen, setIsFilterOpen] = useState(true)
-	const [selectedFilters, setSelectedFilters] = useState({
-		postupleniye: true,
-		vyplata: true,
-		peremeshcheniye: true,
-		nachisleniye: true,
-		otmena: true,
-		postavka: true,
-	})
+	const [selectedFilters, setSelectedFilters] = useState([])
 
 	const [dateFilters, setDateFilters] = useState({
 		podtverzhdena: true,
@@ -54,9 +49,11 @@ export default function OperationsPage() {
 
 	const [selectedDatePaymentRange, setSelectedDatePaymentRange] = useState(null)
 	const [selectedDateStartRange, setSelectedDateStartRange] = useState(null)
-	const [selectedLegalEntities, setSelectedLegalEntities] = useState({}) // Will store legal entity GUIDs
-	const [selectedCounterAgents, setSelectedCounterAgents] = useState({})
+	const [selectedLegalEntities, setSelectedLegalEntities] = useState([]) // Will store legal entity GUIDs
+	const [selectedCounterAgents, setSelectedCounterAgents] = useState([])
 	const [selectedFinancialAccounts, setSelectedFinancialAccounts] = useState({})
+	const [amountRange, setAmountRange] = useState({ min: '', max: '' })
+	const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
 
 	// No filtering - filters are just UI elements
 	const filtersForAPI = useMemo(() => {
@@ -73,18 +70,53 @@ export default function OperationsPage() {
 
 	// Fetch data from API - using V2 endpoints
 	// Fetch data from API - using groups endpoint which includes children
-	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
-		page: 1,
-		limit: 100,
-	})
+
+
+	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact()
 	const { data: legalEntitiesData } = useLegalEntitiesPlanFact({
 		page: 1,
 		limit: 100,
 	})
+
 	const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({
 		page: 1,
 		limit: 100,
 	})
+
+	const { data: myAccountsData } = useBankAccountsPlanFact({
+		page: 1,
+		limit: 100,
+	}) 
+
+
+
+	const leagatEntities = useMemo(() => {
+		const data = myAccountsData?.data?.data?.data || []
+		return data.map(item => ({
+			value: item.guid,
+			label: item.nazvanie,
+		}))
+	}, [myAccountsData])
+
+	const chartOfAccountsOptions = useMemo(() => {
+		const rawData = chartOfAccountsData?.data?.data?.data || []
+		const flatten = (items) => {
+			let result = []
+			items.forEach(item => {
+				result.push(item)
+				if (item.children && item.children.length > 0) {
+					result = result.concat(flatten(item.children))
+				}
+			})
+			return result
+		}
+		const flat = Array.isArray(rawData) ? flatten(rawData) : []
+		return flat.map(item => ({
+			value: item.guid,
+			label: item.nazvanie || 'Без названия',
+			group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
+		}))
+	}, [chartOfAccountsData])
 
 	// Pagination state
 	const [page, setPage] = useState(1)
@@ -121,13 +153,47 @@ export default function OperationsPage() {
 		}
 	}, [selectedDatePaymentRange])
 
-	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList({
-		dateRange: dateParams,
-		page: page,
-		limit: limit,
-	})
 
-	console.log('operationsListData => ', operationsListData)
+	const requestOperationFilters = useMemo(() => {
+		const safeFormatDate = (date) => {
+			if (!date) return undefined
+			try {
+				return formatDate(new Date(date))
+			} catch {
+				return undefined
+			}
+		}
+
+		const startDate = safeFormatDate(selectedDatePaymentRange?.start)
+		const endDate = safeFormatDate(selectedDatePaymentRange?.end)
+
+		return {
+			page: 1,
+			limit: 100,
+			...(startDate && endDate && {
+				date_range: {
+					start_date: startDate,
+					end_date: endDate,
+				}
+			}),
+			...(selectedCounterAgents.length > 0 && { counterparties_ids: selectedCounterAgents }),
+			...(selectedLegalEntities.length > 0 && { my_accounts_ids: selectedLegalEntities }),
+			...(selectedFilters.length > 0 && { tip: selectedFilters }),
+			...((amountRange.min !== '' || amountRange.max !== '') && {
+				amount_range: {
+					...(amountRange.min !== '' && { min: Number(amountRange.min) }),
+					...(amountRange.max !== '' && { max: Number(amountRange.max) }),
+				}
+			}),
+			...(selectedChartOfAccounts.length > 0 && { chart_of_accounts_ids: selectedChartOfAccounts }),
+			podtverzhdena: dateFilters.podtverzhdena,
+			ne_podtverzhdena: dateFilters.nePodtverzhdena,
+		}
+	}, [selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
+
+	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList(requestOperationFilters)
+
+
 
 	// Reset pagination when date filter changes
 	useEffect(() => {
@@ -194,22 +260,16 @@ export default function OperationsPage() {
 	const counterAgents = useMemo(() => {
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
 
-		// Build flat list from groups and their children for filter sidebar
-		const flatList = []
+		const hasChildren = groups.filter(item => item.children && item.children.length > 0)
 
-		groups.forEach(group => {
-			if (group.children && Array.isArray(group.children)) {
-				group.children.forEach(child => {
-					flatList.push({
-						guid: child.guid,
-						label: child.nazvanie || '',
-						group: group.nazvanie_gruppy || 'Без группы',
-					})
-				})
-			}
-		})
-
-		return flatList
+		return hasChildren.map(item => [
+			{ value: '', label: item.nazvanie_gruppy, group: item.nazvanie_gruppy },
+			...(item.children || []).map(child => ({
+				value: child.guid,
+				label: child.nazvanie || '',
+				group: item.nazvanie_gruppy
+			}))
+		]).flat()
 	}, [counterpartiesGroupsData])
 
 	// Extract operations list from API response - no filtering
@@ -495,7 +555,7 @@ export default function OperationsPage() {
 		})
 		setIsModalClosing(false)
 		setIsModalOpening(true)
-		openOperationModal(copiedOperation)
+
 
 		if (operation.typeCategory === 'transfer') {
 			setModalType('accrual')
@@ -544,12 +604,16 @@ export default function OperationsPage() {
 			}, 0)
 	}, [operations, selectedOperations])
 
-	const toggleFilter = (category, key) => {
+	const toggleFilter = (category, key, forceValue) => {
 		if (category === 'type') {
 			setSelectedFilters(prev => {
-				const newValue = !prev[key]
-				console.log('Updating filter:', { key, oldValue: prev[key], newValue })
-				return { ...prev, [key]: newValue }
+				const arr = prev || []
+				const shouldAdd = forceValue !== undefined ? forceValue : !arr.includes(key)
+				if (shouldAdd) {
+					return arr.includes(key) ? arr : [...arr, key]
+				} else {
+					return arr.filter(v => v !== key)
+				}
 			})
 		} else if (category === 'date') {
 			setDateFilters(prev => ({ ...prev, [key]: !prev[key] }))
@@ -592,9 +656,6 @@ export default function OperationsPage() {
 		}
 	}
 
-	const handleCounterAgentToggle = guid => {
-		setSelectedCounterAgents(prev => ({ ...prev, [guid]: !prev[guid] }))
-	}
 
 
 
@@ -614,14 +675,20 @@ export default function OperationsPage() {
 				onDatePaymentRangeChange={setSelectedDatePaymentRange}
 				selectedDateStartRange={selectedDateStartRange}
 				onDateStartRangeChange={setSelectedDateStartRange}
-				legalEntities={legalEntitiesData?.data?.data?.data || []}
+				legalEntities={leagatEntities}
 				selectedLegalEntities={selectedLegalEntities}
-				onLegalEntityToggle={handleLegalEntityToggle}
+				onLegalEntityToggle={setSelectedLegalEntities}
 				onSelectAllLegalEntities={handleSelectAllLegalEntities}
 				counterAgents={counterAgents}
 				selectedCounterAgents={selectedCounterAgents}
-				onCounterAgentToggle={handleCounterAgentToggle}
+				onCounterAgentToggle={setSelectedCounterAgents}
 				onSelectAllCounterAgents={handleSelectAllCounterAgents}
+				amountRange={amountRange}
+				onAmountRangeChange={setAmountRange}
+				isLoading={isLoadingOperations || isFetching}
+				chartOfAccountsOptions={chartOfAccountsOptions}
+				selectedChartOfAccounts={selectedChartOfAccounts}
+				onChartOfAccountsChange={setSelectedChartOfAccounts}
 			/>
 
 			{/* Filter Toggle Bar */}
@@ -655,7 +722,31 @@ export default function OperationsPage() {
 				/>
 
 				{/* Table */}
-				<div className={styles.tableArea}>
+				<div className={styles.tableArea} style={{ position: 'relative' }}>
+					{(isLoadingOperations || isFetching) && (
+						<div style={{
+							position: 'absolute',
+							top: 0,
+							left: 0,
+							right: 0,
+							bottom: 0,
+							background: 'rgba(255,255,255,0.7)',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							zIndex: 10,
+							borderRadius: '12px'
+						}}>
+							<div style={{
+								width: '36px',
+								height: '36px',
+								border: '3px solid #e5e7eb',
+								borderTopColor: '#307FE2',
+								borderRadius: '50%',
+								animation: 'spin 0.8s linear infinite'
+							}} />
+						</div>
+					)}
 					{/* Selection Bar */}
 					{selectedOperations.length > 0 && (
 						<div className={styles.selectionBar}>

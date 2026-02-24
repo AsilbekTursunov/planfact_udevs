@@ -5,6 +5,9 @@ import { cn } from '@/app/lib/utils'
 import styles from './OperationsFiltersSidebar.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 import NewDateRangeComponent from '../../directories/NewDateRangeComponent'
+import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
+import { FaSortDown } from 'react-icons/fa'
+import Input from '../../shared/Input'
 
 export function OperationsFiltersSidebar({
   isOpen,
@@ -26,7 +29,13 @@ export function OperationsFiltersSidebar({
   counterAgents,
   selectedCounterAgents,
   onCounterAgentToggle,
-  onSelectAllCounterAgents
+  onSelectAllCounterAgents,
+  amountRange,
+  onAmountRangeChange,
+  isLoading,
+  chartOfAccountsOptions,
+  selectedChartOfAccounts,
+  onChartOfAccountsChange,
 }) {
   const [activeTab, setActiveTab] = useState('general')
   const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)
@@ -36,6 +45,9 @@ export function OperationsFiltersSidebar({
   const [tempEndDateStart, setTempEndDateStart] = useState(null)
   const [openUpwardStart, setOpenUpwardStart] = useState(false)
   const [openParameterDropdown, setOpenParameterDropdown] = useState(null)
+  const [expandedFilters, setExpandedFilters] = useState({ peremescheniye: false, nachisleniye: false })
+  const [localAmount, setLocalAmount] = useState({ min: '', max: '' })
+  const amountDebounceRef = useRef(null)
   const dateStartPickerRef = useRef(null)
   const dateStartPickerModalRef = useRef(null)
   const legalEntitiesDropdownRef = useRef(null)
@@ -50,6 +62,15 @@ export function OperationsFiltersSidebar({
     const spaceAbove = buttonRect.top
     return spaceBelow < modalHeight || (spaceAbove > spaceBelow && spaceAbove > 100)
   }, [])
+
+  const handleAmountChange = useCallback((field, rawValue) => {
+    const digitsOnly = rawValue.replace(/[^0-9]/g, '')
+    setLocalAmount(prev => ({ ...prev, [field]: digitsOnly }))
+    if (amountDebounceRef.current) clearTimeout(amountDebounceRef.current)
+    amountDebounceRef.current = setTimeout(() => {
+      onAmountRangeChange(prev => ({ ...prev, [field]: digitsOnly }))
+    }, 200)
+  }, [onAmountRangeChange])
 
   // Определяем направление открытия для второго выпадающего списка
   useEffect(() => {
@@ -159,6 +180,8 @@ export function OperationsFiltersSidebar({
 
   if (!isOpen) return null
 
+
+
   return (
     <>
       <div className={styles.sidebar}>
@@ -205,79 +228,97 @@ export function OperationsFiltersSidebar({
                     </svg>
                   </h3>
 
-                  {/* Начисление */}
-                  <div className={styles.filterSectionHeader}>
-                    <label className={styles.checkboxWrapper} style={{ cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedFilters.nachisleniye || false}
-                        onChange={() => onFilterChange('type', 'nachisleniye')}
-                        className={styles.checkboxInput}
-                      />
-                      <div
-                        className={cn(
-                          styles.checkbox,
-                          selectedFilters.nachisleniye && styles.checkboxChecked
-                        )}
-                        onClick={(e) => {
-                          e.preventDefault()
-                          onFilterChange('type', 'nachisleniye')
-                        }}
-                        style={{
-                          '--checkbox-bg': selectedFilters.nachisleniye ? '#307FE2' : 'white',
-                          '--checkbox-border': selectedFilters.nachisleniye ? '#307FE2' : '#d1d5db',
-                          '--checkbox-hover-border': '#9ca3af',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {selectedFilters.nachisleniye && (
-                          <svg className={styles.checkboxIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                    </label>
-                    <span
-                      className={styles.filterSectionHeaderTitle}
-                      onClick={() => onFilterChange('type', 'nachisleniye')}
-                    >
-                      Начисление
-                    </span>
-                  </div>
+                  {/* Поступление */}
                   <div className={styles.filterOptions}>
-                    {[
-                      { key: 'postupleniye', label: 'Отгрузка' },
-                      { key: 'vyplata', label: 'Поставка' }
-                    ].map(item => (
-                      <label key={item.key} className={styles.filterOption}>
-                        <div className={styles.checkboxWrapper}>
-                          <input
-                            type="checkbox"
-                            checked={selectedFilters[item.key]}
-                            onChange={() => onFilterChange('type', item.key)}
-                            className={styles.checkboxInput}
-                          />
-                          <div
-                            className={cn(
-                              styles.checkbox,
-                              selectedFilters[item.key] && styles.checkboxChecked
-                            )}
-                            style={{
-                              '--checkbox-bg': selectedFilters[item.key] ? '#307FE2' : 'white',
-                              '--checkbox-border': selectedFilters[item.key] ? '#307FE2' : '#d1d5db',
-                              '--checkbox-hover-border': '#9ca3af'
-                            }}
-                          >
-                            {selectedFilters[item.key] && (
-                              <svg className={styles.checkboxIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                        </div>
-                        <span className={styles.filterOptionLabel}>{item.label}</span>
-                      </label>
-                    ))}
+                    <OperationCheckbox
+                      checked={selectedFilters.includes('Поступление') || false}
+                      onChange={() => onFilterChange('type', 'Поступление')}
+                      label="Поступление"
+                    />
+
+                    {/* Выплата */}
+                    <OperationCheckbox
+                      checked={selectedFilters.includes('Выплата') || false}
+                      onChange={() => onFilterChange('type', 'Выплата')}
+                      label="Выплата"
+                    />
+
+                    {/* Перемещение */}
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
+                      <OperationCheckbox
+                        checked={selectedFilters.includes('Перемещение') || false}
+                        onChange={() => {
+                          onFilterChange('type', 'Перемещение')
+                          onFilterChange('type', 'Списание', !selectedFilters.includes('Перемещение'))
+                          onFilterChange('type', 'Зачисление', !selectedFilters.includes('Перемещение'))
+                        }}
+                        label="Перемещение"
+                      />
+                      <FaSortDown
+                        style={{
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s',
+                          transform: expandedFilters.peremescheniye ? 'rotate(0deg)' : 'rotate(-180deg)',
+                          marginBottom: expandedFilters.peremescheniye ? '10px' : '0',
+                          color: '#6b7280',
+                          fontSize: '12px'
+                        }}
+                        onClick={() => setExpandedFilters(prev => ({ ...prev, peremescheniye: !prev.peremescheniye }))}
+                      />
+                    </div>
+                    {expandedFilters.peremescheniye && (
+                      <div style={{ paddingLeft: '1.25rem', display: 'flex', alignItems: 'flex-start', flexDirection: 'column', gap: '0.75rem' }}>
+                        <OperationCheckbox
+                          checked={selectedFilters.includes('Списание') || false}
+                          onChange={() => onFilterChange('type', 'Списание')}
+                          label="Списание"
+                        />
+                        <OperationCheckbox
+                          checked={selectedFilters.includes('Зачисление') || false}
+                          onChange={() => onFilterChange('type', 'Зачисление')}
+                          label="Зачисление"
+                        />
+                      </div>
+                    )}
+
+                    {/* Начисление */}
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
+                      <OperationCheckbox
+                        checked={selectedFilters.includes('Начисление') || false}
+                        onChange={() => {
+                          onFilterChange('type', 'Начисление')
+                          onFilterChange('type', 'Дебет', !selectedFilters.includes('Начисление'))
+                          onFilterChange('type', 'Кредит', !selectedFilters.includes('Начисление'))
+                        }}
+                        label="Начисление"
+                      />
+                      <FaSortDown
+                        style={{
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s',
+                          transform: expandedFilters.nachisleniye ? 'rotate(0deg)' : 'rotate(-180deg)',
+                          marginBottom: expandedFilters.nachisleniye ? '10px' : '0',
+                          color: '#6b7280',
+                          fontSize: '12px'
+                        }}
+                        onClick={() => setExpandedFilters(prev => ({ ...prev, nachisleniye: !prev.nachisleniye }))}
+                      />
+                    </div>
+                    {expandedFilters.nachisleniye && (
+                      <div style={{ paddingLeft: '1.25rem', display: 'flex', alignItems: 'flex-start', flexDirection: 'column', gap: '0.75rem' }}>
+                        <OperationCheckbox
+                          checked={selectedFilters.includes('Дебет') || false}
+                          onChange={() => onFilterChange('type', 'Дебет')}
+                          label="Дебет"
+                        />
+                        <OperationCheckbox
+                          checked={selectedFilters.includes('Кредит') || false}
+                          onChange={() => onFilterChange('type', 'Кредит')}
+                          label="Кредит"
+                        />
+                      </div>
+                    )}
+
                   </div>
                 </div>
 
@@ -322,330 +363,70 @@ export function OperationsFiltersSidebar({
                     </svg>
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {/* Юрлица */}
-                    <div className={styles.parameterDropdown} ref={legalEntitiesDropdownRef}>
-                      <button
-                        onClick={() => setOpenParameterDropdown(openParameterDropdown === 'legalentities' ? null : 'legalentities')}
-                        className={styles.parameterDropdownButton}
-                      >
-                        <div className={styles.parameterDropdownButtonContent}>
-                          {legalEntities && Object.keys(selectedLegalEntities).filter(guid => selectedLegalEntities[guid]).length > 0 ? (
-                            <div className={styles.parameterDropdownChips}>
-                              {Object.keys(selectedLegalEntities)
-                                .filter(guid => selectedLegalEntities[guid])
-                                .slice(0, 2)
-                                .map(guid => {
-                                  const entity = legalEntities.find(le => le.guid === guid)
-                                  if (!entity) return null
-                                  return (
-                                    <div key={guid} className={styles.parameterDropdownChip}>
-                                      <span className={styles.parameterDropdownChipLabel}>{entity.nazvanie || 'Без названия'}</span>
-                                      <div
-                                        className={styles.parameterDropdownChipRemove}
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          onLegalEntityToggle(guid)
-                                        }}
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            onLegalEntityToggle(guid)
-                                          }
-                                        }}
-                                      >
-                                        <svg className={styles.parameterDropdownChipRemoveIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              {Object.keys(selectedLegalEntities).filter(guid => selectedLegalEntities[guid]).length > 2 && (
-                                <span className={styles.parameterDropdownChipMore}>
-                                  +{Object.keys(selectedLegalEntities).filter(guid => selectedLegalEntities[guid]).length - 2}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span>Юрлица</span>
-                          )}
-                        </div>
-                        <svg className={cn(styles.parameterDropdownIcon, openParameterDropdown === 'legalentities' && styles.open)} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
+                    {/* Юрлица */} 
+                    <MultiSelect
+                      data={legalEntities}
+                      value={selectedLegalEntities}
+                      onChange={onLegalEntityToggle}
+                      hideSelectAll={true}
+                      placeholder="Юрлица и счета"
+                      valueKey="value"
+                    />
 
-                      {openParameterDropdown === 'legalentities' && (
-                        <div
-                          className={styles.parameterDropdownMenu}
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                        >
-                          <div className={styles.parameterDropdownSearch}>
-                            <div style={{ position: 'relative' }}>
-                              <input
-                                type="text"
-                                placeholder="Поиск по списку"
-                                className={styles.parameterDropdownSearchInput}
-                              />
-                              <svg className={styles.parameterDropdownSearchIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <path d="m21 21-4.35-4.35"></path>
-                              </svg>
-                            </div>
-                          </div>
-
-                          <div className={styles.parameterDropdownSelectAll}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onSelectAllLegalEntities()
-                              }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className={styles.parameterDropdownSelectAllButton}
-                            >
-                              Выбрать все
-                            </button>
-                          </div>
-
-                          <div className={styles.parameterDropdownList}>
-                            <div className={styles.parameterDropdownListInner}>
-                              {legalEntities && legalEntities.length > 0 ? (
-                                legalEntities.map((entity) => (
-                                  <label
-                                    key={entity.guid}
-                                    className={styles.parameterItem}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onMouseDown={(e) => e.stopPropagation()}
-                                  >
-                                    <div className={styles.checkboxWrapper}>
-                                      <input
-                                        type="checkbox"
-                                        checked={selectedLegalEntities[entity.guid] || false}
-                                        onChange={(e) => {
-                                          e.stopPropagation()
-                                          onLegalEntityToggle(entity.guid)
-                                        }}
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                        }}
-                                        onMouseDown={(e) => {
-                                          e.stopPropagation()
-                                        }}
-                                        className={styles.checkboxInput}
-                                      />
-                                      <div
-                                        className={cn(
-                                          styles.checkbox,
-                                          selectedLegalEntities[entity.guid] && styles.checkboxChecked
-                                        )}
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          onLegalEntityToggle(entity.guid)
-                                        }}
-                                        onMouseDown={(e) => {
-                                          e.stopPropagation()
-                                          onLegalEntityToggle(entity.guid)
-                                        }}
-                                        style={{
-                                          '--checkbox-bg': selectedLegalEntities[entity.guid] ? '#307FE2' : 'white',
-                                          '--checkbox-border': selectedLegalEntities[entity.guid] ? '#307FE2' : '#d1d5db',
-                                          '--checkbox-hover-border': '#9ca3af'
-                                        }}
-                                      >
-                                        {selectedLegalEntities[entity.guid] && (
-                                          <svg className={styles.checkboxIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                          </svg>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <span className={styles.parameterItemLabel}>{entity.nazvanie || 'Без названия'}</span>
-                                  </label>
-                                ))
-                              ) : (
-                                <div className={styles.parameterItemLabel} style={{ padding: '0.5rem', color: '#9ca3af' }}>
-                                  Нет доступных юрлиц
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
 
                     {/* Контрагенты */}
-                    <div className={styles.parameterDropdown} ref={counterAgentsDropdownRef}>
-                      <button
-                        onClick={() => setOpenParameterDropdown(openParameterDropdown === 'counteragents' ? null : 'counteragents')}
-                        className={styles.parameterDropdownButton}
-                      >
-                        <div className={styles.parameterDropdownButtonContent}>
-                          {counterAgents && Object.keys(selectedCounterAgents).filter(guid => selectedCounterAgents[guid]).length > 0 ? (
-                            <div className={styles.parameterDropdownChips}>
-                              {Object.keys(selectedCounterAgents)
-                                .filter(guid => selectedCounterAgents[guid])
-                                .slice(0, 2)
-                                .map(guid => {
-                                  const agent = counterAgents.find(ca => ca.guid === guid)
-                                  if (!agent) return null
-                                  return (
-                                    <div key={guid} className={styles.parameterDropdownChip}>
-                                      <span className={styles.parameterDropdownChipLabel}>{agent.label}</span>
-                                      <div
-                                        className={styles.parameterDropdownChipRemove}
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          onCounterAgentToggle(guid)
-                                        }}
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            onCounterAgentToggle(guid)
-                                          }
-                                        }}
-                                      >
-                                        <svg className={styles.parameterDropdownChipRemoveIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              {Object.keys(selectedCounterAgents).filter(guid => selectedCounterAgents[guid]).length > 2 && (
-                                <span className={styles.parameterDropdownChipMore}>
-                                  +{Object.keys(selectedCounterAgents).filter(guid => selectedCounterAgents[guid]).length - 2}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span>Контрагенты</span>
-                          )}
-                        </div>
-                        <svg className={cn(styles.parameterDropdownIcon, openParameterDropdown === 'counteragents' && styles.open)} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
+                    <MultiSelect
+                      data={counterAgents}
+                      value={selectedCounterAgents}
+                      onChange={onCounterAgentToggle}
+                      hideSelectAll={true}
+                      grouped
+                      placeholder="Контрагенты"
+                      valueKey="value"
+                    />
 
-                      {openParameterDropdown === 'counteragents' && (
-                        <div
-                          className={styles.parameterDropdownMenu}
-                          onClick={(e) => e.stopPropagation()}
-                          onMouseDown={(e) => e.stopPropagation()}
-                        >
-                          <div className={styles.parameterDropdownSearch}>
-                            <div style={{ position: 'relative' }}>
-                              <input
-                                type="text"
-                                placeholder="Поиск по списку"
-                                className={styles.parameterDropdownSearchInput}
-                              />
-                              <svg className={styles.parameterDropdownSearchIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <path d="m21 21-4.35-4.35"></path>
-                              </svg>
-                            </div>
-                          </div>
+                    {/* Статьи */}
+                    {/* <MultiSelect
+                      data={articles}
+                      value={selectedArticles}
+                      onChange={onArticleToggle}
+                      hideSelectAll={true}
+                      placeholder="Все статьи"
+                      valueKey="value"
+                    /> */}
 
-                          <div className={styles.parameterDropdownSelectAll}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onSelectAllCounterAgents()
-                              }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className={styles.parameterDropdownSelectAllButton}
-                            >
-                              Выбрать все
-                            </button>
-                          </div>
 
-                          <div className={styles.parameterDropdownList}>
-                            <div className={styles.parameterDropdownListInner}>
-                              {counterAgents && counterAgents.length > 0 ? (
-                                Object.entries(
-                                  counterAgents.reduce((acc, ca) => {
-                                    const group = ca.group || 'Без группы'
-                                    if (!acc[group]) acc[group] = []
-                                    acc[group].push(ca)
-                                    return acc
-                                  }, {})
-                                ).map(([groupName, items]) => (
-                                  <div key={groupName} className={styles.parameterGroup}>
-                                    <div className={styles.parameterGroupTitle}>
-                                      {groupName}
-                                    </div>
-                                    {items.map((ca) => (
-                                      <label
-                                        key={ca.guid}
-                                        className={cn(styles.parameterItem, styles.nested)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        onMouseDown={(e) => e.stopPropagation()}
-                                      >
-                                        <div className={styles.checkboxWrapper}>
-                                          <input
-                                            type="checkbox"
-                                            checked={selectedCounterAgents[ca.guid] || false}
-                                            onChange={(e) => {
-                                              e.stopPropagation()
-                                              onCounterAgentToggle(ca.guid)
-                                            }}
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                            }}
-                                            onMouseDown={(e) => {
-                                              e.stopPropagation()
-                                            }}
-                                            className={styles.checkboxInput}
-                                          />
-                                          <div
-                                            className={cn(
-                                              styles.checkbox,
-                                              selectedCounterAgents[ca.guid] && styles.checkboxChecked
-                                            )}
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              onCounterAgentToggle(ca.guid)
-                                            }}
-                                            onMouseDown={(e) => {
-                                              e.stopPropagation()
-                                              onCounterAgentToggle(ca.guid)
-                                            }}
-                                            style={{
-                                              '--checkbox-bg': selectedCounterAgents[ca.guid] ? '#307FE2' : 'white',
-                                              '--checkbox-border': selectedCounterAgents[ca.guid] ? '#307FE2' : '#d1d5db',
-                                              '--checkbox-hover-border': '#9ca3af'
-                                            }}
-                                          >
-                                            {selectedCounterAgents[ca.guid] && (
-                                              <svg className={styles.checkboxIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                              </svg>
-                                            )}
-                                          </div>
-                                        </div>
-                                        <span className={styles.parameterItemLabel}>{ca.label}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                ))
-                              ) : (
-                                <div className={styles.parameterItemLabel} style={{ padding: '0.5rem', color: '#9ca3af' }}>
-                                  Нет доступных контрагентов
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                    {/* Статьи учета */}
+                    <MultiSelect
+                      data={chartOfAccountsOptions || []}
+                      value={selectedChartOfAccounts}
+                      onChange={onChartOfAccountsChange}
+                      hideSelectAll={true}
+                      placeholder="Статьи учета"
+                      valueKey="value"
+                    />
+
+                    {/* Price */}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        action="filter"
+                        placeholder="Сумма от"
+                        value={localAmount.min}
+                        onChange={(e) => handleAmountChange('min', e.target.value)}
+                        style={{ flex: 1, minWidth: 0 }}
+                      />
+                      <span style={{ color: '#9ca3af', fontSize: '13px' }}>–</span>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        action="filter"
+                        placeholder="до"
+                        value={localAmount.max}
+                        onChange={(e) => handleAmountChange('max', e.target.value)}
+                        style={{ flex: 1, minWidth: 0 }}
+                      />
                     </div>
 
                   </div>

@@ -29,6 +29,7 @@ const navItems = [
         href: '/pages/directories',
         hasPage: true,
         submenu: [
+            { label: 'Контрагенты', href: '/pages/directories/counterparties', hasPage: true },
             { label: 'Учетные статьи', href: '/pages/directories/transaction-categories', hasPage: true },
             { label: 'Мои счета', href: '/pages/directories/accounts', hasPage: true },
             { label: 'Мои юрлица', href: '/pages/directories/legal-entities', hasPage: true }

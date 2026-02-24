@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './MultiSelect.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
+import { ChevronDown } from 'lucide-react'
 
 export function MultiSelect({
   data = [],
@@ -68,10 +69,9 @@ export function MultiSelect({
 
   const isAllSelected = filteredData.length > 0 && value.length === filteredData.length
 
-  return (
+  return <>
     <div className={cn(styles.container, className)} ref={dropdownRef}>
-      <button
-        type="button"
+      <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled || loading}
         className={cn(
@@ -82,16 +82,9 @@ export function MultiSelect({
       >
         <div className={`${styles.buttonContent} line-clamp-1`}>
           <span className={`${styles.buttonText}`}>{loading ? "Загрузка..." : getSelectedLabel()}</span>
-          <svg
-            className={cn(styles.buttonIcon, isOpen && styles.open)}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
+          <ChevronDown className={cn(styles.buttonIcon, isOpen && styles.open)} />
         </div>
-      </button>
+      </div>
 
       {isOpen && (
         <div className={styles.dropdown}>
@@ -160,12 +153,33 @@ export function MultiSelect({
             ) : (
               filteredData.map((item) => (
                 <div key={item[valueKey]} className={styles.checkboxLabel}>
-                  <OperationCheckbox
-                    key={item[valueKey]}
-                    checked={value.includes(item[valueKey])}
-                    onChange={() => handleToggle(item[valueKey])}
-                    label={item[labelKey]}
-                  />
+                  {item.value ? (
+                    <OperationCheckbox
+                      key={item[valueKey]}
+                      checked={value.includes(item[valueKey])}
+                      onChange={() => handleToggle(item[valueKey])}
+                      label={item[labelKey]}
+                    />
+                  ) : (
+                    <p
+                      className={styles.categoryLabel}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => {
+                        const groupChildren = filteredData.filter(
+                          child => child.group === item.group && child[valueKey]
+                        )
+                        const childValues = groupChildren.map(c => c[valueKey])
+                        const allSelected = childValues.every(v => value.includes(v))
+                        if (allSelected) {
+                          onChange?.(value.filter(v => !childValues.includes(v)))
+                        } else {
+                          onChange?.([...new Set([...value, ...childValues])])
+                        }
+                      }}
+                    >
+                      {item.label}
+                    </p>
+                  )}
                 </div>
               ))
             )}
@@ -173,5 +187,5 @@ export function MultiSelect({
         </div>
       )}
     </div>
-  )
+  </>
 }

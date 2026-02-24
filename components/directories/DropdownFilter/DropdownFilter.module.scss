@@ -68,6 +68,12 @@
   }
 }
 
+.optionText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: capitalize !important;
+}
 .chipsContainer {
   display: flex;
   align-items: center;

@@ -47,14 +47,7 @@ export default function AccountsPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const [filters, setFilters] = useState({
-    nalichnye: true,
-    beznalichnye: true,
-    kartaFizlica: true,
-    elektronnye: true,
-    showActive: true,
-    showArchived: true
-  })
+  const [filters, setFilters] = useState([])
 
   const [selectedEntity, setSelectedEntity] = useState([])
   const [selectedAccounts, setSelectedAccounts] = useState([])
@@ -70,18 +63,24 @@ export default function AccountsPage() {
     return Array.isArray(items) ? items : []
   }, [legalEntitiesData])
 
-  // Fetch bank accounts using new invoke_function API
-  const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useBankAccountsPlanFact({
-    page: 1,
-    limit: 100,
-  })
 
-  console.log('Bank accounts data:', bankAccountsData)
+  const requestBankAccounts = useMemo(() => {
+    return {
+      page: 1,
+      limit: 100,
+      ...(filters.length > 0 && { tip: filters }),
+      ...(selectedAccounts.length > 0 && { my_accounts_ids: selectedAccounts }),
+      ...(selectedEntity.length > 0 && { legal_entity_ids: selectedEntity }),
+    }
+  }, [filters, selectedAccounts, selectedEntity])
+
+  // Fetch bank accounts using new invoke_function API
+  const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useBankAccountsPlanFact(requestBankAccounts)
+
 
   // Extract bank accounts from response - correct path is data.data.data
   const bankAccountsItems = useMemo(() => {
     const items = bankAccountsData?.data?.data?.data || []
-    console.log('Bank accounts items:', items)
     return Array.isArray(items) ? items : []
   }, [bankAccountsData])
 
@@ -110,7 +109,7 @@ export default function AccountsPage() {
   ]
 
   const toggleFilter = (key) => {
-    setFilters(prev => ({ ...prev, [key]: !prev[key] }))
+    setFilters(prev => prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key])
   }
 
   // Filter bank accounts on frontend based on selected filters
@@ -266,23 +265,23 @@ export default function AccountsPage() {
         <FilterSection title="Тип">
           <div className="space-y-2.5 flex flex-col items-start">
             <OperationCheckbox
-              checked={filters.nalichnye}
-              onChange={() => toggleFilter('nalichnye')}
+              checked={filters.includes('Наличный')}
+              onChange={() => toggleFilter('Наличный')}
               label="Наличный"
             />
             <OperationCheckbox
-              checked={filters.beznalichnye}
-              onChange={() => toggleFilter('beznalichnye')}
+              checked={filters.includes('Безналичный')}
+              onChange={() => toggleFilter('Безналичный')}
               label="Безналичный"
             />
             <OperationCheckbox
-              checked={filters.kartaFizlica}
-              onChange={() => toggleFilter('kartaFizlica')}
+              checked={filters.includes('Карта физлица')}
+              onChange={() => toggleFilter('Карта физлица')}
               label="Карта физлица"
             />
             <OperationCheckbox
-              checked={filters.elektronnye}
-              onChange={() => toggleFilter('elektronnye')}
+              checked={filters.includes('Электронный')}
+              onChange={() => toggleFilter('Электронный')}
               label="Электронный"
             />
           </div>
