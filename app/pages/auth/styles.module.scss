@@ -1,0 +1,234 @@
+.loginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  position: relative;
+  background: linear-gradient(to top, rgba(2, 37, 101, 1), #456fad);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.logoContainer {
+  position: absolute;
+  left: 2.5rem;
+  top: 2.5rem;
+}
+
+.cardWrapper {
+  width: 100%;
+  max-width: 480px;
+
+}
+
+.card {
+  background-color: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+ 
+}
+
+.cardLogo {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.cardTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: black;
+  line-height: 1.5rem;
+  transform: scaleY(1.1);
+  margin-bottom: 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.inputGroup {
+  position: relative;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.inputField {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  padding: 1.25rem 1rem !important;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+  outline: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: $gray-500 !important;
+  &::placeholder {
+    font-size: 14px;
+    font-weight: 500;
+    color: $gray-500;
+  }
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+
+  &.focused {
+    border-color: #104CA2;
+    box-shadow: 0 0 0 1px rgba(16, 76, 162, 0.2);
+  }
+  
+  &.passwordField {
+    padding-right: 3rem;
+  }
+}
+
+.eyeButton {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  outline: none;
+
+  &:hover {
+    color: #475569;
+  }
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.checkboxWrapper {
+  display: flex;
+  align-items: center;
+  height: 1.25rem;
+}
+
+.checkbox {
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.25rem;
+  background-color: white;
+  transition: colors 0.2s;
+  cursor: pointer;
+
+  &:checked {
+    background-color: #0E73F6;
+    border-color: #0E73F6;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 1px #0E73F6;
+  }
+}
+
+.checkboxLabel {
+  font-size: 0.875rem;
+  color: #334155;
+  line-height: tight;
+  cursor: pointer;
+
+  .highlight {
+    color: #0E73F6;
+  }
+}
+
+.errorMessage {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.actionLinks {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.875rem; 
+  color: #64748b;
+}
+
+.actionToggle {
+  color: #0E73F6;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+
+.submitButton {
+  width: 100%;
+  background-color: #7aa0e0;
+  color: white;
+  padding: 0.875rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  transition: background-color 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #0E73F6;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  &.loginButton {
+    background-color: #0E73F6;
+    
+    &:hover {
+      background-color: #7aa0e0;
+    }
+  }
+}
+
+.termsText { 
+  text-align: center;
+  font-size: 0.75rem;
+  color: #1e293b;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: relaxed;
+  max-width: 340px;
+
+  a {
+    text-decoration: underline;
+    color: #0E73F6;
+
+    &:hover {
+      color: #0b5bbd;
+    }
+  }
+}

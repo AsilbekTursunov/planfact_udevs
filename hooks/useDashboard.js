@@ -11,6 +11,13 @@ export const useDashboardData = (params) => {
   })
 }
 
+export const useMyAccountsBoard = (params) => {
+  return useQuery({
+    queryKey: ['myAccountsBoard', params],
+    queryFn: () => dashboardAPI.getMyAccountsBoard(params),
+  })
+}
+
 // Get operations
 export const useOperations = (params) => {
   return useQuery({
@@ -46,25 +53,25 @@ export const useTransactionCategories = (params) => {
 // Create operation mutation
 export const useCreateOperation = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: dashboardAPI.createOperation,
     onMutate: async (newOperation) => {
       // Отменяем текущие запросы
       await queryClient.cancelQueries({ queryKey: ['operationsList'] })
-      
+
       // Сохраняем предыдущее состояние
       const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
-      
+
       return { previousData }
     },
     onSuccess: (response, variables) => {
       // Добавляем новую операцию в кеш
       queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
         if (!old?.data?.data?.data) return old
-        
+
         const newOp = response?.data?.data || variables
-        
+
         return {
           ...old,
           data: {
@@ -76,7 +83,7 @@ export const useCreateOperation = () => {
           }
         }
       })
-      
+
       showSuccessNotification('Операция успешно создана!')
     },
     onError: (error, variables, context) => {
@@ -96,30 +103,30 @@ export const useCreateOperation = () => {
 // Update operation mutation
 export const useUpdateOperation = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: ({ id, data }) => dashboardAPI.updateOperation(id, data),
     onMutate: async ({ id, data }) => {
       // Отменяем текущие запросы
       await queryClient.cancelQueries({ queryKey: ['operationsList'] })
       await queryClient.cancelQueries({ queryKey: ['operation', id] })
-      
+
       // Сохраняем предыдущее состояние
       const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
       const previousOperation = queryClient.getQueryData(['operation', id])
-      
+
       // Оптимистично обновляем операцию в списке
       queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
         if (!old?.data?.data?.data) return old
-        
+
         return {
           ...old,
           data: {
             ...old.data,
             data: {
               ...old.data.data,
-              data: old.data.data.data.map(op => 
-                op.guid === id 
+              data: old.data.data.data.map(op =>
+                op.guid === id
                   ? { ...op, ...data, data_obnovleniya: new Date().toISOString() }
                   : op
               )
@@ -127,7 +134,7 @@ export const useUpdateOperation = () => {
           }
         }
       })
-      
+
       return { previousData, previousOperation }
     },
     onSuccess: () => {
@@ -153,22 +160,22 @@ export const useUpdateOperation = () => {
 // Delete operation mutation
 export const useDeleteOperation = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: dashboardAPI.deleteOperation,
     onMutate: async (guidsToDelete) => {
       // Отменяем текущие запросы
       await queryClient.cancelQueries({ queryKey: ['operationsList'] })
-      
+
       // Сохраняем предыдущее состояние для отката
       const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
-      
+
       // Оптимистично обновляем кеш - удаляем операции из списка
       queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
         if (!old?.data?.data?.data) return old
-        
+
         const guidsArray = Array.isArray(guidsToDelete) ? guidsToDelete : [guidsToDelete]
-        
+
         return {
           ...old,
           data: {
@@ -180,7 +187,7 @@ export const useDeleteOperation = () => {
           }
         }
       })
-      
+
       return { previousData }
     },
     onError: (error, variables, context) => {
@@ -486,16 +493,16 @@ export const useDeleteCounterpartiesGroups = () => {
     onMutate: async (guidsToDelete) => {
       // Отменяем текущие запросы
       await queryClient.cancelQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
-      
+
       // Сохраняем предыдущее состояние для отката
       const previousData = queryClient.getQueriesData({ queryKey: ['counterpartiesGroupsPlanFact'] })
-      
+
       // Оптимистично удаляем группы из кеша
       const guidsArray = Array.isArray(guidsToDelete) ? guidsToDelete : [guidsToDelete]
-      
+
       queryClient.setQueriesData({ queryKey: ['counterpartiesGroupsPlanFact'] }, (old) => {
         if (!old) return old
-        
+
         // Handle structure: { data: { data: { data: [...] } } }
         if (old.data?.data?.data && Array.isArray(old.data.data.data)) {
           return {
@@ -509,7 +516,7 @@ export const useDeleteCounterpartiesGroups = () => {
             }
           }
         }
-        
+
         // Handle structure: { data: { data: [...] } }
         if (old.data?.data && Array.isArray(old.data.data)) {
           return {
@@ -520,7 +527,7 @@ export const useDeleteCounterpartiesGroups = () => {
             }
           }
         }
-        
+
         // Handle structure: { data: [...] }
         if (Array.isArray(old.data)) {
           return {
@@ -528,10 +535,10 @@ export const useDeleteCounterpartiesGroups = () => {
             data: old.data.filter(item => !guidsArray.includes(item.guid))
           }
         }
-        
+
         return old
       })
-      
+
       return { previousData }
     },
     onError: (error, variables, context) => {
@@ -579,16 +586,16 @@ export const useDeleteCounterparties = () => {
     onMutate: async (guidsToDelete) => {
       // Отменяем текущие запросы
       await queryClient.cancelQueries({ queryKey: ['counterpartiesPlanFact'] })
-      
+
       // Сохраняем предыдущее состояние для отката
       const previousData = queryClient.getQueriesData({ queryKey: ['counterpartiesPlanFact'] })
-      
+
       // Оптимистично удаляем контрагентов из кеша
       const guidsArray = Array.isArray(guidsToDelete) ? guidsToDelete : [guidsToDelete]
-      
+
       queryClient.setQueriesData({ queryKey: ['counterpartiesPlanFact'] }, (old) => {
         if (!old) return old
-        
+
         // Handle structure: { data: { data: { data: [...] } } }
         if (old.data?.data?.data && Array.isArray(old.data.data.data)) {
           return {
@@ -602,7 +609,7 @@ export const useDeleteCounterparties = () => {
             }
           }
         }
-        
+
         // Handle structure: { data: { data: [...] } }
         if (old.data?.data && Array.isArray(old.data.data)) {
           return {
@@ -613,7 +620,7 @@ export const useDeleteCounterparties = () => {
             }
           }
         }
-        
+
         // Handle structure: { data: [...] }
         if (Array.isArray(old.data)) {
           return {
@@ -621,10 +628,10 @@ export const useDeleteCounterparties = () => {
             data: old.data.filter(item => !guidsArray.includes(item.guid))
           }
         }
-        
+
         return old
       })
-      
+
       return { previousData }
     },
     onError: (error, variables, context) => {
@@ -731,7 +738,7 @@ export const useMyAccountsV2 = (params = {}) => {
 // Create my account mutation
 export const useCreateMyAccount = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: dashboardAPI.createMyAccount,
     onSuccess: () => {
@@ -749,7 +756,7 @@ export const useCreateMyAccount = () => {
 // Update my account mutation
 export const useUpdateMyAccount = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: dashboardAPI.updateMyAccount,
     onSuccess: () => {
@@ -767,7 +774,7 @@ export const useUpdateMyAccount = () => {
 // Delete my accounts mutation
 export const useDeleteMyAccounts = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: dashboardAPI.deleteMyAccounts,
     onSuccess: () => {
@@ -833,7 +840,7 @@ export const useAccountsGroupsV2 = (params = {}) => {
 // Create legal entity mutation
 export const useCreateLegalEntity = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: dashboardAPI.createLegalEntity,
     onSuccess: () => {
@@ -850,7 +857,7 @@ export const useCreateLegalEntity = () => {
 // Update legal entity mutation
 export const useUpdateLegalEntity = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: dashboardAPI.updateLegalEntity,
     onSuccess: () => {
@@ -867,7 +874,7 @@ export const useUpdateLegalEntity = () => {
 // Delete legal entities mutation
 export const useDeleteLegalEntities = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: dashboardAPI.deleteLegalEntities,
     onSuccess: () => {
@@ -956,7 +963,7 @@ import { operationsAPI } from '@/lib/api/ucode/operations'
  */
 export const useOperationsListNew = (params = {}) => {
   const { enabled = true, ...queryParams } = params
-  
+
   return useQuery({
     queryKey: ['operationsListNew', queryParams],
     queryFn: () => operationsAPI.getList(queryParams),
@@ -988,26 +995,26 @@ export const useOperationByGuid = (guid, enabled = true) => {
  */
 export const useCreateOperationNew = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (operationData) => operationsAPI.create(operationData),
     onMutate: async (newOperation) => {
       // Отменяем текущие запросы
       await queryClient.cancelQueries({ queryKey: ['operationsList'] })
-      
+
       // Сохраняем предыдущее состояние
       const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
-      
+
       return { previousData }
     },
     onSuccess: (response, variables) => {
       // Добавляем новую операцию в кеш
       queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
         if (!old?.data?.data?.data) return old
-        
+
         // Получаем созданную операцию из ответа
         const newOp = response?.data?.data || variables
-        
+
         return {
           ...old,
           data: {
@@ -1019,7 +1026,7 @@ export const useCreateOperationNew = () => {
           }
         }
       })
-      
+
       showSuccessNotification('Операция успешно создана!')
     },
     onError: (error, variables, context) => {
@@ -1044,30 +1051,30 @@ export const useCreateOperationNew = () => {
  */
 export const useUpdateOperationNew = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (operationData) => operationsAPI.update(operationData),
     onMutate: async (updatedOperation) => {
       // Отменяем текущие запросы
       await queryClient.cancelQueries({ queryKey: ['operationsList'] })
       await queryClient.cancelQueries({ queryKey: ['operation', updatedOperation.guid] })
-      
+
       // Сохраняем предыдущее состояние
       const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
       const previousOperation = queryClient.getQueryData(['operation', updatedOperation.guid])
-      
+
       // Оптимистично обновляем операцию в списке
       queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
         if (!old?.data?.data?.data) return old
-        
+
         return {
           ...old,
           data: {
             ...old.data,
             data: {
               ...old.data.data,
-              data: old.data.data.data.map(op => 
-                op.guid === updatedOperation.guid 
+              data: old.data.data.data.map(op =>
+                op.guid === updatedOperation.guid
                   ? { ...op, ...updatedOperation, data_obnovleniya: new Date().toISOString() }
                   : op
               )
@@ -1075,7 +1082,7 @@ export const useUpdateOperationNew = () => {
           }
         }
       })
-      
+
       // Обновляем кеш конкретной операции
       queryClient.setQueryData(['operation', updatedOperation.guid], (old) => {
         return {
@@ -1087,7 +1094,7 @@ export const useUpdateOperationNew = () => {
           }
         }
       })
-      
+
       return { previousData, previousOperation }
     },
     onSuccess: (data, variables) => {
@@ -1118,22 +1125,22 @@ export const useUpdateOperationNew = () => {
  */
 export const useDeleteOperationsNew = () => {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (guids) => operationsAPI.delete(guids),
     onMutate: async (guidsToDelete) => {
       // Отменяем текущие запросы
       await queryClient.cancelQueries({ queryKey: ['operationsList'] })
-      
+
       // Сохраняем предыдущее состояние
       const previousData = queryClient.getQueriesData({ queryKey: ['operationsList'] })
-      
+
       // Оптимистично удаляем операции из списка
       const guidsArray = Array.isArray(guidsToDelete) ? guidsToDelete : [guidsToDelete]
-      
+
       queryClient.setQueriesData({ queryKey: ['operationsList'] }, (old) => {
         if (!old?.data?.data?.data) return old
-        
+
         return {
           ...old,
           data: {
@@ -1145,7 +1152,7 @@ export const useDeleteOperationsNew = () => {
           }
         }
       })
-      
+
       return { previousData }
     },
     onSuccess: () => {

@@ -1,11 +1,13 @@
 "use client"
-
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/app/lib/utils'
 import { useLogin, useRegister } from '@/hooks/useAuth'
+import { Eye, EyeOff } from 'lucide-react'
 import { AuthLogo } from '@/constants/icons'
-
+import styles from './styles.module.scss'
+import Input from '@/components/shared/Input'
+import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,9 +18,13 @@ export default function LoginPage() {
     fullname: '',
     email: '',
     phone: '',
+    checked: false,
   })
   const [error, setError] = useState('')
   const [focusedField, setFocusedField] = useState(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // Login & Register mutations
   const loginMutation = useLogin()
@@ -35,6 +41,10 @@ export default function LoginPage() {
           password: formData.password,
         })
       } else {
+        if (formData.password !== confirmPassword) {
+          setError('Пароли не совпадают')
+          return
+        }
         await registerAsync({
           fullname: formData.fullname,
           email: formData.email,
@@ -56,46 +66,35 @@ export default function LoginPage() {
     setFromType(prev => prev === 'login' ? 'register' : 'login')
     setError('')
     setFormData({ username: '', password: '', fullname: '', email: '', phone: '' })
+    setConfirmPassword('')
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4 relative"
-      style={{
-        background: 'linear-gradient(to top, rgba(2, 37, 101, 1), #456fad)',
-        height: '100vh',
-        overflow: 'hidden'
-      }}
-    >
-      <div className="absolute left-10 top-10">
+    <div className={styles.loginPage}>
+      <div className={styles.logoContainer}>
         <AuthLogo color="#ffffff" width="114" height="27" />
       </div>
       {/* Login Card */}
-      <div className="w-full max-w-[480px]">
-        <div
-          className="bg-white rounded-3xl p-10 md:p-12 shadow-2xl"
-        >
+      <div className={styles.cardWrapper}>
+        <div className={styles.card}>
 
           {/* Logo/Title */}
-          <div className="mb-6 text-center justify-center items-center flex">
+          <div className={styles.cardLogo}>
             <AuthLogo color="#000000" width="150" height="36" />
           </div>
 
-          <h1 className="text-[24px] font-bold mb-3 text-black leading-6 scale-y-110">
+          <h1 className={styles.cardTitle}>
             {fromType === 'login' ? 'Вход в аккаунт' : 'Регистрация'}
           </h1>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className={styles.form}>
             {fromType === 'register' && (
               <>
                 {/* Fullname */}
-                <div className="relative">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-                    ФИО
-                  </label>
-                  <div className="relative group">
-                    <input
+                <div className={styles.inputGroup}>
+                  <div className={styles.inputWrapper}>
+                    <Input
                       type="text"
                       value={formData.fullname}
                       onChange={(e) => {
@@ -105,24 +104,19 @@ export default function LoginPage() {
                       onFocus={() => setFocusedField('fullname')}
                       onBlur={() => setFocusedField(null)}
                       className={cn(
-                        "w-full px-4 py-3.5 border rounded-xl focus:outline-none transition-all text-slate-900 bg-white",
-                        focusedField === 'fullname'
-                          ? "border-[#104CA2] ring-1 ring-[#104CA2]/20"
-                          : "border-slate-200 hover:border-slate-300"
+                        styles.inputField,
+                        focusedField === 'fullname' && styles.focused
                       )}
-                      placeholder="Введите ФИО"
+                      placeholder="ФИО пользователя"
                       required
                     />
                   </div>
                 </div>
 
                 {/* Email */}
-                <div className="relative">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-                    Email
-                  </label>
-                  <div className="relative group">
-                    <input
+                <div className={styles.inputGroup}>
+                  <div className={styles.inputWrapper}>
+                    <Input
                       type="email"
                       value={formData.email}
                       onChange={(e) => {
@@ -132,24 +126,19 @@ export default function LoginPage() {
                       onFocus={() => setFocusedField('email')}
                       onBlur={() => setFocusedField(null)}
                       className={cn(
-                        "w-full px-4 py-3.5 border rounded-xl focus:outline-none transition-all text-slate-900 bg-white",
-                        focusedField === 'email'
-                          ? "border-[#104CA2] ring-1 ring-[#104CA2]/20"
-                          : "border-slate-200 hover:border-slate-300"
+                        styles.inputField,
+                        focusedField === 'email' && styles.focused
                       )}
-                      placeholder="Введите email"
+                      placeholder="Email"
                       required
                     />
                   </div>
                 </div>
 
                 {/* Phone */}
-                <div className="relative">
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-                    Телефон
-                  </label>
-                  <div className="relative group">
-                    <input
+                <div className={styles.inputGroup}>
+                  <div className={styles.inputWrapper}>
+                    <Input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => {
@@ -159,12 +148,10 @@ export default function LoginPage() {
                       onFocus={() => setFocusedField('phone')}
                       onBlur={() => setFocusedField(null)}
                       className={cn(
-                        "w-full px-4 py-3.5 border rounded-xl focus:outline-none transition-all text-slate-900 bg-white",
-                        focusedField === 'phone'
-                          ? "border-[#104CA2] ring-1 ring-[#104CA2]/20"
-                          : "border-slate-200 hover:border-slate-300"
+                        styles.inputField,
+                        focusedField === 'phone' && styles.focused
                       )}
-                      placeholder="Введите телефон"
+                      placeholder="Телефон номер"
                       required
                     />
                   </div>
@@ -174,12 +161,9 @@ export default function LoginPage() {
 
             {/* Username/Login (Only on login) */}
             {fromType === 'login' && (
-              <div className="relative">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-                  Имя пользователя
-                </label>
-                <div className="relative group">
-                  <input
+              <div className={styles.inputGroup}>
+                <div className={styles.inputWrapper}>
+                  <Input
                     type="text"
                     value={formData.username}
                     onChange={(e) => {
@@ -189,12 +173,10 @@ export default function LoginPage() {
                     onFocus={() => setFocusedField('username')}
                     onBlur={() => setFocusedField(null)}
                     className={cn(
-                      "w-full px-4 py-3.5 border rounded-xl focus:outline-none transition-all text-slate-900 bg-white",
-                      focusedField === 'username'
-                        ? "border-[#104CA2] ring-1 ring-[#104CA2]/20"
-                        : "border-slate-200 hover:border-slate-300"
+                      styles.inputField,
+                      focusedField === 'username' && styles.focused
                     )}
-                    placeholder="Введите username"
+                    placeholder="Имя пользователя"
                     required
                   />
                 </div>
@@ -202,13 +184,10 @@ export default function LoginPage() {
             )}
 
             {/* Password */}
-            <div className="relative">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5 ml-1">
-                Пароль
-              </label>
-              <div className="relative group">
-                <input
-                  type="password"
+            <div className={styles.inputGroup}>
+              <div className={styles.inputWrapper}>
+                <Input
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => {
                     setFormData({ ...formData, password: e.target.value })
@@ -217,31 +196,79 @@ export default function LoginPage() {
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
                   className={cn(
-                    "w-full px-4 py-3.5 border rounded-xl focus:outline-none transition-all text-slate-900 bg-white",
-                    focusedField === 'password'
-                      ? "border-[#104CA2] ring-1 ring-[#104CA2]/20"
-                      : "border-slate-200 hover:border-slate-300"
+                    styles.inputField,
+                    styles.passwordField,
+                    focusedField === 'password' && styles.focused
                   )}
-                  placeholder="Введите пароль"
+                  placeholder={fromType === 'register' ? "Создать пароль" : "Пароль"}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className={styles.eyeButton}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
               </div>
             </div>
 
+            {/* Confirm Password (Only on register) */}
+            {fromType === 'register' && (
+              <div className={styles.inputGroup}>
+                <div className={styles.inputWrapper}>
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value)
+                      setError('')
+                    }}
+                    onFocus={() => setFocusedField('confirmPassword')}
+                    onBlur={() => setFocusedField(null)}
+                    className={cn(
+                      styles.inputField,
+                      styles.passwordField,
+                      focusedField === 'confirmPassword' && styles.focused
+                    )}
+                    placeholder="Подтвердить пароль"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className={styles.eyeButton}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Checkbox (Only on register) */}
+            {fromType === 'register' && (
+              <div className={styles.checkboxGroup}>
+                <OperationCheckbox id="terms" checked={formData.checked} onChange={() => setFormData({ ...formData, checked: !formData.checked })} />
+                <label htmlFor="terms" className={styles.checkboxLabel}>
+                  Я <span className={styles.highlight}>соглашаюсь</span> на получение информационных и справочных материалов
+                </label>
+              </div>
+            )}
+
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm text-center">
+              <div className={styles.errorMessage}>
                 {error}
               </div>
             )}
 
             {/* Action Links */}
-            <div className="flex justify-center items-center text-sm mt-10">
-              <span className="text-slate-500">
-                {fromType === 'login' ? 'Нет учётной записи? ' : 'Уже есть аккаунт? '}
+            <div className={styles.actionLinks}>
+              <span>
+                {fromType === 'login' ? 'Нет учётной записи? ' : 'Есть учётная запись? '}
                 <span
                   onClick={toggleFormType}
-                  className="text-[#0E73F6] text-base font-medium cursor-pointer hover:underline"
+                  className={styles.actionToggle}
                 >
                   {fromType === 'login' ? 'Зарегистрироваться' : 'Войти'}
                 </span>
@@ -249,18 +276,24 @@ export default function LoginPage() {
             </div>
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={fromType === 'login' ? loginMutation.isPending : isRegistering}
-              className="w-full bg-[#0E73F6] text-white py-3.5 rounded-lg font-bold text-lg hover:bg-[#7aa0e0] transition-colors disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
-            >
-              {fromType === 'login'
-                ? (loginMutation.isPending ? 'Вход...' : 'Войти')
-                : (isRegistering ? 'Регистрация...' : 'Зарегистрироваться')}
-            </button>
+            <div className={styles.submitWrapper}>
+              <button
+                type="submit"
+                disabled={fromType === 'login' ? loginMutation.isPending : isRegistering}
+                className={cn(
+                  styles.submitButton,
+                  fromType === 'login' && styles.loginButton
+                )}
+              >
+                {fromType === 'login'
+                  ? (loginMutation.isPending ? 'Вход...' : 'Войти')
+                  : (isRegistering ? 'Регистрация...' : 'Зарегистрироваться')}
+              </button>
+            </div>
 
-            <div className="mt-8 text-center tracking-[1px] text-xs text-slate-900 max-w-[280px] mx-auto leading-tight">
-              Нажав кнопку «{fromType === 'login' ? 'Войти' : 'Зарегистрироваться'}», вы подтверждаете <a href="#" className="underline font-semibold text-[#0E73F6] decoration-[#0E73F6] hover:text-slate-700">Политика конфеденциальности</a>
+            <div className={styles.termsText}>
+              Нажав кнопку «{fromType === 'login' ? 'Войти' : 'Зарегистрироваться'}», вы подтверждаете{' '}
+              <a href="#">Политика конфеденциальности</a>
             </div>
           </form>
         </div>

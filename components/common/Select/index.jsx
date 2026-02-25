@@ -7,7 +7,7 @@ const customStyles = {
     minHeight: '36px',
     height: '36px',
     borderRadius: '8px',
-    border: `1px solid ${state.isFocused ? '#9ca3af' : '#e5e7eb'}`,
+    border: `1px solid ${state.isFocused ? '#d0d5dd' : '#e5e7eb'}`,
     backgroundColor: 'white',
     padding: '0 12px',
     boxShadow: 'none',
