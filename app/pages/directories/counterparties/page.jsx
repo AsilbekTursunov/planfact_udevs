@@ -1096,9 +1096,19 @@ export default function CounterpartiesPage() {
             try {
               await deleteGroupMutation.mutateAsync([deletingGroup.guid])
               setDeletingGroup(null)
+              // Reset search to show all groups after deletion
+              setSearchQuery('')
+              setDebouncedSearchQuery('')
+              // Reset local state
+              setPage(1)
+              setAllCounterparties([])
+              setHasMore(true)
+              setTotalFromAPI(0)
               // Invalidate queries to refresh data
               queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
               queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
+              queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
+              queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
             } catch (error) {
               console.error('Error deleting group:', error)
             }
@@ -1117,8 +1127,18 @@ export default function CounterpartiesPage() {
             try {
               await deleteMutation.mutateAsync([deletingCounterparty.guid])
               setDeletingCounterparty(null)
+              // Reset search to show all counterparties after deletion
+              setSearchQuery('')
+              setDebouncedSearchQuery('')
+              // Reset local state
+              setPage(1)
+              setAllCounterparties([])
+              setHasMore(true)
+              setTotalFromAPI(0)
               // Invalidate queries to refresh data
               queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
+              queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
+              queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
             } catch (error) {
               console.error('Error deleting counterparty:', error)
             }

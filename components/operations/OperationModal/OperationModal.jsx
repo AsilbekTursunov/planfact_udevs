@@ -245,7 +245,7 @@ export function OperationModal({
 	}, [activeTab])
 
 	// Fetch data from API - using groups endpoint which includes children
-	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
+	const { data: counterpartiesGroupsData, isLoading: isLoadingGroups } = useCounterpartiesGroupsPlanFact({
 		page: 1,
 		limit: 100,
 	})
@@ -1024,6 +1024,7 @@ export function OperationModal({
 											onChange={value => setFormData({ ...formData, counterparty: value })}
 											placeholder='Выберите контрагента...'
 											className='flex-1'
+											loading={isLoadingGroups}
 										/>
 									</div>
 
@@ -1181,6 +1182,7 @@ export function OperationModal({
 											onChange={value => setFormData({ ...formData, counterparty: value })}
 											placeholder='Выберите контрагента...'
 											className='flex-1'
+											loading={isLoadingGroups}
 										/>
 									</div>
 

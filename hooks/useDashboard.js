@@ -254,7 +254,7 @@ export const useChartOfAccountsPlanFact = (params = {}) => {
     enabled: true,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchOnMount: true, // Always refetch on component mount
     refetchOnWindowFocus: false, // Don't refetch on window focus
     retry: false,
   })
@@ -446,7 +446,7 @@ export const useCounterpartiesGroupsPlanFact = (params = {}) => {
     enabled: true,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
+    refetchOnMount: true, // Always refetch on component mount
     refetchOnWindowFocus: false,
     retry: false,
   })
@@ -644,12 +644,12 @@ export const useDeleteCounterparties = () => {
       showErrorNotification(error.message || 'Ошибка при удалении контрагента(ов)')
     },
     onSuccess: () => {
-      showSuccessNotification('Контрагент(ы) успешно удален(ы)!')
-    },
-    onSettled: () => {
-      // Обновляем связанные запросы в фоне
+      // Invalidate all counterparties queries to refetch fresh data
       queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
       queryClient.invalidateQueries({ queryKey: ['counterparties'] })
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
+      showSuccessNotification('Контрагент(ы) успешно удален(ы)!')
     },
   })
 }
@@ -820,7 +820,7 @@ export const useLegalEntitiesPlanFact = (params = {}) => {
     enabled: true,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchOnMount: true, // Always refetch on component mount
     refetchOnWindowFocus: false, // Don't refetch on window focus
     retry: false,
   })
