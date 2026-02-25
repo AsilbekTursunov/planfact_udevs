@@ -47,6 +47,7 @@ export default function CounterpartiesPage() {
   const queryClient = useQueryClient()
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedRows, setSelectedRows] = useState([])
   const [viewMode, setViewMode] = useState('list') // 'list' | 'nested' | 'groups'
@@ -73,6 +74,15 @@ export default function CounterpartiesPage() {
     calculationMethod: "Cashflow",
     dateRange: null
   })
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 500) // 500ms debounce
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   // Build filters object for API request
   const filtersForAPI = useMemo(() => {
@@ -121,6 +131,7 @@ export default function CounterpartiesPage() {
     calculationMethod: filters.calculationMethod,
     contrAgentId: filters.selectedCounterparties,
     operationCategoryId: filters.selectedChartOfAccounts,
+    searchString: viewMode === 'list' ? debouncedSearchQuery : '',
   }, true) // Always enable the query
 
   // Update counterparties when new data arrives
@@ -224,7 +235,7 @@ export default function CounterpartiesPage() {
     setTotalFromAPI(0)
     isLoadingRef.current = false
     lastPageRef.current = 1
-  }, [filtersForAPI])
+  }, [filtersForAPI, debouncedSearchQuery])
 
   // Infinite scroll handler
   useEffect(() => {
@@ -281,6 +292,7 @@ export default function CounterpartiesPage() {
   const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
     page: 1,
     limit: 100,
+    searchString: (viewMode === 'nested' || viewMode === 'groups') ? debouncedSearchQuery : '',
   })
 
 
@@ -654,7 +666,13 @@ export default function CounterpartiesPage() {
                   <SearchBar
                     value={searchQuery}
                     onChange={setSearchQuery}
-                    placeholder="Поиск по названию или ИНН"
+                    placeholder={
+                      viewMode === 'list' 
+                        ? "Поиск контрагентов" 
+                        : viewMode === 'nested'
+                          ? "Поиск по группам"
+                          : "Поиск групп"
+                    }
                   />
                 </div>
               </div>

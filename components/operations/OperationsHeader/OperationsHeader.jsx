@@ -3,7 +3,14 @@
 import { cn } from '@/app/lib/utils'
 import styles from './OperationsHeader.module.scss'
 
-export function OperationsHeader({ isFilterOpen, onFilterToggle, onCreateClick, selectedCount = 0 }) {
+export function OperationsHeader({ 
+  isFilterOpen, 
+  onFilterToggle, 
+  onCreateClick, 
+  selectedCount = 0,
+  searchQuery = '',
+  onSearchChange
+}) {
   return (
     <div className={styles.header}>
       <div className={styles.headerInner}>
@@ -20,8 +27,10 @@ export function OperationsHeader({ isFilterOpen, onFilterToggle, onCreateClick, 
           <div className={styles.headerSearch}>
             <input
               type="text"
-              placeholder="Поиск по операциям"
+              placeholder="По счету, контрагенту, или статья"
               className={styles.headerSearchInput}
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
             />
             <svg className={styles.headerSearchIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <circle cx="11" cy="11" r="8"></circle>

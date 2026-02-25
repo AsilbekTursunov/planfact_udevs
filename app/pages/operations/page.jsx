@@ -37,6 +37,10 @@ export default function OperationsPage() {
 	const [isFilterOpen, setIsFilterOpen] = useState(true)
 	const [selectedFilters, setSelectedFilters] = useState([])
 
+	// Search state
+	const [searchQuery, setSearchQuery] = useState('')
+	const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
+
 	const [dateFilters, setDateFilters] = useState({
 		podtverzhdena: true,
 		nePodtverzhdena: true,
@@ -54,6 +58,15 @@ export default function OperationsPage() {
 	const [selectedFinancialAccounts, setSelectedFinancialAccounts] = useState({})
 	const [amountRange, setAmountRange] = useState({ min: '', max: '' })
 	const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
+
+	// Debounce search query
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setDebouncedSearchQuery(searchQuery)
+		}, 500)
+
+		return () => clearTimeout(timer)
+	}, [searchQuery])
 
 	// No filtering - filters are just UI elements
 	const filtersForAPI = useMemo(() => {
@@ -170,6 +183,7 @@ export default function OperationsPage() {
 		return {
 			page: page,
 			limit: limit,
+			...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
 			...(startDate && endDate && {
 				date_range: {
 					start_date: startDate,
@@ -189,7 +203,7 @@ export default function OperationsPage() {
 			podtverzhdena: dateFilters.podtverzhdena,
 			ne_podtverzhdena: dateFilters.nePodtverzhdena,
 		}
-	}, [page, limit, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
+	}, [page, limit, debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
 
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList(requestOperationFilters)
 
@@ -200,7 +214,7 @@ export default function OperationsPage() {
 		setPage(1)
 		setHasMore(true)
 		setAllOperations([])
-	}, [selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
+	}, [debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
 
 	// Update operations when new data arrives
 	useEffect(() => {
@@ -720,6 +734,8 @@ export default function OperationsPage() {
 						}, 50)
 					}}
 					selectedCount={selectedOperations.length}
+					searchQuery={searchQuery}
+					onSearchChange={setSearchQuery}
 				/>
 
 				{/* Table */}

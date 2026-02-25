@@ -28,10 +28,20 @@ export default function AccountsPage() {
 
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingAccount, setEditingAccount] = useState(null)
   const [deletingAccount, setDeletingAccount] = useState(null)
   const deleteMutation = useDeleteMyAccounts()
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const [accountingMethod, setAccountingMethod] = useState('cash')
   const [isMethodDropdownOpen, setIsMethodDropdownOpen] = useState(false)
@@ -68,11 +78,12 @@ export default function AccountsPage() {
     return {
       page: 1,
       limit: 100,
+      ...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
       ...(filters.length > 0 && { tip: filters }),
       ...(selectedAccounts.length > 0 && { my_accounts_ids: selectedAccounts }),
       ...(selectedEntity.length > 0 && { legal_entity_ids: selectedEntity }),
     }
-  }, [filters, selectedAccounts, selectedEntity])
+  }, [debouncedSearchQuery, filters, selectedAccounts, selectedEntity])
 
   // Fetch bank accounts using new invoke_function API
   const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useBankAccountsPlanFact(requestBankAccounts)
@@ -117,16 +128,7 @@ export default function AccountsPage() {
     if (!bankAccountsItems || bankAccountsItems.length === 0) return []
 
     return bankAccountsItems.filter(item => {
-      // Note: New API doesn't return 'tip' field, so type filtering is disabled
-      // If you need type filtering, it should be added to the API
-
-      // Filter by search query
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase()
-        const name = (item.nazvanie || '').toLowerCase()
-        const accountNumber = (item.nomer_scheta || '').toLowerCase()
-        if (!name.includes(query) && !accountNumber.includes(query)) return false
-      }
+      // Note: Search is now handled by API via searchString parameter
 
       // Filter by selected accounts
       if (selectedAccounts.length > 0) {
@@ -138,7 +140,7 @@ export default function AccountsPage() {
 
       return true
     })
-  }, [bankAccountsItems, searchQuery, selectedAccounts])
+  }, [bankAccountsItems, selectedAccounts])
   const [selectedRows, setSelectedRows] = useState([])
 
   // Get all field keys from API response - only show needed fields

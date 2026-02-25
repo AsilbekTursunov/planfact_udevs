@@ -8,11 +8,11 @@ import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityMo
 import LegalEntityMenu from '@/components/directories/LegalEntityMenu/LegalEntityMenu'
 import DeleteLegalEntityConfirmModal from '@/components/directories/DeleteLegalEntityConfirmModal/DeleteLegalEntityConfirmModal'
 import styles from './legal-entities.module.scss'
-import { SearchBar } from '../../../../components/directories/SearchBar/SearchBar'
 
 export default function LegalEntitiesPage() {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [selectedRows, setSelectedRows] = useState([])
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingLegalEntity, setEditingLegalEntity] = useState(null)
@@ -20,10 +20,20 @@ export default function LegalEntitiesPage() {
 
   const deleteMutation = useDeleteLegalEntities()
 
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
   // Fetch legal entities using new invoke_function API
   const { data: legalEntitiesData, isLoading: isLoadingLegalEntities } = useLegalEntitiesPlanFact({
     page: 1,
     limit: 100,
+    ...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
   })
 
   console.log('Legal entities data:', legalEntitiesData)
@@ -69,15 +79,9 @@ export default function LegalEntitiesPage() {
   }
 
   const filteredData = useMemo(() => {
-    if (!searchQuery.trim()) return entities
-
-    const query = searchQuery.toLowerCase()
-    return entities.filter(item =>
-      item.shortName.toLowerCase().includes(query) ||
-      item.fullName.toLowerCase().includes(query) ||
-      item.inn.includes(query)
-    )
-  }, [entities, searchQuery])
+    // Search is now handled by API, so just return entities
+    return entities
+  }, [entities])
 
   const handleEdit = (legalEntity) => {
     setEditingLegalEntity(legalEntity.rawData)
@@ -127,11 +131,22 @@ export default function LegalEntitiesPage() {
 
             {/* Search */}
             <div className={styles.searchContainer}>
-              <SearchBar
+              <input
+                type="text"
+                placeholder="Поиск по краткому названию"
+                className={styles.searchInput}
                 value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Поиск по названию"
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
+              <svg
+                className={styles.searchIcon}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
             </div>
           </div>
         </div>
