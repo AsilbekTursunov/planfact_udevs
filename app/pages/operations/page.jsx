@@ -123,7 +123,7 @@ export default function OperationsPage() {
 	const [hasMore, setHasMore] = useState(true)
 	const [allOperations, setAllOperations] = useState([])
 	const [isLoadingMore, setIsLoadingMore] = useState(false)
-	const limit = 20
+	const limit = 50
 	const tableWrapperRef = useRef(null)
 
 	const dateParams = useMemo(() => {
@@ -168,8 +168,8 @@ export default function OperationsPage() {
 		const endDate = safeFormatDate(selectedDatePaymentRange?.end)
 
 		return {
-			page: 1,
-			limit: 100,
+			page: page,
+			limit: limit,
 			...(startDate && endDate && {
 				date_range: {
 					start_date: startDate,
@@ -189,17 +189,18 @@ export default function OperationsPage() {
 			podtverzhdena: dateFilters.podtverzhdena,
 			ne_podtverzhdena: dateFilters.nePodtverzhdena,
 		}
-	}, [selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
+	}, [page, limit, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
 
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList(requestOperationFilters)
 
 
 
-	// Reset pagination when date filter changes
+	// Reset pagination when filters change
 	useEffect(() => {
 		setPage(1)
 		setHasMore(true)
-	}, [dateParams])
+		setAllOperations([])
+	}, [selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
 
 	// Update operations when new data arrives
 	useEffect(() => {
@@ -723,30 +724,6 @@ export default function OperationsPage() {
 
 				{/* Table */}
 				<div className={styles.tableArea} style={{ position: 'relative' }}>
-					{(isLoadingOperations || isFetching) && (
-						<div style={{
-							position: 'absolute',
-							top: 0,
-							left: 0,
-							right: 0,
-							bottom: 0,
-							background: 'rgba(255,255,255,0.7)',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							zIndex: 10,
-							borderRadius: '12px'
-						}}>
-							<div style={{
-								width: '36px',
-								height: '36px',
-								border: '3px solid #e5e7eb',
-								borderTopColor: '#307FE2',
-								borderRadius: '50%',
-								animation: 'spin 0.8s linear infinite'
-							}} />
-						</div>
-					)}
 					{/* Selection Bar */}
 					{selectedOperations.length > 0 && (
 						<div className={styles.selectionBar}>
@@ -896,23 +873,23 @@ export default function OperationsPage() {
 								)}
 							</tbody>
 						</table>
-						{/* Loading indicator */}
-						{(isLoadingMore || (isLoadingOperations && page > 1)) && (
-							<div className={styles.loadingMore}>
-								<div className={styles.loadingSpinner}></div>
-								<span>Загрузка...</span>
-							</div>
-						)}
-						{/* {!hasMore && operations.length > 0 && (
-							<div className={styles.noMoreData}>
-								Все операции загружены
-							</div>
-						)} */}
 					</div>
 				</div>
 
+				{/* Loading indicator at the bottom outside the table */}
+				{isLoadingMore && page > 1 && (
+					<div className={styles.loadingMore}>
+						<div className={styles.loadingSpinner}></div>
+						<span>Загрузка...</span>
+					</div>
+				)}
+
 				{/* Footer Stats */}
-				<OperationsFooter isFilterOpen={isFilterOpen} operations={operations} />
+				<OperationsFooter 
+					isFilterOpen={isFilterOpen} 
+					operations={operations}
+					totalOperations={operationsListData?.data?.data?.pagination?.total || operations.length}
+				/>
 			</div>
 
 			{/* Right Side Modal */}

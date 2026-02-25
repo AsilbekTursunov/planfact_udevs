@@ -5,13 +5,12 @@ import styles from './OperationsFooter.module.scss'
 import { useMemo } from 'react'
 import { BsCurrencyDollar } from 'react-icons/bs'
 
-export function OperationsFooter({ isFilterOpen = false, operations = [] }) {
-
-  console.log(operations)
+export function OperationsFooter({ isFilterOpen = false, operations = [], totalOperations }) {
+  
   const stats = useMemo(() => {
     if (!operations || operations.length === 0) {
       return {
-        total: 0,
+        total: totalOperations || 0,
         income: { count: 0, sum: 0 },
         payment: { count: 0, sum: 0 },
         transfer: { count: 0, sum: 0 },
@@ -52,14 +51,14 @@ export function OperationsFooter({ isFilterOpen = false, operations = [] }) {
     const totalSum = incomeSum - paymentSum
 
     return {
-      total: operations.length,
+      total: totalOperations || operations.length,
       income: { count: incomeCount, sum: incomeSum },
       payment: { count: paymentCount, sum: paymentSum },
       transfer: { count: transferCount, sum: transferSum },
       accrual: { count: accrualCount, sum: accrualSum },
       totalSum
     }
-  }, [operations])
+  }, [operations, totalOperations])
 
   return (
     <div className={cn(styles.footer, isFilterOpen && styles.withFilter)}>
