@@ -331,6 +331,10 @@
   .tr:hover &:first-child {
     background-color: #f0f4f8;
   }
+        &:hover {
+          cursor: pointer;
+          color: #1890ff;
+        }
 }
 
 .cellContent {
@@ -377,8 +381,8 @@
 }
 
 .boldNumber {
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 12px;
+    font-weight: 600;
 }
 
 .sectionHeader {
