@@ -12,7 +12,7 @@ import Input from '../../shared/Input'
 export function OperationsFiltersSidebar({
   isOpen,
   onClose,
-  selectedFilters,
+  selectedFilters = [],
   onFilterChange,
   dateFilters,
   onDateFilterChange,
@@ -37,6 +37,9 @@ export function OperationsFiltersSidebar({
   selectedChartOfAccounts,
   onChartOfAccountsChange,
 }) {
+  // Ensure selectedFilters is always an array
+  const safeSelectedFilters = Array.isArray(selectedFilters) ? selectedFilters : []
+  
   const [activeTab, setActiveTab] = useState('general')
   const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)
   const [currentMonthStart, setCurrentMonthStart] = useState(new Date(2026, 0))
@@ -231,14 +234,14 @@ export function OperationsFiltersSidebar({
                   {/* Поступление */}
                   <div className={styles.filterOptions}>
                     <OperationCheckbox
-                      checked={selectedFilters.includes('Поступление') || false}
+                      checked={safeSelectedFilters.includes('Поступление') || false}
                       onChange={() => onFilterChange('type', 'Поступление')}
                       label="Поступление"
                     />
 
                     {/* Выплата */}
                     <OperationCheckbox
-                      checked={selectedFilters.includes('Выплата') || false}
+                      checked={safeSelectedFilters.includes('Выплата') || false}
                       onChange={() => onFilterChange('type', 'Выплата')}
                       label="Выплата"
                     />
@@ -246,11 +249,11 @@ export function OperationsFiltersSidebar({
                     {/* Перемещение */}
                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
                       <OperationCheckbox
-                        checked={selectedFilters.includes('Перемещение') || false}
+                        checked={safeSelectedFilters.includes('Перемещение') || false}
                         onChange={() => {
                           onFilterChange('type', 'Перемещение')
-                          onFilterChange('type', 'Списание', !selectedFilters.includes('Перемещение'))
-                          onFilterChange('type', 'Зачисление', !selectedFilters.includes('Перемещение'))
+                          onFilterChange('type', 'Списание', !safeSelectedFilters.includes('Перемещение'))
+                          onFilterChange('type', 'Зачисление', !safeSelectedFilters.includes('Перемещение'))
                         }}
                         label="Перемещение"
                       />
@@ -269,12 +272,12 @@ export function OperationsFiltersSidebar({
                     {expandedFilters.peremescheniye && (
                       <div style={{ paddingLeft: '1.25rem', display: 'flex', alignItems: 'flex-start', flexDirection: 'column', gap: '0.75rem' }}>
                         <OperationCheckbox
-                          checked={selectedFilters.includes('Списание') || false}
+                          checked={safeSelectedFilters.includes('Списание') || false}
                           onChange={() => onFilterChange('type', 'Списание')}
                           label="Списание"
                         />
                         <OperationCheckbox
-                          checked={selectedFilters.includes('Зачисление') || false}
+                          checked={safeSelectedFilters.includes('Зачисление') || false}
                           onChange={() => onFilterChange('type', 'Зачисление')}
                           label="Зачисление"
                         />
@@ -284,11 +287,11 @@ export function OperationsFiltersSidebar({
                     {/* Начисление */}
                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
                       <OperationCheckbox
-                        checked={selectedFilters.includes('Начисление') || false}
+                        checked={safeSelectedFilters.includes('Начисление') || false}
                         onChange={() => {
                           onFilterChange('type', 'Начисление')
-                          onFilterChange('type', 'Дебет', !selectedFilters.includes('Начисление'))
-                          onFilterChange('type', 'Кредит', !selectedFilters.includes('Начисление'))
+                          onFilterChange('type', 'Дебет', !safeSelectedFilters.includes('Начисление'))
+                          onFilterChange('type', 'Кредит', !safeSelectedFilters.includes('Начисление'))
                         }}
                         label="Начисление"
                       />
@@ -307,12 +310,12 @@ export function OperationsFiltersSidebar({
                     {expandedFilters.nachisleniye && (
                       <div style={{ paddingLeft: '1.25rem', display: 'flex', alignItems: 'flex-start', flexDirection: 'column', gap: '0.75rem' }}>
                         <OperationCheckbox
-                          checked={selectedFilters.includes('Дебет') || false}
+                          checked={safeSelectedFilters.includes('Дебет') || false}
                           onChange={() => onFilterChange('type', 'Дебет')}
                           label="Дебет"
                         />
                         <OperationCheckbox
-                          checked={selectedFilters.includes('Кредит') || false}
+                          checked={safeSelectedFilters.includes('Кредит') || false}
                           onChange={() => onFilterChange('type', 'Кредит')}
                           label="Кредит"
                         />

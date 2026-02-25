@@ -151,8 +151,8 @@ export function MultiSelect({
                 Ничего не найдено
               </div>
             ) : (
-              filteredData.map((item) => (
-                <div key={item[valueKey]} className={styles.checkboxLabel}>
+              filteredData.map((item, index) => (
+                <div key={item[valueKey] || `group-${item.group}-${index}`} className={styles.checkboxLabel}>
                   {item.value ? (
                     <OperationCheckbox
                       key={item[valueKey]}

@@ -101,9 +101,10 @@ const customStyles = {
   }),
 }
 
-const Select = ({ styles: userStyles, ...props }) => {
+const Select = ({ styles: userStyles, instanceId, ...props }) => {
   return (
     <ReactSelect
+      instanceId={instanceId}
       styles={{ ...customStyles, ...userStyles }}
       {...props}
     />
