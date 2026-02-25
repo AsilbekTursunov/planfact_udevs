@@ -14,6 +14,7 @@ const OperationTableRow = ({
   handleDeleteOperation,
   handleCopyOperation,
 }) => {
+  console.log("op", op)
   return (
     <tr
       key={op.id}
@@ -23,7 +24,7 @@ const OperationTableRow = ({
       )}
       onClick={e => {
         if (!e.target.closest('input') && !e.target.closest('button')) {
-          openOperationModal(op)
+          openOperationModal(op) 
         }
       }}
     >

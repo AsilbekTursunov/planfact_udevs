@@ -33,6 +33,7 @@ export function OperationModal({
 	const queryClient = useQueryClient()
 	const isNew = operation?.isNew || false
 
+
 	// Extract guid from operation - check multiple possible locations
 	const operationGuid = useMemo(() => {
 		if (isNew) return null
@@ -76,7 +77,7 @@ export function OperationModal({
 
 
 	// Current active tab
-	const [activeTab, setActiveTab] = useState(modalType || 'income')
+	const [activeTab, setActiveTab] = useState(operationData?.typeCategory || 'income')
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
 	// Block body scroll when modal is open

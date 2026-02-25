@@ -314,6 +314,7 @@
   overflow: visible;
 }
 
+// ----------------------------------------------------
 .balanceSection {
   display: flex;
   flex-direction: column;
@@ -323,27 +324,19 @@
   margin: auto 0;
   position: relative;
   padding: 0.5rem 1.25rem;
-  background: linear-gradient(135deg, rgba(139, 125, 255, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%);
   border-radius: 0.5rem;
-  border: 1px solid rgba(139, 125, 255, 0.2);
   backdrop-filter: blur(12px);
   max-width: 100%;
   box-sizing: border-box;
   min-width: 0;
   overflow: visible;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   
   &:hover {
-    background: linear-gradient(135deg, rgba(139, 125, 255, 0.2) 0%, rgba(99, 102, 241, 0.15) 100%);
+    background: linear-gradient(135deg, rgba(12, 10, 21, 0.2) 0%, rgba(3, 3, 16, 0.15) 100%);
     border-color: rgba(139, 125, 255, 0.3);
-    box-shadow: 
-      0 4px 12px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    transform: translateY(-1px);
+    // transform: translateY(-1px);
   }
   
   &:active {

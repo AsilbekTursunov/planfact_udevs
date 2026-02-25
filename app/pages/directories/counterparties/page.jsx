@@ -376,9 +376,8 @@ export default function CounterpartiesPage() {
 
     // For nested view - use counterpartiesGroupsItems with children
     const groupedFromAPI = counterpartiesGroupsItems
-      .filter(group => group.children && group.children.length > 0) // Only groups with children
       .map(group => {
-        const children = group.children.map((item, index) => ({
+        const children = (group.children || []).map((item, index) => ({
           id: item.guid || `counterparty-${index}`,
           guid: item.guid,
           nazvanie: item.nazvanie || 'Без названия',
@@ -427,6 +426,8 @@ export default function CounterpartiesPage() {
       items: [] // Empty for groups-only view
     }))
   }, [counterpartiesGroupsItems])
+
+  console.log(counterpartiesGroups, 'counterpartiesGroups') 
 
 
   const totalCounterparties = flatCounterparties.length
@@ -744,6 +745,7 @@ export default function CounterpartiesPage() {
                     if (item.isGroup) {
                       const isExpanded = expandedGroups.has(item.guid)
                       const isLastChild = (index) => index === item.items.length - 1
+                      console.log(item, 'item')
                       return (
                         <React.Fragment key={item.id}>
                           <tr className={cn(styles.tableRow, styles.groupRow)} onClick={() => toggleGroup(item.guid)}>
@@ -789,6 +791,13 @@ export default function CounterpartiesPage() {
                               />
                             </td>
                           </tr>
+                          {isExpanded && item.items.length === 0 && (
+                            <tr className={cn(styles.tableRow, styles.childRow)}>
+                              <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.textMuted)} style={{ padding: '16px' }}>
+                                Нет контрагентов
+                              </td>
+                            </tr>
+                          )}
                           {isExpanded && item.items.map((counterparty, childIndex) => (
                             <tr
                               key={counterparty.id}
@@ -823,6 +832,7 @@ export default function CounterpartiesPage() {
                         </React.Fragment>
                       )
                     } else {
+
                       return (
                         <tr
                           key={item.id}

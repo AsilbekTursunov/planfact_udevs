@@ -5,6 +5,7 @@ import { ChevronDown, MoreVertical, Maximize2, User, LogOut } from 'lucide-react
 import { cn } from '@/app/lib/utils'
 import { useFinanceSummary } from '@/hooks/useDashboard'
 import styles from './Header.module.scss'
+import TotalPrice from './total-prices'
 
 export function Header() {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false)
@@ -493,6 +494,8 @@ export function Header() {
                         )}
                     </div>}
                 </div>
+
+                <TotalPrice />
 
                 {/* Right side: User icon and Logout button */}
                 <div className={styles.rightSection}>
