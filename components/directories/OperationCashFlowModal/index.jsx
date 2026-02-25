@@ -8,11 +8,29 @@ import { ExpenseArrow, IncomeArrow } from '../../../constants/icons'
  * Skips the root row itself — only its children are shown as "operations".
  */
 const flattenRows = (row, depth = 0) => {
-  const result = [{ ...row, _depth: depth }]
+  const result = []
   if (Array.isArray(row.subRows) && row.subRows.length > 0) {
     row.subRows.forEach(child => {
-      result.push(...flattenRows(child, depth + 1))
+      // For children, we want to include them in the operations list
+      // If a child has its own subRows, we just flatten those too instead of adding the child group wrapper
+      if (Array.isArray(child.subRows) && child.subRows.length > 0) {
+        result.push(...flattenRows(child, depth + 1))
+      } else {
+        result.push({ ...child, _depth: depth + 1 })
+      }
     })
+  } else if (Array.isArray(row.details) && row.details.length > 0) {
+    // Handling P&L data structure where children are in `details` instead of `subRows` pending on transformation
+    row.details.forEach(child => {
+      if (Array.isArray(child.details) && child.details.length > 0) {
+        result.push(...flattenRows(child, depth + 1))
+      } else {
+        result.push({ ...child, _depth: depth + 1 })
+      }
+    })
+  } else {
+    // If it's a leaf node itself, just show it
+    result.push({ ...row, _depth: depth })
   }
   return result
 }

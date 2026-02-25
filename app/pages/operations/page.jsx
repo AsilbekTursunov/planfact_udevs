@@ -502,13 +502,13 @@ export default function OperationsPage() {
 		// document.body.style.overflow = 'hidden'
 		// Определяем тип модалки по типу операции
 		if (operation.typeCategory === 'transfer') {
-			setModalType('accrual')
+			setModalType('transfer')
 		} else if (operation.typeCategory === 'out') {
 			setModalType('payment')
 		} else if (operation.typeCategory === 'in') {
 			setModalType('income')
 		} else {
-			setModalType('payment')
+			setModalType('accrual')
 		}
 		// Запускаем анимацию появления
 		setTimeout(() => {
@@ -527,8 +527,19 @@ export default function OperationsPage() {
 	}
 
 	const handleEditOperation = operation => {
+		if (operation.typeCategory === 'transfer') {
+			setModalType('transfer')
+		} else if (operation.typeCategory === 'out') {
+			setModalType('payment')
+		} else if (operation.typeCategory === 'in') {
+			setModalType('income')
+		} else {
+			setModalType('accrual')
+		}
 		openOperationModal(operation)
 	}
+
+
 
 	const handleDeleteOperation = operation => {
 		setOperationToDelete(operation)

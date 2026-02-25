@@ -8,6 +8,7 @@ import { bankAccountsAPI } from '@/lib/api/ucode/bankAccounts'
 import { counterpartiesAPI } from '@/lib/api/ucode/counterparties'
 import styles from './profit-and-loss.module.scss'
 import '@/styles/report-filters.css'
+import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 
 export default function ProfitAndLossPage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
@@ -15,6 +16,9 @@ export default function ProfitAndLossPage() {
   const [reportData, setReportData] = useState(null)
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedColumn, setSelectedColumn] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(null)
   
   // Data from API
   const [accounts, setAccounts] = useState([])
@@ -366,14 +370,28 @@ export default function ProfitAndLossPage() {
             
             return (
               <td key={period.key} className={styles.td}>
-                <span className={item.level === 0 || isResultRow || isTotalRow ? styles.boldNumber : ''}>
+                <span
+                  className={`${item.level === 0 || isResultRow || isTotalRow ? styles.boldNumber : ''} ${styles.clickableCell || ''}`}
+                  onClick={() => {
+                    setSelectedColumn(item)
+                    setSelectedMonth({ key: period.key, label: period.title })
+                    setIsModalOpen(true)
+                  }}
+                >
                   {displayValue}
                 </span>
               </td>
             )
           })}
           <td className={styles.td}>
-            <span className={item.level === 0 || isResultRow || isTotalRow ? styles.boldNumber : ''}>
+            <span
+              className={`${item.level === 0 || isResultRow || isTotalRow ? styles.boldNumber : ''} ${styles.clickableCell || ''}`}
+              onClick={() => {
+                setSelectedColumn(item)
+                setSelectedMonth(null)
+                setIsModalOpen(true)
+              }}
+            >
               {item.totalValue === 0 ? '–' : isPercentRow ? `${item.totalValue.toFixed(1)}%` : item.totalValue.toLocaleString('ru-RU')}
             </span>
           </td>
@@ -638,6 +656,7 @@ export default function ProfitAndLossPage() {
           </div>
         </div>
       </div>
+      <OperationCashFlowModal data={selectedColumn} selectedMonth={selectedMonth} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   )
 }

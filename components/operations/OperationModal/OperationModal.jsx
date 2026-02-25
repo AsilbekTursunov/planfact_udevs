@@ -75,9 +75,9 @@ export function OperationModal({
 	// Determine if this is create or update
 	const isUpdate = !isNew && !operation?.isCopy && (operationData?.rawData?.guid || operationData?.guid)
 
-
 	// Current active tab
-	const [activeTab, setActiveTab] = useState(operationData?.typeCategory || 'income')
+	const type = operationData?.type == 'Начисление' ? 'accrual' : operationData?.type == 'Поступление' ? 'income' : operationData?.type == 'Перемещение' ? 'transfer' : 'payment'
+	const [activeTab, setActiveTab] = useState(type)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 
 	// Block body scroll when modal is open
@@ -175,8 +175,28 @@ export function OperationModal({
 		}
 	}
 
-	// Form state
-	const [formData, setFormData] = useState(() => getInitialFormData())
+	// Form states per tab
+	const [formStates, setFormStates] = useState(() => {
+		const init = getInitialFormData()
+		return {
+			income: { ...init },
+			payment: { ...init },
+			transfer: { ...init },
+			accrual: { ...init }
+		}
+	})
+
+	const formData = formStates[activeTab] || formStates['income'];
+
+	const setFormData = (updater) => {
+		setFormStates(prev => {
+			const updated = typeof updater === 'function' ? updater(prev[activeTab]) : updater;
+			return {
+				...prev,
+				[activeTab]: updated
+			};
+		});
+	}
 
 	// Update form data when operationData changes (for editing)
 	useEffect(() => {
@@ -184,7 +204,12 @@ export function OperationModal({
 			console.log('Updating form data with operationData:', operationData)
 			const newFormData = getInitialFormData()
 			console.log('New form data:', newFormData)
-			setFormData(newFormData)
+			setFormStates({
+				income: { ...newFormData },
+				payment: { ...newFormData },
+				transfer: { ...newFormData },
+				accrual: { ...newFormData }
+			})
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [operationData, isNew, isLoadingOperation])
@@ -201,7 +226,12 @@ export function OperationModal({
 		if (isOpening) {
 			console.log('Modal opening, resetting form')
 			const newFormData = getInitialFormData()
-			setFormData(newFormData)
+			setFormStates({
+				income: { ...newFormData },
+				payment: { ...newFormData },
+				transfer: { ...newFormData },
+				accrual: { ...newFormData }
+			})
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isOpening])
@@ -233,14 +263,12 @@ export function OperationModal({
 	})
 	const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
 
+	console.log(modalType)
 
 	// Build tree structure for counterparties (groups and their children)
 	// Use data directly from API - groups already contain children
 	const counterAgentsTree = useMemo(() => {
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
-
-		console.log('🔍 Building counterAgentsTree from API groups:')
-		console.log('groups from API:', groups)
 
 		if (groups.length === 0) return []
 
@@ -787,7 +815,6 @@ export function OperationModal({
 	}
 
 	if (!operationData && !isNew) return null
-
 
 	return (
 		<>

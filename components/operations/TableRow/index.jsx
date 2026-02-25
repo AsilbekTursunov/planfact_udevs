@@ -13,8 +13,7 @@ const OperationTableRow = ({
   handleEditOperation,
   handleDeleteOperation,
   handleCopyOperation,
-}) => {
-  console.log("op", op)
+}) => { 
   return (
     <tr
       key={op.id}
