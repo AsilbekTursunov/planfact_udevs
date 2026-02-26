@@ -98,26 +98,29 @@ const TotalPrice = () => {
 
 
     return (
-        <div className={styles.balanceSection} ref={balanceRef}>
-            <div
-                onClick={() => {
-                    setIsBalanceOpen(!isBalanceOpen)
-                }}
-                className={styles.balanceTrigger}
-            >
-                <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div className={styles.balanceDot}></div>
-                        <span className={styles.balanceText}>На счетах {totalBalance.toLocaleString('ru-RU')} <span className={styles.balanceCurrency}>₽</span></span>
-                        <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
-                    </div>
-                    <div className={styles.balanceSubtext} style={{ marginLeft: '17px', color: '#fbbf24' }}>
-                        {today}
+        <>
+            <div className={styles.balanceSection} ref={balanceRef}>
+                <div
+                    onClick={() => {
+                        setIsBalanceOpen(!isBalanceOpen)
+                    }}
+                    className={styles.balanceTrigger}
+                >
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div className={styles.balanceDot}></div>
+                            <span className={styles.balanceText}>На счетах {totalBalance.toLocaleString('ru-RU')} <span className={styles.balanceCurrency}>₽</span></span>
+                            <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
+                        </div>
+                        <div className={styles.balanceSubtext} style={{ marginLeft: '17px', color: '#fbbf24' }}>
+                            {today}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Balance Modal */}
+                {/* Balance Modal */}
+
+            </div>
             {isBalanceOpen && (
                 <div className={cn(styles.balanceModal, modalMode === 'full' ? styles.full : styles.compact)}>
                     <div className={styles.balanceModalFull}>
@@ -185,7 +188,7 @@ const TotalPrice = () => {
                                                 </span>
                                             )}
                                         </div>
-                                    ))} 
+                                    ))}
                                 </div>
                             ) : (
                                     <div className={styles.balanceGrid}>
@@ -209,57 +212,57 @@ const TotalPrice = () => {
                                                         </div>
                                                     </div>
 
-                                                    {/* Group Actions Dropdown */}
-                                                    {activeGroupMenu === group.id && (
-                                                        <div ref={groupMenuRef} className={styles.balanceGroupMenu}>
-                                                            <button
-                                                                onClick={() => toggleExpandGroup(group.id)}
-                                                                className={styles.balanceGroupMenuItem}
-                                                            >
-                                                                <Maximize2 size={16} className={styles.balanceGroupMenuIcon} />
-                                                                <span>{expandedGroups.includes(group.id) ? 'Свернуть' : 'Развернуть'}</span>
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Expanded Content or Placeholder */}
-                                                {expandedGroups?.includes(group.id) && group?.accounts?.length > 0 && (
-                                                    <div className={styles.balanceGroupContent}>
-                                                        {group?.accounts?.map((acc, idx) => (
-                                                            <div key={idx} className={styles.balanceAccount}>
-                                                                <div className={styles.balanceAccountLeft} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                                                                    <div className={cn(styles.balanceAccountDot, acc?.color === 'red' && styles.red, acc?.color === 'green' && styles.green, acc?.color === 'blue' && styles.blue)} style={{ marginTop: '6px' }}></div>
-                                                                    <div className={styles.balanceAccountInfo} style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                        <span className={styles.balanceAccountName} style={{ fontSize: '14px', color: '#334155' }}>{acc?.name}</span>
-                                                                        {acc?.status && (
-                                                                            <span className={styles.balanceAccountStatus} style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px' }}>{acc?.status}</span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                                {acc?.balance && (
-                                                                    <span className={styles.balanceAccountValue} style={{ fontSize: '14px', color: '#334155' }}>
-                                                                        {acc?.balance} <span className={styles.balanceAccountCurrency} style={{ color: '#94a3b8' }}>{acc?.currency}</span>
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                {group?.total_items === 0 && (
-                                                    <div className={styles.balanceGroupEmpty} style={{ padding: '24px', textAlign: 'center' }}>
-                                                        <span className={styles.balanceGroupEmptyText} style={{ color: '#94a3b8', fontSize: '14px' }}>Переместите счета в эту группу</span>
+                                                {/* Group Actions Dropdown */}
+                                                {activeGroupMenu === group.id && (
+                                                    <div ref={groupMenuRef} className={styles.balanceGroupMenu}>
+                                                        <button
+                                                            onClick={() => toggleExpandGroup(group.id)}
+                                                            className={styles.balanceGroupMenuItem}
+                                                        >
+                                                            <Maximize2 size={16} className={styles.balanceGroupMenuIcon} />
+                                                            <span>{expandedGroups.includes(group.id) ? 'Свернуть' : 'Развернуть'}</span>
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
-                                        ))} 
+
+                                            {/* Expanded Content or Placeholder */}
+                                            {expandedGroups?.includes(group.id) && group?.accounts?.length > 0 && (
+                                                <div className={styles.balanceGroupContent}>
+                                                    {group?.accounts?.map((acc, idx) => (
+                                                        <div key={idx} className={styles.balanceAccount}>
+                                                            <div className={styles.balanceAccountLeft} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                                                                <div className={cn(styles.balanceAccountDot, acc?.color === 'red' && styles.red, acc?.color === 'green' && styles.green, acc?.color === 'blue' && styles.blue)} style={{ marginTop: '6px' }}></div>
+                                                                <div className={styles.balanceAccountInfo} style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                    <span className={styles.balanceAccountName} style={{ fontSize: '14px', color: '#334155' }}>{acc?.name}</span>
+                                                                    {acc?.status && (
+                                                                        <span className={styles.balanceAccountStatus} style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px' }}>{acc?.status}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            {acc?.balance && (
+                                                                <span className={styles.balanceAccountValue} style={{ fontSize: '14px', color: '#334155' }}>
+                                                                    {acc?.balance} <span className={styles.balanceAccountCurrency} style={{ color: '#94a3b8' }}>{acc?.currency}</span>
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {group?.total_items === 0 && (
+                                                <div className={styles.balanceGroupEmpty} style={{ padding: '24px', textAlign: 'center' }}>
+                                                    <span className={styles.balanceGroupEmptyText} style={{ color: '#94a3b8', fontSize: '14px' }}>Переместите счета в эту группу</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
                                     </div>
                             )}
                         </div>
                     </div>
                 </div>
             )}
-        </div>
+        </>
     )
 }
 

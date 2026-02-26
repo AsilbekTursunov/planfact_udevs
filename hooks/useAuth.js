@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { apiConfig } from '@/lib/config/api'
 import { showErrorNotification, showSuccessNotification } from '@/lib/utils/notifications'
 import { register } from '../lib/api/auth'
+import { authStore } from '@/store/auth.store'
 
 /**
  * Login mutation hook
@@ -51,19 +52,9 @@ export function useLogin() {
       return data
     },
     onSuccess: (data) => {
-      // Save token to localStorage on client side
-      if (data.data?.token?.access_token) {
-        localStorage.setItem('authToken', data.data.token.access_token)
-        localStorage.setItem('refreshToken', data.data.token.refresh_token)
-        localStorage.setItem('userData', JSON.stringify(data.data.user_data))
-      }
-
-      // Set cookie for middleware
-      document.cookie = 'isAuthenticated=true; path=/; max-age=86400'
-      localStorage.setItem('isAuthenticated', 'true')
-
-      if (data.data?.user_data) {
-        localStorage.setItem('userEmail', data.data.user_data.login || '')
+      // Set authentication state through MobX store
+      if (data?.data) {
+        authStore.setAuthentication(data.data)
       }
 
       showSuccessNotification('Успешный вход!')
@@ -107,20 +98,8 @@ export function useRegister() {
       const tokenData = responseBody?.token || responseBody
       const userData = responseBody?.user_data || responseBody
 
-      // Save token to localStorage on client side
-      if (tokenData?.access_token) {
-        localStorage.setItem('authToken', tokenData.access_token)
-        localStorage.setItem('refreshToken', tokenData.refresh_token)
-        localStorage.setItem('userData', JSON.stringify(userData))
-      }
-
-      // Set cookie for middleware
-      document.cookie = 'isAuthenticated=true; path=/; max-age=86400'
-      localStorage.setItem('isAuthenticated', 'true')
-
-      if (userData?.login) {
-        localStorage.setItem('userEmail', userData.login || '')
-      }
+      // Set authentication state through MobX store
+      authStore.setAuthentication({ token: tokenData, user_data: userData })
 
       showSuccessNotification('Успешная регистрация!')
     },

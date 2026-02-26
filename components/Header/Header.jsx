@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, MoreVertical, Maximize2, User, LogOut } from 'lucide-react'
+import { ChevronDown, MoreVertical, Maximize2, User } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import { useFinanceSummary } from '@/hooks/useDashboard'
 import styles from './Header.module.scss'
 import TotalPrice from './total-prices'
+import { Profile } from './profile'
 
 export function Header() {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false)
@@ -16,12 +17,11 @@ export function Header() {
     const [activeGroupMenu, setActiveGroupMenu] = useState(null)
     const [modalMode, setModalMode] = useState('full')
     const [isViewOpen, setIsViewOpen] = useState(false)
-    const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     // Fetch finance summary
     const { data: financeSummaryData } = useFinanceSummary({ data: {} })
     const financeResult = financeSummaryData?.data?.result || 0
-    
+
     // Format number with spaces
     const formatNumber = (num) => {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
@@ -282,7 +282,7 @@ export function Header() {
                                                                 <span>Полный</span>
                                                                 {modalMode === 'full' && <span className={styles.viewDropdownCheck}>✓</span>}
                                                             </button>
-                                                            
+
                                                             <div className={styles.viewDropdownSection}>
                                                                 <span className={styles.viewDropdownSectionTitle}>Группировка</span>
                                                             </div>
@@ -495,30 +495,11 @@ export function Header() {
                     </div>}
                 </div>
 
-                <TotalPrice />
 
                 {/* Right side: User icon and Logout button */}
                 <div className={styles.rightSection}>
-                    <div className={styles.logoutSection}>
-                        <button 
-                            onClick={async () => {
-                                setIsLoggingOut(true)
-                                await new Promise(resolve => setTimeout(resolve, 500))
-                                document.cookie = 'isAuthenticated=; path=/; max-age=0'
-                                localStorage.removeItem('isAuthenticated')
-                                localStorage.removeItem('userEmail')
-                                localStorage.removeItem('authToken')
-                                localStorage.removeItem('refreshToken')
-                                localStorage.removeItem('userData')
-                                window.location.href = '/pages/auth'
-                            }}
-                            disabled={isLoggingOut}
-                            className={styles.logoutButton}
-                            title={isLoggingOut ? 'Выход...' : 'Выйти'}
-                        >
-                            <LogOut size={18} className={styles.logoutIcon} />
-                        </button>
-                    </div>
+                    <TotalPrice />
+                    <Profile />
                 </div>
             </header>
         </>

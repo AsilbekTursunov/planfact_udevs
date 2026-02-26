@@ -682,6 +682,8 @@ export default function OperationsPage() {
 		}
 	}
 
+	console.log('counterAgents', counterAgents)
+
 
 
 

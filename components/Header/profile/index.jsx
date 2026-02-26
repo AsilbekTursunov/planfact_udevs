@@ -1,0 +1,55 @@
+import React, { useState, useRef, useEffect } from 'react'
+import { ChevronDown, Settings, HelpCircle, Handshake, Gift, Percent, Clock, FileText, LogOut } from 'lucide-react'
+import { cn } from '@/app/lib/utils'
+import { observer } from 'mobx-react-lite'
+import { authStore } from '@/store/auth.store'
+import styles from './Profile.module.scss'
+
+export const Profile = observer(() => {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    // Click outside to close
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleLogout = () => {
+    authStore.logout()
+    window.location.href = '/pages/auth'
+  }
+
+  return (
+    <div className={styles.profileContainer} ref={menuRef}>
+      <button 
+        className={cn(styles.profileButton, isOpen && styles.active)} 
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className={styles.profileInfo}>
+          <div className={styles.profileTop}>
+            <span className={styles.email}>{authStore.userEmail || 'soburjon@udevs.io'}</span>
+            <ChevronDown size={14} className={cn(styles.chevron, isOpen && styles.open)} />
+          </div>
+          <span className={styles.accessText}>Доступ истекает 02.03.26</span>
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className={styles.dropdownMenu}>
+          <div className={styles.menuGroup}> 
+            <button className={cn(styles.menuItem, styles.logoutItem)} onClick={handleLogout}>
+              <LogOut size={18} className={styles.menuIcon} />
+              <span>Выйти из аккаунта</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+})

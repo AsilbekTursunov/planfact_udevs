@@ -83,10 +83,10 @@ export function ReportFilterSidebar({
             <div className={styles.filterSection}>
               <h3 className={styles.filterSectionTitle}>
                 Период
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
                   <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
+                </svg> */}
               </h3>
               <NewDateRangeComponent
                 value={dateRange}
@@ -95,14 +95,7 @@ export function ReportFilterSidebar({
             </div>
 
             {/* Счет - всегда показываем */}
-            <div className={styles.filterSection}>
-              <h3 className={styles.filterSectionTitle}>
-                Счет
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </h3>
+            <div className={styles.filterSection}> 
               {accountOptions && accountOptions.length > 0 ? (
                 <MultiSelect
                   data={accountOptions}
@@ -127,14 +120,7 @@ export function ReportFilterSidebar({
             </div>
 
             {/* Контрагент - всегда показываем */}
-            <div className={styles.filterSection}>
-              <h3 className={styles.filterSectionTitle}>
-                Контрагент
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M8 11.5V8M8 5.5H8.005" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </h3>
+            <div className={styles.filterSection}> 
               {counterpartyOptions && counterpartyOptions.length > 0 ? (
                 <MultiSelect
                   data={counterpartyOptions}
