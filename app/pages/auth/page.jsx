@@ -18,7 +18,7 @@ export default function LoginPage() {
     fullname: '',
     email: '',
     phone: '',
-    checked: false,
+    checked: false, // Explicitly set to false to avoid uncontrolled->controlled warning
   })
   const [error, setError] = useState('')
   const [focusedField, setFocusedField] = useState(null)
@@ -77,7 +77,7 @@ export default function LoginPage() {
   const toggleFormType = () => {
     setFromType(prev => prev === 'login' ? 'register' : 'login')
     setError('')
-    setFormData({ username: '', password: '', fullname: '', email: '', phone: '' })
+    setFormData({ username: '', password: '', fullname: '', email: '', phone: '', checked: false })
     setConfirmPassword('')
   }
 
@@ -176,7 +176,7 @@ export default function LoginPage() {
               <div className={styles.inputGroup}>
                 <div className={styles.inputWrapper}>
                   <Input
-                    type="text"
+                    type="email"
                     value={formData.username}
                     onChange={(e) => {
                       setFormData({ ...formData, username: e.target.value })
@@ -188,7 +188,7 @@ export default function LoginPage() {
                       styles.inputField,
                       focusedField === 'username' && styles.focused
                     )}
-                    placeholder="Имя пользователя"
+                    placeholder="Email"
                     required
                   />
                 </div>

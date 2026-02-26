@@ -11,24 +11,30 @@ import { authStore } from '@/store/auth.store'
 export function useLogin() {
   return useMutation({
     mutationFn: async ({ username, password }) => {
-      // Get values from config
       const clientTypeId = apiConfig.ucode.clientTypeId
       const roleId = apiConfig.ucode.roleId
+      const baseURL = apiConfig.ucode.baseURL
+      const projectId = apiConfig.ucode.projectId
 
-      // Prepare full request body with login_strategy and data
+      const url = `${baseURL}/v2/invoke_function/planfact-plan-fact?project-id=${projectId}`
+
       const requestBody = {
-        login_strategy: 'LOGIN_PWD',
         data: {
-          client_type_id: clientTypeId,
-          role_id: roleId,
-          username,
-          password,
+          auth: {
+            data: {},
+            type: 'apikey'
+          },
+          method: 'auth_login',
+          object_data: {
+            email: username,
+            password: password,
+            client_type_id: clientTypeId,
+            role_id: roleId
+          }
         }
       }
 
-      console.log('Login request body:', JSON.stringify(requestBody, null, 2))
-
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,17 +42,10 @@ export function useLogin() {
         body: JSON.stringify(requestBody),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.data || errorData.description || 'Ошибка при входе')
-      }
-
       const data = await response.json()
 
-      // Check for API-level errors
-      if (data.status === 'NOT_FOUND' || data.status === 'ERROR') {
-        const errorMessage = data.data || data.description || 'Ошибка при входе'
-        throw new Error(errorMessage)
+      if (!response.ok || data.status === 'ERROR' || data.status === 'BAD_REQUEST') {
+        throw new Error(data.description || data.data || 'Ошибка при входе')
       }
 
       return data
@@ -69,34 +68,27 @@ export function useLogin() {
 export function useRegister() {
   return useMutation({
     mutationFn: async ({ fullname, email, phone, password }) => {
-      // Assuming there is or will be a register endpoint.
       const response = await register({
         name: fullname,
         email,
         phone,
         password,
       })
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.data || errorData.description || 'Ошибка при регистрации')
-      }
 
-      const data = await response.json()
-
+      // Response is already parsed JSON from apiClient.invokeFunction
       // Check for API-level errors
-      if (data.status === 'NOT_FOUND' || data.status === 'ERROR') {
-        const errorMessage = data.data || data.description || 'Ошибка при регистрации'
+      if (response.status === 'ERROR' || response.status === 'BAD_REQUEST') {
+        const errorMessage = response.description || response.data || 'Ошибка при регистрации'
         throw new Error(errorMessage)
       }
 
-      return data
+      return response
     },
     onSuccess: (data) => {
-      // Identify where the token and user data are located in the response 
-      // (invokeFunction often returns data under `data.response`)
-      const responseBody = data.data?.response || data.data || data
-      const tokenData = responseBody?.token || responseBody
-      const userData = responseBody?.user_data || responseBody
+      // Response structure: { status: "CREATED", data: { status: "success", data: {...} } }
+      const responseData = data.data?.data || data.data || data
+      const userData = responseData?.user_data || responseData?.userData || responseData?.user
+      const tokenData = responseData?.token
 
       // Set authentication state through MobX store
       authStore.setAuthentication({ token: tokenData, user_data: userData })
