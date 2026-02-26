@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { apiConfig } from '@/lib/config/api'
 import { showErrorNotification, showSuccessNotification } from '@/lib/utils/notifications'
+import { register } from '../lib/api/auth'
 
 /**
  * Login mutation hook
@@ -77,33 +78,13 @@ export function useLogin() {
 export function useRegister() {
   return useMutation({
     mutationFn: async ({ fullname, email, phone, password }) => {
-      // Get values from config
-      const clientTypeId = apiConfig.ucode.clientTypeId
-      const roleId = apiConfig.ucode.roleId
-
-      // Prepare full request body with login_strategy and data
-      // Registration usually requires user info, adjust according to actual backend schema
-      const requestBody = {
-        login_strategy: 'LOGIN_PWD',
-        data: {
-          client_type_id: clientTypeId,
-          role_id: roleId,
-          name: fullname,
-          email,
-          phone,
-          password,
-        }
-      }
-
       // Assuming there is or will be a register endpoint.
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+      const response = await register({
+        name: fullname,
+        email,
+        phone,
+        password,
       })
-
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.data || errorData.description || 'Ошибка при регистрации')
@@ -120,25 +101,31 @@ export function useRegister() {
       return data
     },
     onSuccess: (data) => {
+      // Identify where the token and user data are located in the response 
+      // (invokeFunction often returns data under `data.response`)
+      const responseBody = data.data?.response || data.data || data
+      const tokenData = responseBody?.token || responseBody
+      const userData = responseBody?.user_data || responseBody
+
       // Save token to localStorage on client side
-      if (data.data?.token?.access_token) {
-        localStorage.setItem('authToken', data.data.token.access_token)
-        localStorage.setItem('refreshToken', data.data.token.refresh_token)
-        localStorage.setItem('userData', JSON.stringify(data.data.user_data))
+      if (tokenData?.access_token) {
+        localStorage.setItem('authToken', tokenData.access_token)
+        localStorage.setItem('refreshToken', tokenData.refresh_token)
+        localStorage.setItem('userData', JSON.stringify(userData))
       }
 
       // Set cookie for middleware
       document.cookie = 'isAuthenticated=true; path=/; max-age=86400'
       localStorage.setItem('isAuthenticated', 'true')
 
-      if (data.data?.user_data) {
-        localStorage.setItem('userEmail', data.data.user_data.login || '')
+      if (userData?.login) {
+        localStorage.setItem('userEmail', userData.login || '')
       }
 
-      showSuccessNotification('Успешный вход!')
+      showSuccessNotification('Успешная регистрация!')
     },
     onError: (error) => {
-      const errorMessage = error.message || 'Ошибка при входе'
+      const errorMessage = error.message || 'Ошибка при регистрации'
       showErrorNotification(errorMessage)
     },
   })

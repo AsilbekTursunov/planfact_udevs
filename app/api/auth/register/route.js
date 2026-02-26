@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { register } from '@/lib/api/auth'
-import { apiConfig } from '@/lib/config/api'
 
 /**
  * POST /api/auth/register
@@ -12,7 +11,7 @@ export async function POST(request) {
     
     // Extract properties
     const { data } = body
-    const { name, email, phone, password, client_type_id, role_id } = data || {}
+    const { name, email, phone, password } = data || {}
 
     // Validate required fields
     if (!name || !password || (!email && !phone)) {
@@ -26,18 +25,12 @@ export async function POST(request) {
       )
     }
 
-    // Get default values from config if not provided
-    const finalClientTypeId = client_type_id || apiConfig.ucode.clientTypeId
-    const finalRoleId = role_id || apiConfig.ucode.roleId
-
     // Call register function
     const result = await register({
       name,
       email,
       phone,
-      password,
-      clientTypeId: finalClientTypeId,
-      roleId: finalRoleId
+      password
     })
 
     return NextResponse.json(result, { status: 200 })

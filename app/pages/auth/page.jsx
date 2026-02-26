@@ -36,11 +36,23 @@ export default function LoginPage() {
 
     try {
       if (fromType === 'login') {
+        if (!formData.username || !formData.password) {
+          setError('Заполните все поля')
+          return
+        }
         await loginMutation.mutateAsync({
           username: formData.username,
           password: formData.password,
         })
       } else {
+        if (!formData.fullname || !formData.email || !formData.phone || !formData.password || !confirmPassword) {
+          setError('Заполните все поля')
+          return
+        }
+        if (!formData.checked) {
+          setError('Вы должны согласиться с условиями')
+          return
+        }
         if (formData.password !== confirmPassword) {
           setError('Пароли не совпадают')
           return

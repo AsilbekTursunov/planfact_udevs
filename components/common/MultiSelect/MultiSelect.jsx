@@ -20,11 +20,13 @@ export function MultiSelect({
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [dropdownPosition, setDropdownPosition] = useState('bottom') // 'top' or 'bottom'
+  const containerRef = useRef(null)
   const dropdownRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
         setIsOpen(false)
         setSearch('')
       }
@@ -33,6 +35,30 @@ export function MultiSelect({
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      // Defer state update to next tick to avoid synchronous setState warning
+      const timer = setTimeout(() => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect()
+        const windowHeight = window.innerHeight
+        const dropdownHeight = 320 // matches max-height in SCSS
+
+        // Calculate available space below and above
+        const spaceBelow = windowHeight - rect.bottom
+        const spaceAbove = rect.top
+
+        // If there's not enough space below AND there's more space above, open upwards
+        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+          setDropdownPosition('top')
+        } else {
+          setDropdownPosition('bottom')
+        }
+      }, 0)
+
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
 
   // Filter data by search
   const filteredData = data.filter(item =>
@@ -70,7 +96,7 @@ export function MultiSelect({
   const isAllSelected = filteredData.length > 0 && value.length === filteredData.length
 
   return <>
-    <div className={cn(styles.container, className)} ref={dropdownRef}>
+    <div className={cn(styles.container, className)} ref={containerRef}>
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled || loading}
@@ -87,7 +113,13 @@ export function MultiSelect({
       </div>
 
       {isOpen && (
-        <div className={styles.dropdown}>
+        <div
+          ref={dropdownRef}
+          className={cn(
+            styles.dropdown,
+            dropdownPosition === 'top' && styles.dropdownTop
+          )}
+        >
           {/* Search input */}
           <div className={styles.searchContainer}>
             <input

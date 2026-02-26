@@ -6,7 +6,6 @@ import { cn } from '@/app/lib/utils'
 import styles from '../Header.module.scss'
 import { formatDateTime } from '../../../utils/formatDate'
 import { useMyAccountsBoard } from '../../../hooks/useDashboard'
-import Select from '@/components/common/Select'
 
 const TotalPrice = () => {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false)
@@ -137,12 +136,22 @@ const TotalPrice = () => {
 
                             <div className={styles.balanceModalFullControls}>
                                 <div style={{ minWidth: '150px' }}>
-                                    <Select
-                                        options={viewOptions}
-                                        value={viewOptions.find(opt => opt.value === modalMode)}
-                                        onChange={(selected) => setModalMode(selected.value)}
-                                        isSearchable={false}
-                                    />
+                                    <div className={styles.balanceViewToggle}>
+                                        {viewOptions.map(opt => {
+                                            return (
+                                                <button
+                                                    key={opt.value}
+                                                    onClick={() => setModalMode(opt.value)}
+                                                    className={cn(
+                                                        styles.balanceViewButton,
+                                                        modalMode === opt.value ? styles.active : styles.inactive
+                                                    )}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
                                 </div>
                                 {modalMode === 'full' && (
                                     <button
@@ -176,7 +185,7 @@ const TotalPrice = () => {
                                                 </span>
                                             )}
                                         </div>
-                                    ))}
+                                    ))} 
                                 </div>
                             ) : (
                                     <div className={styles.balanceGrid}>
@@ -243,7 +252,7 @@ const TotalPrice = () => {
                                                     </div>
                                                 )}
                                             </div>
-                                        ))}
+                                        ))} 
                                     </div>
                             )}
                         </div>
