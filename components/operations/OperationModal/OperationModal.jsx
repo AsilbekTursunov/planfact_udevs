@@ -629,16 +629,12 @@ export function OperationModal({
 			// Build request data object with all fields
 			const requestData = {
 				tip: [tipMap[activeTab] || 'Поступление'],
-				data_operatsii: paymentDate.toISOString(),
-				data_nachisleniya:
-					activeTab === 'accrual' ? accrualDate.toISOString() : paymentDate.toISOString(),
-				summa: parseFloat(formData.amount?.toString().replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '')) || 0,
+				data_operatsii: activeTab === 'accrual' ? null : formData?.paymentDate,
+				data_nachisleniya: formData?.accrualDate,
 				opisanie: formData.purpose || '',
 				oplata_podtverzhdena: formData.confirmPayment || false,
 				payment_confirmed: formData.confirmPayment || false,
 				payment_accrual: formData.confirmAccrual || false,
-				data_sozdaniya: now.toISOString(),
-				data_obnovleniya: now.toISOString(),
 			}
 
 
@@ -675,13 +671,6 @@ export function OperationModal({
 
 			const updateGuid = (!isNew && !operation?.isCopy) ? (operationData?.rawData?.guid || operationData?.guid) : null
 
-			// console.log('=== Submit Operation Debug ===')
-			// console.log('isNew:', isNew)
-			// console.log('isUpdate:', isUpdate)
-			// console.log('updateGuid:', updateGuid)
-			// console.log('operationData:', operationData)
-			// console.log('operationData.rawData:', operationData?.rawData)
-
 			// For update, add guid and preserve original creation date
 			if (isUpdate && updateGuid) {
 				requestData.guid = updateGuid
@@ -700,30 +689,15 @@ export function OperationModal({
 					data: {}
 				},
 				data: {
-					app_id: '3ed54a59-5eda-4cfe-b4ae-8a201c1ea4ed',
-					environment_id: 'fc258dff-47c0-4ab1-9beb-91a045b4847c',
-					project_id: '3ed54a59-5eda-4cfe-b4ae-8a201c1ea4ed',
 					method: isUpdate ? 'update_operation' : 'create_operation',
-					user_id: '',
 					object_data: requestData
 				}
 			}
 
-			console.log(
-				`${isUpdate ? 'Updating' : 'Creating'} operation with data:`,
-				JSON.stringify(apiRequestBody, null, 2),
-			)
-			console.log('Form data:', formData)
-			console.log(
-				'Selected account:',
-				formData.accountAndLegalEntity
-					? bankAccounts.find(acc => acc.guid === formData.accountAndLegalEntity)
-					: 'none',
-			)
 
 			// Call API directly
 			const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-			const apiUrl = 'https://api.admin.u-code.io/v2/invoke_function/planfact-plan-fact'
+			const apiUrl = `https://api.admin.u-code.io/v2/invoke_function/planfact-plan-fact?project-id=${apiRequestBody.data.project_id}`
 
 			const headers = {
 				'Content-Type': 'application/json',
@@ -732,6 +706,8 @@ export function OperationModal({
 			if (authToken) {
 				headers['Authorization'] = `Bearer ${authToken}`
 			}
+
+			console.log('requestData', requestData)
 
 			const response = await fetch(apiUrl, {
 				method: 'POST',
@@ -749,8 +725,6 @@ export function OperationModal({
 					`Ошибка при ${isUpdate ? 'обновлении' : 'создании'} операции`,
 				)
 			}
-
-			console.log('API Response:', result)
 
 			showSuccessNotification(`Операция успешно ${isUpdate ? 'обновлена' : 'создана'}!`)
 
@@ -803,8 +777,7 @@ export function OperationModal({
 		}
 	}
 
-	// Don't return null for new operations
-	// Show loading state while fetching operation data
+
 	if (!isNew && isLoadingOperation) {
 		return (
 			<div className={styles.loadingOverlay}>

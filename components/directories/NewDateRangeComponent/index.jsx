@@ -76,7 +76,7 @@ export default function NewDateRangeComponent({ value, onChange }) {
   const [endDate, setEndDate] = useState(value?.end || null)
   const [activePreset, setActivePreset] = useState(null)
   const [focused, setFocused] = useState(null)
-  const [dateType, setDateType] = useState('startDate')
+  const [dateType, setDateType] = useState()
   const wrapperRef = useRef(null)
   const [open, setOpen] = useState(false)
 

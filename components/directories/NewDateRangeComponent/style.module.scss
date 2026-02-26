@@ -38,8 +38,8 @@
 
 .modalContent {
   position: absolute;
-  top: 120%;
-  left: 0;
+  left: 105%;
+    top: -100%;
   z-index: 10;
   background-color: $white;
   border: 1px solid $gray-200;
@@ -133,7 +133,7 @@
   }
 }
 
-.closeIcon{
+.closeIcon {
   cursor: pointer;
   position: absolute;
   right: 12px;

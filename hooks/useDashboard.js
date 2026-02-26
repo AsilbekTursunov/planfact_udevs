@@ -408,6 +408,7 @@ export const useCreateCounterparty = () => {
       queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
       queryClient.invalidateQueries({ queryKey: ['counterparties'] })
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
       showSuccessNotification('Контрагент успешно создан!')
     },
     onError: (error) => {
@@ -570,6 +571,7 @@ export const useUpdateCounterparty = () => {
       queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
       queryClient.invalidateQueries({ queryKey: ['counterparties'] })
+      queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
       showSuccessNotification('Контрагент успешно обновлен!')
     },
     onError: (error) => {

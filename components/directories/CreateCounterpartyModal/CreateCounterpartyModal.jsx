@@ -265,8 +265,8 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
         await createGroupMutation.mutateAsync(submitData)
 
         // Invalidate queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
-        queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
+        queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
+        queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
 
         handleClose()
       } catch (error) {
@@ -322,6 +322,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
         // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
         queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
+        queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
 
         handleClose()
       } catch (error) {
