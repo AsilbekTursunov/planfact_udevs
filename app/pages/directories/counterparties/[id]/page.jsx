@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useCounterpartiesPlanFact, useOperationsList } from '@/hooks/useDashboard'
+import { useCounterpartyById, useOperationsList } from '@/hooks/useDashboard'
 import { OperationModal } from '@/components/operations/OperationModal/OperationModal'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
@@ -16,6 +16,11 @@ export default function KontragentDetailPage() {
   const params = useParams()
   const counterpartyGuid = params?.id
   
+  console.log('=== KontragentDetailPage ===')
+  console.log('params:', params)
+  console.log('counterpartyGuid:', counterpartyGuid)
+  console.log('===========================')
+  
   const [dateRange, setDateRange] = useState(null)
   const [isCreateOperationModalOpen, setIsCreateOperationModalOpen] = useState(false)
   const [isCreateModalClosing, setIsCreateModalClosing] = useState(false)
@@ -27,18 +32,30 @@ export default function KontragentDetailPage() {
   const [deletingOperation, setDeletingOperation] = useState(null)
   const deleteOperationMutation = useDeleteOperation()
 
-  // Fetch counterparty data by GUID
-  const { data: counterpartyData, isLoading: isLoadingCounterparty } = useCounterpartiesPlanFact({
-    page: 1,
-    limit: 1000
-  })
+  // Fetch counterparty data by GUID using get_counterparty_by_id
+  const { data: counterpartyData, isLoading: isLoadingCounterparty, error: counterpartyError } = useCounterpartyById(counterpartyGuid)
   
-  // Find the specific counterparty by GUID from the list
-  const allCounterparties = counterpartyData?.data?.data?.data || []
-  const counterparty = allCounterparties.find(cp => cp.guid === counterpartyGuid) || null
+  console.log('=== Counterparty Query State ===')
+  console.log('isLoading:', isLoadingCounterparty)
+  console.log('data:', counterpartyData)
+  console.log('error:', counterpartyError)
+  console.log('================================')
+  
+  // Extract counterparty from response
+  // Response structure: { data: { data: { data: { data: { counterparty: {...}, operations: [...] } } } } }
+  const responseData = counterpartyData?.data?.data?.data
+  const counterparty = responseData?.counterparty || null
+  const counterpartyOperations = responseData?.operations || []
+  
+  console.log('=== Extracted Data ===')
+  console.log('counterparty:', counterparty)
+  console.log('counterpartyOperations:', counterpartyOperations)
+  console.log('======================')
+
 
   // Fetch operations for this counterparty
-  // Note: New API doesn't support counterparty filtering, so we fetch all and filter on frontend
+  // Note: We now get operations directly from counterparty API response
+  // But we still fetch all operations for other purposes if needed
   const { data: operationsData, isLoading: isLoadingOperations } = useOperationsList({
     date_range: {
       start_date: '2026-01-01',
@@ -48,15 +65,17 @@ export default function KontragentDetailPage() {
     limit: 1000
   })
 
-  // Filter operations by counterparty GUID on frontend
-  const allOperationsItems = operationsData?.data?.data?.data || []
-  const operationsItems = counterpartyGuid 
-    ? allOperationsItems.filter(op => op.counterparties_id === counterpartyGuid)
-    : allOperationsItems
+  // Use operations from counterparty response if available, otherwise filter from all operations
+  const operationsItems = counterpartyOperations.length > 0 
+    ? counterpartyOperations 
+    : (operationsData?.data?.data?.data || []).filter(op => op.counterparties_id === counterpartyGuid)
 
   // Transform operations data for display
   const operations = useMemo(() => {
     if (!operationsItems || operationsItems.length === 0) return []
+    
+    console.log('=== Transforming operations ===')
+    console.log('operationsItems:', operationsItems)
     
     return operationsItems.map((item, index) => {
       const operationDate = item.data_operatsii ? new Date(item.data_operatsii) : null
@@ -118,8 +137,36 @@ export default function KontragentDetailPage() {
     })
   }, [operationsItems])
 
+  // Format counterparty info - DECLARE FIRST
+  const counterpartyInfo = useMemo(() => {
+    if (!counterparty) return null
+    
+    console.log('=== Formatting counterparty info ===')
+    console.log('counterparty:', counterparty)
+    
+    return {
+      name: counterparty.nazvanie || 'Без названия',
+      fullName: counterparty.polnoe_imya || 'Полное название не указано',
+      inn: counterparty.inn || null,
+      kpp: counterparty.kpp || null,
+      accountNumber: counterparty.nomer_scheta || null,
+      receiptArticle: counterparty.chart_of_accounts_id_data?.nazvanie || '–',
+      paymentArticle: counterparty.chart_of_accounts_id_2_data?.nazvanie || '–',
+      comment: counterparty.komentariy || null,
+      type: counterparty.tip || 'Не указан',
+      // Financial metrics from API
+      income: counterparty.income || 0,
+      expense: counterparty.expense || 0,
+      difference: counterparty.difference || 0,
+      receivables: counterparty.receivables || counterparty.debitorka || 0,
+      payables: counterparty.payables || counterparty.kreditorka || 0,
+      operationsCount: counterparty.operations_count || 0
+    }
+  }, [counterparty])
+
   // Calculate stats from operations
   const stats = useMemo(() => {
+    console.log('=== Calculating stats from operations ===')
     let receipts = 0
     let payments = 0
     let receiptsCount = 0
@@ -147,33 +194,6 @@ export default function KontragentDetailPage() {
       totalCount: operations.length
     }
   }, [operations])
-
-  // Format date range (if needed)
-  const dateRangeDisplay = useMemo(() => {
-    if (operations.length === 0) return 'Нет операций'
-    const dates = operationsItems.map(op => new Date(op.data_operatsii || op.data_oplaty)).filter(Boolean).sort((a, b) => a - b)
-    if (dates.length === 0) return 'Нет операций'
-    const first = dates[0]
-    const last = dates[dates.length - 1]
-    return `${first?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })} – ${last?.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' })}`
-  }, [operations, operationsItems])
-
-  // Format counterparty info
-  const counterpartyInfo = useMemo(() => {
-    if (!counterparty) return null
-    
-    return {
-      name: counterparty.nazvanie || 'Без названия',
-      fullName: counterparty.polnoe_imya || 'Полное название не указано',
-      inn: counterparty.inn || null,
-      kpp: counterparty.kpp || null,
-      accountNumber: counterparty.nomer_scheta || null,
-      receiptArticle: counterparty.chart_of_accounts_id_data?.nazvanie || '–',
-      paymentArticle: counterparty.chart_of_accounts_id_2_data?.nazvanie || '–',
-      comment: counterparty.komentariy || null,
-      type: counterparty.tip || 'Не указан'
-    }
-  }, [counterparty])
 
   const toggleOperation = (id) => {
     if (selectedOperations.includes(id)) {
@@ -252,7 +272,80 @@ export default function KontragentDetailPage() {
     return (
       <div className={styles.container}>
         <div className={styles.content}>
-          <div style={{ padding: '2rem', textAlign: 'center' }}>Загрузка...</div>
+          {/* Breadcrumbs Skeleton */}
+          <div className={styles.breadcrumbs}>
+            <div className={styles.breadcrumbsContent}>
+              <div className={styles.skeleton} style={{ width: '150px', height: '14px' }}></div>
+              <span className={styles.breadcrumbSeparator}>›</span>
+              <div className={styles.skeleton} style={{ width: '100px', height: '14px' }}></div>
+            </div>
+          </div>
+
+          {/* Header Skeleton */}
+          <div className={styles.header}>
+            <div className={styles.headerTop}>
+              <div className={styles.skeleton} style={{ width: '200px', height: '28px' }}></div>
+              <div className={styles.skeleton} style={{ width: '180px', height: '36px' }}></div>
+            </div>
+
+            {/* Stats Grid Skeleton */}
+            <div className={styles.statsGrid}>
+              {/* Financial Card Skeleton */}
+              <div className={styles.financialCard}>
+                <div className={styles.financialCardContent}>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className={styles.financialItem}>
+                      <div className={styles.financialItemHeader}>
+                        <div className={styles.skeleton} style={{ width: '6px', height: '6px', borderRadius: '50%' }}></div>
+                        <div className={styles.skeleton} style={{ width: '80px', height: '12px' }}></div>
+                      </div>
+                      <div className={styles.skeleton} style={{ width: '120px', height: '24px' }}></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Debit/Credit Column Skeleton */}
+              <div className={styles.debitCreditColumn}>
+                {[1, 2].map((i) => (
+                  <div key={i} className={styles.debitCreditCard}>
+                    <div className={styles.skeleton} style={{ width: '80px', height: '14px', marginBottom: '8px' }}></div>
+                    <div className={styles.skeleton} style={{ width: '100px', height: '12px' }}></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Info Card Skeleton */}
+              <div className={styles.infoCard}>
+                <div className={styles.skeleton} style={{ width: '150px', height: '18px', marginBottom: '12px' }}></div>
+                <div className={styles.infoCardDivider}></div>
+                <div className={styles.infoCardDetails}>
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className={styles.infoCardRow}>
+                      <div className={styles.skeleton} style={{ width: '100px', height: '12px', marginBottom: '4px' }}></div>
+                      <div className={styles.skeleton} style={{ width: '140px', height: '12px' }}></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Operations Section Skeleton */}
+          <div className={styles.operationsSection}>
+            <div className={styles.operationsContent}>
+              <div className={styles.operationsHeader}>
+                <div className={styles.skeleton} style={{ width: '180px', height: '18px' }}></div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div className={styles.skeleton} style={{ width: '80px', height: '32px' }}></div>
+                  <div className={styles.skeleton} style={{ width: '80px', height: '32px' }}></div>
+                </div>
+              </div>
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                Загрузка данных контрагента...
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -336,7 +429,7 @@ export default function KontragentDetailPage() {
               <div className={styles.debitCreditCard}>
                 <div className={styles.debitCreditTitle}>Дебиторка</div>
                 <div className={styles.debitCreditValue}>
-                  {counterparty?.receivables ? counterparty.receivables.toLocaleString('ru-RU') : 'Нет задолженности'}
+                  {counterpartyInfo?.receivables ? counterpartyInfo.receivables.toLocaleString('ru-RU') : 'Нет задолженности'}
                 </div>
               </div>
 
@@ -344,7 +437,7 @@ export default function KontragentDetailPage() {
               <div className={styles.debitCreditCard}>
                 <div className={styles.debitCreditTitle}>Кредиторка</div>
                 <div className={styles.debitCreditValue}>
-                  {counterparty?.payables ? counterparty.payables.toLocaleString('ru-RU') : 'Нет задолженности'}
+                  {counterpartyInfo?.payables ? counterpartyInfo.payables.toLocaleString('ru-RU') : 'Нет задолженности'}
                 </div>
               </div>
             </div>
@@ -419,8 +512,61 @@ export default function KontragentDetailPage() {
               </div>
             </div>
 
-            {isLoadingOperations ? (
-              <div style={{ padding: '2rem', textAlign: 'center' }}>Загрузка операций...</div>
+            {isLoadingCounterparty ? (
+              <div className={styles.tableWrapper}>
+                <table className={styles.operationsTable}>
+                  <thead className={styles.tableHeader}>
+                    <tr>
+                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>№</th>
+                      <th className={styles.tableHeaderCell}>Дата</th>
+                      <th className={styles.tableHeaderCell}>Счет</th>
+                      <th className={styles.tableHeaderCell}>Тип</th>
+                      <th className={styles.tableHeaderCell}>Контрагент</th>
+                      <th className={styles.tableHeaderCell}>Статья</th>
+                      <th className={styles.tableHeaderCell}>Проект</th>
+                      <th className={styles.tableHeaderCell}>Сделка</th>
+                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
+                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
+                    </tr>
+                  </thead>
+                  <tbody className={styles.tableBody}>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <tr key={i} className={styles.tableRow}>
+                        <td className={cn(styles.tableCell, styles.tableCellIndex)}>
+                          <div className={styles.skeleton} style={{ width: '20px', height: '12px', margin: '0 auto' }}></div>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <div className={styles.skeleton} style={{ width: '80px', height: '12px' }}></div>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <div className={styles.skeleton} style={{ width: '100px', height: '12px' }}></div>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <div className={styles.skeleton} style={{ width: '24px', height: '24px' }}></div>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <div className={styles.skeleton} style={{ width: '120px', height: '12px' }}></div>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <div className={styles.skeleton} style={{ width: '100px', height: '12px' }}></div>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <div className={styles.skeleton} style={{ width: '60px', height: '12px' }}></div>
+                        </td>
+                        <td className={styles.tableCell}>
+                          <div className={styles.skeleton} style={{ width: '60px', height: '12px' }}></div>
+                        </td>
+                        <td className={cn(styles.tableCell, styles.amountCell)}>
+                          <div className={styles.skeleton} style={{ width: '80px', height: '12px', marginLeft: 'auto' }}></div>
+                        </td>
+                        <td className={cn(styles.tableCell, styles.tableCellActions)}>
+                          <div className={styles.skeleton} style={{ width: '20px', height: '20px', margin: '0 auto' }}></div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : operations.length === 0 ? (
               <div className={styles.emptyState}>
                 <div className={styles.emptyStateIcon}>

@@ -399,6 +399,32 @@ export const useCounterpartiesPlanFact = (params = {}, enabled = true) => {
   })
 }
 
+// Get counterparty by ID
+export const useCounterpartyById = (guid, enabled = true) => {
+  console.log('useCounterpartyById called with guid:', guid, 'enabled:', enabled)
+  
+  return useQuery({
+    queryKey: ['counterpartyById', guid],
+    queryFn: async () => {
+      console.log('useCounterpartyById: Making request for guid:', guid)
+      try {
+        const { counterpartiesAPI } = await import('@/lib/api/ucode/counterparties')
+        const result = await counterpartiesAPI.getCounterpartyById(guid)
+        console.log('useCounterpartyById: Response received:', result)
+        return result
+      } catch (error) {
+        console.error('useCounterpartyById: Error:', error)
+        console.error('useCounterpartyById: Error response:', error.response?.data)
+        return { status: 'ERROR', data: null }
+      }
+    },
+    enabled: enabled && !!guid,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: false,
+  })
+}
+
 // Create counterparty mutation
 export const useCreateCounterparty = () => {
   const queryClient = useQueryClient()

@@ -10,8 +10,9 @@ import { authStore } from '@/store/auth.store'
 export function useLogin() {
   return useMutation({
     mutationFn: async ({ email, password }) => {
-      const baseURL = 'https://api.auth.u-code.io'
+      const baseURL = apiConfig.ucode.authBaseURL
       const projectId = apiConfig.ucode.projectId
+      const environmentId = apiConfig.ucode.environmentId
       const clientTypeId = apiConfig.ucode.clientTypeId
       const roleId = apiConfig.ucode.roleId
 
@@ -32,7 +33,7 @@ export function useLogin() {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Environment-Id': 'fc258dff-47c0-4ab1-9beb-91a045b4847c',
+          'Environment-Id': environmentId,
         },
         body: JSON.stringify(requestBody),
       })
@@ -96,8 +97,9 @@ export function useLogin() {
 export function useRegister() {
   return useMutation({
     mutationFn: async ({ fullname, email, phone, password }) => {
-      const baseURL = 'https://api.auth.u-code.io'
+      const baseURL = apiConfig.ucode.authBaseURL
       const projectId = apiConfig.ucode.projectId
+      const environmentId = apiConfig.ucode.environmentId
       const clientTypeId = apiConfig.ucode.clientTypeId
       const roleId = apiConfig.ucode.roleId
 
@@ -125,7 +127,7 @@ export function useRegister() {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Environment-Id': 'fc258dff-47c0-4ab1-9beb-91a045b4847c',
+          'Environment-Id': environmentId,
         },
         body: JSON.stringify(requestBody),
       })
