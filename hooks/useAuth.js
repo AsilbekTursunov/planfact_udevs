@@ -159,19 +159,28 @@ export function useRegister() {
       console.log('=== REGISTER SUCCESS ===')
       console.log('Full response:', JSON.stringify(data, null, 2))
       
-      // Response structure: { status: "CREATED", data: { status: "success", data: {...} } }
-      const responseData = data.data?.data || data.data || data
-      const userData = responseData?.user_data || responseData?.userData || responseData?.user
-      const tokenData = responseData?.token
+      // Response structure for registration: { status: "CREATED", data: { token: {...}, user: {...}, user_id: "..." } }
+      const responseData = data.data
+      const tokenData = responseData?.token?.access_token
+      const refreshToken = responseData?.token?.refresh_token
+      const userData = responseData?.user
+      const userEmail = userData?.email
 
       console.log('Extracted userData:', userData)
       console.log('Extracted token:', tokenData)
+      console.log('Extracted email:', userEmail)
       console.log('========================')
 
       // Set authentication state through MobX store
-      // Note: token might be null for registration, user needs to login after
-      if (userData) {
-        authStore.setAuthentication({ token: tokenData, user_data: userData })
+      if (tokenData && userData) {
+        authStore.setAuthentication({ 
+          token: tokenData,
+          refresh_token: refreshToken,
+          user_data: {
+            ...userData,
+            email: userEmail
+          }
+        })
       }
 
       showSuccessNotification('Успешная регистрация!')
