@@ -7,7 +7,12 @@ import styles from './Profile.module.scss'
 
 export const Profile = observer(() => {
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const menuRef = useRef(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     // Click outside to close
@@ -33,7 +38,9 @@ export const Profile = observer(() => {
       >
         <div className={styles.profileInfo}>
           <div className={styles.profileTop}>
-            <span className={styles.email}>{authStore.userEmail || 'soburjon@udevs.io'}</span>
+            <span className={styles.email}>
+              {mounted ? (authStore.userEmail || 'Пользователь') : 'Пользователь'}
+            </span>
             <ChevronDown size={14} className={cn(styles.chevron, isOpen && styles.open)} />
           </div>
           <span className={styles.accessText}>Доступ истекает 02.03.26</span>

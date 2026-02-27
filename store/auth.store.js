@@ -34,16 +34,21 @@ class AuthStore {
   setAuthentication(data) {
     this.isAuthenticated = true;
     
-    if (data?.token?.access_token) {
-      this.authToken = data.token.access_token;
-      this.refreshToken = data.token.refresh_token;
+    // Handle new auth API response structure
+    if (data?.token) {
+      this.authToken = data.token;
       localStorage.setItem('authToken', this.authToken);
+    }
+    
+    if (data?.refresh_token) {
+      this.refreshToken = data.refresh_token;
       localStorage.setItem('refreshToken', this.refreshToken);
     }
 
     if (data?.user_data) {
       this.userData = data.user_data;
-      this.userEmail = data.user_data.login || '';
+      // Use email field from user_data
+      this.userEmail = data.user_data.email || data.user_data.login || '';
       localStorage.setItem('userData', JSON.stringify(this.userData));
       localStorage.setItem('userEmail', this.userEmail);
     }

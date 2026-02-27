@@ -34,8 +34,6 @@ export async function makePlanFactRequest({
   objectData = {},
   userId = '',
 }) {
-
-
   try {
     const baseURL = apiConfig.ucode.baseURL
     const projectId = apiConfig.ucode.projectId

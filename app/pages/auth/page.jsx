@@ -13,10 +13,9 @@ export default function LoginPage() {
   const router = useRouter()
   const [fromType, setFromType] = useState('login')
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
     fullname: '',
-    email: '',
     phone: '',
     checked: false, // Explicitly set to false to avoid uncontrolled->controlled warning
   })
@@ -36,12 +35,12 @@ export default function LoginPage() {
 
     try {
       if (fromType === 'login') {
-        if (!formData.username || !formData.password) {
+        if (!formData.email || !formData.password) {
           setError('Заполните все поля')
           return
         }
         await loginMutation.mutateAsync({
-          username: formData.username,
+          email: formData.email,
           password: formData.password,
         })
       } else {
@@ -77,7 +76,7 @@ export default function LoginPage() {
   const toggleFormType = () => {
     setFromType(prev => prev === 'login' ? 'register' : 'login')
     setError('')
-    setFormData({ username: '', password: '', fullname: '', email: '', phone: '', checked: false })
+    setFormData({ email: '', password: '', fullname: '', phone: '', checked: false })
     setConfirmPassword('')
   }
 
@@ -171,22 +170,22 @@ export default function LoginPage() {
               </>
             )}
 
-            {/* Username/Login (Only on login) */}
+            {/* Email (Only on login) */}
             {fromType === 'login' && (
               <div className={styles.inputGroup}>
                 <div className={styles.inputWrapper}>
                   <Input
                     type="email"
-                    value={formData.username}
+                    value={formData.email}
                     onChange={(e) => {
-                      setFormData({ ...formData, username: e.target.value })
+                      setFormData({ ...formData, email: e.target.value })
                       setError('')
                     }}
-                    onFocus={() => setFocusedField('username')}
+                    onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
                     className={cn(
                       styles.inputField,
-                      focusedField === 'username' && styles.focused
+                      focusedField === 'email' && styles.focused
                     )}
                     placeholder="Email"
                     required

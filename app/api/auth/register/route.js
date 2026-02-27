@@ -1,100 +1,71 @@
 import { NextResponse } from 'next/server'
-import { apiConfig } from '@/lib/config/api'
+import axios from 'axios'
 
-/**
- * POST /api/auth/register
- * Register a new user
- */
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { name, email, phone, password } = body
+    const { fullname, email, phone, password } = body
 
-    // Validate required fields
-    if (!name || !email || !phone || !password) {
-      return NextResponse.json(
-        {
-          status: 'ERROR',
-          description: 'Missing required fields',
-          data: 'name, email, phone, and password are required'
-        },
-        { status: 400 }
-      )
-    }
+    const baseURL = 'https://api.auth.u-code.io'
+    const projectId = '3ed54a59-5eda-4cfe-b4ae-8a201c1ea4ed'
+    const clientTypeId = '2d3beced-ea36-41ab-9e24-e7ad372300fe'
+    const roleId = '653c399c-ed2b-4f16-bfe8-612d2e29e87d'
+    const url = `${baseURL}/v2/register?project-id=${projectId}`
 
-    const baseURL = apiConfig.ucode.baseURL
-    const projectId = apiConfig.ucode.projectId
-    const invokeFunctionEndpoint = '/v2/invoke_function/planfact-plan-fact'
-
-    // Build URL
-    const url = `${baseURL}${invokeFunctionEndpoint}?project-id=${projectId}`
-
-    // Prepare request body - exactly as in Postman (order matters!)
     const requestBody = {
       data: {
-        auth: {
-          data: {},
-          type: 'apikey'
-        },
-        method: 'auth_register',
-        object_data: {
-          name,
-          password,
-          email,
-          phone
-        }
+        // type: 'email',
+        name: fullname,
+        phone: phone,
+        password: password,
+        email: email,
+        client_type_id: clientTypeId,
+        role_id: roleId
       }
     }
 
-    console.log('Register API request:', {
-      url,
-      body: JSON.stringify(requestBody, null, 2)
-    })
+    console.log('=== SERVER REGISTER REQUEST (NEW API) ===')
+    console.log('URL:', url)
+    console.log('Request Body:', JSON.stringify(requestBody, null, 2))
+    console.log('==========================================')
 
-    // Make request to u-code API
-    const response = await fetch(url, {
-      method: 'POST',
+    const response = await axios.post(url, requestBody, {
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Environment-Id': 'fc258dff-47c0-4ab1-9beb-91a045b4847c',
       },
-      body: JSON.stringify(requestBody)
+      validateStatus: () => true,
     })
 
-    const responseText = await response.text()
-    let data
+    console.log('=== SERVER RESPONSE (NEW API) ===')
+    console.log('Status:', response.status)
+    console.log('Response Data:', response.data)
+    console.log('==================================')
 
+    let data
     try {
-      data = responseText ? JSON.parse(responseText) : {}
-    } catch (parseError) {
-      console.error('Failed to parse register response:', parseError)
+      data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
+    } catch (e) {
+      console.error('Failed to parse response:', e)
       return NextResponse.json(
-        {
-          status: 'ERROR',
-          description: 'Failed to parse response',
-          data: responseText
-        },
+        { error: 'Invalid response from server' },
         { status: 500 }
       )
     }
 
-    console.log('Register API response:', data)
-
-    // Check for errors
-    if (!response.ok || data.status === 'ERROR' || data.status === 'BAD_REQUEST') {
-      return NextResponse.json(data, { status: response.status })
+    if (response.status !== 200 && response.status !== 201) {
+      return NextResponse.json(
+        { error: data.message || data.description || 'Registration failed' },
+        { status: response.status }
+      )
     }
 
-    // Return success response
-    return NextResponse.json(data, { status: 200 })
+    return NextResponse.json(data)
   } catch (error) {
-    console.error('Register API error:', error)
+    console.error('Server error:', error)
+    console.error('Error details:', error.response?.data)
     return NextResponse.json(
-      {
-        status: 'ERROR',
-        description: 'Internal server error',
-        data: error.message
-      },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     )
   }
