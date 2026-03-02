@@ -1,10 +1,19 @@
 "use client"
+import { createPortal } from 'react-dom'
+import { useEffect, useState } from 'react'
 import styles from './SplitAmountCancelModal.module.scss'
 
 export function SplitAmountCancelModal({ isOpen, onConfirm, onCancel }) {
-  if (!isOpen) return null
+  const [mounted, setMounted] = useState(false)
 
-  return (
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
+
+  if (!isOpen || !mounted) return null
+
+  return createPortal(
     <>
       <div 
         className={styles.cancelModalOverlay}
@@ -37,6 +46,7 @@ export function SplitAmountCancelModal({ isOpen, onConfirm, onCancel }) {
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
