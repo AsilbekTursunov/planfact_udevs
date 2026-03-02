@@ -6,7 +6,7 @@ import { TbCurrencyRubel } from 'react-icons/tb'
 import { PiCurrencyKztDuotone } from 'react-icons/pi'
 import { CreditIcon, DebitIcon } from '../../../constants/icons'
 
-const PriceStatus = ({ amount, type, confirmed, accrual, currency }) => {
+const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency }) => {
   return (
     <div
       className={cn(
@@ -24,9 +24,16 @@ const PriceStatus = ({ amount, type, confirmed, accrual, currency }) => {
       {confirmed && !accrual && (
         <CreditIcon />
       )}
-      <span className={styles.amountText}>{amount}</span>
-      <span className={styles.currency}>{
-        currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span>
+      <span className={styles.amountText}>{tab == "Перемещение" ? <>
+        <div className={`${styles.doubleAccount} ${confirmed && styles.confirmed}`}>
+          <span className=''>-{amount} <span className={styles.currency}>{
+            currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
+          <span className=''>+{amount} <span className={styles.currency}>{
+            currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
+        </div>
+      </> : amount}</span>
+      {tab != "Перемещение" && <span className={styles.currency}>{
+        currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span>}
     </div>
   )
 }

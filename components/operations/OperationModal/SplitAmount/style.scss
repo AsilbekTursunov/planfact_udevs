@@ -1,0 +1,375 @@
+@import '../../../../styles/variables.scss';
+
+$border: #e5e7eb;
+$text-muted: #999;
+$text-dark: #0f172a;
+$primary: #0F51B9;
+$primary-light: #e3eeff;
+$row-hover: #f9fafb;
+
+// ── Toggle button ──────────────────────────────────────────
+.split-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .split-title {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    color: $primary;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    transition: opacity 0.15s;
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+}
+
+// ── MultipleSelect wrapper ─────────────────────────────────
+.split-select-wrap {
+  max-width: 520px;
+  margin-bottom: 4px;
+}
+
+// ── Table container ────────────────────────────────────────
+.split-table-wrap {
+  overflow-x: auto; 
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+}
+
+.split-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: $text-dark;
+}
+
+.split-thead {
+  background: #f9fafb;
+  border: 1px solid $border;
+}
+
+// ── Header ────────────────────────────────────────────────
+.split-th {
+  padding: 8px 10px;
+
+  white-space: nowrap;
+  font-weight: 500;
+  color: #334155;
+  text-align: left;
+
+  &:not(:first-child) {
+    border-left: 1px solid $border;
+  }
+
+  strong {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 550;
+    font-size: 12px;
+
+    .sort-arrow {
+      color: #9ca3af;
+      display: inline-flex;
+    }
+  }
+
+  .th-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+}
+
+// Column widths
+.col-date {
+  min-width: 150px;
+}
+
+.col-confirm {
+  min-width: 90px;
+  text-align: center;
+}
+
+.col-agent {
+  min-width: 180px;
+  max-width: 180px;
+}
+
+.col-statya {
+  min-width: 180px;
+  max-width: 180px;
+}
+
+.col-value {
+  min-width: 100px;
+  text-align: right;
+}
+
+.col-percent {
+  min-width: 80px;
+  text-align: center;
+}
+
+.col-remove {
+  width: 28px;
+  min-width: 28px;
+}
+
+// ── Body rows ─────────────────────────────────────────────
+.split-tr {
+  border-bottom: 1px solid $border;
+  border-left: 1px solid $border;
+  border-right: 1px solid $border;
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: $row-hover;
+  }
+}
+
+.split-td {
+  padding: 6px 10px;
+  vertical-align: middle;
+
+  &:not(:first-child) {
+    border-left: 1px solid $border;
+  }
+}
+
+// ── Date cell ─────────────────────────────────────────────
+.date-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
+
+  .date-value {
+    font-size: 12px;
+    color: $text-dark;
+  }
+
+  .date-hidden {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ── Checkbox cell ─────────────────────────────────────────
+.col-confirm .split-td,
+.split-td.col-confirm {
+  text-align: center;
+}
+
+.checkbox-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  .checkbox-hidden {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .checkbox-box {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    border: 2px solid #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    background: white;
+
+    &.checked {
+      background: #0F51B9;
+      border-color: #0F51B9;
+    }
+  }
+}
+
+// ── Borderless select ─────────────────────────────────────
+.borderless-select {
+  display: flex;
+  align-items: center;
+  position: relative;
+
+  .select-input {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: $text-dark;
+    padding: 0 20px 0 0;
+    cursor: pointer;
+    width: 100%;
+    outline: none;
+    font-family: inherit;
+
+    option {
+      color: $text-dark;
+    }
+  }
+
+  .select-arrow {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+  }
+}
+
+// ── Value input ───────────────────────────────────────────
+.value-input {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: $text-dark;
+  text-align: right;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+  padding: 0;
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+// ── Percent cell ──────────────────────────────────────────
+.percent-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  justify-content: center;
+
+  .percent-input {
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: $text-dark;
+    text-align: right;
+    width: 36px;
+    outline: none;
+    font-family: inherit;
+    padding: 0;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  .percent-symbol {
+    font-size: 12px;
+    color: $text-dark;
+  }
+}
+
+// ── Remove row button ─────────────────────────────────────
+.remove-row-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+
+  &:hover {
+    color: #ef4444;
+  }
+}
+
+// ── Footer row ────────────────────────────────────────────
+.split-footer-row {
+  border-top: 1px solid $border;
+
+  td {
+    padding: 8px 10px;
+
+    // &:not(:first-child) {
+    //   border-left: 1px solid $border;
+    // }
+  }
+
+  .add-row-btn {
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: $primary;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.15s;
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+
+  .footer-total {
+    text-align: right;
+    font-weight: 600;
+    font-size: 12px;
+    color: $text-dark;
+    white-space: nowrap;
+
+    .total-label {
+      margin-right: 4px;
+    }
+
+    .total-value {
+      font-weight: 700;
+    }
+  }
+
+  .footer-percent {
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: $text-dark;
+    white-space: nowrap;
+  }
+}

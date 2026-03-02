@@ -99,7 +99,7 @@ export default function OperationsPage() {
 	const { data: myAccountsData } = useBankAccountsPlanFact({
 		page: 1,
 		limit: 100,
-	}) 
+	})
 
 
 
@@ -399,6 +399,7 @@ export default function OperationsPage() {
 				chartOfAccounts: item.chart_of_accounts_id_data?.nazvanie || item.chart_of_accounts_name || '',
 				chartOfAccountsId: item.chart_of_accounts_id || null,
 				bankAccount: item.my_accounts_name || '',
+				bankAccount2: item.my_accounts_name_2 || '',
 				bankAccountId: item.my_accounts_id || null,
 				counterparty: item.counterparties_name || '',
 				counterpartyId: item.counterparties_id || null,
@@ -753,6 +754,24 @@ export default function OperationsPage() {
 
 				{/* Table */}
 				<div className={styles.tableArea} style={{ position: 'relative' }}>
+					{/* Refetch overlay spinner */}
+					{isFetching && !isLoadingOperations && (
+						<div style={{
+							position: 'absolute',
+							top: 0,
+							left: 0,
+							right: 0,
+							bottom: 0,
+							background: 'rgba(255,255,255,0.55)',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							zIndex: 30,
+							borderRadius: '4px',
+						}}>
+							<div className={styles.loadingSpinner} style={{ width: 28, height: 28, borderWidth: 3 }} />
+						</div>
+					)}
 					{/* Selection Bar */}
 					{selectedOperations.length > 0 && (
 						<div className={styles.selectionBar}>
@@ -838,7 +857,10 @@ export default function OperationsPage() {
 								{isLoadingOperations ? (
 									<tr className={styles.emptyRow}>
 										<td colSpan='9' className={styles.emptyCell}>
-											Загрузка данных...
+											<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem' }}>
+												<div className={styles.loadingSpinner} />
+												<span>Загрузка данных...</span>
+											</div>
 										</td>
 									</tr>
 								) : operations.length === 0 ? (
@@ -870,7 +892,7 @@ export default function OperationsPage() {
 													openOperationModal={openOperationModal}
 													handleEditOperation={handleEditOperation}
 													handleDeleteOperation={handleDeleteOperation}
-															handleCopyOperation={handleCopyOperation}
+													handleCopyOperation={handleCopyOperation}
 												/>
 											))}
 
@@ -889,14 +911,14 @@ export default function OperationsPage() {
 													.map(op => (
 														<OperationTableRow
 													key={op.id}
-															op={op}
-															selectedOperations={selectedOperations}
-															toggleOperation={toggleOperation}
-															openOperationModal={openOperationModal}
-															handleEditOperation={handleEditOperation}
-															handleDeleteOperation={handleDeleteOperation}
-															handleCopyOperation={handleCopyOperation}
-														/>
+													op={op}
+													selectedOperations={selectedOperations}
+													toggleOperation={toggleOperation}
+													openOperationModal={openOperationModal}
+													handleEditOperation={handleEditOperation}
+													handleDeleteOperation={handleDeleteOperation}
+													handleCopyOperation={handleCopyOperation}
+												/>
 											))}
 									</>
 								)}
@@ -914,8 +936,8 @@ export default function OperationsPage() {
 				)}
 
 				{/* Footer Stats */}
-				<OperationsFooter 
-					isFilterOpen={isFilterOpen} 
+				<OperationsFooter
+					isFilterOpen={isFilterOpen}
 					operations={operations}
 					totalOperations={operationsListData?.data?.data?.pagination?.total || operations.length}
 				/>
@@ -928,7 +950,7 @@ export default function OperationsPage() {
 					modalType={modalType}
 					isClosing={isModalClosing}
 					isOpening={isModalOpening}
-					onClose={closeOperationModal}
+					onClose={closeOperationModal} 
 					onSuccess={(operationData, isUpdate) => {
 						console.log('=== onSuccess callback ===')
 						console.log('operationData:', operationData)

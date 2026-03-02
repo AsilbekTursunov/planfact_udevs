@@ -237,6 +237,11 @@
   padding-bottom: 1.5rem;
 }
 
+.amountWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: .325rem;
+}
 .formRow {
   display: flex;
   align-items: center;

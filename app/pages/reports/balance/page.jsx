@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './balance.module.scss';
 import { balanceMockData } from './mockData';
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons';
 
 export default function BalancePage() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 400)
+    return () => clearTimeout(t)
+  }, [])
+
   const [selectedDate, setSelectedDate] = useState('10.02.2026');
   const [selectedEntity, setSelectedEntity] = useState('Юрлица');
   const [selectedCurrency, setSelectedCurrency] = useState('RUB');
@@ -114,6 +121,12 @@ export default function BalancePage() {
         </div>
 
         <div className={styles.reportContent}>
+          {isLoading && (
+            <div className={styles.loadingOverlay}>
+              <div className={styles.loadingSpinner} />
+              <span>Загрузка...</span>
+            </div>
+          )}
           <div className={styles.balanceEquation}>
             Активы = Обязательства + Капитал
           </div>

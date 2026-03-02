@@ -449,7 +449,7 @@ export default function CounterpartiesPage() {
     }))
   }, [counterpartiesGroupsItems])
 
-  console.log(counterpartiesGroups, 'counterpartiesGroups') 
+  console.log(counterpartiesGroups, 'counterpartiesGroups')
 
 
   const totalCounterparties = flatCounterparties.length
@@ -493,7 +493,7 @@ export default function CounterpartiesPage() {
     })
   }
 
-  console.log(chartOfAccountsOptions, 'chartOfAccountsOptions') 
+  console.log(chartOfAccountsOptions, 'chartOfAccountsOptions')
 
   return (
     <div className={styles.container}>
@@ -667,8 +667,8 @@ export default function CounterpartiesPage() {
                     value={searchQuery}
                     onChange={setSearchQuery}
                     placeholder={
-                      viewMode === 'list' 
-                        ? "Поиск контрагентов" 
+                      viewMode === 'list'
+                        ? "Поиск контрагентов"
                         : viewMode === 'nested'
                           ? "Поиск по группам"
                           : "Поиск групп"
@@ -681,7 +681,9 @@ export default function CounterpartiesPage() {
         </div>
 
         {/* Table Container */}
-        <div className={styles.tableContainer}>
+        <div className={styles.tableContainer} style={{ position: 'relative' }}>
+          {/* Refetch overlay spinner */}
+
           <div ref={tableWrapperRef} className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead className={styles.tableHead}>
@@ -801,7 +803,10 @@ export default function CounterpartiesPage() {
                 {isLoadingCounterparties && page === 1 ? (
                   <tr className={styles.emptyRow}>
                     <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
-                      Загрузка...
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem' }}>
+                        <div className={styles.loadingSpinner} />
+                        <span>Загрузка...</span>
+                      </div>
                     </td>
                   </tr>
                 ) : (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 ? (
@@ -994,6 +999,11 @@ export default function CounterpartiesPage() {
             </div>
           )}
         </div>
+        {isFetching && !isLoadingCounterparties && (
+          <div className={styles.fetchOverlay}>
+            <div className={styles.loadingSpinner} style={{ width: 28, height: 28, borderWidth: 3 }} />
+          </div>
+        )}
 
         {/* Footer */}
         <div className={cn(styles.footer, isFilterOpen && styles.footerWithFilter)}>

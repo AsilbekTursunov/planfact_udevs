@@ -13,7 +13,8 @@ const OperationTableRow = ({
   handleEditOperation,
   handleDeleteOperation,
   handleCopyOperation,
-}) => { 
+}) => {
+  console.log(op)
   return (
     <tr
       key={op.id}
@@ -23,7 +24,7 @@ const OperationTableRow = ({
       )}
       onClick={e => {
         if (!e.target.closest('input') && !e.target.closest('button')) {
-          openOperationModal(op) 
+          openOperationModal(op)
         }
       }}
     >
@@ -38,7 +39,12 @@ const OperationTableRow = ({
       </td>
       <td className={cn(styles.tableCell, styles.dateCell)}>{op.operationDate || ''}</td>
       <td className={cn(styles.tableCell, styles.accountCell)}>
-        {op.bankAccount || ''}
+        {op?.type == "Перемещение" ? <>
+          <div className={`${styles.doubleAccount} ${op.paymentConfirmed && styles.confirmed}`}>
+            <span>{op.bankAccount}</span>
+            <span>{op.bankAccount2}</span>
+          </div>
+        </> : op.bankAccount || ''}
       </td>
       <td className={styles.tableCell}>
         {op.typeLabel ? (
@@ -100,12 +106,16 @@ const OperationTableRow = ({
         {op.counterparty || ''}
       </td>
       <td className={cn(styles.tableCell, styles.statusCell)}>
-        {op.chartOfAccounts || ''}
+        {op?.type == "Перемещение" ? <div className={`${styles.doubleAccount} ${op.paymentConfirmed && styles.confirmed}`}>
+          <span>[Перемещение - списание]</span>
+          <span>[Перемещение - зачисление]</span>
+        </div> : op.chartOfAccounts || ''}
       </td>
       <td className={styles.tableCell}></td>
       <td className={styles.tableCell} onClick={e => e.stopPropagation()}>
         <PriceStatus
           amount={op.amount}
+          tab={op.type}
           type={op.typeCategory}
           confirmed={op.payment_confirmed}
           accrual={op.payment_accrual}

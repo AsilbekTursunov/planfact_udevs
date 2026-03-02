@@ -52,6 +52,20 @@
   color: #334155;
 }
 
+.doubleAccount {
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  color: #334155;
+  align-items: flex-start;
+  justify-content: center;
+  color: $gray-400;
+  font-weight: 400;
+
+  &.confirmed {
+    color: $primary-dark;
+  }
+}
 .typeIcon {
   display: inline-flex;
   align-items: center;

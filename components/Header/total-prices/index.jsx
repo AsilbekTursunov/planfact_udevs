@@ -98,8 +98,8 @@ const TotalPrice = () => {
 
 
     return (
-        <>
-            <div className={styles.balanceSection} ref={balanceRef}>
+        <div ref={balanceRef} style={{ position: 'relative' }}>
+            <div className={styles.balanceSection}>
                 <div
                     onClick={() => {
                         setIsBalanceOpen(!isBalanceOpen)
@@ -119,7 +119,6 @@ const TotalPrice = () => {
                 </div>
 
                 {/* Balance Modal */}
-
             </div>
             {isBalanceOpen && (
                 <div className={cn(styles.balanceModal, modalMode === 'full' ? styles.full : styles.compact)}>
@@ -262,7 +261,7 @@ const TotalPrice = () => {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     )
 }
 

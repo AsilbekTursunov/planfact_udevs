@@ -20,6 +20,7 @@ import TextArea from '@/components/shared/TextArea'
 import styles from './OperationModal.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 import { CreditIcon, DebitIcon } from '../../../constants/icons'
+import SplitAmount from './SplitAmount'
 
 export function OperationModal({
 	operation,
@@ -430,16 +431,16 @@ export function OperationModal({
 	}, [bankAccountsData, legalEntitiesData, currenciesData])
 
 	// Transform currencies data
-	const currencies = (
-		currenciesData?.data?.data?.response ||
-		currenciesData?.data?.response ||
-		[]
-	).map(item => ({
-		guid: item.guid,
-		label: `${item.kod || ''} (${item.nazvanie || ''})`.trim(),
-		kod: item.kod || '',
-		nazvanie: item.nazvanie || '',
-	}))
+	// const currencies = (
+	// 	currenciesData?.data?.data?.response ||
+	// 	currenciesData?.data?.response ||
+	// 	[]
+	// ).map(item => ({
+	// 	guid: item.guid,
+	// 	label: `${item.kod || ''} (${item.nazvanie || ''})`.trim(),
+	// 	kod: item.kod || '',
+	// 	nazvanie: item.nazvanie || '',
+	// }))
 
 	// Get currency from selected account
 	const getAccountCurrency = accountGuid => {
@@ -632,6 +633,7 @@ export function OperationModal({
 				data_operatsii: activeTab === 'accrual' ? null : formData?.paymentDate,
 				data_nachisleniya: formData?.accrualDate,
 				opisanie: formData.purpose || '',
+				summa: Number(activeTab === 'transfer' ? formData.fromAmount || formData.toAmount || 0 : activeTab === 'accrual' ? formData.amount || 0 : formData.amount || 0).toFixed(2),
 				oplata_podtverzhdena: formData.confirmPayment || false,
 				payment_confirmed: formData.confirmPayment || false,
 				payment_accrual: formData.confirmAccrual || false,
@@ -942,31 +944,44 @@ export function OperationModal({
 									</div>
 
 									{/* Сумма new form value summa */}
-									<div className={styles.formRow}>
-										<label className={styles.label}>
-											Сумма
-										</label>
-										<div className={styles.fieldWrapper}>
-											<div className={styles.inputGroup}>
-												<Input
-													value={formatAmount(formData.amount)}
-													onChange={e => {
-														setFormData({ ...formData, amount: parseAmount(e.target.value) })
-														if (errors.amount) {
-															setErrors({ ...errors, amount: null })
-														}
-													}}
-													placeholder='0'
-													className={styles.input}
-												/>
-												<div>
-													{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
-													{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+									<div className={styles.amountWrapper}>
+										<div className={styles.formRow}>
+											<label className={styles.label}>
+												Сумма
+											</label>
+											<div className={styles.fieldWrapper}>
+												<div className={styles.inputGroup}>
+													<Input
+														value={formatAmount(formData.amount)}
+														onChange={e => {
+															setFormData({ ...formData, amount: parseAmount(e.target.value) })
+															if (errors.amount) {
+																setErrors({ ...errors, amount: null })
+															}
+														}}
+														placeholder='0'
+														className={styles.input}
+													/>
+													<div>
+														{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
+														{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+													</div>
+													{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
+														{getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
+													</div>}
 												</div>
-												{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
-													{getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
-												</div>}
 											</div>
+										</div>
+
+										<div className={styles.formRow}>
+											<label className={styles.label}>
+												&nbsp;
+											</label>
+											<SplitAmount
+												summa={formData?.amount}
+												counterAgents={counterAgents}
+												chartOfAccountsOptions={chartOfAccountsTree}
+											/>
 										</div>
 									</div>
 
@@ -1099,33 +1114,44 @@ export function OperationModal({
 									</div>
 
 									{/* Сумма */}
-									<div className={styles.formRow}>
-										<label className={styles.label}>
-											Сумма
-										</label>
-										<div className={styles.fieldWrapper}>
-											<div className={styles.inputGroup}>
-												<Input
-													type='text'
-													value={formatAmount(formData.amount)}
-													onChange={e => {
-														setFormData({ ...formData, amount: parseAmount(e.target.value) })
-														if (errors.amount) {
-															setErrors({ ...errors, amount: null })
-														}
-													}}
-													placeholder='0'
-													className={cn(styles.input, errors.amount && styles.error)}
-												/>
-												<div>
-													{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
-													{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+									<div className={styles.amountWrapper}>
+										<div className={styles.formRow}>
+											<label className={styles.label}>
+												Сумма
+											</label>
+											<div className={styles.fieldWrapper}>
+												<div className={styles.inputGroup}>
+													<Input
+														type='text'
+														value={formatAmount(formData.amount)}
+														onChange={e => {
+															setFormData({ ...formData, amount: parseAmount(e.target.value) })
+															if (errors.amount) {
+																setErrors({ ...errors, amount: null })
+															}
+														}}
+														placeholder='0'
+														className={cn(styles.input, errors.amount && styles.error)}
+													/>
+													<div>
+														{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
+														{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+													</div>
+													{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
+														{getAccountCurrency(formData.accountAndLegalEntity)}
+													</div>}
 												</div>
-												{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
-													{getAccountCurrency(formData.accountAndLegalEntity)}
-												</div>}
 											</div>
-
+										</div>
+										<div className={styles.formRow}>
+											<label className={styles.label}>
+												&nbsp;
+											</label>
+											<SplitAmount
+												summa={formData?.amount}
+												counterAgents={counterAgents}
+												chartOfAccountsOptions={chartOfAccountsTree}
+											/>
 										</div>
 									</div>
 
@@ -1608,7 +1634,7 @@ export function OperationModal({
 						</button>
 					</div>
 				</div>
-			</div>
+			</div >
 		</>
 	)
 }

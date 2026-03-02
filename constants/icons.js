@@ -106,3 +106,48 @@ export const DesignCalenderIcon = () => (
     </defs>
   </svg>
 )
+
+// ── SVG icons ──────────────────────────────────────────────
+
+
+export const MergeArrowsIcon = () => (
+  <svg width="13" height="12" viewBox="0 0 13 12" fill="none">
+    <path
+      d="M12.8333 5V0H8.45831V1.875H4.70831V0H0.333313V5H4.70831V3.125H5.95831V9.375H8.45831V11.25H12.8333V6.25H8.45831V8.125H7.20831V3.125H8.45831V5H12.8333Z"
+      fill="#999"
+    />
+  </svg>
+)
+
+export const SortArrow = () => (
+  <svg width="8" height="5" viewBox="0 0 8 5" fill="none">
+    <path fillRule="evenodd" fill="currentColor"
+      d="M8 .5a.48.48 0 0 1-.148.352l-3.5 3.5A.48.48 0 0 1 4 4.5a.48.48 0 0 1-.352-.148l-3.5-3.5A.48.48 0 0 1 0 .5.48.48 0 0 1 .148.148.48.48 0 0 1 .5 0h7a.48.48 0 0 1 .352.148A.48.48 0 0 1 8 .5z"
+    />
+  </svg>
+)
+
+export const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+    <path d="M4.1,12.7 9,17.6 20.3,6.3" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const CalendarCellIcon = () => (
+  <svg width="14" height="16" viewBox="0 0 14 16" fill="none">
+    <path d="M11.6079 2.27344H2.30548C1.57154 2.27344 0.976562 2.83742 0.976562 3.53314V12.351C0.976562 13.0467 1.57154 13.6107 2.30548 13.6107H11.6079C12.3418 13.6107 12.9368 13.0467 12.9368 12.351V3.53314C12.9368 2.83742 12.3418 2.27344 11.6079 2.27344Z"
+      stroke="#BDBDBD" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M1.33203 6.04688H12.6693" stroke="#BDBDBD" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M9.51953 1.00781V3.52721" stroke="#BDBDBD" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M4.48047 1.00781V3.52721" stroke="#BDBDBD" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const SelectArrow = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path fillRule="evenodd" clipRule="evenodd"
+      d="M3.03596 5.57966C2.77968 5.83594 2.77968 6.25146 3.03596 6.50774L6.53596 10.0077C6.65903 10.1308 6.82595 10.2 7 10.2C7.17405 10.2 7.34097 10.1308 7.46404 10.0077L10.964 6.50774C11.2203 6.25146 11.2203 5.83594 10.964 5.57966C10.7078 5.32338 10.2922 5.32338 10.036 5.57966L7 8.61562L3.96404 5.57966C3.70776 5.32338 3.29225 5.32338 3.03596 5.57966Z"
+      fill="currentColor"
+    />
+  </svg>
+)

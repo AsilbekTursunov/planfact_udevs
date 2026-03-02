@@ -447,8 +447,11 @@ export default function CashFlowReportPage() {
           </div>
 
           <div className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`}>
-            {loading && !reportData ? (
-              <div className={styles.loadingOverlay}>Загрузка данных...</div>
+            {loading ? (
+              <div className={styles.loadingOverlay}>
+                <div className={styles.loadingSpinner} />
+                <span>Загрузка данных...</span>
+              </div>
             ) : null}
             <table className={`${styles.table} ${loading ? styles.tableLoading : ''}`}>
               <thead className={styles.thead}>
