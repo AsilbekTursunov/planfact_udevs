@@ -411,6 +411,7 @@ export function TreeSelect({
     <div className={cn(styles.container, className)} ref={dropdownRef}>
       <button
         ref={buttonRef}
+        id='tree-select-button'
         type="button"
         onClick={(e) => {
           e.stopPropagation()
@@ -428,7 +429,7 @@ export function TreeSelect({
           styles.button,
           disabled || loading ? styles.disabled : styles.enabled,
           !value && styles.empty,
-          hasError && styles.error
+          hasError && styles.error, className
         )}
       >
         <div className={styles.buttonContent}>

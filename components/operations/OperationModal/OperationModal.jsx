@@ -1,5 +1,5 @@
 'use client'
-
+import React, { useReducer } from 'react'
 import { useState, useMemo, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
@@ -21,6 +21,54 @@ import styles from './OperationModal.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 import { CreditIcon, DebitIcon } from '../../../constants/icons'
 import SplitAmount from './SplitAmount'
+
+const today = new Date().toISOString().split('T')[0]
+
+const emptyRow = () => ({
+	calculationDate: today,
+	isCalculationCommitted: true,
+	contrAgentId: '',
+	operationCategoryId: '',
+	value: '',
+	percent: '',
+})
+
+
+
+
+
+function rowsReducer(state, action) {
+	switch (action.type) {
+		case 'ADD':
+			return [...state, emptyRow()]
+		case 'REMOVE':
+			return state.filter((_, i) => i !== action.index)
+		case 'UPDATE':
+			return state.map((row, i) =>
+				i === action.index ? { ...row, [action.field]: action.value } : row
+			)
+		case 'DIVIDE_EQUAL': {
+			const count = state.length
+			if (count === 0) return state
+			const totalAmount = parseFloat(action.amount) || 0
+			const equalValue = Math.floor((totalAmount / count) * 100) / 100
+			const equalPercent = Math.floor((100 / count) * 100) / 100
+			const lastValue = +(totalAmount - equalValue * (count - 1)).toFixed(2)
+			const lastPercent = +(100 - equalPercent * (count - 1)).toFixed(2)
+			return state.map((row, i) => ({
+				...row,
+				value: i === count - 1 ? String(lastValue) : String(equalValue),
+				percent: i === count - 1 ? String(lastPercent) : String(equalPercent),
+			}))
+		}
+		case "CLEAR": {
+			state = []
+		}
+		default:
+			return state
+	}
+}
+
 
 export function OperationModal({
 	operation,
@@ -81,6 +129,14 @@ export function OperationModal({
 	const type = operationData?.type == 'Начисление' ? 'accrual' : operationData?.type == 'Поступление' ? 'income' : operationData?.type == 'Перемещение' ? 'transfer' : 'payment'
 	const [activeTab, setActiveTab] = useState(type)
 	const [isSubmitting, setIsSubmitting] = useState(false)
+
+	// Разбить сумму
+	const [divivedAmounts, setdivivedAmounts] = useState([])
+	const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(), emptyRow()])
+	const [selectedSplits, setSelectedSplits] = useState([])
+
+	const has = (label) => selectedSplits.some(s => s.value === label)
+	const showDate = has('Начисление')
 
 	// Block body scroll when modal is open
 	useEffect(() => {
@@ -634,10 +690,15 @@ export function OperationModal({
 				data_operatsii: activeTab === 'accrual' ? null : formData?.paymentDate,
 				data_nachisleniya: formData?.accrualDate,
 				opisanie: formData.purpose || '',
-				summa: Number(activeTab === 'transfer' ? formData.fromAmount || formData.toAmount || 0 : activeTab === 'accrual' ? formData.amount || 0 : formData.amount || 0).toFixed(2),
+				summa: Number(activeTab === 'transfer' ? Number(formData.fromAmount || formData.toAmount || 0) : Number(activeTab === 'accrual' ? formData.amount || 0 : formData.amount || 0).toFixed(2)),
 				oplata_podtverzhdena: formData.confirmPayment || false,
 				payment_confirmed: formData.confirmPayment || false,
 				payment_accrual: formData.confirmAccrual || false,
+				items: []
+			}
+
+			if (divivedAmounts.length > 0) {
+				requestData.items = divivedAmounts.map(item => ({ ...item, value: Number(item?.value), percent: Number(item?.percent) }))
 			}
 
 
@@ -979,15 +1040,21 @@ export function OperationModal({
 												&nbsp;
 											</label>
 											<SplitAmount
-												summa={formData?.amount}
+												amount={formData?.amount}
 												counterAgents={counterAgents}
 												chartOfAccountsOptions={chartOfAccountsTree}
+												onChange={setdivivedAmounts}
+												rows={rows}
+												dispatch={dispatch}
+												emptyRow={emptyRow}
+												selectedSplits={selectedSplits}
+												setSelectedSplits={setSelectedSplits}
 											/>
 										</div>
 									</div>
 
 									{/* Дата начисления new value data_nachisleniya if confirmAccrual is true */}
-									<div className={styles.formRow}>
+									{!showDate && <div className={styles.formRow}>
 										<label className={styles.label}>Дата начисления</label>
 										<DatePicker
 											value={formData.accrualDate}
@@ -1002,7 +1069,7 @@ export function OperationModal({
 												setFormData({ ...formData, confirmAccrual: checked })
 											}
 										/>
-									</div>
+									</div>}
 
 									{/* Контрагент */}
 									<div className={styles.formRow}>
@@ -1150,15 +1217,21 @@ export function OperationModal({
 												&nbsp;
 											</label>
 											<SplitAmount
-												summa={formData?.amount}
+												amount={formData?.amount}
 												counterAgents={counterAgents}
 												chartOfAccountsOptions={chartOfAccountsTree}
+												onChange={setdivivedAmounts}
+												rows={rows}
+												dispatch={dispatch}
+												emptyRow={emptyRow}
+												selectedSplits={selectedSplits}
+												setSelectedSplits={setSelectedSplits}
 											/>
 										</div>
 									</div>
 
 									{/* Дата начисления */}
-									<div className={styles.formRow}>
+									{!showDate && <div className={styles.formRow}>
 										<label className={styles.label}>Дата начисления</label>
 										<DatePicker
 											value={formData.accrualDate}
@@ -1172,7 +1245,7 @@ export function OperationModal({
 											}
 											className={cn(styles.datePicker, errors.accrualDate ? styles.error : '')}
 										/>
-									</div>
+									</div>}
 
 									{/* Контрагент */}
 									<div className={styles.formRow}>

@@ -1,80 +1,79 @@
-import React, { useReducer, useState } from 'react'
+import React, { useEffect, useReducer, useState } from 'react'
 import './style.scss'
 import MultipleSelect from '../../../shared/MultipleSelect'
-import { CalendarCellIcon, CalendarIcon, MergeArrowsIcon, SelectArrow, SortArrow } from '../../../../constants/icons'
-import { CheckIcon } from 'lucide-react'
+import { CalendarCellIcon, CalendarIcon, CreditIcon, MergeArrowsIcon, SelectArrow, SortArrow } from '../../../../constants/icons'
 import { formatAmount, formatDateRu } from '../../../../utils/helpers'
-
-const today = new Date().toISOString().split('T')[0]
-
-const emptyRow = () => ({
-  calculationDate: today,
-  isCommitted: true,
-  contrAgentId: '',
-  operationCategoryId: '',
-  value: '',
-  percent: '',
-})
-
-function rowsReducer(state, action) {
-  switch (action.type) {
-    case 'ADD':
-      return [...state, emptyRow()]
-    case 'REMOVE':
-      return state.filter((_, i) => i !== action.index)
-    case 'UPDATE':
-      return state.map((row, i) =>
-        i === action.index ? { ...row, [action.field]: action.value } : row
-      )
-    default:
-      return state
-  }
-}
+import CustomCalendar from '../../../shared/Calendar'
+import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
+import { GroupedSelect } from '../../../common/GroupedSelect/GroupedSelect'
+import { TreeSelect } from '../../../common/TreeSelect/TreeSelect'
 
 
 
 
+import { SplitAmountCancelModal } from './SplitAmountCancelModal'
 
 // ── Main component ──────────────────────────────────────────
 const SplitAmount = ({ amount, counterAgents,
-  chartOfAccountsOptions }) => {
+  chartOfAccountsOptions, onChange, rows,
+  dispatch, selectedSplits, setSelectedSplits }) => {
   const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState([
-    { value: 'Начисление', label: 'Начисление' },
-    { value: 'Контрагент', label: 'Контрагент' },
-    { value: 'Статья', label: 'Статья' },
-  ])
-  const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(), emptyRow()])
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
 
-  const has = (label) => selected.some(s => s.value === label)
+  const [openCalendarIdx, setOpenCalendarIdx] = useState(null)
+
+  const has = (label) => selectedSplits.some(s => s.value === label)
   const showDate = has('Начисление')
   const showAgent = has('Контрагент')
   const showStatya = has('Статья')
 
-  const totalValue = rows.reduce((s, r) => s + (parseFloat(r.value) || 0), 0)
+
   const totalPercent = rows.reduce((s, r) => s + (parseFloat(r.percent) || 0), 0)
 
-  // console.log('splitamount', counterAgents)
-  console.log('splitamount', chartOfAccountsOptions)
-
-  const groupedOptions = counterAgents?.reduce((acc, item) => {
-    const group = item.group || 'Без группы'
-    if (acc.filter(item => item.label === group).length === 0) {
-      acc.push({ label: group, options: [] })
+  useEffect(() => {
+    if (onChange) {
+      onChange(open ? rows.filter((r) => r.value) : [])
     }
-    acc.filter(item => item.label === group)[0].options.push({ value: item.guid, label: item.label })
-    return acc
-  }, [])
+  }, [rows, open, onChange])
 
-  console.log('groupedOptions', groupedOptions)
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (openCalendarIdx !== null && !event.target.closest('.date-cell-wrapper')) {
+        setOpenCalendarIdx(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [openCalendarIdx])
+
+  const handleToggleSplit = () => {
+    if (open) {
+      setIsCancelModalOpen(true)
+    } else {
+      setOpen(true)
+    }
+  }
+
+  const handleConfirmCancel = () => {
+    dispatch({ type: 'CLEAR' })
+    setOpen(false)
+    setIsCancelModalOpen(false)
+  }
 
   return (
     <div className="split-wrapper">
+      <SplitAmountCancelModal
+        isOpen={isCancelModalOpen}
+        onCancel={() => setIsCancelModalOpen(false)}
+        onConfirm={handleConfirmCancel}
+      />
+      
       <button
         type="button"
         className="split-title"
-        onClick={() => setOpen(p => !p)}
+        onClick={handleToggleSplit}
       >
         {open ? 'Отменить разбиение' : 'Разбить сумму'}
       </button>
@@ -82,10 +81,10 @@ const SplitAmount = ({ amount, counterAgents,
       {open && (
         <>
           <div className="split-select-wrap">
-            <MultipleSelect value={selected} onChange={setSelected} />
+            <MultipleSelect value={selectedSplits} onChange={setSelectedSplits} />
           </div>
 
-          <div className="split-table-wrap">
+          {selectedSplits?.length > 0 && <div className="split-table-wrap">
             <table className="split-table">
               <thead className='split-thead'>
                 <tr>
@@ -111,11 +110,11 @@ const SplitAmount = ({ amount, counterAgents,
                     </th>
                   )}
                   <th className="split-th col-value">
-                    <span className="th-icon"><MergeArrowsIcon /></span>
+                    <span className="th-icon" onClick={() => dispatch({ type: 'DIVIDE_EQUAL', amount })} style={{ cursor: 'pointer' }}><MergeArrowsIcon /></span>
                     <strong>Сумма <span className="sort-arrow"><SortArrow /></span></strong>
                   </th>
                   <th className="split-th col-percent">
-                    <span className="th-icon"><MergeArrowsIcon /></span>
+                    <span className="th-icon" onClick={() => dispatch({ type: 'DIVIDE_EQUAL', amount })} style={{ cursor: 'pointer' }}><MergeArrowsIcon /></span>
                     <strong>Доля</strong>
                   </th>
                   <th className="split-th col-remove" />
@@ -129,46 +128,58 @@ const SplitAmount = ({ amount, counterAgents,
                       <>
                         {/* Date cell */}
                         <td className="split-td col-date">
-                          <label className="date-cell">
-                            <CalendarCellIcon />
-                            <span className="date-value">{formatDateRu(row.calculationDate)}</span>
-                            <input
-                              type="date"
-                              className="date-hidden"
-                              value={row.calculationDate}
-                              onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'calculationDate', value: e.target.value })}
-                            />
-                          </label>
+                          <div className="date-cell-wrapper">
+                            <div className="date-cell" onClick={() => setOpenCalendarIdx(openCalendarIdx === i ? null : i)}>
+                              <CalendarCellIcon />
+                              <span className="date-value">{formatDateRu(row.calculationDate)}</span>
+                            </div>
+                            {openCalendarIdx === i && (
+                              <div className="date-calendar-popover">
+                                <CustomCalendar
+                                  value={new Date(row.calculationDate)}
+                                  onChange={(dateObj) => {
+                                    let iso = ''
+                                    if (dateObj?.format) {
+                                      iso = dateObj.format("YYYY-MM-DD")
+                                    } else {
+                                      const d = dateObj?.toDate?.() ?? dateObj
+                                      const offset = d.getTimezoneOffset()
+                                      const adjusted = new Date(d.getTime() - (offset * 60 * 1000))
+                                      iso = adjusted.toISOString().split('T')[0]
+                                    }
+                                    dispatch({ type: 'UPDATE', index: i, field: 'calculationDate', value: iso })
+                                    setOpenCalendarIdx(null)
+                                  }}
+                                  format="DD MMM, YYYY"
+                                />
+                              </div>
+                            )}
+                          </div>
                         </td>
                         {/* Confirm checkbox */}
                         <td className="split-td col-confirm">
-                          <label className="checkbox-cell">
-                            <input
-                              type="checkbox"
-                              className="checkbox-hidden"
-                              checked={row.isCommitted}
-                              onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'isCommitted', value: e.target.checked })}
-                            />
-                            <span className={`checkbox-box ${row.isCommitted ? 'checked' : ''}`}>
-                              {row.isCommitted && <CheckIcon />}
-                            </span>
-                          </label>
+                          <OperationCheckbox
+                            checked={row.isCalculationCommitted}
+                            onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'isCalculationCommitted', value: e.target.checked })}
+                          />
                         </td>
                       </>
                     )}
 
-                    {/* Контрагент */}
                     {showAgent && (
                       <td className="split-td col-agent">
-                        <div className="borderless-select">
-                          <select
+                        <div className="borderless-select" style={{ maxWidth: '180px' }}>
+                          <GroupedSelect
+                            data={counterAgents || []}
                             value={row.contrAgentId}
-                            onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'contrAgentId', value: e.target.value })}
-                            className="select-input"
-                          >
-                            <option value="">Не выбран</option>
-                          </select>
-                          <span className="select-arrow"><SelectArrow /></span>
+                            onChange={(value) => dispatch({ type: 'UPDATE', index: i, field: 'contrAgentId', value: value || '' })}
+                            placeholder="Не выбран"
+                            groupBy={true}
+                            groupKey="group"
+                            labelKey="label"
+                            valueKey="guid"
+                            className="grouped-select"
+                          />
                         </div>
                       </td>
                     )}
@@ -176,35 +187,39 @@ const SplitAmount = ({ amount, counterAgents,
                     {/* Статья */}
                     {showStatya && (
                       <td className="split-td col-statya">
-                        <div className="borderless-select">
-                          <select
+                        <div className="borderless-select" style={{ maxWidth: '180px' }}>
+                          <TreeSelect
+                            data={chartOfAccountsOptions || []}
+                            alwaysExpanded={true}
                             value={row.operationCategoryId}
-                            onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'operationCategoryId', value: e.target.value })}
-                            className="select-input"
-                          >
-                            <option value="">Нераспределенный доход</option>
-                          </select>
-                          <span className="select-arrow"><SelectArrow /></span>
+                            onChange={value => dispatch({ type: 'UPDATE', index: i, field: 'operationCategoryId', value })}
+                            placeholder='Выберите статью...'
+                            className="TreeSelect"
+                          />
                         </div>
                       </td>
                     )}
 
                     {/* Сумма */}
                     <td className="split-td col-value">
-                      <input
-                        type="text"
-                        className="value-input"
-                        placeholder="0"
-                        value={row.value}
-                        onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'value', value: e.target.value })}
-                      />
+                      <div className="value-cell-wrapper">
+                        {!row.isCalculationCommitted && <CreditIcon />}
+
+                        <input
+                          type="number"
+                          className="value-input"
+                          placeholder="0"
+                          value={row.value}
+                          onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'value', value: e.target.value })}
+                        />
+                      </div>
                     </td>
 
                     {/* Доля */}
                     <td className="split-td col-percent">
                       <div className="percent-cell">
                         <input
-                          type="text"
+                          type="number"
                           className="percent-input"
                           placeholder="0"
                           maxLength={5}
@@ -232,7 +247,7 @@ const SplitAmount = ({ amount, counterAgents,
                 {/* Footer row */}
                 <tr className="split-footer-row">
                   <td
-                    colSpan={1 + (showDate ? 1 : 0) + (showAgent ? 1 : 0) + (showStatya ? 1 : 0)}
+                    colSpan={ (showDate ? 2 : 0) + (showAgent ? 0 : 0) + (showStatya ? 1 : 0)}
                   >
                     <button
                       type="button"
@@ -244,16 +259,16 @@ const SplitAmount = ({ amount, counterAgents,
                   </td>
                   <td className="footer-total">
                     <span className="total-label">Итого:</span>
-                    <span className="total-value">{formatAmount(String(totalValue)) || '0'}</span>
+                    <span className="total-value">{formatAmount(String(amount)) || '0'}</span>
                   </td>
                   <td className="footer-percent">
                     {totalPercent} %
                   </td>
-                  <td />
+                  {/* <td /> */}
                 </tr>
               </tbody>
             </table>
-          </div>
+          </div>}
         </>
       )}
     </div>

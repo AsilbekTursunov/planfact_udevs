@@ -119,13 +119,15 @@ export function GroupedSelect({
     <div className={cn(styles.container, className)} ref={dropdownRef}>
       <button
         type="button"
+        id='button'
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled || loading}
         className={cn(
-          styles.button,
+          styles.Wrapperbutton,
           disabled || loading ? styles.disabled : styles.enabled,
           !value && styles.empty,
-          hasError && styles.error
+          hasError && styles.error,
+          className
         )}
       >
         <div className={styles.buttonContent}>
