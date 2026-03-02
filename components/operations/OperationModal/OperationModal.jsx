@@ -30,6 +30,7 @@ export function OperationModal({
 	onClose,
 	onSuccess,
 	preselectedCounterparty = null,
+	disableCounterpartySelect = false,
 }) {
 	const queryClient = useQueryClient()
 	const isNew = operation?.isNew || false
@@ -1013,6 +1014,7 @@ export function OperationModal({
 											placeholder='Выберите контрагента...'
 											className='flex-1'
 											loading={isLoadingGroups}
+											disabled={disableCounterpartySelect}
 										/>
 									</div>
 
@@ -1182,6 +1184,7 @@ export function OperationModal({
 											placeholder='Выберите контрагента...'
 											className='flex-1'
 											loading={isLoadingGroups}
+											disabled={disableCounterpartySelect}
 										/>
 									</div>
 

@@ -21,6 +21,7 @@ export function MultiSelect({
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [dropdownPosition, setDropdownPosition] = useState('bottom') // 'top' or 'bottom'
+  const [isPositioned, setIsPositioned] = useState(false) // Track if position is calculated
   const containerRef = useRef(null)
   const dropdownRef = useRef(null)
 
@@ -37,6 +38,9 @@ export function MultiSelect({
   }, [])
   useEffect(() => {
     if (isOpen && containerRef.current) {
+      // Reset positioned state when opening
+      setIsPositioned(false)
+      
       // Defer state update to next tick to avoid synchronous setState warning
       const timer = setTimeout(() => {
         if (!containerRef.current) return;
@@ -54,9 +58,14 @@ export function MultiSelect({
         } else {
           setDropdownPosition('bottom')
         }
+        
+        // Mark as positioned
+        setIsPositioned(true)
       }, 0)
 
       return () => clearTimeout(timer)
+    } else {
+      setIsPositioned(false)
     }
   }, [isOpen])
 
@@ -117,7 +126,8 @@ export function MultiSelect({
           ref={dropdownRef}
           className={cn(
             styles.dropdown,
-            dropdownPosition === 'top' && styles.dropdownTop
+            dropdownPosition === 'top' && styles.dropdownTop,
+            !isPositioned && styles.dropdownHidden
           )}
         >
           {/* Search input */}

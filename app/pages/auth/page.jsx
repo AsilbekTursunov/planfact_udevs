@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/app/lib/utils'
 import { useLogin, useRegister } from '@/hooks/useAuth'
@@ -16,58 +16,201 @@ export default function LoginPage() {
     email: '',
     password: '',
     fullname: '',
-    phone: '',
-    checked: false, // Explicitly set to false to avoid uncontrolled->controlled warning
+    phone: '+998',
+    checked: false,
   })
+  const [fieldErrors, setFieldErrors] = useState({})
   const [error, setError] = useState('')
   const [focusedField, setFocusedField] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const phoneInputRef = useRef(null)
 
   // Login & Register mutations
   const loginMutation = useLogin()
   const { mutateAsync: registerAsync, isPending: isRegistering } = useRegister()
 
+  // Format phone number with mask
+  const formatPhoneNumber = (value) => {
+    // Remove all non-digits except the leading +
+    const digits = value.replace(/[^\d]/g, '')
+    
+    // Always start with +998
+    if (!value.startsWith('+998')) {
+      return '+998'
+    }
+    
+    // Limit to 12 digits total (+998 + 9 digits)
+    const limitedDigits = digits.slice(0, 12)
+    
+    // Apply mask: +998 XX XXX XX XX
+    if (limitedDigits.length <= 3) {
+      return '+998'
+    } else if (limitedDigits.length <= 5) {
+      return `+998 ${limitedDigits.slice(3)}`
+    } else if (limitedDigits.length <= 8) {
+      return `+998 ${limitedDigits.slice(3, 5)} ${limitedDigits.slice(5)}`
+    } else if (limitedDigits.length <= 10) {
+      return `+998 ${limitedDigits.slice(3, 5)} ${limitedDigits.slice(5, 8)} ${limitedDigits.slice(8)}`
+    } else {
+      return `+998 ${limitedDigits.slice(3, 5)} ${limitedDigits.slice(5, 8)} ${limitedDigits.slice(8, 10)} ${limitedDigits.slice(10)}`
+    }
+  }
+
+  // Get clean phone number for API (only digits)
+  const getCleanPhoneNumber = (formattedPhone) => {
+    return formattedPhone.replace(/[^\d]/g, '')
+  }
+
+  // Validate password (no special characters)
+  const validatePassword = (password) => {
+    // Only allow letters, numbers, and basic characters
+    const validPasswordRegex = /^[a-zA-Z0-9а-яА-Я]+$/
+    return validPasswordRegex.test(password)
+  }
+
+  const handlePhoneChange = (e) => {
+    const input = e.target
+    const value = input.value
+    const cursorPosition = input.selectionStart
+    
+    // Prevent deleting +998
+    if (!value.startsWith('+998')) {
+      return
+    }
+    
+    // Get old value to compare
+    const oldValue = formData.phone
+    const oldDigits = oldValue.replace(/[^\d]/g, '')
+    const newDigits = value.replace(/[^\d]/g, '')
+    
+    // Format the new value
+    const formatted = formatPhoneNumber(value)
+    
+    // Calculate new cursor position
+    let newCursorPosition = cursorPosition
+    
+    // If we're adding digits
+    if (newDigits.length > oldDigits.length) {
+      // Count spaces before cursor in formatted string
+      const spacesBeforeCursor = formatted.slice(0, cursorPosition).split(' ').length - 1
+      const oldSpacesBeforeCursor = oldValue.slice(0, cursorPosition).split(' ').length - 1
+      
+      // Adjust cursor if a space was added
+      if (spacesBeforeCursor > oldSpacesBeforeCursor) {
+        newCursorPosition = cursorPosition + 1
+      }
+    }
+    // If we're deleting digits
+    else if (newDigits.length < oldDigits.length) {
+      // Keep cursor at same position
+      newCursorPosition = cursorPosition
+    }
+    
+    setFormData({ ...formData, phone: formatted })
+    setFieldErrors({ ...fieldErrors, phone: '' })
+    
+    // Restore cursor position after React updates
+    setTimeout(() => {
+      if (phoneInputRef.current) {
+        phoneInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition)
+      }
+    }, 0)
+  }
+
+  const handlePasswordChange = (e, field = 'password') => {
+    const value = e.target.value
+    
+    // Block special characters
+    if (value && !validatePassword(value)) {
+      return
+    }
+    
+    if (field === 'password') {
+      setFormData({ ...formData, password: value })
+      setFieldErrors({ ...fieldErrors, password: '' })
+    } else {
+      setConfirmPassword(value)
+      setFieldErrors({ ...fieldErrors, confirmPassword: '' })
+    }
+  }
+
+  const validateForm = () => {
+    const errors = {}
+    
+    if (fromType === 'register') {
+      if (!formData.fullname.trim()) {
+        errors.fullname = 'Введите ФИО'
+      }
+      if (!formData.email.trim()) {
+        errors.email = 'Введите email'
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        errors.email = 'Неверный формат email'
+      }
+      const cleanPhone = getCleanPhoneNumber(formData.phone)
+      if (cleanPhone.length !== 12) {
+        errors.phone = 'Введите полный номер телефона'
+      }
+      if (!formData.password) {
+        errors.password = 'Введите пароль'
+      } else if (formData.password.length < 6) {
+        errors.password = 'Пароль должен быть не менее 6 символов'
+      }
+      if (!confirmPassword) {
+        errors.confirmPassword = 'Подтвердите пароль'
+      } else if (formData.password !== confirmPassword) {
+        errors.confirmPassword = 'Пароли не совпадают'
+      }
+      if (!formData.checked) {
+        errors.terms = 'Необходимо согласиться с условиями'
+      }
+    } else {
+      if (!formData.email.trim()) {
+        errors.email = 'Введите email'
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        errors.email = 'Неверный формат email'
+      }
+      if (!formData.password) {
+        errors.password = 'Введите пароль'
+      }
+    }
+    
+    return errors
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setFieldErrors({})
+
+    const errors = validateForm()
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
+    }
 
     try {
       if (fromType === 'login') {
-        if (!formData.email || !formData.password) {
-          setError('Заполните все поля')
-          return
-        }
         await loginMutation.mutateAsync({
           email: formData.email,
           password: formData.password,
         })
       } else {
-        if (!formData.fullname || !formData.email || !formData.phone || !formData.password || !confirmPassword) {
-          setError('Заполните все поля')
-          return
-        }
-        if (!formData.checked) {
-          setError('Вы должны согласиться с условиями')
-          return
-        }
-        if (formData.password !== confirmPassword) {
-          setError('Пароли не совпадают')
-          return
-        }
+        const cleanPhone = getCleanPhoneNumber(formData.phone)
         await registerAsync({
           fullname: formData.fullname,
           email: formData.email,
-          phone: formData.phone,
+          phone: cleanPhone,
           password: formData.password,
         })
       }
 
-      // Redirect immediately after successful auth
-      router.push('/pages/operations')
+      // Даем время на сохранение токена и cookie
+      setTimeout(() => {
+        window.location.href = '/pages/operations'
+      }, 100)
     } catch (error) {
-      console.error('Auth error:', error)
       const errorMessage = error.message || (fromType === 'login' ? 'Ошибка при входе' : 'Ошибка при регистрации')
       setError(errorMessage)
     }
@@ -76,7 +219,8 @@ export default function LoginPage() {
   const toggleFormType = () => {
     setFromType(prev => prev === 'login' ? 'register' : 'login')
     setError('')
-    setFormData({ email: '', password: '', fullname: '', phone: '', checked: false })
+    setFieldErrors({})
+    setFormData({ email: '', password: '', fullname: '', phone: '+998', checked: false })
     setConfirmPassword('')
   }
 
@@ -110,18 +254,21 @@ export default function LoginPage() {
                       value={formData.fullname}
                       onChange={(e) => {
                         setFormData({ ...formData, fullname: e.target.value })
-                        setError('')
+                        setFieldErrors({ ...fieldErrors, fullname: '' })
                       }}
                       onFocus={() => setFocusedField('fullname')}
                       onBlur={() => setFocusedField(null)}
                       className={cn(
                         styles.inputField,
-                        focusedField === 'fullname' && styles.focused
+                        focusedField === 'fullname' && styles.focused,
+                        fieldErrors.fullname && styles.error
                       )}
                       placeholder="ФИО пользователя"
-                      required
                     />
                   </div>
+                  {fieldErrors.fullname && (
+                    <div className={styles.fieldError}>{fieldErrors.fullname}</div>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -132,40 +279,44 @@ export default function LoginPage() {
                       value={formData.email}
                       onChange={(e) => {
                         setFormData({ ...formData, email: e.target.value })
-                        setError('')
+                        setFieldErrors({ ...fieldErrors, email: '' })
                       }}
                       onFocus={() => setFocusedField('email')}
                       onBlur={() => setFocusedField(null)}
                       className={cn(
                         styles.inputField,
-                        focusedField === 'email' && styles.focused
+                        focusedField === 'email' && styles.focused,
+                        fieldErrors.email && styles.error
                       )}
                       placeholder="Email"
-                      required
                     />
                   </div>
+                  {fieldErrors.email && (
+                    <div className={styles.fieldError}>{fieldErrors.email}</div>
+                  )}
                 </div>
 
                 {/* Phone */}
                 <div className={styles.inputGroup}>
                   <div className={styles.inputWrapper}>
                     <Input
+                      ref={phoneInputRef}
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => {
-                        setFormData({ ...formData, phone: e.target.value })
-                        setError('')
-                      }}
+                      onChange={handlePhoneChange}
                       onFocus={() => setFocusedField('phone')}
                       onBlur={() => setFocusedField(null)}
                       className={cn(
                         styles.inputField,
-                        focusedField === 'phone' && styles.focused
+                        focusedField === 'phone' && styles.focused,
+                        fieldErrors.phone && styles.error
                       )}
-                      placeholder="Телефон номер"
-                      required
+                      placeholder="+998 XX XXX XX XX"
                     />
                   </div>
+                  {fieldErrors.phone && (
+                    <div className={styles.fieldError}>{fieldErrors.phone}</div>
+                  )}
                 </div>
               </>
             )}
@@ -179,18 +330,21 @@ export default function LoginPage() {
                     value={formData.email}
                     onChange={(e) => {
                       setFormData({ ...formData, email: e.target.value })
-                      setError('')
+                      setFieldErrors({ ...fieldErrors, email: '' })
                     }}
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
                     className={cn(
                       styles.inputField,
-                      focusedField === 'email' && styles.focused
+                      focusedField === 'email' && styles.focused,
+                      fieldErrors.email && styles.error
                     )}
                     placeholder="Email"
-                    required
                   />
                 </div>
+                {fieldErrors.email && (
+                  <div className={styles.fieldError}>{fieldErrors.email}</div>
+                )}
               </div>
             )}
 
@@ -200,19 +354,16 @@ export default function LoginPage() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => {
-                    setFormData({ ...formData, password: e.target.value })
-                    setError('')
-                  }}
+                  onChange={(e) => handlePasswordChange(e, 'password')}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
                   className={cn(
                     styles.inputField,
                     styles.passwordField,
-                    focusedField === 'password' && styles.focused
+                    focusedField === 'password' && styles.focused,
+                    fieldErrors.password && styles.error
                   )}
                   placeholder={fromType === 'register' ? "Создать пароль" : "Пароль"}
-                  required
                 />
                 <button
                   type="button"
@@ -222,6 +373,9 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <div className={styles.fieldError}>{fieldErrors.password}</div>
+              )}
             </div>
 
             {/* Confirm Password (Only on register) */}
@@ -231,19 +385,16 @@ export default function LoginPage() {
                   <Input
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value)
-                      setError('')
-                    }}
+                    onChange={(e) => handlePasswordChange(e, 'confirmPassword')}
                     onFocus={() => setFocusedField('confirmPassword')}
                     onBlur={() => setFocusedField(null)}
                     className={cn(
                       styles.inputField,
                       styles.passwordField,
-                      focusedField === 'confirmPassword' && styles.focused
+                      focusedField === 'confirmPassword' && styles.focused,
+                      fieldErrors.confirmPassword && styles.error
                     )}
                     placeholder="Подтвердить пароль"
-                    required
                   />
                   <button
                     type="button"
@@ -253,17 +404,30 @@ export default function LoginPage() {
                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                {fieldErrors.confirmPassword && (
+                  <div className={styles.fieldError}>{fieldErrors.confirmPassword}</div>
+                )}
               </div>
             )}
 
             {/* Checkbox (Only on register) */}
             {fromType === 'register' && (
               <div className={styles.checkboxGroup}>
-                <OperationCheckbox id="terms" checked={formData.checked} onChange={() => setFormData({ ...formData, checked: !formData.checked })} />
+                <OperationCheckbox 
+                  id="terms" 
+                  checked={formData.checked} 
+                  onChange={() => {
+                    setFormData({ ...formData, checked: !formData.checked })
+                    setFieldErrors({ ...fieldErrors, terms: '' })
+                  }} 
+                />
                 <label htmlFor="terms" className={styles.checkboxLabel}>
                   Я <span className={styles.highlight}>соглашаюсь</span> на получение информационных и справочных материалов
                 </label>
               </div>
+            )}
+            {fieldErrors.terms && (
+              <div className={styles.fieldError}>{fieldErrors.terms}</div>
             )}
 
             {/* Error Message */}

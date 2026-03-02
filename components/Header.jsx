@@ -20,6 +20,7 @@ export function Header() {
     const [isLoggingOut, setIsLoggingOut] = useState(false)
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
     const [isEntitiesDropdownOpen, setIsEntitiesDropdownOpen] = useState(false)
+    const [isCategoriesDropdownOpen, setIsCategoriesDropdownOpen] = useState(false)
 
     const helpRef = useRef(null)
     const balanceRef = useRef(null)
@@ -119,14 +120,14 @@ export function Header() {
                                     ))}
                                 </ul>
                                 
-                                <div style={{ marginTop: '2rem' }}>
-                                    <div className={styles.entitiesDropdown} style={{ position: 'relative' }}>
+                                <div style={{ marginTop: '2rem', display: 'flex', gap: '0.75rem' }}>
+                                    <div style={{ position: 'relative', flex: 1 }}>
                                         <button 
                                             onClick={() => setIsEntitiesDropdownOpen(!isEntitiesDropdownOpen)}
                                             className={styles.megaMenuButton}
                                         >
                                             <span className={styles.megaMenuButtonText}>Юрлица и счета</span>
-                                            <ChevronDown size={16} className={cn(styles.megaMenuButtonIcon, isEntitiesDropdownOpen && styles.open)} />
+                                            <ChevronDown size={14} className={cn(styles.megaMenuButtonIcon, isEntitiesDropdownOpen && styles.open)} />
                                         </button>
                                         
                                         {isEntitiesDropdownOpen && (
@@ -155,6 +156,54 @@ export function Header() {
                                                         'Карта физ. лица',
                                                         'ООО "Прометей"',
                                                         'Т-Банк'
+                                                    ].map((item, idx) => (
+                                                        <button 
+                                                            key={idx}
+                                                            className={styles.entityItem}
+                                                        >
+                                                            {item}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div style={{ position: 'relative', flex: 1 }}>
+                                        <button 
+                                            onClick={() => setIsCategoriesDropdownOpen(!isCategoriesDropdownOpen)}
+                                            className={styles.megaMenuButton}
+                                        >
+                                            <span className={styles.megaMenuButtonText}>Статьи учета</span>
+                                            <ChevronDown size={14} className={cn(styles.megaMenuButtonIcon, isCategoriesDropdownOpen && styles.open)} />
+                                        </button>
+                                        
+                                        {isCategoriesDropdownOpen && (
+                                            <div className={styles.entitiesDropdown}>
+                                                <div className={styles.entitiesDropdownHeader}>
+                                                    <div className={styles.entitiesSearch}>
+                                                        <input 
+                                                            type="text" 
+                                                            placeholder="Поиск по списку"
+                                                            className={styles.entitiesSearchInput}
+                                                        />
+                                                        <div className={styles.entitiesSearchIcon}>
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <circle cx="11" cy="11" r="8"></circle>
+                                                                <path d="m21 21-4.35-4.35"></path>
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className={styles.entitiesList}>
+                                                    {[
+                                                        'Доходы от продаж',
+                                                        'Расходы на закупку',
+                                                        'Зарплата',
+                                                        'Аренда',
+                                                        'Налоги',
+                                                        'Прочие расходы'
                                                     ].map((item, idx) => (
                                                         <button 
                                                             key={idx}

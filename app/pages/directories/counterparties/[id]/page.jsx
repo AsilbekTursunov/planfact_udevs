@@ -4,13 +4,25 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useCounterpartyById, useOperationsList } from '@/hooks/useDashboard'
+import { useLegalEntitiesPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
+import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { OperationModal } from '@/components/operations/OperationModal/OperationModal'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
 import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
+import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
+import { formatDate } from '@/utils/formatDate'
 import { useDeleteOperation } from '@/hooks/useDashboard'
 import { cn } from '@/app/lib/utils'
 import styles from './counterparty-detail.module.scss'
+
+import Select from '@/components/common/Select'
+
+const calculationOptions = [
+  { value: "Cashflow", label: 'Учет по денежному потоку' },
+  { value: "Cash", label: 'Учет кассовым методом' },
+  { value: "Calculation", label: 'Учет методом начисления' },
+]
 
 export default function KontragentDetailPage() {
   const params = useParams()
@@ -22,6 +34,10 @@ export default function KontragentDetailPage() {
   console.log('===========================')
   
   const [dateRange, setDateRange] = useState(null)
+  const [calculationMethod, setCalculationMethod] = useState('Cashflow')
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [selectedLegalEntities, setSelectedLegalEntities] = useState([])
+  const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
   const [isCreateOperationModalOpen, setIsCreateOperationModalOpen] = useState(false)
   const [isCreateModalClosing, setIsCreateModalClosing] = useState(false)
   const [isCreateModalOpening, setIsCreateModalOpening] = useState(false)
@@ -35,6 +51,31 @@ export default function KontragentDetailPage() {
   // Fetch counterparty data by GUID using get_counterparty_by_id
   const { data: counterpartyData, isLoading: isLoadingCounterparty, error: counterpartyError } = useCounterpartyById(counterpartyGuid)
   
+  // Fetch data for filters
+  const { data: legalEntitiesData } = useLegalEntitiesPlanFact()
+  const { data: chartOfAccountsData } = useChartOfAccountsPlanFact()
+  
+  // Transform chart of accounts data for MultiSelect
+  const chartOfAccountsOptions = useMemo(() => {
+    const rawData = chartOfAccountsData?.data?.data?.data || []
+    const flatten = (items) => {
+      let result = []
+      items.forEach(item => {
+        result.push(item)
+        if (item.children && item.children.length > 0) {
+          result = result.concat(flatten(item.children))
+        }
+      })
+      return result
+    }
+    const flat = Array.isArray(rawData) ? flatten(rawData) : []
+    return flat.map(item => ({
+      value: item.guid,
+      label: item.nazvanie || 'Без названия',
+      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
+    }))
+  }, [chartOfAccountsData])
+  
   console.log('=== Counterparty Query State ===')
   console.log('isLoading:', isLoadingCounterparty)
   console.log('data:', counterpartyData)
@@ -42,7 +83,7 @@ export default function KontragentDetailPage() {
   console.log('================================')
   
   // Extract counterparty from response
-  // Response structure: { data: { data: { data: { data: { counterparty: {...}, operations: [...] } } } } }
+  // Response structure: { data: { data: { data: { counterparty: {...}, operations: [...] } } } }
   const responseData = counterpartyData?.data?.data?.data
   const counterparty = responseData?.counterparty || null
   const counterpartyOperations = responseData?.operations || []
@@ -52,32 +93,14 @@ export default function KontragentDetailPage() {
   console.log('counterpartyOperations:', counterpartyOperations)
   console.log('======================')
 
-
-  // Fetch operations for this counterparty
-  // Note: We now get operations directly from counterparty API response
-  // But we still fetch all operations for other purposes if needed
-  const { data: operationsData, isLoading: isLoadingOperations } = useOperationsList({
-    date_range: {
-      start_date: '2026-01-01',
-      end_date: '2026-12-31'
-    },
-    page: 1,
-    limit: 1000
-  })
-
-  // Use operations from counterparty response if available, otherwise filter from all operations
-  const operationsItems = counterpartyOperations.length > 0 
-    ? counterpartyOperations 
-    : (operationsData?.data?.data?.data || []).filter(op => op.counterparties_id === counterpartyGuid)
-
-  // Transform operations data for display
+  // Use operations from counterparty response directly
   const operations = useMemo(() => {
-    if (!operationsItems || operationsItems.length === 0) return []
+    if (!counterpartyOperations || counterpartyOperations.length === 0) return []
     
     console.log('=== Transforming operations ===')
-    console.log('operationsItems:', operationsItems)
+    console.log('counterpartyOperations:', counterpartyOperations)
     
-    return operationsItems.map((item, index) => {
+    return counterpartyOperations.map((item, index) => {
       const operationDate = item.data_operatsii ? new Date(item.data_operatsii) : null
       
       // Determine operation type from tip array
@@ -135,7 +158,7 @@ export default function KontragentDetailPage() {
         rawData: item
       }
     })
-  }, [operationsItems])
+  }, [counterpartyOperations])
 
   // Format counterparty info - DECLARE FIRST
   const counterpartyInfo = useMemo(() => {
@@ -146,12 +169,12 @@ export default function KontragentDetailPage() {
     
     return {
       name: counterparty.nazvanie || 'Без названия',
-      fullName: counterparty.polnoe_imya || 'Полное название не указано',
-      inn: counterparty.inn || null,
-      kpp: counterparty.kpp || null,
-      accountNumber: counterparty.nomer_scheta || null,
-      receiptArticle: counterparty.chart_of_accounts_id_data?.nazvanie || '–',
-      paymentArticle: counterparty.chart_of_accounts_id_2_data?.nazvanie || '–',
+      fullName: counterparty.polnoe_imya || '',
+      inn: counterparty.inn && counterparty.inn !== 0 ? counterparty.inn : null,
+      kpp: counterparty.kpp && counterparty.kpp !== 0 ? counterparty.kpp : null,
+      accountNumber: counterparty.nomer_scheta && counterparty.nomer_scheta !== 0 ? counterparty.nomer_scheta : null,
+      receiptArticle: counterparty.chart_of_accounts_id_data?.nazvanie || (counterparty.chart_of_accounts_id ? 'Загрузка...' : null),
+      paymentArticle: counterparty.chart_of_accounts_id_2_data?.nazvanie || (counterparty.chart_of_accounts_id_2 ? 'Загрузка...' : null),
       comment: counterparty.komentariy || null,
       type: counterparty.tip || 'Не указан',
       // Financial metrics from API
@@ -379,11 +402,25 @@ export default function KontragentDetailPage() {
         <div className={styles.header}>
           <div className={styles.headerTop}>
             <h1 className={styles.title}>{counterpartyInfo?.name || 'Контрагент'}</h1>
-            <DateRangePicker
-              selectedRange={dateRange}
-              onChange={setDateRange}
-              placeholder="Выберите период"
-            />
+            <div className={styles.headerFilters}>
+              <NewDateRangeComponent
+                value={dateRange}
+                onChange={(range) => {
+                  setDateRange(range)
+                }}
+              />
+              <div style={{ width: '250px' }}>
+                <Select
+                  instanceId="counterparty-detail-calculation-method"
+                  options={calculationOptions}
+                  value={calculationOptions.find(opt => opt.value === calculationMethod) || null}
+                  onChange={(selected) => setCalculationMethod(selected ? selected.value : 'Cashflow')}
+                  placeholder="Выбирать"
+                  isSearchable={false}
+                  isClearable={false}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Stats Grid */}
@@ -447,38 +484,30 @@ export default function KontragentDetailPage() {
               <div className={styles.infoCardTitle}>{counterpartyInfo?.name || 'Контрагент'}</div>
               <div className={styles.infoCardDivider}></div>
               <div className={styles.infoCardDetails}>
-                {counterpartyInfo?.inn && (
-                  <div className={styles.infoCardRow}>
-                    <span className={styles.infoCardLabel}>ИНН</span>
-                    <span className={styles.infoCardValue}>{counterpartyInfo.inn}</span>
-                  </div>
-                )}
+                <div className={styles.infoCardRow}>
+                  <span className={styles.infoCardLabel}>ИНН</span>
+                  <span className={styles.infoCardValue}>{counterpartyInfo?.inn || '–'}</span>
+                </div>
                 <div className={styles.infoCardRow}>
                   <span className={styles.infoCardLabel}>Статья для поступлений</span>
                   <span className={styles.infoCardValue}>{counterpartyInfo?.receiptArticle || '–'}</span>
                 </div>
-                {counterpartyInfo?.kpp && (
-                  <div className={styles.infoCardRow}>
-                    <span className={styles.infoCardLabel}>КПП</span>
-                    <span className={styles.infoCardValue}>{counterpartyInfo.kpp}</span>
-                  </div>
-                )}
+                <div className={styles.infoCardRow}>
+                  <span className={styles.infoCardLabel}>КПП</span>
+                  <span className={styles.infoCardValue}>{counterpartyInfo?.kpp || '–'}</span>
+                </div>
                 <div className={styles.infoCardRow}>
                   <span className={styles.infoCardLabel}>Статья для выплат</span>
                   <span className={styles.infoCardValue}>{counterpartyInfo?.paymentArticle || '–'}</span>
                 </div>
-                {counterpartyInfo?.accountNumber && (
-                  <div className={styles.infoCardRow}>
-                    <span className={styles.infoCardLabel}>№ счета</span>
-                    <span className={styles.infoCardValue}>{counterpartyInfo.accountNumber}</span>
-                  </div>
-                )}
-                {counterpartyInfo?.comment && (
-                  <div className={styles.infoCardRow}>
-                    <span className={styles.infoCardLabel}>Комментарий</span>
-                    <span className={styles.infoCardValue}>{counterpartyInfo.comment}</span>
-                  </div>
-                )}
+                <div className={styles.infoCardRow}>
+                  <span className={styles.infoCardLabel}>№ счета</span>
+                  <span className={styles.infoCardValue}>{counterpartyInfo?.accountNumber || '–'}</span>
+                </div>
+                <div className={styles.infoCardRow}>
+                  <span className={styles.infoCardLabel}>Комментарий</span>
+                  <span className={styles.infoCardValue}>{counterpartyInfo?.comment || '–'}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -487,30 +516,72 @@ export default function KontragentDetailPage() {
         {/* Operations Section */}
         <div className={styles.operationsSection}>
           <div className={styles.operationsContent}>
-            <div className={styles.operationsHeader}>
-              <h2 className={styles.operationsTitle}>Операции по контрагенту</h2>
-              <div className={styles.operationsHeaderActions}>
-              <button 
-                className={styles.createButton}
-                onClick={() => {
-                  setIsCreateOperationModalOpen(true)
-                  setIsCreateModalClosing(false)
-                  setIsCreateModalOpening(true)
-                  setTimeout(() => {
-                    setIsCreateModalOpening(false)
-                  }, 50)
-                }}
-              >
-                Создать
-              </button>
-                <button className={styles.filtersButton}>
+            <div className={cn(styles.operationsHeader, isFiltersOpen && styles.filtersOpen)}>
+              <div className={styles.operationsHeaderLeft}>
+                <h2 className={styles.operationsTitle}>Операции по контрагенту</h2>
+                <button 
+                  className={styles.createButton}
+                  onClick={() => {
+                    setIsCreateOperationModalOpen(true)
+                    setIsCreateModalClosing(false)
+                    setIsCreateModalOpening(true)
+                    setTimeout(() => {
+                      setIsCreateModalOpening(false)
+                    }, 50)
+                  }}
+                >
+                  Создать
+                </button>
+                <button 
+                  className={styles.filtersButton}
+                  onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                >
                   Фильтры
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg 
+                    className={cn(styles.filtersIcon, isFiltersOpen && styles.filtersIconOpen)} 
+                    width="12" 
+                    height="12" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
               </div>
             </div>
+
+            {/* Filters Panel */}
+            {isFiltersOpen && (
+              <div className={styles.filtersPanel}>
+                <div className={styles.filtersPanelContent}>
+                  <div className={styles.filterGroup}>
+                    <MultiSelect
+                      data={legalEntitiesData?.data?.data?.data?.map(entity => ({
+                        value: entity.guid,
+                        label: entity.nazvanie
+                      })) || []}
+                      value={selectedLegalEntities}
+                      onChange={setSelectedLegalEntities}
+                      hideSelectAll={true}
+                      placeholder="Юрлица и счета"
+                      valueKey="value"
+                    />
+                  </div>
+                  <div className={styles.filterGroup}>
+                    <MultiSelect
+                      data={chartOfAccountsOptions || []}
+                      value={selectedChartOfAccounts}
+                      onChange={setSelectedChartOfAccounts}
+                      hideSelectAll={true}
+                      grouped
+                      placeholder="Статьи"
+                      valueKey="value"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {isLoadingCounterparty ? (
               <div className={styles.tableWrapper}>
@@ -524,7 +595,6 @@ export default function KontragentDetailPage() {
                       <th className={styles.tableHeaderCell}>Контрагент</th>
                       <th className={styles.tableHeaderCell}>Статья</th>
                       <th className={styles.tableHeaderCell}>Проект</th>
-                      <th className={styles.tableHeaderCell}>Сделка</th>
                       <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
                       <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
                     </tr>
@@ -549,9 +619,6 @@ export default function KontragentDetailPage() {
                         </td>
                         <td className={styles.tableCell}>
                           <div className={styles.skeleton} style={{ width: '100px', height: '12px' }}></div>
-                        </td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.skeleton} style={{ width: '60px', height: '12px' }}></div>
                         </td>
                         <td className={styles.tableCell}>
                           <div className={styles.skeleton} style={{ width: '60px', height: '12px' }}></div>
@@ -598,7 +665,6 @@ export default function KontragentDetailPage() {
                       <th className={styles.tableHeaderCell}>Контрагент</th>
                       <th className={styles.tableHeaderCell}>Статья</th>
                       <th className={styles.tableHeaderCell}>Проект</th>
-                      <th className={styles.tableHeaderCell}>Сделка</th>
                       <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
                       <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
                     </tr>
@@ -634,7 +700,6 @@ export default function KontragentDetailPage() {
                         <td className={styles.tableCell}>{op.counterparty}</td>
                         <td className={styles.tableCell}>{op.category}</td>
                         <td className={styles.tableCell}>{op.project}</td>
-                        <td className={styles.tableCell}>{op.deal}</td>
                         <td className={cn(
                           styles.tableCell,
                           styles.amountCell,
@@ -696,6 +761,7 @@ export default function KontragentDetailPage() {
           isOpening={isCreateModalOpening}
           onClose={handleCloseCreateModal}
           preselectedCounterparty={counterpartyGuid}
+          disableCounterpartySelect={true}
         />
       )}
 
@@ -707,6 +773,8 @@ export default function KontragentDetailPage() {
           isClosing={isEditModalClosing}
           isOpening={isEditModalOpening}
           onClose={handleCloseEditModal}
+          preselectedCounterparty={counterpartyGuid}
+          disableCounterpartySelect={true}
         />
       )}
 

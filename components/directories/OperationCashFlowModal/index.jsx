@@ -55,17 +55,27 @@ const formatNumber = (value) => {
 
 
 const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
+  console.log('🔵 OperationCashFlowModal - Props:', { isOpen, data, selectedMonth })
+  
   const getValue = (row) => {
     if (selectedMonth?.key) {
-      return row.months?.[selectedMonth.key] ?? 0
+      // Try both 'values' (P&L) and 'months' (Cashflow) structures
+      return row.values?.[selectedMonth.key] ?? row.months?.[selectedMonth.key] ?? 0
     }
-    return row.total ?? 0
+    // Try both 'totalValue' (P&L) and 'total' (Cashflow) structures
+    return row.totalValue ?? row.total ?? 0
   }
 
   const rows = !data ? [] : flattenRows(data, 0).filter(row => getValue(row) !== 0)
+  
+  console.log('🔵 OperationCashFlowModal - Flattened rows:', rows)
+  console.log('🔵 OperationCashFlowModal - Rows count:', rows.length)
 
   const periodLabel = selectedMonth?.label || 'Итого'
   const totalAmount = data ? formatNumber(getValue(data)) : '—'
+  
+  console.log('🔵 OperationCashFlowModal - Period:', periodLabel)
+  console.log('🔵 OperationCashFlowModal - Total amount:', totalAmount)
 
   if (!isOpen) return null
 
@@ -119,7 +129,18 @@ const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
                 ) : (
                   rows.map((row, idx) => {
                     const value = getValue(row)
-                    const isIncome = value >= 0
+                    // Determine if this is income or expense based on row type or parent category
+                    // In P&L, expenses are typically under "Расходы" or have negative impact
+                    // We check the row name or type to determine the color
+                    const isExpenseCategory = row.name?.toLowerCase().includes('расход') || 
+                                             row.name?.toLowerCase().includes('себестоимость') ||
+                                             row.name?.toLowerCase().includes('операционные') ||
+                                             row.name?.toLowerCase().includes('административные') ||
+                                             row.type === 'expense'
+                    
+                    // For P&L: if it's an expense category, show as negative (red) even if value is positive
+                    // For Cashflow: use the sign of the value
+                    const isIncome = isExpenseCategory ? false : value >= 0
                     const isRoot = row._depth === 0
 
                     return (
@@ -151,7 +172,7 @@ const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
                         <td className={styles.tdAmount}>
                           <span className={cn(
                             styles.amountValue,
-                            value > 0 ? styles.positive : value < 0 ? styles.negative : styles.neutral
+                            isIncome ? styles.positive : styles.negative
                           )}>
                             {formatAmount(value)}
                           </span>

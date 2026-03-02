@@ -241,7 +241,7 @@ export default function ProfitAndLossPage() {
           isEbt: profitTypes.ebt,
           reportGenMethod: 0,
           includeTrendData: true,
-          aggregationMode: 'autoAggregate',
+          aggregationMode: 'detailedByCounterparty', // Changed from 'autoAggregate' to get subRows
         }
         
         // Only add filter arrays if they have values
@@ -252,8 +252,12 @@ export default function ProfitAndLossPage() {
           apiParams.contrAgentId = selectedCounterparties
         }
         
+        console.log('📤 P&L API Request params:', apiParams)
         
         const response = await getProfitAndLoss(apiParams)
+        
+        console.log('📥 P&L API Full Response:', response)
+        console.log('📥 P&L API Response Data:', response?.data?.data?.data)
         
         if (response?.data?.data?.data) {
           const apiData = response.data.data.data

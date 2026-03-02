@@ -90,6 +90,27 @@
   &.passwordField {
     padding-right: 3rem;
   }
+  
+  &.error {
+    border-color: #ef4444;
+    
+    &:hover {
+      border-color: #dc2626;
+    }
+    
+    &.focused {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+    }
+  }
+}
+
+.fieldError {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.375rem;
+  margin-left: 0.25rem;
+  font-weight: 500;
 }
 
 .eyeButton {
