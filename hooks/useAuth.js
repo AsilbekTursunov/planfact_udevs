@@ -39,16 +39,11 @@ export function useLogin() {
       })
 
       const responseText = await response.text()
-      console.log('=== LOGIN RAW RESPONSE ===')
-      console.log('Status:', response.status)
-      console.log('Response Text:', responseText)
-      console.log('==========================')
 
       let data
       try {
         data = JSON.parse(responseText)
       } catch (e) {
-        console.error('Failed to parse response as JSON:', e)
         throw new Error('Invalid response from server')
       }
 
@@ -59,18 +54,11 @@ export function useLogin() {
       return data
     },
     onSuccess: (data) => {
-      console.log('=== LOGIN SUCCESS ===')
-      console.log('Full response:', JSON.stringify(data, null, 2))
-      
       // Response structure: { status: "CREATED", data: { token: {...}, user_data: {...} } }
       const responseData = data.data
       const tokenData = responseData?.token?.access_token
       const refreshToken = responseData?.token?.refresh_token
       const userData = responseData?.user_data
-
-      console.log('Extracted userData:', userData)
-      console.log('Extracted token:', tokenData)
-      console.log('========================')
 
       // Set authentication state through MobX store
       if (tokenData && userData) {
@@ -93,8 +81,11 @@ export function useLogin() {
 /**
  * Register mutation hook
  * Handles user registration - direct call to new u-code auth API
+ * After successful registration, automatically logs in the user
  */
 export function useRegister() {
+  const loginMutation = useLogin()
+  
   return useMutation({
     mutationFn: async ({ fullname, email, phone, password }) => {
       const baseURL = apiConfig.ucode.authBaseURL
@@ -133,58 +124,58 @@ export function useRegister() {
       })
 
       const responseText = await response.text()
-      console.log('=== RAW RESPONSE ===')
-      console.log('Response Text:', responseText)
-      console.log('====================')
 
       let data
       try {
         data = JSON.parse(responseText)
       } catch (e) {
-        console.error('Failed to parse response as JSON:', e)
         throw new Error('Invalid JSON response from server')
       }
-
-      console.log('=== REGISTER RESPONSE ===')
-      console.log('Status:', response.status)
-      console.log('Response Data:', JSON.stringify(data, null, 2))
-      console.log('=========================')
 
       if (!response.ok) {
         const errorMessage = data.message || data.description || 'Ошибка при регистрации'
         throw new Error(errorMessage)
       }
 
-      return data
+      // Return both registration data and credentials for auto-login
+      return { 
+        registrationData: data,
+        credentials: { email, password }
+      }
     },
-    onSuccess: (data) => {
-      console.log('=== REGISTER SUCCESS ===')
-      console.log('Full response:', JSON.stringify(data, null, 2))
+    onSuccess: async ({ registrationData, credentials }) => {
+      const responseData = registrationData.data
       
-      // Response structure for registration: { status: "CREATED", data: { token: {...}, user: {...}, user_id: "..." } }
-      const responseData = data.data
-      const tokenData = responseData?.token?.access_token
-      const refreshToken = responseData?.token?.refresh_token
-      const userData = responseData?.user
-      const userEmail = userData?.email
-
-      console.log('Extracted userData:', userData)
-      console.log('Extracted token:', tokenData)
-      console.log('Extracted email:', userEmail)
-      console.log('========================')
-
-      // Set authentication state through MobX store
-      if (tokenData && userData) {
+      // Check if token is provided in registration response
+      if (responseData?.token?.access_token) {
+        // Token provided - use it directly
+        const tokenData = responseData.token.access_token
+        const refreshToken = responseData.token.refresh_token
+        const userData = responseData.user
+        
+        // Build user_data object
+        const userDataForStore = {
+          id: userData?.id || responseData.user_id,
+          email: userData?.email || credentials.email,
+          phone: userData?.phone,
+          ...userData
+        }
+        
         authStore.setAuthentication({ 
           token: tokenData,
           refresh_token: refreshToken,
-          user_data: {
-            ...userData,
-            email: userEmail
-          }
+          user_data: userDataForStore
         })
+      } else {
+        // Token not provided - need to login
+        try {
+          await loginMutation.mutateAsync(credentials)
+        } catch (error) {
+          showErrorNotification('Регистрация успешна, но не удалось войти автоматически. Пожалуйста, войдите вручную.')
+          return
+        }
       }
-
+      
       showSuccessNotification('Успешная регистрация!')
     },
     onError: (error) => {
