@@ -11,3 +11,10 @@ export const formatAmount = (v) => {
   if (!v || isNaN(n)) return ''
   return n.toLocaleString('ru-RU')
 }
+
+
+export const formatPercent = (totalAmount, minAmount) => {
+  const n = parseFloat(Number(minAmount) || 0)
+  if (!minAmount || isNaN(n)) return ''
+  return (n * Number(totalAmount) / 100).toLocaleString('ru-RU') + '%'
+}

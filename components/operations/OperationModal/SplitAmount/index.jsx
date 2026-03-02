@@ -2,7 +2,7 @@ import React, { useEffect, useReducer, useState } from 'react'
 import './style.scss'
 import MultipleSelect from '../../../shared/MultipleSelect'
 import { CalendarCellIcon, CalendarIcon, CreditIcon, MergeArrowsIcon, SelectArrow, SortArrow } from '../../../../constants/icons'
-import { formatAmount, formatDateRu } from '../../../../utils/helpers'
+import { formatAmount, formatDateRu, formatPercent } from '../../../../utils/helpers'
 import CustomCalendar from '../../../shared/Calendar'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import { GroupedSelect } from '../../../common/GroupedSelect/GroupedSelect'
@@ -69,7 +69,7 @@ const SplitAmount = ({ amount, counterAgents,
         onCancel={() => setIsCancelModalOpen(false)}
         onConfirm={handleConfirmCancel}
       />
-      
+
       <button
         type="button"
         className="split-title"
@@ -210,7 +210,15 @@ const SplitAmount = ({ amount, counterAgents,
                           className="value-input"
                           placeholder="0"
                           value={row.value}
-                          onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'value', value: e.target.value })}
+                          onChange={e => {
+                            const val = e.target.value;
+                            dispatch({ type: 'UPDATE', index: i, field: 'value', value: val });
+                            const numAmount = Number(String(amount).replace(/\s/g, ''));
+                            if (numAmount > 0) {
+                              const perc = ((Number(val) / numAmount) * 100).toFixed(2);
+                              dispatch({ type: 'UPDATE', index: i, field: 'percent', value: String(perc) });
+                            }
+                          }}
                         />
                       </div>
                     </td>
@@ -224,7 +232,15 @@ const SplitAmount = ({ amount, counterAgents,
                           placeholder="0"
                           maxLength={5}
                           value={row.percent}
-                          onChange={e => dispatch({ type: 'UPDATE', index: i, field: 'percent', value: e.target.value })}
+                          onChange={e => {
+                            const perc = e.target.value;
+                            dispatch({ type: 'UPDATE', index: i, field: 'percent', value: perc });
+                            const numAmount = Number(String(amount).replace(/\s/g, ''));
+                            if (numAmount > 0) {
+                              const val = ((Number(perc) / 100) * numAmount).toFixed(2);
+                              dispatch({ type: 'UPDATE', index: i, field: 'value', value: String(val) });
+                            }
+                          }}
                         />
                         <span className="percent-symbol">%</span>
                       </div>
@@ -247,7 +263,7 @@ const SplitAmount = ({ amount, counterAgents,
                 {/* Footer row */}
                 <tr className="split-footer-row">
                   <td
-                    colSpan={ (showDate ? 2 : 0) + (showAgent ? 0 : 0) + (showStatya ? 1 : 0)}
+                    colSpan={(showDate ? 2 : 0) + (showAgent ? 1 : 0) + (showStatya ? 1 : 0)}
                   >
                     <button
                       type="button"

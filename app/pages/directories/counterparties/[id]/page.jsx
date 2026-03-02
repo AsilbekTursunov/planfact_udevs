@@ -3,15 +3,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useCounterpartyById, useOperationsList } from '@/hooks/useDashboard'
+import { useCounterpartyById } from '@/hooks/useDashboard'
 import { useLegalEntitiesPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { OperationModal } from '@/components/operations/OperationModal/OperationModal'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
-import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
-import { formatDate } from '@/utils/formatDate'
 import { useDeleteOperation } from '@/hooks/useDashboard'
 import { cn } from '@/app/lib/utils'
 import styles from './counterparty-detail.module.scss'
@@ -27,11 +25,7 @@ const calculationOptions = [
 export default function KontragentDetailPage() {
   const params = useParams()
   const counterpartyGuid = params?.id
-  
-  console.log('=== KontragentDetailPage ===')
-  console.log('params:', params)
-  console.log('counterpartyGuid:', counterpartyGuid)
-  console.log('===========================')
+
   
   const [dateRange, setDateRange] = useState(null)
   const [calculationMethod, setCalculationMethod] = useState('Cashflow')
@@ -160,6 +154,44 @@ export default function KontragentDetailPage() {
     })
   }, [counterpartyOperations])
 
+  const filteredOperations = useMemo(() => {
+    let result = operations;
+
+    if (selectedLegalEntities && selectedLegalEntities.length > 0) {
+      const selectedAccounts = selectedLegalEntities.map(guid => {
+        const entity = legalEntitiesData?.data?.data?.data?.find(e => e.guid === guid);
+        return entity?.nazvanie;
+      }).filter(Boolean);
+
+      if (selectedAccounts.length > 0) {
+        result = result.filter(op => selectedAccounts.includes(op.account));
+      } else {
+        result = result.filter(op =>
+          selectedLegalEntities.includes(op.rawData?.bank_accounts_id) ||
+          selectedLegalEntities.includes(op.rawData?.my_accounts_id)
+        );
+      }
+    }
+
+    if (selectedChartOfAccounts && selectedChartOfAccounts.length > 0) {
+      const selectedCategories = selectedChartOfAccounts.map(guid => {
+        const option = chartOfAccountsOptions.find(o => o.value === guid);
+        return option?.label;
+      }).filter(Boolean);
+
+      if (selectedCategories.length > 0) {
+        result = result.filter(op => selectedCategories.includes(op.category));
+      } else {
+        result = result.filter(op =>
+          selectedChartOfAccounts.includes(op.rawData?.chart_of_accounts_id) ||
+          selectedChartOfAccounts.includes(op.rawData?.chart_of_accounts_id_data?.guid)
+        );
+      }
+    }
+
+    return result;
+  }, [operations, selectedLegalEntities, legalEntitiesData, selectedChartOfAccounts, chartOfAccountsOptions]);
+
   // Format counterparty info - DECLARE FIRST
   const counterpartyInfo = useMemo(() => {
     if (!counterparty) return null
@@ -195,7 +227,7 @@ export default function KontragentDetailPage() {
     let receiptsCount = 0
     let paymentsCount = 0
 
-    operations.forEach(op => {
+    filteredOperations.forEach(op => {
       const amount = op.amountRaw || 0
       if (op.type === 'in') {
         receipts += amount
@@ -214,9 +246,9 @@ export default function KontragentDetailPage() {
       difference,
       receiptsCount,
       paymentsCount,
-      totalCount: operations.length
+      totalCount: filteredOperations.length
     }
-  }, [operations])
+  }, [filteredOperations])
 
   const toggleOperation = (id) => {
     if (selectedOperations.includes(id)) {
@@ -653,6 +685,12 @@ export default function KontragentDetailPage() {
                   </a>
                 </div>
               </div>
+              ) : filteredOperations.length === 0 ? (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyStateText}>
+                    <div className={styles.emptyStateTitle}>По заданным фильтрам ничего не найдено</div>
+                  </div>
+                </div>
             ) : (
               <div className={styles.tableWrapper}>
                 <table className={styles.operationsTable}>
@@ -670,7 +708,7 @@ export default function KontragentDetailPage() {
                     </tr>
                   </thead>
                   <tbody className={styles.tableBody}>
-                    {operations.map((op, index) => (
+                          {filteredOperations.map((op, index) => (
                       <tr
                         key={op.id}
                         className={styles.tableRow}
