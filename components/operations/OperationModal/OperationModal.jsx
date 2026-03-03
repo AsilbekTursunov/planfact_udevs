@@ -19,8 +19,9 @@ import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import styles from './OperationModal.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
-import { CreditIcon, DebitIcon, FilesPlugIcon, FilesClipIcon, FilesSendIcon } from '../../../constants/icons'
+import { CreditIcon, DebitIcon, FilesPlugIcon, FilesClipIcon } from '../../../constants/icons'
 import SplitAmount from './SplitAmount'
+import SentMessages from './SentMessages'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -1744,21 +1745,15 @@ export function OperationModal({
 								</div>
 							</div>
 
-							<div className={cn(styles.entityAttachmentsContainer, styles.operation)}>
-								<div className={cn(styles.filesInput, styles.operation)}>
-									<div className={styles.filesInputAttach}>
-										<label className={styles.filesInputLabel}>
-											<FilesClipIcon className={cn(styles.filesInputIcon, styles.filesInputClip)} title="Прикрепить файл" />
-											<input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpeg,.png,.jpg,.zip,.rar,.txt,.csv,.xml" style={{ display: 'none' }} />
-										</label>
-										<div className={styles.filesInputTextarea}>
-											<textarea rows={2} placeholder="Написать комментарий" maxLength={256} />
-											<i className={styles.counter}>0/256</i>
-											<FilesSendIcon className={cn(styles.filesInputIcon, styles.filesInputSend, styles.filesInputSendDisabled)} title="Добавить комментарий" />
-										</div>
-									</div>
-								</div>
-							</div>
+							{/* sent messages list + input */}
+							<SentMessages
+								onSend={(payload) => {
+									// payload = { file: File | null, message: string }
+									// TODO: call your API here, e.g.:
+									// api.postOperationComment(operationId, payload)
+									console.log('send to backend', payload)
+								}}
+							/>
 						</div>
 					</div>
 				</div>}

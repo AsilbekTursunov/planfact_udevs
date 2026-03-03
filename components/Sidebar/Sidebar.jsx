@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { RefreshCw, ClipboardList, Settings } from 'lucide-react'
+import { RefreshCw, ClipboardList, Settings, Library } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import styles from './Sidebar.module.scss'
 import { UsersIcon, DealIcon } from '@/constants/icons'
+import { IoSettingsOutline } from 'react-icons/io5'
 
 const navItems = [
     { icon: RefreshCw, label: 'Операции', href: '/pages/operations', hasPage: true },
@@ -24,7 +25,7 @@ const navItems = [
         ]
     },
     {
-        icon: Settings,
+        icon: Library,
         label: 'Справочники',
         href: '/pages/directories',
         hasPage: true,
@@ -34,6 +35,12 @@ const navItems = [
             { label: 'Мои счета', href: '/pages/directories/accounts', hasPage: true },
             { label: 'Мои юрлица', href: '/pages/directories/legal-entities', hasPage: true }
         ]
+    },
+    {
+        icon: IoSettingsOutline,
+        label: 'Настройки',
+        href: '/pages/settings',
+        hasPage: true,
     },
 ]
 

@@ -1,0 +1,349 @@
+/* ═══════════════════════════════════════════════════════
+   SentMessages – dark theme styles (sm- prefix)
+   ═══════════════════════════════════════════════════════ */
+
+/* Root wrapper ─────────────────────────────────────────── */
+.sm-root {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	width: 100%;
+	padding: 0 12px;
+	box-sizing: border-box;
+}
+
+/* Message list — scrollable ────────────────────────────── */
+.sm-list {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding-bottom: 8px;
+	max-height: 340px;
+	overflow-y: auto;
+	overflow-x: hidden;
+
+	/* Thin dark scrollbar */
+	&::-webkit-scrollbar {
+		width: 4px;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.15);
+		border-radius: 4px;
+	}
+}
+
+/* Message card ─────────────────────────────────────────── */
+.sm-card {
+	background: transparent;
+	border-radius: 10px;
+	padding: 14px 16px 10px;
+	display: flex;
+	border: 1px solid  #616161;
+	flex-direction: column;
+	gap: 8px;
+	transition: background 0.15s;
+ 
+	&--editing {
+		background: #00000021;
+	}
+}
+
+.sm-card__text {
+	margin: 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: #fff;
+	line-height: 1.4;
+}
+
+.sm-card__meta {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-top: 2px;
+}
+
+.sm-card__meta-left {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.sm-card__email {
+	font-size: 11.5px;
+	color: #b0b0bc;
+}
+
+.sm-card__date {
+	font-size: 11.5px;
+	color: #b0b0bc;
+}
+
+.sm-card__actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	opacity: 0;
+	transition: opacity 0.15s;
+
+	.sm-card:hover & {
+		opacity: 1;
+	}
+}
+
+.sm-card__action-btn {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 4px;
+	border-radius: 5px;
+	color: #9e9ea8;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: color 0.15s, background 0.15s;
+
+	&:hover {
+		color: #fff;
+		background: rgba(255, 255, 255, 0.08);
+	}
+
+	&--delete:hover {
+		color: #f87171;
+		background: rgba(248, 113, 113, 0.1);
+	}
+}
+
+/* ── Edit mode (inline) ────────────────────────────────── */
+.sm-card__file-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.sm-card__edit-input-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: rgba(255, 255, 255, 0.08);
+	border-radius: 8px;
+	padding: 6px 10px;
+}
+
+.sm-card__edit-clip {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	color: #60a5fa;
+	flex-shrink: 0;
+	transition: color 0.15s;
+
+	&:hover {
+		color: #93c5fd;
+	}
+}
+
+.sm-card__edit-input {
+	flex: 1;
+	background: transparent;
+	border: none;
+	outline: none;
+	font-size: 13px;
+	color: #e0e0ea;
+	font-family: inherit;
+	line-height: 1.4;
+
+	&::placeholder {
+		color: #7e7e8a;
+	}
+}
+
+.sm-card__edit-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.sm-card__edit-btn {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 2px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.1s;
+
+	&:hover {
+		transform: scale(1.15);
+	}
+
+	&--cancel {
+		color: #9e9ea8;
+		&:hover {
+			color: #ccc;
+		}
+	}
+
+	&--confirm {
+		color: #3b82f6;
+	}
+}
+
+/* File badge ────────────────────────────────────────────── */
+.sm-file-badge {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.sm-file-badge__icon {
+	width: 42px;
+	height: 42px;
+	border-radius: 6px;
+	border: 2px solid currentColor;
+	background: rgba(255, 255, 255, 0.06);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.sm-file-badge__ext {
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.sm-file-badge__name {
+	font-size: 13px;
+	font-weight: 500;
+	color: #e0e0ea;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 240px;
+}
+
+/* Attach preview (above input) ─────────────────────────── */
+.sm-attach-preview {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 4px 4px;
+
+	.sm-file-badge__name {
+		max-width: 180px;
+	}
+}
+
+.sm-attach-preview__remove {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 4px;
+	border-radius: 4px;
+	color: #9e9ea8;
+	display: flex;
+	align-items: center;
+	transition: color 0.15s;
+
+	&:hover {
+		color: #f87171;
+	}
+}
+
+/* Input bar ─────────────────────────────────────────────── */
+.sm-input-bar {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	padding: 12px 0 4px;
+	border-top: 1px solid rgba(255, 255, 255, 0.07);
+	margin-bottom: 50px;
+}
+
+.sm-input-bar__clip {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	padding: 4px;
+	color: #60a5fa;
+	flex-shrink: 0;
+	transition: color 0.15s;
+
+	&:hover {
+		color: #93c5fd;
+	}
+}
+
+.sm-input-bar__field {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+.sm-input-bar__textarea {
+	background: transparent;
+	border: none;
+	outline: none;
+	resize: none;
+	font-size: 13px;
+	color: #e0e0ea;
+	padding: 4px 0;
+	width: 100%;
+	font-family: inherit;
+	line-height: 1.4;
+
+	&::placeholder {
+		color: #7e7e8a;
+	}
+}
+
+.sm-input-bar__underline {
+	display: block;
+	height: 1px;
+	background: rgba(255, 255, 255, 0.2);
+	margin-top: 2px;
+	transition: background 0.15s;
+
+	.sm-input-bar__field:focus-within & {
+		background: #60a5fa;
+	}
+}
+
+.sm-input-bar__send {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 4px;
+	color: #60a5fa;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	transition: color 0.15s, transform 0.1s;
+
+	&:hover {
+		color: #93c5fd;
+		transform: scale(1.1);
+	}
+
+	&--disabled {
+		color: #5a5a66;
+		cursor: default;
+		pointer-events: none;
+
+		&:hover {
+			transform: none;
+		}
+	}
+}
