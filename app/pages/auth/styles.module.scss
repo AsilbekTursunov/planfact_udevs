@@ -51,7 +51,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: .625rem;
 }
 
 .inputGroup {
@@ -65,10 +65,11 @@
 .inputField {
   width: 100%;
   border: 1px solid #e2e8f0;
-  padding: 1.5rem 0.75rem !important;
+  padding: 1.25rem 0.75rem !important;
   border-radius: 0.75rem;
   transition: all 0.2s;
   outline: none;
+  height: 32px !important;
   font-size: 14px;
   font-weight: 500;
   color: $gray-500 !important;
@@ -163,7 +164,7 @@
 }
 
 .checkboxLabel {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #334155;
   line-height: tight;
   cursor: pointer;
@@ -177,11 +178,10 @@
   background-color: #fef2f2;
   border: 1px solid #fecaca;
   color: #dc2626;
-  padding: 0.75rem 1rem;
+  padding: 0.325rem 0.5rem;
   border-radius: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   text-align: center;
-  margin-top: 1rem;
 }
 
 .actionLinks {
@@ -208,10 +208,10 @@
   width: 100%;
   background-color: #7aa0e0;
   color: white;
-  padding: 0.875rem;
+  padding: 0.75rem;
   border-radius: 0.5rem;
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: 1rem;
   transition: background-color 0.2s;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border: none;

@@ -8,6 +8,7 @@ import { AuthLogo } from '@/constants/icons'
 import styles from './styles.module.scss'
 import Input from '@/components/shared/Input'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
+import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function LoginPage() {
     password: '',
     fullname: '',
     phone: '+998',
+    branchName: '',
     checked: false,
   })
   const [fieldErrors, setFieldErrors] = useState({})
@@ -29,21 +31,21 @@ export default function LoginPage() {
 
   // Login & Register mutations
   const loginMutation = useLogin()
-  const { mutateAsync: registerAsync, isPending: isRegistering } = useRegister()
+  const { mutateAsync: registerAsync, isPending: isRegistering } = useUcodeRequestMutation()
 
   // Format phone number with mask
   const formatPhoneNumber = (value) => {
     // Remove all non-digits except the leading +
     const digits = value.replace(/[^\d]/g, '')
-    
+
     // Always start with +998
     if (!value.startsWith('+998')) {
       return '+998'
     }
-    
+
     // Limit to 12 digits total (+998 + 9 digits)
     const limitedDigits = digits.slice(0, 12)
-    
+
     // Apply mask: +998 XX XXX XX XX
     if (limitedDigits.length <= 3) {
       return '+998'
@@ -74,29 +76,29 @@ export default function LoginPage() {
     const input = e.target
     const value = input.value
     const cursorPosition = input.selectionStart
-    
+
     // Prevent deleting +998
     if (!value.startsWith('+998')) {
       return
     }
-    
+
     // Get old value to compare
     const oldValue = formData.phone
     const oldDigits = oldValue.replace(/[^\d]/g, '')
     const newDigits = value.replace(/[^\d]/g, '')
-    
+
     // Format the new value
     const formatted = formatPhoneNumber(value)
-    
+
     // Calculate new cursor position
     let newCursorPosition = cursorPosition
-    
+
     // If we're adding digits
     if (newDigits.length > oldDigits.length) {
       // Count spaces before cursor in formatted string
       const spacesBeforeCursor = formatted.slice(0, cursorPosition).split(' ').length - 1
       const oldSpacesBeforeCursor = oldValue.slice(0, cursorPosition).split(' ').length - 1
-      
+
       // Adjust cursor if a space was added
       if (spacesBeforeCursor > oldSpacesBeforeCursor) {
         newCursorPosition = cursorPosition + 1
@@ -107,10 +109,10 @@ export default function LoginPage() {
       // Keep cursor at same position
       newCursorPosition = cursorPosition
     }
-    
+
     setFormData({ ...formData, phone: formatted })
     setFieldErrors({ ...fieldErrors, phone: '' })
-    
+
     // Restore cursor position after React updates
     setTimeout(() => {
       if (phoneInputRef.current) {
@@ -121,12 +123,12 @@ export default function LoginPage() {
 
   const handlePasswordChange = (e, field = 'password') => {
     const value = e.target.value
-    
+
     // Block special characters
     if (value && !validatePassword(value)) {
       return
     }
-    
+
     if (field === 'password') {
       setFormData({ ...formData, password: value })
       setFieldErrors({ ...fieldErrors, password: '' })
@@ -138,8 +140,11 @@ export default function LoginPage() {
 
   const validateForm = () => {
     const errors = {}
-    
+
     if (fromType === 'register') {
+      if (!formData.branchName.trim()) {
+        errors.branchName = 'Введите название организации'
+      }
       if (!formData.fullname.trim()) {
         errors.fullname = 'Введите ФИО'
       }
@@ -175,7 +180,7 @@ export default function LoginPage() {
         errors.password = 'Введите пароль'
       }
     }
-    
+
     return errors
   }
 
@@ -199,10 +204,14 @@ export default function LoginPage() {
       } else {
         const cleanPhone = getCleanPhoneNumber(formData.phone)
         await registerAsync({
-          fullname: formData.fullname,
-          email: formData.email,
-          phone: cleanPhone,
-          password: formData.password,
+          method: 'auth_register_legal_entity',
+          data: {
+            fullname: formData.fullname,
+            email: formData.email,
+            phone: cleanPhone,
+            password: formData.password, 
+            branch_name: formData.branchName,
+          }
         })
       }
 
@@ -220,7 +229,7 @@ export default function LoginPage() {
     setFromType(prev => prev === 'login' ? 'register' : 'login')
     setError('')
     setFieldErrors({})
-    setFormData({ email: '', password: '', fullname: '', phone: '+998', checked: false })
+    setFormData({ email: '', password: '', fullname: '', phone: '+998', branchName: '', checked: false })
     setConfirmPassword('')
   }
 
@@ -246,6 +255,31 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className={styles.form}>
             {fromType === 'register' && (
               <>
+                {/* Branch Name */}
+                <div className={styles.inputGroup}>
+                  <div className={styles.inputWrapper}>
+                    <Input
+                      type="text"
+                      value={formData.branchName}
+                      onChange={(e) => {
+                        setFormData({ ...formData, branchName: e.target.value })
+                        setFieldErrors({ ...fieldErrors, branchName: '' })
+                      }}
+                      onFocus={() => setFocusedField('branchName')}
+                      onBlur={() => setFocusedField(null)}
+                      className={cn(
+                        styles.inputField,
+                        focusedField === 'branchName' && styles.focused,
+                        fieldErrors.branchName && styles.error
+                      )}
+                      placeholder="Название организации"
+                    />
+                  </div>
+                  {fieldErrors.branchName && (
+                    <div className={styles.fieldError}>{fieldErrors.branchName}</div>
+                  )}
+                </div>
+
                 {/* Fullname */}
                 <div className={styles.inputGroup}>
                   <div className={styles.inputWrapper}>
@@ -413,13 +447,13 @@ export default function LoginPage() {
             {/* Checkbox (Only on register) */}
             {fromType === 'register' && (
               <div className={styles.checkboxGroup}>
-                <OperationCheckbox 
-                  id="terms" 
-                  checked={formData.checked} 
+                <OperationCheckbox
+                  id="terms"
+                  checked={formData.checked}
                   onChange={() => {
                     setFormData({ ...formData, checked: !formData.checked })
                     setFieldErrors({ ...fieldErrors, terms: '' })
-                  }} 
+                  }}
                 />
                 <label htmlFor="terms" className={styles.checkboxLabel}>
                   Я <span className={styles.highlight}>соглашаюсь</span> на получение информационных и справочных материалов
