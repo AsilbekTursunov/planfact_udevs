@@ -19,7 +19,7 @@ import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import styles from './OperationModal.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
-import { CreditIcon, DebitIcon } from '../../../constants/icons'
+import { CreditIcon, DebitIcon, FilesPlugIcon, FilesClipIcon, FilesSendIcon } from '../../../constants/icons'
 import SplitAmount from './SplitAmount'
 
 const today = new Date().toISOString().split('T')[0]
@@ -129,6 +129,7 @@ export function OperationModal({
 	const type = operationData?.type == 'Начисление' ? 'accrual' : operationData?.type == 'Поступление' ? 'income' : operationData?.type == 'Перемещение' ? 'transfer' : 'payment'
 	const [activeTab, setActiveTab] = useState(type)
 	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
 
 	// Разбить сумму
 	const [divivedAmounts, setdivivedAmounts] = useState([])
@@ -693,7 +694,7 @@ export function OperationModal({
 				summa: Number(activeTab === 'transfer' ? Number(formData.fromAmount || formData.toAmount || 0) : Number(activeTab === 'accrual' ? formData.amount || 0 : formData.amount || 0).toFixed(2)),
 				oplata_podtverzhdena: formData.confirmPayment || false,
 				payment_confirmed: formData.confirmPayment || false,
-				payment_accrual: formData.confirmAccrual || false,
+				payment_accrual: activeTab === 'transfer' || activeTab === 'accrual' ? false : formData.confirmAccrual,
 				items: []
 			}
 
@@ -817,7 +818,6 @@ export function OperationModal({
 						}
 					}
 				}
-				console.log('Calling onSuccess with operationData:', operationData)
 				onSuccess(operationData, isUpdate)
 			}
 
@@ -1710,7 +1710,65 @@ export function OperationModal({
 						</button>
 					</div>
 				</div>
-			</div >
+				{isAttachmentsOpen && <div className={cn(styles.messageContent, isAttachmentsOpen && styles.open)}>
+					<div className={styles.filesAttachWrap}>
+						<div className={styles.filesAttachCollapseWrp}>
+							<button className={styles.filesAttachCollapse} onClick={() => setIsAttachmentsOpen(false)}>
+								Свернуть
+								<span>
+									<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+										<path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+									</svg>
+								</span>
+							</button>
+						</div>
+
+						<div className={cn(styles.entityAttachments, styles.darkTheme)} style={{ height: '100%' }}>
+							<div className={styles.entityAttachmentsList}>
+								<div className={styles.entityAttachmentsCards}>
+									<div className={styles.plug}>
+										<FilesPlugIcon className={styles.plugIcon} />
+										<div className={styles.plugTitle}>
+											Прикрепляйте к операциям файлы,<br />
+											например, акты или счета, добавляйте<br />
+											комментарии
+										</div>
+										<div className={styles.plugDescription}>Не более 10 файлов к операции</div>
+										<div className={styles.plugDescription}>Максимальный размер файла — 5 МБ</div>
+										<div className={styles.plugDescription}>
+											Поддерживаемые форматы:<br />
+											pdf, doc, docx, xls, xlsx, jpeg,<br />
+											png, zip, rar, txt, csv, xml
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div className={cn(styles.entityAttachmentsContainer, styles.operation)}>
+								<div className={cn(styles.filesInput, styles.operation)}>
+									<div className={styles.filesInputAttach}>
+										<label className={styles.filesInputLabel}>
+											<FilesClipIcon className={cn(styles.filesInputIcon, styles.filesInputClip)} title="Прикрепить файл" />
+											<input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpeg,.png,.jpg,.zip,.rar,.txt,.csv,.xml" style={{ display: 'none' }} />
+										</label>
+										<div className={styles.filesInputTextarea}>
+											<textarea rows={2} placeholder="Написать комментарий" maxLength={256} />
+											<i className={styles.counter}>0/256</i>
+											<FilesSendIcon className={cn(styles.filesInputIcon, styles.filesInputSend, styles.filesInputSendDisabled)} title="Добавить комментарий" />
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>}
+				{!isAttachmentsOpen && (
+					<button className={styles.filesAttachExpandTab} onClick={() => setIsAttachmentsOpen(true)}>
+						<FilesClipIcon className={styles.expandTabIcon} />
+						Файлы и комментарии
+					</button>
+				)}
+			</div>
 		</>
 	)
 }

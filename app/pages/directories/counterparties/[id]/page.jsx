@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useMemo } from 'react'
-import { useParams } from 'next/navigation'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useCounterpartyById } from '@/hooks/useDashboard'
+import { MoreHorizontal, PenLine, Archive, Trash2 } from 'lucide-react'
+import { useCounterpartyById, useUcodeRequestMutation } from '@/hooks/useDashboard'
 import { useLegalEntitiesPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { OperationModal } from '@/components/operations/OperationModal/OperationModal'
@@ -15,6 +16,7 @@ import { cn } from '@/app/lib/utils'
 import styles from './counterparty-detail.module.scss'
 
 import Select from '@/components/common/Select'
+import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -24,12 +26,33 @@ const calculationOptions = [
 
 export default function KontragentDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const counterpartyGuid = params?.id
+  const ucodeRequestMutation = useUcodeRequestMutation()
 
-  
   const [dateRange, setDateRange] = useState(null)
   const [calculationMethod, setCalculationMethod] = useState('Cashflow')
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
+  const [activePopover, setActivePopover] = useState(null)
+  const [isRequisitesModalOpen, setIsRequisitesModalOpen] = useState(false)
+  const [isDeletingCounterparty, setIsDeletingCounterparty] = useState(false)
+
+  // Handle click outside for dropdown and popovers
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false)
+      }
+      if (!event.target.closest(`.${styles.popoverContainer}`)) {
+        setActivePopover(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
   const [selectedLegalEntities, setSelectedLegalEntities] = useState([])
   const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
   const [isCreateOperationModalOpen, setIsCreateOperationModalOpen] = useState(false)
@@ -40,15 +63,16 @@ export default function KontragentDetailPage() {
   const [isEditModalClosing, setIsEditModalClosing] = useState(false)
   const [isEditModalOpening, setIsEditModalOpening] = useState(false)
   const [deletingOperation, setDeletingOperation] = useState(null)
+  const [isEditCounterpartyModalOpen, setIsEditCounterpartyModalOpen] = useState(false)
   const deleteOperationMutation = useDeleteOperation()
 
   // Fetch counterparty data by GUID using get_counterparty_by_id
   const { data: counterpartyData, isLoading: isLoadingCounterparty, error: counterpartyError } = useCounterpartyById(counterpartyGuid)
-  
+
   // Fetch data for filters
   const { data: legalEntitiesData } = useLegalEntitiesPlanFact()
   const { data: chartOfAccountsData } = useChartOfAccountsPlanFact()
-  
+
   // Transform chart of accounts data for MultiSelect
   const chartOfAccountsOptions = useMemo(() => {
     const rawData = chartOfAccountsData?.data?.data?.data || []
@@ -69,34 +93,25 @@ export default function KontragentDetailPage() {
       group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
     }))
   }, [chartOfAccountsData])
-  
-  console.log('=== Counterparty Query State ===')
-  console.log('isLoading:', isLoadingCounterparty)
-  console.log('data:', counterpartyData)
-  console.log('error:', counterpartyError)
-  console.log('================================')
-  
+
+
   // Extract counterparty from response
   // Response structure: { data: { data: { data: { counterparty: {...}, operations: [...] } } } }
   const responseData = counterpartyData?.data?.data?.data
   const counterparty = responseData?.counterparty || null
-  const counterpartyOperations = responseData?.operations || []
-  
-  console.log('=== Extracted Data ===')
-  console.log('counterparty:', counterparty)
-  console.log('counterpartyOperations:', counterpartyOperations)
-  console.log('======================')
+  const counterpartyOperations = useMemo(() => {
+    return responseData?.operations || []
+  }, [responseData])
+
 
   // Use operations from counterparty response directly
   const operations = useMemo(() => {
     if (!counterpartyOperations || counterpartyOperations.length === 0) return []
-    
-    console.log('=== Transforming operations ===')
-    console.log('counterpartyOperations:', counterpartyOperations)
-    
+
+
     return counterpartyOperations.map((item, index) => {
       const operationDate = item.data_operatsii ? new Date(item.data_operatsii) : null
-      
+
       // Determine operation type from tip array
       let type = 'out'
       let typeLabel = 'Выплата'
@@ -117,7 +132,7 @@ export default function KontragentDetailPage() {
           typeLabel = item.tip[0] || 'Выплата'
         }
       }
-      
+
       // Format date
       const formatDate = (date) => {
         if (!date) return ''
@@ -129,12 +144,12 @@ export default function KontragentDetailPage() {
           return ''
         }
       }
-      
+
       // Format amount
       const amount = item.summa || 0
       const amountFormatted = amount.toLocaleString('ru-RU')
       const amountSign = type === 'in' ? '+' : type === 'out' ? '-' : ''
-      
+
       return {
         id: item.guid || index,
         guid: item.guid,
@@ -195,16 +210,14 @@ export default function KontragentDetailPage() {
   // Format counterparty info - DECLARE FIRST
   const counterpartyInfo = useMemo(() => {
     if (!counterparty) return null
-    
-    console.log('=== Formatting counterparty info ===')
-    console.log('counterparty:', counterparty)
-    
+
+
     return {
       name: counterparty.nazvanie || 'Без названия',
       fullName: counterparty.polnoe_imya || '',
       inn: counterparty.inn && counterparty.inn !== 0 ? counterparty.inn : null,
-      kpp: counterparty.kpp && counterparty.kpp !== 0 ? counterparty.kpp : null,
-      accountNumber: counterparty.nomer_scheta && counterparty.nomer_scheta !== 0 ? counterparty.nomer_scheta : null,
+      kpp: (Array.isArray(counterparty.kpp) ? counterparty.kpp.filter(v => v !== null && v !== '') : (counterparty.kpp && counterparty.kpp !== 0 ? [counterparty.kpp] : [])),
+      accountNumber: (Array.isArray(counterparty.nomer_scheta) ? counterparty.nomer_scheta.filter(v => v !== null && v !== '') : (counterparty.nomer_scheta && counterparty.nomer_scheta !== 0 ? [counterparty.nomer_scheta] : [])),
       receiptArticle: counterparty.chart_of_accounts_id_data?.nazvanie || (counterparty.chart_of_accounts_id ? 'Загрузка...' : null),
       paymentArticle: counterparty.chart_of_accounts_id_2_data?.nazvanie || (counterparty.chart_of_accounts_id_2 ? 'Загрузка...' : null),
       comment: counterparty.komentariy || null,
@@ -250,6 +263,43 @@ export default function KontragentDetailPage() {
     }
   }, [filteredOperations])
 
+  const renderMultiValue = (values, type) => {
+    if (!values || values.length === 0) return '–';
+    if (values.length === 1) return values[0];
+
+    return (
+      <div className={styles.popoverContainer}>
+        <span>{values[0]}</span>
+        <button
+          className={styles.popoverToggle}
+          onClick={(e) => {
+            e.stopPropagation();
+            setActivePopover(activePopover === type ? null : type);
+          }}
+        >
+          +{values.length - 1}
+        </button>
+        {activePopover === type && (
+          <div className={styles.popoverMenu}>
+            <div className={styles.popoverHeader}>
+              <span>{type === 'kpp' ? 'Дополнительные КПП' : 'Номера счетов'}</span>
+              <button className={styles.closeBtn} onClick={() => setActivePopover(null)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className={styles.popoverList}>
+              {values.slice(1).map((val, idx) => (
+                <div key={idx} className={styles.popoverItem}>{val}</div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const toggleOperation = (id) => {
     if (selectedOperations.includes(id)) {
       setSelectedOperations(selectedOperations.filter(opId => opId !== id))
@@ -291,17 +341,32 @@ export default function KontragentDetailPage() {
 
   const handleDeleteConfirm = async () => {
     if (!deletingOperation) return
-    
+
     try {
       const guid = deletingOperation.rawData?.guid || deletingOperation.guid
       if (!guid) {
         throw new Error('GUID операции не найден')
       }
-      
+
       await deleteOperationMutation.mutateAsync([guid])
       setDeletingOperation(null)
     } catch (error) {
       console.error('Error deleting operation:', error)
+    }
+  }
+
+  const handleDeleteCounterparty = async () => {
+    setIsDropdownOpen(false)
+    try {
+      setIsDeletingCounterparty(true)
+      await ucodeRequestMutation.mutateAsync({
+        method: 'delete_counterparty',
+        data: { guid: counterpartyGuid }
+      })
+      router.push('/pages/directories/counterparties')
+    } catch (error) {
+      console.error('Error deleting counterparty:', error)
+      setIsDeletingCounterparty(false)
     }
   }
 
@@ -418,6 +483,12 @@ export default function KontragentDetailPage() {
 
   return (
     <div className={styles.container}>
+      {isDeletingCounterparty && (
+        <div className={styles.deleteOverlay}>
+          <div className={styles.deleteSpinner}></div>
+          <span className={styles.deleteSpinnerText}>Удаление...</span>
+        </div>
+      )}
       <div className={styles.content}>
         {/* Breadcrumbs */}
         <div className={styles.breadcrumbs}>
@@ -434,6 +505,8 @@ export default function KontragentDetailPage() {
         <div className={styles.header}>
           <div className={styles.headerTop}>
             <h1 className={styles.title}>{counterpartyInfo?.name || 'Контрагент'}</h1>
+
+
             <div className={styles.headerFilters}>
               <NewDateRangeComponent
                 value={dateRange}
@@ -453,6 +526,36 @@ export default function KontragentDetailPage() {
                 />
               </div>
             </div>
+            {/* dots button */}
+            <div className={styles.headerActions} ref={dropdownRef}>
+              <button
+                className={cn(styles.dotsButton, isDropdownOpen && styles.dotsButtonActive)}
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
+                <MoreHorizontal size={20} />
+              </button>
+
+              {isDropdownOpen && (
+                <div className={styles.dropdownMenu}>
+                  <button className={styles.dropdownItem} onClick={() => {
+                    setIsDropdownOpen(false)
+                    setIsEditCounterpartyModalOpen(true)
+                  }}>
+                    <PenLine size={18} className={styles.dropdownIcon} />
+                    Редактировать
+                  </button>
+                  <button className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                    <Archive size={18} className={styles.dropdownIcon} />
+                    Убрать в архив
+                  </button>
+                  <div className={styles.dropdownDivider} />
+                  <button className={cn(styles.dropdownItem, styles.dropdownItemDelete)} onClick={handleDeleteCounterparty}>
+                    <Trash2 size={18} className={styles.dropdownIcon} />
+                    Удалить
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Stats Grid */}
@@ -469,7 +572,7 @@ export default function KontragentDetailPage() {
                     {stats.receipts >= 0 ? '+' : ''}{stats.receipts.toLocaleString('ru-RU')}
                   </div>
                 </div>
-                
+
                 <div className={styles.financialItem}>
                   <div className={styles.financialItemHeader}>
                     <div className={cn(styles.financialItemDot)} style={{ backgroundColor: '#f39c6b' }}></div>
@@ -479,7 +582,7 @@ export default function KontragentDetailPage() {
                     {stats.payments >= 0 ? '-' : ''}{Math.abs(stats.payments).toLocaleString('ru-RU')}
                   </div>
                 </div>
-                
+
                 <div className={styles.financialItem}>
                   <div className={styles.financialItemHeader}>
                     <div className={cn(styles.financialItemDot)} style={{ backgroundColor: stats.difference >= 0 ? '#52c41a' : '#ff4d4f' }}></div>
@@ -513,7 +616,10 @@ export default function KontragentDetailPage() {
 
             {/* Right Card - Additional Info in two-column format */}
             <div className={styles.infoCard}>
-              <div className={styles.infoCardTitle}>{counterpartyInfo?.name || 'Контрагент'}</div>
+              <div className={styles.headerTitle}>
+                <h1 className={styles.infoCardTitle}>{counterpartyInfo?.name || 'Контрагент'}</h1>
+                <PenLine size={12} className={styles.dropdownIcon} onClick={() => setIsEditCounterpartyModalOpen(true)} />
+              </div>
               <div className={styles.infoCardDivider}></div>
               <div className={styles.infoCardDetails}>
                 <div className={styles.infoCardRow}>
@@ -526,7 +632,7 @@ export default function KontragentDetailPage() {
                 </div>
                 <div className={styles.infoCardRow}>
                   <span className={styles.infoCardLabel}>КПП</span>
-                  <span className={styles.infoCardValue}>{counterpartyInfo?.kpp || '–'}</span>
+                  <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.kpp, 'kpp')}</span>
                 </div>
                 <div className={styles.infoCardRow}>
                   <span className={styles.infoCardLabel}>Статья для выплат</span>
@@ -534,13 +640,14 @@ export default function KontragentDetailPage() {
                 </div>
                 <div className={styles.infoCardRow}>
                   <span className={styles.infoCardLabel}>№ счета</span>
-                  <span className={styles.infoCardValue}>{counterpartyInfo?.accountNumber || '–'}</span>
+                  <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.accountNumber, 'accountNumber')}</span>
                 </div>
                 <div className={styles.infoCardRow}>
                   <span className={styles.infoCardLabel}>Комментарий</span>
                   <span className={styles.infoCardValue}>{counterpartyInfo?.comment || '–'}</span>
                 </div>
               </div>
+              <span className={styles.extraDetailsLink} onClick={() => setIsRequisitesModalOpen(true)}>Доп. реквизиты</span>
             </div>
           </div>
         </div>
@@ -551,7 +658,7 @@ export default function KontragentDetailPage() {
             <div className={cn(styles.operationsHeader, isFiltersOpen && styles.filtersOpen)}>
               <div className={styles.operationsHeaderLeft}>
                 <h2 className={styles.operationsTitle}>Операции по контрагенту</h2>
-                <button 
+                <button
                   className={styles.createButton}
                   onClick={() => {
                     setIsCreateOperationModalOpen(true)
@@ -564,17 +671,17 @@ export default function KontragentDetailPage() {
                 >
                   Создать
                 </button>
-                <button 
+                <button
                   className={styles.filtersButton}
                   onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                 >
                   Фильтры
-                  <svg 
-                    className={cn(styles.filtersIcon, isFiltersOpen && styles.filtersIconOpen)} 
-                    width="12" 
-                    height="12" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
+                  <svg
+                    className={cn(styles.filtersIcon, isFiltersOpen && styles.filtersIconOpen)}
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
                     stroke="currentColor"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -722,15 +829,15 @@ export default function KontragentDetailPage() {
                           <span className={styles.typeBadge}>
                             {op.typeLabel === 'Поступление' ? (
                               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             ) : op.typeLabel === 'Выплата' ? (
                               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             ) : (
                               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             )}
                           </span>
@@ -771,14 +878,14 @@ export default function KontragentDetailPage() {
                 <span className={styles.footerTextBold}>{stats.totalCount}</span> {stats.totalCount === 1 ? 'операция' : stats.totalCount < 5 ? 'операции' : 'операций'}
               </span>
               {stats.receiptsCount > 0 && (
-              <span className={styles.footerText}>
+                <span className={styles.footerText}>
                   {stats.receiptsCount} {stats.receiptsCount === 1 ? 'поступление' : stats.receiptsCount < 5 ? 'поступления' : 'поступлений'}: <span className={styles.footerTextBold}>{stats.receipts.toLocaleString('ru-RU')}</span>
-              </span>
+                </span>
               )}
               {stats.paymentsCount > 0 && (
-              <span className={styles.footerText}>
+                <span className={styles.footerText}>
                   {stats.paymentsCount} {stats.paymentsCount === 1 ? 'выплата' : stats.paymentsCount < 5 ? 'выплаты' : 'выплат'}: <span className={styles.footerTextBold}>{stats.payments.toLocaleString('ru-RU')}</span>
-              </span>
+                </span>
               )}
               <span className={styles.footerText}>
                 Итого: <span className={cn(styles.footerTextBold, stats.difference >= 0 ? styles.footerTextGreen : styles.footerTextRed)}>
@@ -826,6 +933,82 @@ export default function KontragentDetailPage() {
           isDeleting={deleteOperationMutation.isPending}
         />
       )}
+
+      {/* Requisites Modal */}
+      {isRequisitesModalOpen && (
+        <div className={styles.modalOverlay} onClick={() => setIsRequisitesModalOpen(false)}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Реквизиты «{counterpartyInfo?.name}»</h3>
+              <button className={styles.closeBtn} onClick={() => setIsRequisitesModalOpen(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.modalRow}>
+                <div className={styles.modalLabel}>Название</div>
+                <div className={styles.modalValue}>{counterpartyInfo?.fullName || ''}</div>
+              </div>
+
+              <div className={styles.modalRow}>
+                <div className={styles.modalLabel}>ИНН</div>
+                <div className={styles.modalValue}>{counterpartyInfo?.inn || ''}</div>
+              </div>
+
+              <div className={styles.modalRow}>
+                <div className={styles.modalDoubleCol}>
+                  <div>
+                    <div className={styles.modalLabel}>КПП</div>
+                    <div className={styles.modalValue}>
+                      {counterpartyInfo?.kpp?.length > 0 ? counterpartyInfo.kpp[0] : ''}
+                    </div>
+                  </div>
+                  <div>
+                    <div className={styles.modalLabel}>Дополнительные КПП</div>
+                    <div className={styles.modalValueList}>
+                      {counterpartyInfo?.kpp?.length > 1 ? counterpartyInfo.kpp.slice(1).map((val, i) => (
+                        <div key={i} className={styles.modalValueItem}>{val}</div>
+                      )) : ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.modalRow}>
+                <div className={styles.modalDoubleCol}>
+                  <div>
+                    <div className={styles.modalLabel}>Номер счета</div>
+                    <div className={styles.modalValue}>
+                      {counterpartyInfo?.accountNumber?.length > 0 ? counterpartyInfo.accountNumber[0] : ''}
+                    </div>
+                  </div>
+                  <div >
+                    <div className={styles.modalLabel}>Дополнительные номера счетов</div>
+                    <div className={styles.modalValueList}>
+                      {counterpartyInfo?.accountNumber?.length > 1 ? counterpartyInfo.accountNumber.slice(1).map((val, i) => (
+                        <div key={i} className={styles.modalValueItem}>{val}</div>
+                      )) : '–'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.closeActionBtn} onClick={() => setIsRequisitesModalOpen(false)}>
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Counterparty Modal */}
+      <EditCounterpartyModal
+        isOpen={isEditCounterpartyModalOpen}
+        onClose={() => setIsEditCounterpartyModalOpen(false)}
+        counterparty={counterparty}
+      />
     </div>
   )
 }

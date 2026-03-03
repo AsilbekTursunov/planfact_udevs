@@ -2,6 +2,7 @@
   display: flex;
   min-height: 100vh;
   background-color: #f9fafb; // slate-50
+  position: relative;
 }
 
 .content {
@@ -54,10 +55,99 @@
   margin-bottom: 1.25rem;
 }
 
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
 .headerFilters {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex: 1;
+  }
+  
+  .headerActions {
+    position: relative;
+  }
+  
+  .dotsButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background-color: white;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+  
+    &:hover,
+    &.dotsButtonActive {
+      background-color: #f8fafc;
+      border-color: #d1d5db;
+    }
+  }
+  
+  .dropdownMenu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    width: 220px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: 50;
+    padding: 4px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .dropdownItem {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 15px;
+    color: #1e293b;
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: background-color 0.2s;
+  
+    &:hover {
+      background-color: #f8fafc;
+    }
+  }
+  
+  .dropdownIcon {
+    margin-right: 12px;
+    color: #334155;
+    cursor: pointer;
+    stroke-width: 1.5;
+  }
+  
+  .dropdownDivider {
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 4px 0;
+  }
+  
+  .dropdownItemDelete {
+    color: #ef4444;
+  
+    .dropdownIcon {
+      color: #ef4444;
+    }
+  
+    &:hover {
+      background-color: #fef2f2;
+    }
 }
 
 .title {
@@ -157,7 +247,6 @@
   font-size: 16px;
   font-weight: 600;
   color: #0f172a;
-  margin-bottom: 0.75rem;
 }
 
 .infoCardDivider {
@@ -348,14 +437,13 @@
 .tableWrapper {
   overflow-x: auto;
   overflow-y: visible;
-  border: 1px solid #e5e7eb;
+  // border: 1px solid #e5e7eb;
   border-radius: 0.25rem;
 }
 
 .operationsTable {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
   overflow: visible;
 }
 
@@ -614,6 +702,261 @@
   font-size: 13px;
   color: #0f172a;
   font-weight: 400;
+  display: flex;
+    align-items: center;
+  }
+  
+  .extraDetailsLink {
+    color: $primary;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 1rem;
+    display: inline-block;
+    transition: color 0.2s;
+  
+    &:hover {
+      color: $primary-dark;
+    }
+  }
+  
+  .popoverContainer {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+  }
+  
+  .popoverToggle {
+    color: $primary;
+    font-weight: 500;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+  
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  
+  .popoverMenu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    width: 250px;
+    padding: 0;
+    border: 1px solid #f1f5f9;
+  
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -6px;
+      border-width: 6px;
+      border-style: solid;
+      border-color: white transparent transparent transparent;
+    }
+  }
+  
+  .popoverHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1e293b;
+  
+    .closeBtn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+  
+      &:hover {
+        color: #475569;
+      }
+    }
+  }
+  
+  .popoverList {
+    padding: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .popoverItem {
+    padding: 8px 8px;
+    font-size: 13px;
+    color: #334155;
+    background: #f8fafc;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  // Modal styles for Requisites Modal
+  .modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  .modalContent {
+    background-color: white;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+  
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+  
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+  
+    .closeBtn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #94a3b8;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+  
+      &:hover {
+        color: #475569;
+      }
+    }
+  }
+  
+  .modalBody {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .modalRow {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    // padding-bottom: 16px;
+  
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+  }
+  
+  .modalDoubleCol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .modalLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 4px;
+  }
+  
+  .modalValue {
+    font-size: 14px;
+    color: #334155;
+  }
+  
+  .modalValueList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .modalValueItem {
+    font-size: 14px;
+    color: #334155;
+  }
+  
+  .modalFooter {
+    padding: 16px 20px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+  
+    .closeActionBtn {
+      background-color: $primary;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+  
+      &:hover {
+        background-color: $primary-dark;
+      }
+    }
 }
 
 // Skeleton loader styles
@@ -630,5 +973,42 @@
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+.deleteOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  .deleteSpinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top-color: $primary;
+    border-radius: 50%;
+    animation: spinner-spin 1s linear infinite;
+  }
+
+  .deleteSpinnerText {
+    color: #475569;
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
+@keyframes spinner-spin {
+  to {
+    transform: rotate(360deg);
   }
 }

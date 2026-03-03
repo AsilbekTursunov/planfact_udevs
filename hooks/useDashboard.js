@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dashboardAPI } from '@/lib/api/dashboard'
 import { chartOfAccountsAPI } from '@/lib/api/ucode/chartOfAccounts'
+import { ucodeRequest } from '@/lib/api/ucode/base'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
 
 // Get dashboard data
@@ -402,7 +403,7 @@ export const useCounterpartiesPlanFact = (params = {}, enabled = true) => {
 // Get counterparty by ID
 export const useCounterpartyById = (guid, enabled = true) => {
   console.log('useCounterpartyById called with guid:', guid, 'enabled:', enabled)
-  
+
   return useQuery({
     queryKey: ['counterpartyById', guid],
     queryFn: async () => {
@@ -1252,5 +1253,33 @@ export const useCashFlowReport = (params = {}) => {
     enabled: true,
     staleTime: 5 * 60 * 1000,
     retry: false
+  })
+}
+
+/**
+ * Universal useUcodeRequest globally accessible
+ */
+export const useUcodeRequestMutation = () => {
+  return useMutation({
+    mutationFn: ({ method, data }) => ucodeRequest({ method, data }),
+    onError: (error) => {
+      console.error('useUcodeRequestMutation Error:', error)
+      showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
+    }
+  })
+}
+
+
+/**
+ * Universal useUcodeRequestQuery globally accessible
+ */
+
+export const useUcodeRequestQuery = () => {
+  return useQuery({
+    queryFn: ({ method, data }) => ucodeRequest({ method, data }),
+    onError: (error) => {
+      console.error('useUcodeRequestQuery Error:', error)
+      showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
+    }
   })
 }

@@ -17,11 +17,11 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency }) => {
       )}
     >
       {/* Debit icon (Д) - показываем когда НЕ confirmed И accrual = true */}
-      {!confirmed && accrual && (
+      {!confirmed && accrual && (tab === 'Поступление' || tab === "Начисление") && (
         <DebitIcon />
       )}
       {/* Credit icon (К) - показываем когда confirmed = true И НЕ accrual */}
-      {confirmed && !accrual && (
+      {confirmed && !accrual && (tab === 'Поступление' || tab === "Начисление") && (
         <CreditIcon />
       )}
       <span className={styles.amountText}>{tab == "Перемещение" ? <>

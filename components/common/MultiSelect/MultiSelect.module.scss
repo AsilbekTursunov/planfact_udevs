@@ -5,14 +5,14 @@
 
 .button {
   width: 100%;
-  padding: 6px 10px !important;
+  padding: 7px 10px 5px 10px !important;
     background: $gray-25 !important;
-    border: 1.5px solid $gray-200 !important;
-    border-radius: 6px !important;
+  border: 1px solid $gray-200 !important;
+    border-radius: 8px !important;
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
-  height: 32px;
+  height: 34px;
 
   &:hover:not(.disabled) {
     border-color: #0E73F6;
@@ -43,6 +43,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .buttonContent {
   display: flex;
   flex: 1;
@@ -63,7 +64,7 @@
 
 .buttonIcon {
   width: 14px;
-    height: 14px;
+  height: 14px;
     color: $gray-400;
   transition: transform 0.2s;
   flex-shrink: 0;
@@ -76,7 +77,7 @@
 .dropdown {
   position: absolute;
   top: calc(100% + 4px);
-    /* Default is bottom positioning */
+  /* Default is bottom positioning */
   left: 0;
   right: 0;
   background: #FFFFFF;
@@ -89,13 +90,12 @@
   flex-direction: column;
   opacity: 1;
   transition: opacity 0.15s ease-in-out;
-  
 &.dropdownTop {
     top: auto;
     bottom: calc(100% + 4px);
     box-shadow: 0px -4px 6px -2px rgba(16, 24, 40, 0.03), 0px -12px 16px -4px rgba(16, 24, 40, 0.08);
   }
-  
+
   &.dropdownHidden {
     opacity: 0;
     pointer-events: none;

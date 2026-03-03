@@ -33,7 +33,7 @@
   pointer-events: auto;
   transition: all 0.3s ease-out;
   transform-origin: left;
-  overflow: hidden;
+  overflow: visible;
 
   &.opening {
     width: 0;
@@ -49,7 +49,6 @@
 
     &.open {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
   }
 }
 
@@ -63,6 +62,52 @@
   max-height: 100vh;
 }
 
+.messageContent {
+  // background-color: #c8c8c812 !important;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  z-index: -1 !important;
+  width: 400px;
+  height: 100%;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+
+  &.open {
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.filesAttachExpandTab {
+  position: absolute;
+  top: 5px;
+  left: 101%;
+  background-color: #555555;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 10;
+  font-family: inherit;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #666666;
+  }
+}
+
+.expandTabIcon {
+  width: 10px;
+  height: 10px;
+  color: #fff;
+}
 .header {
   padding: 1rem 1.5rem 0 1.5rem;
   background-color: white;
@@ -125,19 +170,19 @@
   flex-direction: column;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
-  
+
   &::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: #f3f4f6;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: #d1d5db;
     border-radius: 4px;
-    
+
     &:hover {
       background: #9ca3af;
     }
@@ -210,19 +255,19 @@
   flex-direction: column;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
-  
+
   &::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: #f3f4f6;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: #d1d5db;
     border-radius: 4px;
-    
+
     &:hover {
       background: #9ca3af;
     }
@@ -242,6 +287,7 @@
   flex-direction: column;
   gap: .325rem;
 }
+
 .formRow {
   display: flex;
   align-items: center;
@@ -277,9 +323,10 @@
   width: 140px;
 }
 
-.input { 
-  width: 230px !important;  
+.input {
+  width: 230px !important;
   transition: all 0.2s;
+
   &::placeholder {
     color: #9ca3af;
     opacity: 1;
@@ -293,20 +340,20 @@
 
   &[type="date"] {
     color: #0f172a;
-    
+
     &::-webkit-calendar-picker-indicator {
       opacity: 1;
       cursor: pointer;
     }
-    
+
     &:invalid {
       color: #9ca3af;
     }
-    
+
     &::-webkit-datetime-edit-text {
       color: #0f172a;
     }
-    
+
     &::-webkit-datetime-edit-month-field,
     &::-webkit-datetime-edit-day-field,
     &::-webkit-datetime-edit-year-field {
@@ -316,7 +363,7 @@
 
   &[type="number"] {
     color: #0f172a;
-    
+
     &::placeholder {
       color: #9ca3af;
     }
@@ -336,7 +383,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  
+
   .checkboxLabel {
     margin-left: auto;
     white-space: nowrap;
@@ -348,7 +395,7 @@
   max-width: 250px;
   padding: 0.625rem 0.875rem;
   font-size: 13px;
-  color: #475569; 
+  color: #475569;
   border-radius: 0.375rem;
   white-space: nowrap;
   text-align: end;
@@ -369,7 +416,7 @@
   &:hover:not(:disabled) {
     color: #138496;
   }
-  
+
   &:disabled {
     color: #d1d5db;
     cursor: not-allowed;
@@ -494,10 +541,11 @@
   background-color: #0F51B9;
   border: none;
   border-radius: 0.25rem;
-  
+
   &:hover {
     background-color: #0F51B9;
   }
+
   cursor: pointer;
   transition: background-color 0.2s;
 
@@ -541,7 +589,7 @@
 
 .error {
   border-color: #dc3545 !important;
-  
+
   &:focus {
     box-shadow: 0 0 0 1px #dc3545 !important;
     border-color: #dc3545 !important;
@@ -576,7 +624,204 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
+}
+
+.filesAttachWrap {
+  background-color: #2f2f2f4c;
+  color: white;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.filesAttachCollapseWrp {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  background-color: #363636a1;
+  justify-content: flex-end;
+}
+
+.filesAttachCollapse {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    color: white;
+  }
+
+  span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.entityAttachments {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+
+  &.darkTheme {
+    background-color: #2f2f2f4c;
+  }
+}
+
+.entityAttachmentsList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+.plug {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  min-height: 300px;
+  color: #fff;
+}
+
+.plugIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.plugTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #f8fafc;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.plugDescription {
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.entityAttachmentsContainer {
+  padding: 16px;
+  background-color: #363636a1;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filesInput {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filesInputAttach {
+  display: flex;
+  align-items: flex-start;
+}
+
+.filesInputLabel {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.filesInputIcon {
+  color: #fff;
+}
+
+.filesInputClip {
+  width: 20px;
+  height: 20px;
+}
+
+.filesInputTextarea {
+  flex: 1;
+  position: relative;
+  border-radius: 6px;
+  padding: 8px 12px;
+  padding-right: 48px;
+  display: flex;
+  flex-direction: column;
+
+  &:focus-within {
+    border-color: #1e1e1e;
+  }
+
+  textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    border-bottom: 1px solid #d1d5db;
+
+    &::placeholder {
+      color: white;
+    }
+  }
+}
+.counter {
+  font-size: 11px;
+  color: #fff;
+  font-style: normal;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.filesInputSend {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  width: 20px;
+  height: 20px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &.filesInputSendDisabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: white;
   }
 }
