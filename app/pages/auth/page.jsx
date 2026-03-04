@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    fullname: '',
+    name: '',
     phone: '+998',
     branchName: '',
     checked: false,
@@ -145,8 +145,8 @@ export default function LoginPage() {
       if (!formData.branchName.trim()) {
         errors.branchName = 'Введите название организации'
       }
-      if (!formData.fullname.trim()) {
-        errors.fullname = 'Введите ФИО'
+      if (!formData.name.trim()) {
+        errors.name = 'Введите ФИО'
       }
       if (!formData.email.trim()) {
         errors.email = 'Введите email'
@@ -197,29 +197,102 @@ export default function LoginPage() {
 
     try {
       if (fromType === 'login') {
-        await loginMutation.mutateAsync({
+        console.log('=== STARTING LOGIN ===')
+        console.log('Email:', formData.email)
+        
+        const result = await loginMutation.mutateAsync({
           email: formData.email,
           password: formData.password,
         })
+        
+        console.log('Login mutation result:', result)
+        console.log('=== LOGIN COMPLETED ===')
       } else {
+        console.log('=== STARTING REGISTRATION ===')
         const cleanPhone = getCleanPhoneNumber(formData.phone)
-        await registerAsync({
+        console.log('Registration data:', {
+          name: formData.name,
+          email: formData.email,
+          phone: cleanPhone,
+          branch_name: formData.branchName
+        })
+        
+        const response = await registerAsync({
           method: 'auth_register_legal_entity',
           data: {
-            fullname: formData.fullname,
+            name: formData.name,
             email: formData.email,
             phone: cleanPhone,
-            password: formData.password, 
+            password: formData.password,
+            legal_entity_name: formData.name,
             branch_name: formData.branchName,
           }
         })
+        
+        console.log('=== REGISTRATION RESPONSE ===')
+        console.log('Full response:', response)
+        console.log('Response data:', response?.data)
+        console.log('Response data.data:', response?.data?.data)
+        console.log('Response data.data.data:', response?.data?.data?.data)
+        
+        // Сохраняем токен после успешной регистрации
+        // Структура может быть: response.data.data.data.token или response.data.data.token
+        const innerData = response?.data?.data?.data || response?.data?.data
+        const tokenData = innerData?.token?.access_token || innerData?.token
+        const userData = innerData?.user_data || innerData?.userData || innerData?.user || {
+          email: formData.email,
+          name: formData.name,
+          phone: cleanPhone
+        }
+        
+        console.log('Inner data:', innerData)
+        console.log('Token data:', tokenData)
+        console.log('User data:', userData)
+        
+        if (tokenData) {
+          console.log('✅ Token found!')
+          
+          // Используем authStore для сохранения
+          const { authStore } = await import('@/store/auth.store')
+          console.log('Setting authentication in authStore...')
+          
+          authStore.setAuthentication({
+            token: tokenData,
+            user_data: userData
+          })
+          
+          console.log('✅ Authentication set successfully')
+          console.log('authStore state:', {
+            isAuthenticated: authStore.isAuthenticated,
+            authToken: authStore.authToken,
+            userEmail: authStore.userEmail,
+            userData: authStore.userData
+          })
+          
+          console.log('localStorage check:', {
+            authToken: localStorage.getItem('authToken'),
+            isAuthenticated: localStorage.getItem('isAuthenticated'),
+            userEmail: localStorage.getItem('userEmail')
+          })
+          
+          console.log('=== REGISTRATION COMPLETED ===')
+          
+          // Перенаправляем на главную страницу
+          console.log('Redirecting to /pages/operations...')
+          setTimeout(() => {
+            window.location.href = '/pages/operations'
+          }, 100)
+        } else {
+          console.error('❌ Token not found in response!')
+          console.log('Response structure:', JSON.stringify(response, null, 2))
+          throw new Error('Токен не получен от сервера')
+        }
       }
-
-      // Даем время на сохранение токена и cookie
-      setTimeout(() => {
-        window.location.href = '/pages/operations'
-      }, 100)
     } catch (error) {
+      console.error('=== AUTH ERROR ===')
+      console.error('Error:', error)
+      console.error('Error message:', error.message)
+      console.error('Error details:', error.details)
       const errorMessage = error.message || (fromType === 'login' ? 'Ошибка при входе' : 'Ошибка при регистрации')
       setError(errorMessage)
     }
@@ -229,7 +302,7 @@ export default function LoginPage() {
     setFromType(prev => prev === 'login' ? 'register' : 'login')
     setError('')
     setFieldErrors({})
-    setFormData({ email: '', password: '', fullname: '', phone: '+998', branchName: '', checked: false })
+    setFormData({ email: '', password: '', name: '', phone: '+998', branchName: '', checked: false })
     setConfirmPassword('')
   }
 
@@ -280,28 +353,28 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {/* Fullname */}
+                {/* Name */}
                 <div className={styles.inputGroup}>
                   <div className={styles.inputWrapper}>
                     <Input
                       type="text"
-                      value={formData.fullname}
+                      value={formData.name}
                       onChange={(e) => {
-                        setFormData({ ...formData, fullname: e.target.value })
-                        setFieldErrors({ ...fieldErrors, fullname: '' })
+                        setFormData({ ...formData, name: e.target.value })
+                        setFieldErrors({ ...fieldErrors, name: '' })
                       }}
-                      onFocus={() => setFocusedField('fullname')}
+                      onFocus={() => setFocusedField('name')}
                       onBlur={() => setFocusedField(null)}
                       className={cn(
                         styles.inputField,
-                        focusedField === 'fullname' && styles.focused,
-                        fieldErrors.fullname && styles.error
+                        focusedField === 'name' && styles.focused,
+                        fieldErrors.name && styles.error
                       )}
                       placeholder="ФИО пользователя"
                     />
                   </div>
-                  {fieldErrors.fullname && (
-                    <div className={styles.fieldError}>{fieldErrors.fullname}</div>
+                  {fieldErrors.name && (
+                    <div className={styles.fieldError}>{fieldErrors.name}</div>
                   )}
                 </div>
 

@@ -600,3 +600,62 @@
 	color: #ef4444;
 	margin-top: 2px;
 }
+
+
+/* ── Empty state for branches ──────────────────────── */
+.emptyStateBranches {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.emptyTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+}
+
+.emptyDescription {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 0 16px 0;
+}
+
+.emptyHint {
+  font-size: 14px;
+  color: #999;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 0 32px 0;
+
+  a {
+    color: #00b8d4;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.addButtonLarge {
+  background: transparent;
+  border: none;
+  color: #d0d0d0;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+
+  &:hover {
+    color: #00b8d4;
+  }
+
+  svg {
+    display: block;
+  }
+}

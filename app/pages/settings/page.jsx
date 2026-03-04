@@ -416,8 +416,27 @@ export default function SettingsPage() {
             </table>
           </div>
         ) : (
-          <div className={styles.emptyState}>
-            <p>Нет добавленных филиалов</p>
+          <div className={styles.emptyStateBranches}>
+            <h2 className={styles.emptyTitle}>Создайте филиал</h2>
+            <p className={styles.emptyDescription}>
+              Филиалы помогают сравнивать прибыль и рентабельность разных частей бизнеса. 
+              Например, заказов, направлений или каналов продаж.
+            </p>
+            <p className={styles.emptyHint}>
+              Для удобства филиалы можно объединять в группы.<br />
+              Как ими пользоваться, <a href="#">посмотрите видео</a> или <a href="#">почитайте статью</a>.
+            </p>
+            <button 
+              className={styles.addButtonLarge}
+              onClick={() => { setEditingBranch(null); setBranchModalOpen(true) }}
+              aria-label="Создать филиал"
+            >
+              <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="55" cy="55" r="53" stroke="currentColor" strokeWidth="4"></circle>
+                <rect x="53" y="31" width="4" height="48" fill="currentColor"></rect>
+                <rect x="79" y="53" width="4" height="48" transform="rotate(90 79 53)" fill="currentColor"></rect>
+              </svg>
+            </button>
           </div>
         )}
 

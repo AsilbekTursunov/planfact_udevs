@@ -16,16 +16,21 @@ export function useLogin() {
       const clientTypeId = apiConfig.ucode.clientTypeId
       const roleId = apiConfig.ucode.roleId
 
-      const url = `${baseURL}/v2/login/with-option?project-id=${projectId}`
+      const url = `https://api.admin.u-code.io/v2/invoke_function/planfact-plan-fact?project-id=${projectId}`
+
 
       const requestBody = {
-        login_strategy: "EMAIL",
         data: {
-            email,
-            password,
-            client_type_id: clientTypeId,
-            role_id: roleId
-        }
+        method: "auth_login",
+        object_data: { email, password }
+    }
+        // login_strategy: "EMAIL",
+        // data: {
+        //     email,
+        //     password,
+        //     client_type_id: clientTypeId,
+        //     role_id: roleId
+        // }
       }
 
       const response = await fetch(url, {
@@ -33,7 +38,7 @@ export function useLogin() {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Environment-Id': environmentId,
+          'environment-Id': environmentId,
         },
         body: JSON.stringify(requestBody),
       })
@@ -54,22 +59,51 @@ export function useLogin() {
       return data
     },
     onSuccess: (data) => {
-      // Response structure: { status: "CREATED", data: { token: {...}, user_data: {...} } }
+      console.log('=== LOGIN SUCCESS ===')
+      console.log('Full response:', data)
+      
+      // Response structure: { status: "CREATED", data: { status: "success", data: { data: {...} } } }
       const responseData = data.data
-      const tokenData = responseData?.token?.access_token
-      const refreshToken = responseData?.token?.refresh_token
-      const userData = responseData?.user_data
+      console.log('Response data:', responseData)
+      
+      // Токен находится глубже в структуре
+      const innerData = responseData?.data?.data
+      console.log('Inner data:', innerData)
+      
+      const tokenData = innerData?.token?.access_token
+      const refreshToken = innerData?.token?.refresh_token
+      const userData = innerData?.user_data || innerData?.userData || innerData?.user
+      
+      console.log('Token data:', tokenData)
+      console.log('Refresh token:', refreshToken)
+      console.log('User data:', userData)
 
       // Set authentication state through MobX store
       if (tokenData && userData) {
+        console.log('Setting authentication in authStore...')
         authStore.setAuthentication({ 
           token: tokenData,
           refresh_token: refreshToken,
           user_data: userData 
         })
+        console.log('Authentication set successfully')
+        console.log('authStore state:', {
+          isAuthenticated: authStore.isAuthenticated,
+          authToken: authStore.authToken,
+          userEmail: authStore.userEmail
+        })
+        
+        // Перенаправляем на главную страницу после успешного логина
+        console.log('Redirecting to /pages/operations...')
+        setTimeout(() => {
+          window.location.href = '/pages/operations'
+        }, 100)
+      } else {
+        console.error('Missing token or user data!')
       }
 
       showSuccessNotification('Успешный вход!')
+      console.log('=== LOGIN SUCCESS END ===')
     },
     onError: (error) => {
       const errorMessage = error.message || 'Ошибка при входе'

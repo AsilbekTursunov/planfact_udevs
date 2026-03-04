@@ -8,7 +8,6 @@ import { useDeleteMyAccounts, useBankAccountsPlanFact, useLegalEntitiesPlanFact 
 import CreateMyAccountModal from '@/components/directories/CreateMyAccountModal/CreateMyAccountModal'
 import { AccountMenu } from '@/components/directories/AccountMenu/AccountMenu'
 import { DeleteAccountConfirmModal } from '@/components/directories/DeleteAccountConfirmModal/DeleteAccountConfirmModal'
-import Input from '@/components/shared/Input'
 import { cn } from '@/app/lib/utils'
 import styles from './accounts.module.scss'
 import { SearchBar } from '../../../../components/directories/SearchBar/SearchBar'

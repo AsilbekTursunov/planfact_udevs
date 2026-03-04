@@ -32,12 +32,16 @@ class AuthStore {
   }
 
   setAuthentication(data) {
+    console.log('authStore.setAuthentication called with:', data);
     this.isAuthenticated = true;
     
     // Handle new auth API response structure
     if (data?.token) {
       this.authToken = data.token;
+      console.log('Saving token to localStorage:', this.authToken);
       localStorage.setItem('authToken', this.authToken);
+    } else {
+      console.warn('No token in data:', data);
     }
     
     if (data?.refresh_token) {
@@ -55,6 +59,12 @@ class AuthStore {
 
     localStorage.setItem('isAuthenticated', 'true');
     document.cookie = 'isAuthenticated=true; path=/; max-age=86400';
+    
+    console.log('authStore after setAuthentication:', {
+      isAuthenticated: this.isAuthenticated,
+      authToken: this.authToken,
+      userEmail: this.userEmail
+    });
   }
 
   logout() {
