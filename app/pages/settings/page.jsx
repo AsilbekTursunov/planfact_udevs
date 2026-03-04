@@ -12,7 +12,6 @@ import {
   GitBranch,
   MoreVertical,
   Pencil,
-  Copy,
   X,
   Eye,
   EyeOff,
@@ -58,6 +57,84 @@ function formatPhone998(raw) {
   if (rest.length > 5) result += ' ' + rest.slice(5, 7)
   if (rest.length > 7) result += ' ' + rest.slice(7, 9)
   return result
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/*  DeleteBranchModal                                     */
+/* ═══════════════════════════════════════════════════════ */
+
+function DeleteBranchModal({ open, onClose, onConfirm, branch }) {
+  console.log('DeleteBranchModal render:', { open, branch })
+  
+  if (!open || typeof window === 'undefined') return null
+
+  return createPortal(
+    <>
+      <div 
+        className={styles.deleteModalOverlay} 
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9998,
+          background: 'rgba(0, 0, 0, 0.5)',
+        }}
+      />
+      <div 
+        className={styles.deleteModal}
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 9999,
+          background: '#fff',
+          borderRadius: '14px',
+          padding: 0,
+          width: '480px',
+          maxWidth: '95vw',
+          boxShadow: '0 8px 40px rgba(0, 0, 0, 0.12)',
+        }}
+      >
+        <div className={styles.deleteModalHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 28px 16px', borderBottom: '1px solid #e5e7eb' }}>
+          <h3 className={styles.deleteModalTitle} style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Подтверждение удаления</h3>
+          <button className={styles.deleteModalClose} onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#94a3b8', borderRadius: '6px', display: 'flex', alignItems: 'center' }}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className={styles.deleteModalBody} style={{ padding: '24px 28px' }}>
+          <p className={styles.deleteModalText} style={{ fontSize: '15px', color: '#334155', margin: '0 0 20px', lineHeight: 1.5 }}>
+            Вы уверены, что хотите удалить филиал?
+          </p>
+          {branch && (
+            <div className={styles.deleteModalInfo} style={{ background: '#f9fafb', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className={styles.deleteModalInfoItem} style={{ display: 'flex', gap: '8px', fontSize: '13.5px' }}>
+                <span className={styles.deleteModalInfoLabel} style={{ color: '#64748b', minWidth: '120px', fontWeight: 500 }}>Название:</span>
+                <span className={styles.deleteModalInfoValue} style={{ color: '#0f172a', fontWeight: 500 }}>{branch.branchName || '—'}</span>
+              </div>
+              <div className={styles.deleteModalInfoItem} style={{ display: 'flex', gap: '8px', fontSize: '13.5px' }}>
+                <span className={styles.deleteModalInfoLabel} style={{ color: '#64748b', minWidth: '120px', fontWeight: 500 }}>Email:</span>
+                <span className={styles.deleteModalInfoValue} style={{ color: '#0f172a', fontWeight: 500 }}>{branch.email || '—'}</span>
+              </div>
+              <div className={styles.deleteModalInfoItem} style={{ display: 'flex', gap: '8px', fontSize: '13.5px' }}>
+                <span className={styles.deleteModalInfoLabel} style={{ color: '#64748b', minWidth: '120px', fontWeight: 500 }}>Пользователь:</span>
+                <span className={styles.deleteModalInfoValue} style={{ color: '#0f172a', fontWeight: 500 }}>{branch.name || '—'}</span>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className={styles.deleteModalFooter} style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', padding: '16px 28px 24px' }}>
+          <button className={styles.deleteModalButtonCancel} onClick={onClose} style={{ padding: '9px 22px', background: '#fff', color: '#475569', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '13.5px', fontWeight: 500, cursor: 'pointer' }}>
+            Отмена
+          </button>
+          <button className={styles.deleteModalButtonConfirm} onClick={onConfirm} style={{ padding: '9px 22px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer' }}>
+            Удалить
+          </button>
+        </div>
+      </div>
+    </>,
+    document.body
+  )
 }
 
 /* ═══════════════════════════════════════════════════════ */
@@ -196,7 +273,7 @@ function BranchModal({ open, onClose, onSubmit, initial }) {
 
 import { createPortal } from 'react-dom'
 
-function RowDropdown({ onEdit, onCopyApiKey }) {
+function RowDropdown({ onEdit, onDelete }) {
   const [open, setOpen] = useState(false)
   const btnRef = useRef(null)
   const menuRef = useRef(null)
@@ -236,9 +313,9 @@ function RowDropdown({ onEdit, onCopyApiKey }) {
             <Pencil size={15} />
             <span>Редактировать</span>
           </li>
-          <li className={styles.dropdownItem} onClick={() => { onCopyApiKey(); setOpen(false) }}>
-            <Copy size={15} />
-            <span>Скопировать ApiKey</span>
+          <li className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={() => { onDelete(); setOpen(false) }}>
+            <Trash2 size={15} />
+            <span>Удалить</span>
           </li>
         </ul>,
         document.body
@@ -262,9 +339,48 @@ export default function SettingsPage() {
   const [purposeOptional, setPurposeOptional] = useState(false)
 
   /* ── branches state ──────────────────────────────── */
-  const [branches, setBranches] = useState([])
+  const [branches, setBranches] = useState([
+    {
+      id: 1,
+      email: 'branch1@example.com',
+      role: 'Администратор',
+      name: 'Иван Иванов',
+      position: 'Менеджер',
+      status: 'Активный',
+      lastLogin: '15.01.2024, 14:30',
+      createdAt: '10.01.2024, 10:00',
+      branchName: 'Филиал №1',
+      phone: '+998 90 123 45 67',
+    },
+    {
+      id: 2,
+      email: 'branch2@example.com',
+      role: 'Администратор',
+      name: 'Петр Петров',
+      position: 'Директор',
+      status: 'Активный',
+      lastLogin: '14.01.2024, 16:45',
+      createdAt: '08.01.2024, 09:15',
+      branchName: 'Филиал №2',
+      phone: '+998 91 234 56 78',
+    },
+    {
+      id: 3,
+      email: 'branch3@example.com',
+      role: 'Администратор',
+      name: 'Сергей Сергеев',
+      position: '—',
+      status: 'Приглашен',
+      lastLogin: '—',
+      createdAt: '12.01.2024, 11:20',
+      branchName: 'Филиал №3',
+      phone: '+998 93 345 67 89',
+    },
+  ])
   const [branchModalOpen, setBranchModalOpen] = useState(false)
   const [editingBranch, setEditingBranch] = useState(null)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [branchToDelete, setBranchToDelete] = useState(null)
 
   /* ── branch handlers ─────────────────────────────── */
 
@@ -295,10 +411,25 @@ export default function SettingsPage() {
     setEditingBranch(null)
   }
 
-  function handleCopyApiKey(branch) {
-    const fakeKey = `pk_${branch.id}_${Math.random.toString(36).slice(2, 10)}`
-    navigator.clipboard.writeText(fakeKey)
-    alert(`ApiKey скопирован: ${fakeKey}`)
+  function handleDeleteBranch(branch) {
+    console.log('handleDeleteBranch called with:', branch)
+    setBranchToDelete(branch)
+    setDeleteModalOpen(true)
+  }
+
+  function confirmDeleteBranch() {
+    console.log('confirmDeleteBranch called')
+    if (branchToDelete) {
+      setBranches(prev => prev.filter(b => b.id !== branchToDelete.id))
+      setDeleteModalOpen(false)
+      setBranchToDelete(null)
+    }
+  }
+
+  function cancelDeleteBranch() {
+    console.log('cancelDeleteBranch called')
+    setDeleteModalOpen(false)
+    setBranchToDelete(null)
   }
 
 
@@ -379,7 +510,6 @@ export default function SettingsPage() {
                   <th>Email</th>
                   <th>Роль</th>
                   <th>ФИО / Должность</th>
-                  <th>Статус</th>
                   <th>Последний вход</th>
                   <th>Дата создания</th>
                   <th></th>
@@ -394,11 +524,6 @@ export default function SettingsPage() {
                       <div>{branch.name}</div>
                       <div className={styles.cellSub}>{branch.position}</div>
                     </td>
-                    <td>
-                      <span className={`${styles.statusBadge} ${branch.status === 'Активный' ? styles.statusActive : styles.statusInvited}`}>
-                        {branch.status}
-                      </span>
-                    </td>
                     <td>{branch.lastLogin}</td>
                     <td>{branch.createdAt}</td>
                     <td>
@@ -407,7 +532,7 @@ export default function SettingsPage() {
                           setEditingBranch(branch)
                           setBranchModalOpen(true)
                         }}
-                        onCopyApiKey={() => handleCopyApiKey(branch)}
+                        onDelete={() => handleDeleteBranch(branch)}
                       />
                     </td>
                   </tr>
@@ -445,6 +570,13 @@ export default function SettingsPage() {
           onClose={() => { setBranchModalOpen(false); setEditingBranch(null) }}
           onSubmit={editingBranch ? handleEditBranch : handleAddBranch}
           initial={editingBranch}
+        />
+
+        <DeleteBranchModal
+          open={deleteModalOpen}
+          onClose={cancelDeleteBranch}
+          onConfirm={confirmDeleteBranch}
+          branch={branchToDelete}
         />
       </div>
     )
