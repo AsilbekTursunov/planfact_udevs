@@ -91,13 +91,6 @@ export default function LoginPage() {
     return formattedPhone.replace(/[^\d]/g, '')
   }
 
-  // Validate password (no special characters)
-  const validatePassword = (password) => {
-    // Only allow letters, numbers, and basic characters
-    const validPasswordRegex = /^[a-zA-Z0-9а-яА-Я]+$/
-    return validPasswordRegex.test(password)
-  }
-
   const handlePhoneChange = (e) => {
     const input = e.target
     const value = input.value
@@ -149,11 +142,6 @@ export default function LoginPage() {
 
   const handlePasswordChange = (e, field = 'password') => {
     const value = e.target.value
-
-    // Block special characters
-    if (value && !validatePassword(value)) {
-      return
-    }
 
     if (field === 'password') {
       setFormData({ ...formData, password: value })
