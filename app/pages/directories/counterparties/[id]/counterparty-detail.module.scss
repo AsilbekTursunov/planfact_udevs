@@ -255,6 +255,40 @@
   margin-bottom: 1rem;
 }
 
+.infoCardEmpty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: 1rem;
+}
+
+.infoCardEmptyText {
+  font-size: 13px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.infoCardEmptyButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 13px;
+  color: #4b5563;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+
+  &:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+  }
+}
 .operationsSection {
   flex: 1;
   background-color: white;
@@ -534,7 +568,7 @@
     background-color: inherit;
     border-left: 1px solid #e5e7eb;
     box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
-    z-index: 20;
+    // z-index: 20;
     min-width: 32px;
     width: 32px;
     text-align: center;
@@ -634,6 +668,26 @@
   }
 }
 
+.sectionHeader {
+  background: white;
+  border-bottom: 1px solid #cbd5e1;
+  border-top: 1px solid #cbd5e1;
+}
+
+.sectionHeaderCell {
+  padding: 0.875rem 1rem;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sectionHeaderTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
 .emptyState {
   display: flex;
   flex-direction: column;

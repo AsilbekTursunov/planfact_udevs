@@ -19,16 +19,16 @@ import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import styles from './OperationModal.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
-import { CreditIcon, DebitIcon, FilesPlugIcon, FilesClipIcon } from '../../../constants/icons'
+import { CreditIcon, DebitIcon, FilesClipIcon } from '../../../constants/icons'
 import SplitAmount from './SplitAmount'
 import SentMessages from './SentMessages'
 
 const today = new Date().toISOString().split('T')[0]
 
-const emptyRow = () => ({
+const emptyRow = (preselectedCounterparty = '') => ({
 	calculationDate: today,
 	isCalculationCommitted: true,
-	contrAgentId: '',
+	contrAgentId: preselectedCounterparty,
 	operationCategoryId: '',
 	value: '',
 	percent: '',
@@ -134,11 +134,15 @@ export function OperationModal({
 
 	// Разбить сумму
 	const [divivedAmounts, setdivivedAmounts] = useState([])
-	const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(), emptyRow()])
+	const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(preselectedCounterparty), emptyRow()])
 	const [selectedSplits, setSelectedSplits] = useState([])
 
 	const has = (label) => selectedSplits.some(s => s.value === label)
 	const showDate = has('Начисление')
+	const showAgent = has('Контрагент')
+	const showStatya = has('Статья')
+
+	console.log('selectedSplits', selectedSplits)
 
 	// Block body scroll when modal is open
 	useEffect(() => {
@@ -1049,6 +1053,7 @@ export function OperationModal({
 												dispatch={dispatch}
 												emptyRow={emptyRow}
 												selectedSplits={selectedSplits}
+												preselectedCounterparty={preselectedCounterparty}
 												setSelectedSplits={setSelectedSplits}
 											/>
 										</div>
@@ -1073,7 +1078,7 @@ export function OperationModal({
 									</div>}
 
 									{/* Контрагент */}
-									<div className={styles.formRow}>
+									{!showAgent && <div className={styles.formRow}>
 										<label className={styles.label}>Контрагент</label>
 										<TreeSelect
 											data={counterAgentsTree}
@@ -1084,10 +1089,10 @@ export function OperationModal({
 											loading={isLoadingGroups}
 											disabled={disableCounterpartySelect}
 										/>
-									</div>
+									</div>}
 
 									{/* Статья */}
-									<div className={styles.formRow}>
+									{!showStatya && <div className={styles.formRow}>
 										<label className={styles.label}>Статья</label>
 										<TreeSelect
 											data={chartOfAccountsTree}
@@ -1098,7 +1103,7 @@ export function OperationModal({
 											loading={loadingChartOfAccounts}
 											className='flex-1'
 										/>
-									</div>
+									</div>}
 
 									{/* Назначение платежа */}
 									<div className={styles.formRowStart}>
@@ -1226,6 +1231,7 @@ export function OperationModal({
 												dispatch={dispatch}
 												emptyRow={emptyRow}
 												selectedSplits={selectedSplits}
+												preselectedCounterparty={preselectedCounterparty}
 												setSelectedSplits={setSelectedSplits}
 											/>
 										</div>
@@ -1249,7 +1255,7 @@ export function OperationModal({
 									</div>}
 
 									{/* Контрагент */}
-									<div className={styles.formRow}>
+									{!showAgent && <div className={styles.formRow}>
 										<label className={styles.label}>Контрагент</label>
 										<TreeSelect
 											data={counterAgentsTree}
@@ -1260,10 +1266,10 @@ export function OperationModal({
 											loading={isLoadingGroups}
 											disabled={disableCounterpartySelect}
 										/>
-									</div>
+									</div>}	
 
 									{/* Статья */}
-									<div className={styles.formRow}>
+									{!showStatya && <div className={styles.formRow}>
 										<label className={styles.label}>Статья</label>
 										<TreeSelect
 											data={chartOfAccountsTree}
@@ -1274,7 +1280,7 @@ export function OperationModal({
 											loading={loadingChartOfAccounts}
 											className='flex-1'
 										/>
-									</div>
+									</div>}
 
 									{/* Назначение платежа */}
 									<div className={styles.formRowStart}>
@@ -1725,25 +1731,7 @@ export function OperationModal({
 						</div>
 
 						<div className={cn(styles.entityAttachments, styles.darkTheme)} style={{ height: '100%' }}>
-							<div className={styles.entityAttachmentsList}>
-								<div className={styles.entityAttachmentsCards}>
-									<div className={styles.plug}>
-										<FilesPlugIcon className={styles.plugIcon} />
-										<div className={styles.plugTitle}>
-											Прикрепляйте к операциям файлы,<br />
-											например, акты или счета, добавляйте<br />
-											комментарии
-										</div>
-										<div className={styles.plugDescription}>Не более 10 файлов к операции</div>
-										<div className={styles.plugDescription}>Максимальный размер файла — 5 МБ</div>
-										<div className={styles.plugDescription}>
-											Поддерживаемые форматы:<br />
-											pdf, doc, docx, xls, xlsx, jpeg,<br />
-											png, zip, rar, txt, csv, xml
-										</div>
-									</div>
-								</div>
-							</div>
+
 
 							{/* sent messages list + input */}
 							<SentMessages

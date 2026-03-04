@@ -2,12 +2,11 @@
 
 import { useState } from 'react'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
-import { DateRangePickerModal } from '@/components/common/DateRangePickerModal/DateRangePickerModal'
 import styles from './ReportFilterSidebar.module.scss'
 import '@/styles/report-filters.css'
-import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
-import { DropdownFilter } from '../../directories/DropdownFilter/DropdownFilter'
 import NewDateRangeComponent from '../../directories/NewDateRangeComponent'
+import { GroupedSelect } from '../../common/GroupedSelect/GroupedSelect'
+import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 
 export function ReportFilterSidebar({
   isOpen,
@@ -42,6 +41,8 @@ export function ReportFilterSidebar({
   const [activeTab, setActiveTab] = useState('general')
 
   if (!isOpen) return null
+
+  console.log('counterpartyOptions', counterpartyOptions) 
 
   return (
     <div className={`${styles.sidebar} report-filter-sidebar`}>
@@ -103,7 +104,7 @@ export function ReportFilterSidebar({
                   onChange={(value) => {
                     onAccountsChange(value)
                   }}
-                  placeholder="Все счета"
+                  placeholder="Юрлица и счета"
                   hideSelectAll={true}
                   valueKey="value"
 
@@ -170,71 +171,35 @@ export function ReportFilterSidebar({
                 </h3>
                 <div className={styles.checkboxGroup}>
                   <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
+                    <OperationCheckbox
                       checked={profitTypes.operational}
                       onChange={() => onProfitTypesChange('operational')}
-                      className={styles.checkboxInput}
-                    />
-                    <span className={styles.checkboxCustom}>
-                      {profitTypes.operational && (
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </span>
-                    <span className={styles.checkboxText}>Операционная</span>
+                      label="Операционная"
+                    /> 
                   </label>
 
                   <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
+                    <OperationCheckbox
                       checked={profitTypes.ebitda}
                       onChange={() => onProfitTypesChange('ebitda')}
-                      className={styles.checkboxInput}
-                    />
-                    <span className={styles.checkboxCustom}>
-                      {profitTypes.ebitda && (
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </span>
-                    <span className={styles.checkboxText}>EBITDA</span>
+                      label="EBITDA"
+                    /> 
                   </label>
 
                   <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
+                    <OperationCheckbox
                       checked={profitTypes.ebit}
                       onChange={() => onProfitTypesChange('ebit')}
-                      className={styles.checkboxInput}
-                    />
-                    <span className={styles.checkboxCustom}>
-                      {profitTypes.ebit && (
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </span>
-                    <span className={styles.checkboxText}>EBIT</span>
+                      label="EBIT"
+                    /> 
                   </label>
 
                   <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
+                    <OperationCheckbox
                       checked={profitTypes.ebt}
                       onChange={() => onProfitTypesChange('ebt')}
-                      className={styles.checkboxInput}
-                    />
-                    <span className={styles.checkboxCustom}>
-                      {profitTypes.ebt && (
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M13.3334 4L6.00008 11.3333L2.66675 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </span>
-                    <span className={styles.checkboxText}>EBT</span>
+                      label="EBT"
+                    /> 
                   </label>
                 </div>
               </div>

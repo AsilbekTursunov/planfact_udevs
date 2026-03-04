@@ -652,14 +652,14 @@
   right: 0; 
   border-left: 1px solid #e5e7eb;
   box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
-  z-index: 20;
+  // z-index: 20;
   min-width: 32px;
   width: 32px;
   text-align: center;
   padding: 0.5rem 0.25rem;
   isolation: isolate;
   overflow: visible;
-  
+  background-color: #fff;
   .tableRow:nth-child(even) & {
     background-color: #fafbfc;
   }

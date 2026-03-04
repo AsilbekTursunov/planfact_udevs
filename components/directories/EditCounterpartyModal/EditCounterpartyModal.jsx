@@ -13,7 +13,7 @@ import TextArea from '@/components/shared/TextArea'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 import { GoPlusCircle, GoTrash } from 'react-icons/go'
 
-export default function EditCounterpartyModal({ isOpen, onClose, counterparty }) {
+export default function EditCounterpartyModal({ isOpen, onClose, counterparty, onSuccess }) {
   const queryClient = useQueryClient()
   const updateMutation = useUpdateCounterparty()
 
@@ -25,7 +25,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
     inn: '',
     kpp: '',
     nomer_scheta: '',
-    primenyat_stat_i_po_umolchaniyu: false,
+    primenyat_stat_i_po_umolchaniyu: true,
     chart_of_accounts_id: '',
     chart_of_accounts_id_2: '',
     komentariy: ''
@@ -355,6 +355,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
+      onSuccess()
 
       handleClose()
     } catch (error) {
@@ -475,7 +476,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
                           onWheel={(e) => e.target.blur()}
                         />
                       </div>
-                      {index === 0 ? (
+                      {/* {index === 0 ? (
                         <button className={styles.actionButton} onClick={handleAddKpp}>
                           <GoPlusCircle size={20} />
                         </button>
@@ -483,7 +484,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
                         <button className={styles.actionButton} onClick={(e) => { e.preventDefault(); handleRemoveKpp(item.id); }}>
                           <GoTrash size={18} />
                         </button>
-                      )}
+                      )} */}
                     </div>
                   ))}
                 </div>
@@ -503,7 +504,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
                           className={cn(styles.input, styles.requisitesInput)}
                         />
                       </div>
-                      {index === 0 ? (
+                      {/* {index === 0 ? (
                         <button className={styles.actionButton} onClick={handleAddAccount}>
                           <GoPlusCircle size={20} />
                         </button>
@@ -511,7 +512,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty })
                         <button className={styles.actionButton} onClick={(e) => { e.preventDefault(); handleRemoveAccount(item.id); }}>
                           <GoTrash size={18} />
                         </button>
-                      )}
+                      )} */}
                     </div>
                   ))}
                 </div>

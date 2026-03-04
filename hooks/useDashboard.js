@@ -1274,12 +1274,15 @@ export const useUcodeRequestMutation = () => {
  * Universal useUcodeRequestQuery globally accessible
  */
 
-export const useUcodeRequestQuery = () => {
+export const useUcodeRequestQuery = ({ method, data, skip = false, querySetting = {} }) => {
   return useQuery({
-    queryFn: ({ method, data }) => ucodeRequest({ method, data }),
+    queryKey: [method, data],
+    queryFn: () => ucodeRequest({ method, data }),
+    enabled: !skip,
     onError: (error) => {
       console.error('useUcodeRequestQuery Error:', error)
       showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
-    }
+    },
+    ...querySetting
   })
 }

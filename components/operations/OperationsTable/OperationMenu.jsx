@@ -21,9 +21,16 @@ export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
     const calculatePosition = () => {
       if (buttonRef.current) {
         const buttonRect = buttonRef.current.getBoundingClientRect()
+        const viewportHeight = window.innerHeight
+        const dropdownHeight = 160 // approximate height of 3-item menu
+        const spaceBelow = viewportHeight - buttonRect.bottom
+        const openUp = spaceBelow < dropdownHeight + 8
+
         setPosition({
-          top: buttonRect.bottom + 4,
-          left: buttonRect.right
+          top: openUp ? undefined : buttonRect.bottom + 4,
+          bottom: openUp ? viewportHeight - buttonRect.top + 4 : undefined,
+          left: buttonRect.right,
+          openUp,
         })
       }
     }
@@ -137,7 +144,10 @@ export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
           className={styles.menuDropdown}
           style={{
             position: 'fixed',
-            top: `${position.top}px`,
+            ...(position.openUp
+              ? { bottom: `${position.bottom}px` }
+              : { top: `${position.top}px` }
+            ),
             left: `${position.left}px`,
             transform: 'translateX(-100%)',
             zIndex: 99999

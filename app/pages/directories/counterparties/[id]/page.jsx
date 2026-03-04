@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useQueryClient } from '@tanstack/react-query'
 import { MoreHorizontal, PenLine, Archive, Trash2 } from 'lucide-react'
 import { useCounterpartyById, useUcodeRequestMutation } from '@/hooks/useDashboard'
 import { useLegalEntitiesPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
@@ -14,6 +15,7 @@ import NewDateRangeComponent from '@/components/directories/NewDateRangeComponen
 import { useDeleteOperation } from '@/hooks/useDashboard'
 import { cn } from '@/app/lib/utils'
 import styles from './counterparty-detail.module.scss'
+import PriceStatus from '@/components/operations/PriceStatus'
 
 import Select from '@/components/common/Select'
 import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
@@ -65,6 +67,7 @@ export default function KontragentDetailPage() {
   const [deletingOperation, setDeletingOperation] = useState(null)
   const [isEditCounterpartyModalOpen, setIsEditCounterpartyModalOpen] = useState(false)
   const deleteOperationMutation = useDeleteOperation()
+  const queryClient = useQueryClient()
 
   // Fetch counterparty data by GUID using get_counterparty_by_id
   const { data: counterpartyData, isLoading: isLoadingCounterparty, error: counterpartyError } = useCounterpartyById(counterpartyGuid)
@@ -150,6 +153,13 @@ export default function KontragentDetailPage() {
       const amountFormatted = amount.toLocaleString('ru-RU')
       const amountSign = type === 'in' ? '+' : type === 'out' ? '-' : ''
 
+      // Determine section (today vs yesterday/earlier)
+      const today = new Date()
+      const isToday = operationDate &&
+        operationDate.getDate() === today.getDate() &&
+        operationDate.getMonth() === today.getMonth() &&
+        operationDate.getFullYear() === today.getFullYear()
+
       return {
         id: item.guid || index,
         guid: item.guid,
@@ -164,7 +174,16 @@ export default function KontragentDetailPage() {
         deal: '',
         amount: `${amountSign}${amountFormatted}`,
         amountRaw: amount,
-        rawData: item
+        rawData: item,
+        paymentConfirmed: item.oplata_podtverzhdena,
+        payment_confirmed: item.payment_confirmed !== undefined
+          ? item.payment_confirmed
+          : (item.oplata_podtverzhdena !== undefined ? item.oplata_podtverzhdena : false),
+        payment_accrual: item.payment_accrual !== undefined
+          ? item.payment_accrual
+          : false,
+        currency: item.currenies_kod || '',
+        section: isToday ? 'today' : 'yesterday',
       }
     })
   }, [counterpartyOperations])
@@ -349,6 +368,7 @@ export default function KontragentDetailPage() {
       }
 
       await deleteOperationMutation.mutateAsync([guid])
+      queryClient.invalidateQueries({ queryKey: ['counterpartyById', counterpartyGuid] })
       setDeletingOperation(null)
     } catch (error) {
       console.error('Error deleting operation:', error)
@@ -481,6 +501,10 @@ export default function KontragentDetailPage() {
     )
   }
 
+  const hasInfo = counterpartyInfo?.inn === null && counterpartyInfo?.kpp?.length === 0 && counterpartyInfo?.accountNumber?.length === 0 && counterpartyInfo?.receiptArticle === null && counterpartyInfo?.paymentArticle === null && counterpartyInfo?.comment === null
+
+
+
   return (
     <div className={styles.container}>
       {isDeletingCounterparty && (
@@ -544,10 +568,10 @@ export default function KontragentDetailPage() {
                     <PenLine size={18} className={styles.dropdownIcon} />
                     Редактировать
                   </button>
-                  <button className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
+                  {/* <button className={styles.dropdownItem} onClick={() => setIsDropdownOpen(false)}>
                     <Archive size={18} className={styles.dropdownIcon} />
                     Убрать в архив
-                  </button>
+                  </button> */}
                   <div className={styles.dropdownDivider} />
                   <button className={cn(styles.dropdownItem, styles.dropdownItemDelete)} onClick={handleDeleteCounterparty}>
                     <Trash2 size={18} className={styles.dropdownIcon} />
@@ -621,33 +645,48 @@ export default function KontragentDetailPage() {
                 <PenLine size={12} className={styles.dropdownIcon} onClick={() => setIsEditCounterpartyModalOpen(true)} />
               </div>
               <div className={styles.infoCardDivider}></div>
-              <div className={styles.infoCardDetails}>
-                <div className={styles.infoCardRow}>
-                  <span className={styles.infoCardLabel}>ИНН</span>
-                  <span className={styles.infoCardValue}>{counterpartyInfo?.inn || '–'}</span>
+              {hasInfo ? (
+                <div className={styles.infoCardEmpty}>
+                  <span className={styles.infoCardEmptyText}>Реквизиты контрагента отсутствуют</span>
+                  <button className={styles.infoCardEmptyButton} onClick={() => setIsEditCounterpartyModalOpen(true)}>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="9" cy="9" r="8" stroke="#6b7280" strokeWidth="1.2" />
+                      <path d="M9 5.5V12.5M5.5 9H12.5" stroke="#6b7280" strokeWidth="1.2" strokeLinecap="round" />
+                    </svg>
+                    Добавить
+                  </button>
                 </div>
-                <div className={styles.infoCardRow}>
-                  <span className={styles.infoCardLabel}>Статья для поступлений</span>
-                  <span className={styles.infoCardValue}>{counterpartyInfo?.receiptArticle || '–'}</span>
-                </div>
-                <div className={styles.infoCardRow}>
-                  <span className={styles.infoCardLabel}>КПП</span>
-                  <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.kpp, 'kpp')}</span>
-                </div>
-                <div className={styles.infoCardRow}>
-                  <span className={styles.infoCardLabel}>Статья для выплат</span>
-                  <span className={styles.infoCardValue}>{counterpartyInfo?.paymentArticle || '–'}</span>
-                </div>
-                <div className={styles.infoCardRow}>
-                  <span className={styles.infoCardLabel}>№ счета</span>
-                  <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.accountNumber, 'accountNumber')}</span>
-                </div>
-                <div className={styles.infoCardRow}>
-                  <span className={styles.infoCardLabel}>Комментарий</span>
-                  <span className={styles.infoCardValue}>{counterpartyInfo?.comment || '–'}</span>
-                </div>
-              </div>
-              <span className={styles.extraDetailsLink} onClick={() => setIsRequisitesModalOpen(true)}>Доп. реквизиты</span>
+              ) : (
+                <>
+                    <div className={styles.infoCardDetails}>
+                      <div className={styles.infoCardRow}>
+                        <span className={styles.infoCardLabel}>ИНН</span>
+                        <span className={styles.infoCardValue}>{counterpartyInfo?.inn || '–'}</span>
+                      </div>
+                      <div className={styles.infoCardRow}>
+                        <span className={styles.infoCardLabel}>Статья для поступлений</span>
+                        <span className={styles.infoCardValue}>{counterpartyInfo?.receiptArticle || '–'}</span>
+                      </div>
+                      <div className={styles.infoCardRow}>
+                        <span className={styles.infoCardLabel}>КПП</span>
+                        <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.kpp, 'kpp')}</span>
+                      </div>
+                      <div className={styles.infoCardRow}>
+                        <span className={styles.infoCardLabel}>Статья для выплат</span>
+                        <span className={styles.infoCardValue}>{counterpartyInfo?.paymentArticle || '–'}</span>
+                      </div>
+                      <div className={styles.infoCardRow}>
+                        <span className={styles.infoCardLabel}>№ счета</span>
+                        <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.accountNumber, 'accountNumber')}</span>
+                      </div>
+                      <div className={styles.infoCardRow}>
+                        <span className={styles.infoCardLabel}>Комментарий</span>
+                        <span className={styles.infoCardValue}>{counterpartyInfo?.comment || '–'}</span>
+                      </div>
+                    </div>
+                  {/* <span className={styles.extraDetailsLink} onClick={() => setIsRequisitesModalOpen(true)}>Доп. реквизиты</span> */}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -815,14 +854,71 @@ export default function KontragentDetailPage() {
                     </tr>
                   </thead>
                   <tbody className={styles.tableBody}>
-                          {filteredOperations.map((op, index) => (
+                          {/* Today — Section Header */}
+                          {filteredOperations.filter(op => op.section === 'today').length > 0 && (
+                            <tr className={styles.sectionHeader}>
+                              <td colSpan='9' className={styles.sectionHeaderCell}>
+                                <h3 className={styles.sectionHeaderTitle}>Сегодня</h3>
+                              </td>
+                            </tr>
+                          )}
+                          {filteredOperations.filter(op => op.section === 'today').map((op, index) => (
                       <tr
                         key={op.id}
                         className={styles.tableRow}
+                              onClick={() => handleEditOperation(op)}
                       >
-                        <td className={cn(styles.tableCell, styles.tableCellIndex)}>
-                          {index + 1}
+                              <td className={cn(styles.tableCell, styles.tableCellIndex)}>{index + 1}</td>
+                              <td className={styles.tableCell}>{op.date}</td>
+                              <td className={styles.tableCell}>{op.account}</td>
+                              <td className={styles.tableCell}>
+                                <span className={styles.typeBadge}>
+                                  {op.typeLabel === 'Поступление' ? (
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  ) : op.typeLabel === 'Выплата' ? (
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  ) : (
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  )}
+                                </span>
+                              </td>
+                              <td className={styles.tableCell}>{op.counterparty}</td>
+                              <td className={styles.tableCell}>{op.category}</td>
+                              <td className={styles.tableCell}>{op.project}</td>
+                              <td className={cn(styles.tableCell, styles.amountCell,
+                                op.typeCategory === 'in' && styles.positive,
+                                op.typeCategory === 'out' && styles.negative,
+                                op.typeCategory === 'transfer' && styles.neutral
+                              )}>
+                                <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
+                              </td>
+                              <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
+                                <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
+                              </td>
+                            </tr>
+                          ))}
+
+                          {/* Вчера и ранее — Section Header */}
+                          {filteredOperations.filter(op => op.section === 'yesterday').length > 0 && (
+                            <tr className={styles.sectionHeader}>
+                              <td colSpan='9' className={styles.sectionHeaderCell}>
+                                <h3 className={styles.sectionHeaderTitle}>Вчера и ранее</h3>
                         </td>
+                            </tr>
+                          )}
+                          {filteredOperations.filter(op => op.section === 'yesterday').map((op, index) => (
+                            <tr
+                              key={op.id}
+                              className={styles.tableRow}
+                              onClick={() => handleEditOperation(op)}
+                            >
+                              <td className={cn(styles.tableCell, styles.tableCellIndex)}>{index + 1}</td>
                         <td className={styles.tableCell}>{op.date}</td>
                         <td className={styles.tableCell}>{op.account}</td>
                         <td className={styles.tableCell}>
@@ -845,21 +941,15 @@ export default function KontragentDetailPage() {
                         <td className={styles.tableCell}>{op.counterparty}</td>
                         <td className={styles.tableCell}>{op.category}</td>
                         <td className={styles.tableCell}>{op.project}</td>
-                        <td className={cn(
-                          styles.tableCell,
-                          styles.amountCell,
+                              <td className={cn(styles.tableCell, styles.amountCell,
                           op.typeCategory === 'in' && styles.positive,
                           op.typeCategory === 'out' && styles.negative,
                           op.typeCategory === 'transfer' && styles.neutral
                         )}>
-                          {op.amount}
+                                <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
                         </td>
-                        <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
-                          <OperationMenu
-                            operation={op}
-                            onEdit={handleEditOperation}
-                            onDelete={handleDeleteOperation}
-                          />
+                              <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
+                                <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
                         </td>
                       </tr>
                     ))}
@@ -918,6 +1008,7 @@ export default function KontragentDetailPage() {
           isClosing={isEditModalClosing}
           isOpening={isEditModalOpening}
           onClose={handleCloseEditModal}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['counterpartyById', counterpartyGuid] })}
           preselectedCounterparty={counterpartyGuid}
           disableCounterpartySelect={true}
         />
@@ -1007,6 +1098,10 @@ export default function KontragentDetailPage() {
       <EditCounterpartyModal
         isOpen={isEditCounterpartyModalOpen}
         onClose={() => setIsEditCounterpartyModalOpen(false)}
+        onSuccess={() => {
+          setIsEditCounterpartyModalOpen(false)
+          queryClient.invalidateQueries({ queryKey: ['counterpartyById', counterpartyGuid] })
+        }}
         counterparty={counterparty}
       />
     </div>

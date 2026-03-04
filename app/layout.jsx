@@ -23,8 +23,9 @@ export default function RootLayout({ children }) {
   const isLoginPage = pathname === '/pages/auth'
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-[family-name:var(--font-geist-sans)] bg-slate-50 text-slate-900`}
       >
         <QueryClientProvider client={queryClient}>

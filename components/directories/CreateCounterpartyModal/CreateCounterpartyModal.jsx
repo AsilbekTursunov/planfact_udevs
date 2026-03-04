@@ -14,6 +14,7 @@ import EditCounterpartyGroupModal from '@/components/directories/EditCounterpart
 import { DeleteGroupConfirmModal } from '@/components/directories/DeleteGroupConfirmModal/DeleteGroupConfirmModal'
 import styles from './CreateCounterpartyModal.module.scss'
 import { GoPlusCircle, GoTrash } from 'react-icons/go'
+import { formatDate } from '../../../utils/formatDate'
 
 export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGroupId = null }) {
   const queryClient = useQueryClient()
@@ -258,7 +259,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
         const submitData = {
           nazvanie_gruppy: groupFormData.nazvanie_gruppy.trim(),
           ...(groupFormData.opisanie_gruppy && { opisanie_gruppy: groupFormData.opisanie_gruppy }),
-          data_sozdaniya: new Date().toISOString(),
+          data_sozdaniya: formatDate(new Date()),
           attributes: {}
         }
 
@@ -313,11 +314,11 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
           ...(formData.chart_of_accounts_id && { chart_of_accounts_id: formData.chart_of_accounts_id }),
           ...(formData.chart_of_accounts_id_2 && { chart_of_accounts_id_2: formData.chart_of_accounts_id_2 }),
           ...(formData.komentariy && { komentariy: formData.komentariy }),
-          data_sozdaniya: now.toISOString(),
+          data_sozdaniya: formatDate(new Date()),
           attributes: {}
         }
 
-        await createMutation.mutateAsync(submitData) 
+        await createMutation.mutateAsync(submitData)
 
         // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })

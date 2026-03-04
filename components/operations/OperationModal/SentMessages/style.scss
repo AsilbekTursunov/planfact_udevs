@@ -8,17 +8,67 @@
 	flex-direction: column;
 	gap: 0;
 	width: 100%;
-	padding: 0 12px;
+	height: 100%;
+		min-height: 0;
 	box-sizing: border-box;
+	position: relative;
+	}
+	
+	/* Plug (empty state) ───────────────────────────────────── */
+	.sm-plug-wrapper {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		overflow-y: auto;
+		padding: 16px;
+		background-color: #585858;
+	}
+	
+	.sm-plug {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		color: #fff;
+	
+	}
+	
+	.sm-plug__icon {
+		width: 48px;
+		height: 48px;
+		margin-bottom: 16px;
+		opacity: 0.5;
+	}
+	
+	.sm-plug__title {
+		font-size: 14px;
+		font-weight: 500;
+		color: #f8fafc;
+		margin-bottom: 16px;
+		line-height: 1.5;
+	}
+	
+	.sm-plug__desc {
+		font-size: 12px;
+		line-height: 1.5;
+		color: #b0b0bc;
+		margin-bottom: 8px;
+	
+		&:last-child {
+			margin-bottom: 0;
+		}
 }
 
 /* Message list — scrollable ────────────────────────────── */
 .sm-list {
 	display: flex;
-	flex-direction: column;
+	flex-direction: column-reverse;
 	gap: 10px;
-	padding-bottom: 8px;
-	max-height: 340px;
+	padding: 12px 12px;
+		flex: 1;
+		min-height: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
 
@@ -26,9 +76,11 @@
 	&::-webkit-scrollbar {
 		width: 4px;
 	}
+
 	&::-webkit-scrollbar-track {
 		background: transparent;
 	}
+
 	&::-webkit-scrollbar-thumb {
 		background: rgba(255, 255, 255, 0.15);
 		border-radius: 4px;
@@ -41,11 +93,11 @@
 	border-radius: 10px;
 	padding: 14px 16px 10px;
 	display: flex;
-	border: 1px solid  #616161;
+	border: 1px solid #616161;
 	flex-direction: column;
 	gap: 8px;
 	transition: background 0.15s;
- 
+
 	&--editing {
 		background: #00000021;
 	}
@@ -186,6 +238,7 @@
 
 	&--cancel {
 		color: #9e9ea8;
+
 		&:hover {
 			color: #ccc;
 		}
@@ -229,22 +282,10 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	max-width: 240px;
+	max-width: 200px;
 }
 
-/* Attach preview (above input) ─────────────────────────── */
-.sm-attach-preview {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	padding: 8px 4px 4px;
-
-	.sm-file-badge__name {
-		max-width: 180px;
-	}
-}
-
-.sm-attach-preview__remove {
+.sm-file-badge__remove {
 	background: none;
 	border: none;
 	cursor: pointer;
@@ -254,6 +295,7 @@
 	display: flex;
 	align-items: center;
 	transition: color 0.15s;
+	flex-shrink: 0;
 
 	&:hover {
 		color: #f87171;
@@ -263,11 +305,70 @@
 /* Input bar ─────────────────────────────────────────────── */
 .sm-input-bar {
 	display: flex;
-	align-items: flex-end;
+	flex-direction: column;
 	gap: 8px;
 	padding: 12px 0 4px;
 	border-top: 1px solid rgba(255, 255, 255, 0.07);
-	margin-bottom: 50px;
+	padding: 10px 12px;
+		background-color: #454545;
+		padding-bottom: 50px;
+	}
+	
+	.sm-input-bar__row {
+		display: flex;
+		align-items: flex-end;
+		gap: 8px;
+	}
+	
+	.sm-input-bar__files {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 0 4px;
+		max-height: 120px;
+		overflow-y: auto;
+	
+		&::-webkit-scrollbar {
+			width: 3px;
+		}
+	
+		&::-webkit-scrollbar-thumb {
+			background: rgba(255, 255, 255, 0.15);
+			border-radius: 3px;
+		}
+	}
+	
+	.sm-input-bar__file {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	
+	.sm-input-bar__file-name {
+		font-size: 13px;
+		color: #9cd1fb;
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 240px;
+	}
+	
+	.sm-input-bar__file-remove {
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 4px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #9e9ea8;
+		border-radius: 4px;
+		transition: color 0.15s;
+	
+		&:hover {
+			color: #f87171;
+		}
 }
 
 .sm-input-bar__clip {
@@ -275,7 +376,7 @@
 	align-items: center;
 	cursor: pointer;
 	padding: 4px;
-	color: #60a5fa;
+	color: #cdcdcd;
 	flex-shrink: 0;
 	transition: color 0.15s;
 
@@ -325,7 +426,7 @@
 	border: none;
 	cursor: pointer;
 	padding: 4px;
-	color: #60a5fa;
+	color: #cdcdcd;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -345,5 +446,129 @@
 		&:hover {
 			transform: none;
 		}
+	}
+}
+
+/* ═══════════════════════════════════════════════════════
+   Delete confirmation modal
+   ═══════════════════════════════════════════════════════ */
+
+.sm-delete-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 99999;
+	background: rgba(0, 0, 0, 0.45);
+	padding: 100px;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	animation: sm-fade-in 0.15s ease;
+}
+
+.sm-delete-modal {
+	background: #fff;
+	border-radius: 12px;
+	padding: 28px 32px 24px;
+	width: 420px;
+	max-width: 90vw;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+	position: relative;
+	animation: sm-scale-in 0.2s ease;
+}
+
+.sm-delete-modal__close {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #9ca3af;
+	padding: 4px;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	transition: color 0.15s;
+
+	&:hover {
+		color: #374151;
+	}
+}
+
+.sm-delete-modal__title {
+	margin: 0 0 12px;
+	font-size: 18px;
+	font-weight: 600;
+	color: #111827;
+}
+
+.sm-delete-modal__text {
+	margin: 0 0 24px;
+	font-size: 14px;
+	color: #6b7280;
+	line-height: 1.5;
+
+	strong {
+		font-weight: 600;
+		color: #374151;
+	}
+}
+
+.sm-delete-modal__actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 12px;
+	font-weight: 600;
+}
+
+.sm-delete-modal__btn {
+	padding: 8px 20px;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: 6px;
+	border: none;
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+
+	&--cancel {
+		background: transparent;
+		color: #3b82f6;
+
+		&:hover {
+			background: #eff6ff;
+			color: #2563eb;
+		}
+	}
+
+	&--delete {
+		background: #ef4444;
+		color: #fff;
+
+		&:hover {
+			background: #dc2626;
+		}
+	}
+}
+
+@keyframes sm-fade-in {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes sm-scale-in {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1);
 	}
 }

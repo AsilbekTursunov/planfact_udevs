@@ -1,8 +1,8 @@
-import React, { useEffect, useReducer, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './style.scss'
 import MultipleSelect from '../../../shared/MultipleSelect'
-import { CalendarCellIcon, CalendarIcon, CreditIcon, MergeArrowsIcon, SelectArrow, SortArrow } from '../../../../constants/icons'
-import { formatAmount, formatDateRu, formatPercent } from '../../../../utils/helpers'
+import { CalendarCellIcon, CalendarIcon, CreditIcon, MergeArrowsIcon, SortArrow } from '../../../../constants/icons'
+import { formatAmount, formatDateRu } from '../../../../utils/helpers'
 import CustomCalendar from '../../../shared/Calendar'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import { GroupedSelect } from '../../../common/GroupedSelect/GroupedSelect'
@@ -26,7 +26,6 @@ const SplitAmount = ({ amount, counterAgents,
   const showDate = has('Начисление')
   const showAgent = has('Контрагент')
   const showStatya = has('Статья')
-
 
   const totalPercent = rows.reduce((s, r) => s + (parseFloat(r.percent) || 0), 0)
 
