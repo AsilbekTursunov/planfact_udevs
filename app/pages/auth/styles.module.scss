@@ -62,6 +62,103 @@
   position: relative;
 }
 
+.selectWrapper {
+  position: relative;
+}
+
+.selectField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+  background: white;
+  
+  &:hover {
+    border-color: #cbd5e1;
+  }
+}
+
+.selectIcons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.clearButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: #94a3b8;
+  border-radius: 4px;
+  transition: all 0.2s;
+  
+  &:hover {
+    color: #475569;
+    background-color: #f1f5f9;
+  }
+}
+
+.selectedText {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.placeholderText {
+  color: $gray-500;
+  font-weight: 500;
+}
+
+.chevronIcon {
+  color: #94a3b8;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.selectDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+}
+
+.selectOption {
+  padding: 0.625rem 0.75rem;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  
+  &:hover {
+    background-color: #f8fafc;
+  }
+  
+  &.selectOptionActive {
+    background-color: #eff6ff;
+    color: #104CA2;
+  }
+}
+
 .inputField {
   width: 100%;
   border: 1px solid #e2e8f0;

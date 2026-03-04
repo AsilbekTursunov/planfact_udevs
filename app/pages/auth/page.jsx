@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/app/lib/utils'
 import { useLogin, useRegister } from '@/hooks/useAuth'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ChevronDown, X } from 'lucide-react'
 import { AuthLogo } from '@/constants/icons'
 import styles from './styles.module.scss'
 import Input from '@/components/shared/Input'
@@ -27,7 +27,33 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [selectedBranch, setSelectedBranch] = useState('')
+  const [branchDropdownOpen, setBranchDropdownOpen] = useState(false)
   const phoneInputRef = useRef(null)
+  const branchDropdownRef = useRef(null)
+
+  // Mock branches data
+  const mockBranches = [
+    { id: 1, name: 'Филиал №1', email: 'branch1@example.com' },
+    { id: 2, name: 'Филиал №2', email: 'branch2@example.com' },
+    { id: 3, name: 'Филиал №3', email: 'branch3@example.com' },
+  ]
+
+  // Close branch dropdown when clicking outside
+  React.useEffect(() => {
+    function handleClickOutside(event) {
+      if (branchDropdownRef.current && !branchDropdownRef.current.contains(event.target)) {
+        setBranchDropdownOpen(false)
+      }
+    }
+
+    if (branchDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [branchDropdownOpen])
 
   // Login & Register mutations
   const loginMutation = useLogin()
@@ -179,6 +205,9 @@ export default function LoginPage() {
       if (!formData.password) {
         errors.password = 'Введите пароль'
       }
+      if (!selectedBranch) {
+        errors.branch = 'Выберите филиал'
+      }
     }
 
     return errors
@@ -304,6 +333,8 @@ export default function LoginPage() {
     setFieldErrors({})
     setFormData({ email: '', password: '', name: '', phone: '+998', branchName: '', checked: false })
     setConfirmPassword('')
+    setSelectedBranch('')
+    setBranchDropdownOpen(false)
   }
 
   return (
@@ -484,6 +515,71 @@ export default function LoginPage() {
                 <div className={styles.fieldError}>{fieldErrors.password}</div>
               )}
             </div>
+
+            {/* Branch Selector (Only on login) */}
+            {fromType === 'login' && (
+              <div className={styles.inputGroup}>
+                <div className={styles.selectWrapper} ref={branchDropdownRef}>
+                  <div
+                    className={cn(
+                      styles.inputField,
+                      styles.selectField,
+                      branchDropdownOpen && styles.focused,
+                      fieldErrors.branch && styles.error
+                    )}
+                    onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
+                  >
+                    <span className={selectedBranch ? styles.selectedText : styles.placeholderText}>
+                      {selectedBranch 
+                        ? mockBranches.find(b => b.id === selectedBranch)?.name 
+                        : 'Выберите филиал'}
+                    </span>
+                    <div className={styles.selectIcons}>
+                      {selectedBranch && (
+                        <button
+                          type="button"
+                          className={styles.clearButton}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedBranch('')
+                            setFieldErrors({ ...fieldErrors, branch: '' })
+                          }}
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                      <ChevronDown 
+                        size={16} 
+                        className={cn(styles.chevronIcon, branchDropdownOpen && styles.chevronOpen)} 
+                      />
+                    </div>
+                  </div>
+                  {branchDropdownOpen && (
+                    <ul className={styles.selectDropdown}>
+                      {mockBranches.map(branch => (
+                        <li
+                          key={branch.id}
+                          className={cn(
+                            styles.selectOption,
+                            selectedBranch === branch.id && styles.selectOptionActive
+                          )}
+                          onClick={() => {
+                            setSelectedBranch(branch.id)
+                            setBranchDropdownOpen(false)
+                            setFieldErrors({ ...fieldErrors, branch: '' })
+                          }}
+                        >
+                          {branch.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                {fieldErrors.branch && (
+                  <div className={styles.fieldError}>{fieldErrors.branch}</div>
+                )}
+              </div>
+            )}
 
             {/* Confirm Password (Only on register) */}
             {fromType === 'register' && (
