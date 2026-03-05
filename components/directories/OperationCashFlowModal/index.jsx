@@ -55,6 +55,8 @@ const formatNumber = (value) => {
 
 
 const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
+  const [expandedRows, setExpandedRows] = React.useState({})
+  
   console.log('🔵 OperationCashFlowModal - Props:', { isOpen, data, selectedMonth })
   
   const getValue = (row) => {
@@ -76,6 +78,23 @@ const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
   
   console.log('🔵 OperationCashFlowModal - Period:', periodLabel)
   console.log('🔵 OperationCashFlowModal - Total amount:', totalAmount)
+
+  // Toggle row expansion
+  const toggleRowExpansion = (rowId) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [rowId]: !prev[rowId]
+    }))
+  }
+
+  // Mock detail data - replace with real data later
+  const getDetailData = (rowId) => {
+    return [
+      { id: 1, date: '05 мар \'26', counterparty: 'test', article: 'Оказание услуг', amount: 15000000 },
+      { id: 2, date: '31 мар \'26', counterparty: 'test', article: 'Оказание услуг', amount: 4500000 },
+      { id: 3, date: '30 апр \'26', counterparty: 'test', article: 'Оказание услуг', amount: 9000000 },
+    ]
+  }
 
   if (!isOpen) return null
 
@@ -129,55 +148,97 @@ const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
                 ) : (
                   rows.map((row, idx) => {
                     const value = getValue(row)
-                    // Determine if this is income or expense based on row type or parent category
-                    // In P&L, expenses are typically under "Расходы" or have negative impact
-                    // We check the row name or type to determine the color
                     const isExpenseCategory = row.name?.toLowerCase().includes('расход') || 
                                              row.name?.toLowerCase().includes('себестоимость') ||
                                              row.name?.toLowerCase().includes('операционные') ||
                                              row.name?.toLowerCase().includes('административные') ||
                                              row.type === 'expense'
                     
-                    // For P&L: if it's an expense category, show as negative (red) even if value is positive
-                    // For Cashflow: use the sign of the value
                     const isIncome = isExpenseCategory ? false : value >= 0
                     const isRoot = row._depth === 0
+                    const rowId = row.id ?? idx
+                    const isExpanded = expandedRows[rowId]
+                    const detailData = isExpanded ? getDetailData(rowId) : []
 
                     return (
-                      <tr key={row.id ?? idx} className={styles.tableRow}>
-                        {/* Дата */}
-                        <td className={styles.tdDate}>{periodLabel}</td>
+                      <React.Fragment key={rowId}>
+                        <tr className={styles.tableRow}>
+                          {/* Дата */}
+                          <td className={styles.tdDate}>
+                            <div className={styles.dateCell}>
+                              <button
+                                className={styles.expandButton}
+                                onClick={() => toggleRowExpansion(rowId)}
+                              >
+                                <svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <rect x="1.42383" y="0.5" width="13" height="13" rx="2.5" stroke="#999999"></rect>
+                                  <path d="M10.9223 6.87934H4.92535" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
+                                  {!isExpanded && (
+                                    <path d="M7.92383 3.88086V9.87782" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
+                                  )}
+                                </svg>
+                              </button>
+                              <span>{periodLabel}</span>
+                            </div>
+                          </td>
 
-                        {/* Тип */}
-                        <td className={styles.tdType}>
-                          {value !== 0 && (
-                            isIncome ? <IncomeArrow /> : <ExpenseArrow />
-                          )}
-                        </td>
+                          {/* Тип */}
+                          <td className={styles.tdType}>
+                            {value !== 0 && (
+                              isIncome ? <IncomeArrow /> : <ExpenseArrow />
+                            )}
+                          </td>
 
-                        {/* Контрагент */}
-                        <td className={styles.tdCounterparty}>—</td>
+                          {/* Контрагент */}
+                          <td className={styles.tdCounterparty}>—</td>
 
-                        {/* Статья */}
-                        <td className={styles.tdArticle}>
-                          <span
-                            className={styles.articleName}
-                            style={{ fontWeight: 500 }}
-                          >
-                            {row.name}
-                          </span>
-                        </td>
+                          {/* Статья */}
+                          <td className={styles.tdArticle}>
+                            <span
+                              className={styles.articleName}
+                              style={{ fontWeight: 500 }}
+                            >
+                              {row.name}
+                            </span>
+                          </td>
 
-                        {/* Сумма */}
-                        <td className={styles.tdAmount}>
-                          <span className={cn(
-                            styles.amountValue,
-                            isIncome ? styles.positive : styles.negative
-                          )}>
-                            {formatAmount(value)}
-                          </span>
-                        </td>
-                      </tr>
+                          {/* Сумма */}
+                          <td className={styles.tdAmount}>
+                            <span className={cn(
+                              styles.amountValue,
+                              isIncome ? styles.positive : styles.negative
+                            )}>
+                              {formatAmount(value)}
+                            </span>
+                          </td>
+                        </tr>
+                        
+                        {/* Detail rows */}
+                        {isExpanded && detailData.map((detail) => (
+                          <tr key={`${rowId}-detail-${detail.id}`} className={styles.detailRow}>
+                            <td className={styles.tdDate}>
+                              <div className={styles.detailDateCell}>
+                                {detail.date}
+                              </div>
+                            </td>
+                            <td className={styles.tdType}>
+                              {detail.amount >= 0 ? <IncomeArrow /> : <ExpenseArrow />}
+                            </td>
+                            <td className={styles.tdCounterparty}>{detail.counterparty}</td>
+                            <td className={styles.tdArticle}>
+                              <span className={styles.detailArticleName}>{detail.article}</span>
+                            </td>
+                            <td className={styles.tdAmount}>
+                              <span className={cn(
+                                styles.detailAmountValue,
+                                detail.amount >= 0 ? styles.positive : styles.negative
+                              )}>
+                                {formatAmount(detail.amount)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
                     )
                   })
                 )}

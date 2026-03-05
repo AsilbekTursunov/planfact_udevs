@@ -1066,3 +1066,67 @@
     transform: rotate(360deg);
   }
 }
+
+// Expandable rows styles
+.dateCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  transition: all 0.2s;
+  border-radius: 3px;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: #f3f4f6;
+    
+    svg {
+      rect, path {
+        stroke: #0E73F6;
+      }
+    }
+  }
+}
+
+.detailRow {
+  background-color: #f9fafb;
+  animation: slideDown 0.2s ease-out;
+  
+  &:hover {
+    background-color: #f3f4f6;
+  }
+  
+  .tableCell {
+    font-size: 12px;
+    color: #64748b;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detailDateCell {
+  padding-left: 1.5rem;
+}
+
+.detailAmount {
+  font-size: 13px;
+  font-weight: 500;
+}

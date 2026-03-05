@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
@@ -66,6 +66,7 @@ export default function KontragentDetailPage() {
   const [isEditModalOpening, setIsEditModalOpening] = useState(false)
   const [deletingOperation, setDeletingOperation] = useState(null)
   const [isEditCounterpartyModalOpen, setIsEditCounterpartyModalOpen] = useState(false)
+  const [expandedRows, setExpandedRows] = useState({})
   const deleteOperationMutation = useDeleteOperation()
   const queryClient = useQueryClient()
 
@@ -388,6 +389,22 @@ export default function KontragentDetailPage() {
       console.error('Error deleting counterparty:', error)
       setIsDeletingCounterparty(false)
     }
+  }
+
+  // Toggle row expansion
+  const toggleRowExpansion = (rowId) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [rowId]: !prev[rowId]
+    }))
+  }
+
+  // Mock detail data - replace with real data later
+  const getDetailData = (rowId) => {
+    return [
+      { id: 1, date: '05 мар \'26', account: 'Основной счет', type: 'in', typeLabel: 'Поступление', counterparty: 'test', category: 'Оказание услуг', amount: '+15 000 000', amountRaw: 15000000 },
+      { id: 2, date: '31 мар \'26', account: 'Основной счет', type: 'in', typeLabel: 'Поступление', counterparty: 'test', category: 'Оказание услуг', amount: '+4 500 000', amountRaw: 4500000 },
+    ]
   }
 
   // Close modals when clicking on page header
@@ -862,47 +879,105 @@ export default function KontragentDetailPage() {
                               </td>
                             </tr>
                           )}
-                          {filteredOperations.filter(op => op.section === 'today').map((op, index) => (
-                      <tr
-                        key={op.id}
-                        className={styles.tableRow}
-                              onClick={() => handleEditOperation(op)}
-                      >
-                              <td className={cn(styles.tableCell, styles.tableCellIndex)}>{index + 1}</td>
-                              <td className={styles.tableCell}>{op.date}</td>
-                              <td className={styles.tableCell}>{op.account}</td>
-                              <td className={styles.tableCell}>
-                                <span className={styles.typeBadge}>
-                                  {op.typeLabel === 'Поступление' ? (
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  ) : op.typeLabel === 'Выплата' ? (
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  ) : (
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  )}
-                                </span>
-                              </td>
-                              <td className={styles.tableCell}>{op.counterparty}</td>
-                              <td className={styles.tableCell}>{op.category}</td>
-                              <td className={styles.tableCell}>{op.project}</td>
-                              <td className={cn(styles.tableCell, styles.amountCell,
-                                op.typeCategory === 'in' && styles.positive,
-                                op.typeCategory === 'out' && styles.negative,
-                                op.typeCategory === 'transfer' && styles.neutral
-                              )}>
-                                <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
-                              </td>
-                              <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
-                                <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
-                              </td>
-                            </tr>
-                          ))}
+                          {filteredOperations.filter(op => op.section === 'today').map((op, index) => {
+                            const isExpanded = expandedRows[op.id]
+                            const detailData = isExpanded ? getDetailData(op.id) : []
+                            
+                            return (
+                              <Fragment key={op.id}>
+                                <tr
+                                  className={styles.tableRow}
+                                  onClick={() => handleEditOperation(op)}
+                                >
+                                  <td className={cn(styles.tableCell, styles.tableCellIndex)}>{index + 1}</td>
+                                  <td className={styles.tableCell}>
+                                    <div className={styles.dateCell}>
+                                      <button
+                                        className={styles.expandButton}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          toggleRowExpansion(op.id)
+                                        }}
+                                      >
+                                        <svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <rect x="1.42383" y="0.5" width="13" height="13" rx="2.5" stroke="#999999"></rect>
+                                          <path d="M10.9223 6.87934H4.92535" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
+                                          {!isExpanded && (
+                                            <path d="M7.92383 3.88086V9.87782" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
+                                          )}
+                                        </svg>
+                                      </button>
+                                      <span>{op.date}</span>
+                                    </div>
+                                  </td>
+                                  <td className={styles.tableCell}>{op.account}</td>
+                                  <td className={styles.tableCell}>
+                                    <span className={styles.typeBadge}>
+                                      {op.typeLabel === 'Поступление' ? (
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                      ) : op.typeLabel === 'Выплата' ? (
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                      ) : (
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                      )}
+                                    </span>
+                                  </td>
+                                  <td className={styles.tableCell}>{op.counterparty}</td>
+                                  <td className={styles.tableCell}>{op.category}</td>
+                                  <td className={styles.tableCell}>{op.project}</td>
+                                  <td className={cn(styles.tableCell, styles.amountCell,
+                                    op.typeCategory === 'in' && styles.positive,
+                                    op.typeCategory === 'out' && styles.negative,
+                                    op.typeCategory === 'transfer' && styles.neutral
+                                  )}>
+                                    <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
+                                  </td>
+                                  <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
+                                    <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
+                                  </td>
+                                </tr>
+                                
+                                {/* Detail rows */}
+                                {isExpanded && detailData.map((detail) => (
+                                  <tr key={`${op.id}-detail-${detail.id}`} className={styles.detailRow}>
+                                    <td className={cn(styles.tableCell, styles.tableCellIndex)}></td>
+                                    <td className={styles.tableCell}>
+                                      <div className={styles.detailDateCell}>
+                                        {detail.date}
+                                      </div>
+                                    </td>
+                                    <td className={styles.tableCell}>{detail.account}</td>
+                                    <td className={styles.tableCell}>
+                                      <span className={styles.typeBadge}>
+                                        {detail.typeLabel === 'Поступление' ? (
+                                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                          </svg>
+                                        ) : (
+                                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                          </svg>
+                                        )}
+                                      </span>
+                                    </td>
+                                    <td className={styles.tableCell}>{detail.counterparty}</td>
+                                    <td className={styles.tableCell}>{detail.category}</td>
+                                    <td className={styles.tableCell}></td>
+                                    <td className={cn(styles.tableCell, styles.amountCell, detail.type === 'in' ? styles.positive : styles.negative)}>
+                                      <span className={styles.detailAmount}>{detail.amount}</span>
+                                    </td>
+                                    <td className={cn(styles.tableCell, styles.tableCellActions)}></td>
+                                  </tr>
+                                ))}
+                              </Fragment>
+                            )
+                          })}
 
                           {/* Вчера и ранее — Section Header */}
                           {filteredOperations.filter(op => op.section === 'yesterday').length > 0 && (
@@ -912,47 +987,105 @@ export default function KontragentDetailPage() {
                         </td>
                             </tr>
                           )}
-                          {filteredOperations.filter(op => op.section === 'yesterday').map((op, index) => (
-                            <tr
-                              key={op.id}
-                              className={styles.tableRow}
-                              onClick={() => handleEditOperation(op)}
-                            >
-                              <td className={cn(styles.tableCell, styles.tableCellIndex)}>{index + 1}</td>
-                        <td className={styles.tableCell}>{op.date}</td>
-                        <td className={styles.tableCell}>{op.account}</td>
-                        <td className={styles.tableCell}>
-                          <span className={styles.typeBadge}>
-                            {op.typeLabel === 'Поступление' ? (
-                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            ) : op.typeLabel === 'Выплата' ? (
-                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            ) : (
-                              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </span>
-                        </td>
-                        <td className={styles.tableCell}>{op.counterparty}</td>
-                        <td className={styles.tableCell}>{op.category}</td>
-                        <td className={styles.tableCell}>{op.project}</td>
-                              <td className={cn(styles.tableCell, styles.amountCell,
-                          op.typeCategory === 'in' && styles.positive,
-                          op.typeCategory === 'out' && styles.negative,
-                          op.typeCategory === 'transfer' && styles.neutral
-                        )}>
-                                <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
-                        </td>
-                              <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
-                                <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
-                        </td>
-                      </tr>
-                    ))}
+                          {filteredOperations.filter(op => op.section === 'yesterday').map((op, index) => {
+                            const isExpanded = expandedRows[op.id]
+                            const detailData = isExpanded ? getDetailData(op.id) : []
+                            
+                            return (
+                              <Fragment key={op.id}>
+                                <tr
+                                  className={styles.tableRow}
+                                  onClick={() => handleEditOperation(op)}
+                                >
+                                  <td className={cn(styles.tableCell, styles.tableCellIndex)}>{index + 1}</td>
+                                  <td className={styles.tableCell}>
+                                    <div className={styles.dateCell}>
+                                      <button
+                                        className={styles.expandButton}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          toggleRowExpansion(op.id)
+                                        }}
+                                      >
+                                        <svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <rect x="1.42383" y="0.5" width="13" height="13" rx="2.5" stroke="#999999"></rect>
+                                          <path d="M10.9223 6.87934H4.92535" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
+                                          {!isExpanded && (
+                                            <path d="M7.92383 3.88086V9.87782" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
+                                          )}
+                                        </svg>
+                                      </button>
+                                      <span>{op.date}</span>
+                                    </div>
+                                  </td>
+                                  <td className={styles.tableCell}>{op.account}</td>
+                                  <td className={styles.tableCell}>
+                                    <span className={styles.typeBadge}>
+                                      {op.typeLabel === 'Поступление' ? (
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                      ) : op.typeLabel === 'Выплата' ? (
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                      ) : (
+                                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                          <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                      )}
+                                    </span>
+                                  </td>
+                                  <td className={styles.tableCell}>{op.counterparty}</td>
+                                  <td className={styles.tableCell}>{op.category}</td>
+                                  <td className={styles.tableCell}>{op.project}</td>
+                                  <td className={cn(styles.tableCell, styles.amountCell,
+                                    op.typeCategory === 'in' && styles.positive,
+                                    op.typeCategory === 'out' && styles.negative,
+                                    op.typeCategory === 'transfer' && styles.neutral
+                                  )}>
+                                    <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
+                                  </td>
+                                  <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
+                                    <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
+                                  </td>
+                                </tr>
+                                
+                                {/* Detail rows */}
+                                {isExpanded && detailData.map((detail) => (
+                                  <tr key={`${op.id}-detail-${detail.id}`} className={styles.detailRow}>
+                                    <td className={cn(styles.tableCell, styles.tableCellIndex)}></td>
+                                    <td className={styles.tableCell}>
+                                      <div className={styles.detailDateCell}>
+                                        {detail.date}
+                                      </div>
+                                    </td>
+                                    <td className={styles.tableCell}>{detail.account}</td>
+                                    <td className={styles.tableCell}>
+                                      <span className={styles.typeBadge}>
+                                        {detail.typeLabel === 'Поступление' ? (
+                                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                          </svg>
+                                        ) : (
+                                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+                                          </svg>
+                                        )}
+                                      </span>
+                                    </td>
+                                    <td className={styles.tableCell}>{detail.counterparty}</td>
+                                    <td className={styles.tableCell}>{detail.category}</td>
+                                    <td className={styles.tableCell}></td>
+                                    <td className={cn(styles.tableCell, styles.amountCell, detail.type === 'in' ? styles.positive : styles.negative)}>
+                                      <span className={styles.detailAmount}>{detail.amount}</span>
+                                    </td>
+                                    <td className={cn(styles.tableCell, styles.tableCellActions)}></td>
+                                  </tr>
+                                ))}
+                              </Fragment>
+                            )
+                          })}
                   </tbody>
                 </table>
               </div>
