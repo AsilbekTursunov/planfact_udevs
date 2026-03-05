@@ -108,6 +108,7 @@
   height: 10px;
   color: #fff;
 }
+
 .header {
   padding: 1rem 1.5rem 0 1.5rem;
   background-color: white;
@@ -580,7 +581,6 @@
   flex-direction: column;
   gap: 0.25rem;
   max-width: 600px;
-    overflow: hidden;
 }
 
 .errorText {
@@ -625,8 +625,7 @@
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-}
+@keyframes spin {}
 
 .filesAttachWrap {
   background-color: #616161;
@@ -803,6 +802,7 @@
     }
   }
 }
+
 .counter {
   font-size: 11px;
   color: #fff;

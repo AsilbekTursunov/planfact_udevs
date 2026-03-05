@@ -9,7 +9,7 @@ import { cn } from '@/app/lib/utils'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 import CustomCalendar from '../../shared/Calendar'
 
-export function DatePicker({ value, onChange, placeholder = 'Выберите дату', showCheckbox = false, checkboxLabel = '', checkboxValue = false, onCheckboxChange, className }) {
+export function DatePicker({ value, onChange, placeholder = 'Выберите дату', showCheckbox = false, checkboxLabel = '', checkboxValue = false, onCheckboxChange, className, dateFormat = 'DD.MM.YYYY' }) {
   const [isOpen, setIsOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0, width: 0, ready: false })
@@ -117,7 +117,7 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
           <CustomCalendar
             ref={datePickerRef}
             value={dateValue}
-            format='DD.MM.YYYY'
+            format={dateFormat}
             onChange={handleDateChange}
           />
           {/* <ReactDatePicker

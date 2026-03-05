@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
-import { SearchBar } from '@/components/directories/SearchBar/SearchBar' 
+import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
 import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useChartOfAccountsPlanFact, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
 import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
 import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
@@ -17,12 +17,12 @@ import { cn } from '@/app/lib/utils'
 import styles from './counterparties.module.scss'
 import { BsList } from 'react-icons/bs'
 import { TbCurrencyRubel } from 'react-icons/tb'
-import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
+import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
 import { LuListTree } from 'react-icons/lu'
-import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
-import NewDateRangeComponent from '../../../../components/directories/NewDateRangeComponent'
-import { formatDate } from '../../../../utils/formatDate'
+import { ExpendClose, ExpendOpen } from '@/constants/icons'
+import { formatDate } from '@/utils/formatDate'
 import Select from '@/components/common/Select'
+import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -30,7 +30,7 @@ const calculationOptions = [
   { value: "Calculation", label: 'Учет методом начисления' },
 ]
 
-export default function CounterpartiesPage() { 
+export default function CounterpartiesPage() {
 
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -379,8 +379,11 @@ export default function CounterpartiesPage() {
         receivables: item.receivables || 0,
         payables: item.payables || 0,
         debitorka: item.debitorka || 0,
+        difference: item?.difference,
         kreditorka: item.kreditorka || 0,
         profit: item.profit || 0,
+        income: item?.income,
+        expenses: item?.expense,
         rawData: item
       }
     })
@@ -406,6 +409,9 @@ export default function CounterpartiesPage() {
           debitorka: item.debitorka || 0,
           kreditorka: item.kreditorka || 0,
           profit: item.profit || 0,
+          income: item?.income,
+          expenses: item?.expense,
+          difference: item?.difference,
           rawData: item
         }))
 
@@ -436,7 +442,7 @@ export default function CounterpartiesPage() {
       isGroup: true,
       items: [] // Empty for groups-only view
     }))
-  }, [counterpartiesGroupsItems]) 
+  }, [counterpartiesGroupsItems])
 
 
 
@@ -804,8 +810,9 @@ export default function CounterpartiesPage() {
                       (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item, itemIndex) => {
                     if (item.isGroup) {
                       const isExpanded = expandedGroups.has(item.guid)
-                      const isLastChild = (index) => index === item.items.length - 1
-                      console.log(item, 'item')
+                      // const isLastChild = (index) => index === item.items.length - 1
+                      console.log('item', item)
+                      console.log('viewMode', viewMode)
                       return (
                         <React.Fragment key={item.id}>
                           <tr className={cn(styles.tableRow, styles.groupRow)} onClick={() => toggleGroup(item.guid)}>
@@ -904,7 +911,8 @@ export default function CounterpartiesPage() {
                         </React.Fragment>
                       )
                     } else {
-
+                      console.log('item', item)
+                      console.log('viewMode', viewMode)
                       return (
                         <tr
                           key={item.id}
@@ -918,22 +926,30 @@ export default function CounterpartiesPage() {
                           <td className={cn(styles.tableCell, styles.tableCellIndex)} onClick={(e) => e.stopPropagation()}>
                             {itemIndex + 1}
                           </td>
+
                           <td className={cn(styles.tableCell, styles.text)}>{item.nazvanie}</td>
+
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.gruppa || '–'}</td>
                           {filters.calculationMethod !== 'Cashflow' && (
                             <td className={cn(styles.tableCell, styles.textMuted)}>{item.inn || '–'}</td>
                           )}
+
                           <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.receivables?.toLocaleString('ru-RU') || '0'}</td>
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.payables?.toLocaleString('ru-RU') || '0'}</td>
+
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.debitorka?.toLocaleString('ru-RU') || '0'}</td>
+
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
+
+                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.income?.toLocaleString('ru-RU') || '0'}</td>
+
+                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.expenses?.toLocaleString('ru-RU') || '0'}</td>
+
                           {filters.calculationMethod === 'Cashflow' ? (
-                            <td className={cn(styles.tableCell, styles.textMuted)}>
-                              {((item.debitorka || 0) - (item.kreditorka || 0)).toLocaleString('ru-RU')}
+                            <td className={cn(styles.tableCell, item.difference > 0 ? styles.textGreen : styles.textRed)}>
+                              {item.difference?.toLocaleString('ru-RU')}
                             </td>
                           ) : (
-                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.profit?.toLocaleString('ru-RU') || '0'}</td>
+                              <td className={cn(styles.tableCell, item.profit > 0 ? styles.textGreen : styles.textRed)}>{item.profit?.toLocaleString('ru-RU') || '0'}</td>
                           )}
                           <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                             <CounterpartyMenu

@@ -25,6 +25,7 @@ import SentMessages from './SentMessages'
 import { appStore } from '../../../store/app.store'
 import { observer } from 'mobx-react-lite'
 import { TruckElectric } from 'lucide-react'
+import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
 
 const today = new Date().toISOString().split('T')[0]
 const todayDate = new Date().getDate()
@@ -337,6 +338,8 @@ const OperationModal = observer(({
 		limit: 100,
 	})
 	const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
+
+	const { mutateAsync: createUcodeOperation, isPending: isLoadingUcodeOperation } = useUcodeRequestMutation()
 
 
 	// Build tree structure for counterparties (groups and their children)
@@ -752,48 +755,7 @@ const OperationModal = observer(({
 				}
 			}
 
-			// Build request body for invoke_function API
-			const apiRequestBody = {
-				auth: {
-					type: 'apikey',
-					data: {}
-				},
-				data: {
-					method: isUpdate ? 'update_operation' : 'create_operation',
-					object_data: requestData
-				}
-			}
-
-
-			// Call API directly
-			const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-			const apiUrl = `https://api.admin.u-code.io/v2/invoke_function/planfact-plan-fact?project-id=${apiRequestBody.data.project_id}`
-
-			const headers = {
-				'Content-Type': 'application/json',
-			}
-
-			if (authToken) {
-				headers['Authorization'] = `Bearer ${authToken}`
-			}
-
-			const response = await fetch(apiUrl, {
-				method: 'POST',
-				headers,
-				body: JSON.stringify(apiRequestBody),
-			})
-
-
-			const result = await response.json()
-
-			// Check for error status - API can return ERROR, INVALID_ARGUMENT, etc.
-			if (result.status && result.status !== 'CREATED' && result.status !== 'OK' && result.status !== 'SUCCESS') {
-				throw new Error(
-					result.data ||
-					result.description ||
-					`Ошибка при ${isUpdate ? 'обновлении' : 'создании'} операции`,
-				)
-			}
+			const result = await createUcodeOperation({ method: isUpdate ? 'update_operation' : 'create_operation', data: requestData })
 
 			showSuccessNotification(`Операция успешно ${isUpdate ? 'обновлена' : 'создана'}!`)
 
@@ -809,14 +771,14 @@ const OperationModal = observer(({
 					}
 				} else {
 					// For create, use data from API response
-					const apiData = result?.data?.data?.data || result?.data?.data
+					const apiData = result?.data?.data?.data || result?.data?.data || result?.data
 					if (apiData && typeof apiData === 'object') {
 						operationData = apiData
 					} else {
 						// Fallback if API doesn't return full data
 						operationData = {
 							...requestData,
-							guid: result?.data?.guid || apiData?.guid,
+							guid: result?.data?.guid || apiData?.guid || result?.guid,
 							data_sozdaniya: now.toISOString(),
 							data_obnovleniya: now.toISOString()
 						}
@@ -967,20 +929,21 @@ const OperationModal = observer(({
 											<DatePicker
 												value={formData.paymentDate}
 												onChange={value => {
-													const pickDate = Number(value?.split('.')?.[0])
+													const pickDate = Number(value?.slice(-2))
 													const isFuture = pickDate > todayDate
-													setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : !formData?.confirmPayment })
+													setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : true })
 													if (errors.paymentDate) {
 														setErrors({ ...errors, paymentDate: null })
 													}
 												}}
+												dateFormat='YYYY-MM-DD'
 												className={styles.datePicker}
 												placeholder='Выберите дату'
 												showCheckbox={true}
 												checkboxLabel='Подтвердить оплату'
 												checkboxValue={formData.confirmPayment}
 												onCheckboxChange={checked => {
-													const pickDate = Number(formData.paymentDate?.split('.')?.[0])
+													const pickDate = Number(formData.paymentDate?.slice(-2))
 													const isFuture = pickDate > todayDate
 													if (isFuture) return
 													setFormData({ ...formData, confirmPayment: checked })
@@ -1080,20 +1043,22 @@ const OperationModal = observer(({
 										<DatePicker
 											value={formData.accrualDate}
 											onChange={value => {
-												const pickDate = Number(value?.split('.')?.[0])
+												const pickDate = Number(value?.slice(-2))
 												const isFuture = pickDate > todayDate
-												setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : !formData?.confirmAccrual })
+												setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : true })
 												if (errors.accrualDate) {
 													setErrors({ ...errors, accrualDate: null })
 												}
 											}}
+											dateFormat='YYYY-MM-DD'
+
 											placeholder='Выберите дату'
 											showCheckbox
 											className={styles.datePicker}
 											checkboxLabel='Подтвердить начисление'
 											checkboxValue={formData.confirmAccrual}
 											onCheckboxChange={checked => {
-												const pickDate = Number(formData.accrualDate?.split('.')?.[0])
+												const pickDate = Number(formData.accrualDate?.slice(-2))
 												const isFuture = pickDate > todayDate
 												if (isFuture) return
 												setFormData({ ...formData, confirmAccrual: checked })
@@ -1178,20 +1143,20 @@ const OperationModal = observer(({
 											<DatePicker
 												value={formData.paymentDate}
 												onChange={value => {
-													const pickDate = Number(value?.split('.')?.[0])
+													const pickDate = Number(value?.slice(-2))
 													const isFuture = pickDate > todayDate
-													setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : !formData?.confirmPayment })
+													setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : true })
 													if (errors.paymentDate) {
 														setErrors({ ...errors, paymentDate: null })
 													}
 												}}
 												placeholder='Выберите дату'
 												showCheckbox={true}
-
+												dateFormat='YYYY-MM-DD'
 												checkboxLabel='Подтвердить оплату'
 												checkboxValue={formData.confirmPayment}
 												onCheckboxChange={checked => {
-													const pickDate = Number(formData.paymentDate?.split('.')?.[0])
+													const pickDate = Number(formData.paymentDate?.slice(-2))
 													const isFuture = pickDate > todayDate
 													if (isFuture) return
 													setFormData({ ...formData, confirmPayment: checked })
@@ -1291,19 +1256,20 @@ const OperationModal = observer(({
 											value={formData.accrualDate}
 											// onChange={value => setFormData({ ...formData, accrualDate: value })}
 											onChange={value => {
-												const pickDate = Number(value?.split('.')?.[0])
+												const pickDate = Number(value?.slice(-2))
 												const isFuture = pickDate > todayDate
-												setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : !formData?.confirmAccrual })
+												setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : true })
 												if (errors.accrualDate) {
 													setErrors({ ...errors, accrualDate: null })
 												}
 											}}
 											placeholder='Выберите дату'
 											showCheckbox
+											dateFormat='YYYY-MM-DD'
 											checkboxLabel='Подтвердить начисление'
 											checkboxValue={formData.confirmAccrual}
 											onCheckboxChange={checked => {
-												const pickDate = Number(formData.accrualDate?.split('.')?.[0])
+												const pickDate = Number(formData.accrualDate?.slice(-2))
 												const isFuture = pickDate > todayDate
 												if (isFuture) return
 												setFormData({ ...formData, confirmAccrual: checked })
