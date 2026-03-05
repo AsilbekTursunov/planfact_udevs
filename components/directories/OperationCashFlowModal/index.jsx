@@ -5,33 +5,39 @@ import { ExpenseArrow, IncomeArrow } from '../../../constants/icons'
 
 /**
  * Recursively flatten a row and its subRows into a flat list.
- * Skips the root row itself — only its children are shown as "operations".
+ * Shows all rows including those with subRows.
  */
 const flattenRows = (row, depth = 0) => {
   const result = []
+  
   if (Array.isArray(row.subRows) && row.subRows.length > 0) {
     row.subRows.forEach(child => {
-      // For children, we want to include them in the operations list
-      // If a child has its own subRows, we just flatten those too instead of adding the child group wrapper
+      // Add the child itself
+      result.push({ ...child, _depth: depth + 1 })
+      
+      // If child has its own subRows, recursively flatten them
       if (Array.isArray(child.subRows) && child.subRows.length > 0) {
-        result.push(...flattenRows(child, depth + 1))
-      } else {
-        result.push({ ...child, _depth: depth + 1 })
+        const nested = flattenRows(child, depth + 1)
+        result.push(...nested)
       }
     })
   } else if (Array.isArray(row.details) && row.details.length > 0) {
-    // Handling P&L data structure where children are in `details` instead of `subRows` pending on transformation
+    // Handling P&L data structure where children are in `details` instead of `subRows`
     row.details.forEach(child => {
+      // Add the child itself
+      result.push({ ...child, _depth: depth + 1 })
+      
+      // If child has its own details, recursively flatten them
       if (Array.isArray(child.details) && child.details.length > 0) {
-        result.push(...flattenRows(child, depth + 1))
-      } else {
-        result.push({ ...child, _depth: depth + 1 })
+        const nested = flattenRows(child, depth + 1)
+        result.push(...nested)
       }
     })
   } else {
     // If it's a leaf node itself, just show it
     result.push({ ...row, _depth: depth })
   }
+  
   return result
 }
 
@@ -52,11 +58,7 @@ const formatNumber = (value) => {
   }).format(value)
 }
 
-
-
 const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
-  const [expandedRows, setExpandedRows] = React.useState({})
-  
   console.log('🔵 OperationCashFlowModal - Props:', { isOpen, data, selectedMonth })
   
   const getValue = (row) => {
@@ -78,23 +80,6 @@ const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
   
   console.log('🔵 OperationCashFlowModal - Period:', periodLabel)
   console.log('🔵 OperationCashFlowModal - Total amount:', totalAmount)
-
-  // Toggle row expansion
-  const toggleRowExpansion = (rowId) => {
-    setExpandedRows(prev => ({
-      ...prev,
-      [rowId]: !prev[rowId]
-    }))
-  }
-
-  // Mock detail data - replace with real data later
-  const getDetailData = (rowId) => {
-    return [
-      { id: 1, date: '05 мар \'26', counterparty: 'test', article: 'Оказание услуг', amount: 15000000 },
-      { id: 2, date: '31 мар \'26', counterparty: 'test', article: 'Оказание услуг', amount: 4500000 },
-      { id: 3, date: '30 апр \'26', counterparty: 'test', article: 'Оказание услуг', amount: 9000000 },
-    ]
-  }
 
   if (!isOpen) return null
 
@@ -155,90 +140,50 @@ const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
                                              row.type === 'expense'
                     
                     const isIncome = isExpenseCategory ? false : value >= 0
-                    const isRoot = row._depth === 0
                     const rowId = row.id ?? idx
-                    const isExpanded = expandedRows[rowId]
-                    const detailData = isExpanded ? getDetailData(rowId) : []
+                    
+                    // Add indentation based on depth
+                    const indent = (row._depth || 0) * 20
 
                     return (
-                      <React.Fragment key={rowId}>
-                        <tr className={styles.tableRow}>
-                          {/* Дата */}
-                          <td className={styles.tdDate}>
-                            <div className={styles.dateCell}>
-                              <button
-                                className={styles.expandButton}
-                                onClick={() => toggleRowExpansion(rowId)}
-                              >
-                                <svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <rect x="1.42383" y="0.5" width="13" height="13" rx="2.5" stroke="#999999"></rect>
-                                  <path d="M10.9223 6.87934H4.92535" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
-                                  {!isExpanded && (
-                                    <path d="M7.92383 3.88086V9.87782" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
-                                  )}
-                                </svg>
-                              </button>
-                              <span>{periodLabel}</span>
-                            </div>
-                          </td>
+                      <tr key={rowId} className={styles.tableRow}>
+                        {/* Дата */}
+                        <td className={styles.tdDate} style={{ paddingLeft: `${16 + indent}px` }}>
+                          <span>{periodLabel}</span>
+                        </td>
 
-                          {/* Тип */}
-                          <td className={styles.tdType}>
-                            {value !== 0 && (
-                              isIncome ? <IncomeArrow /> : <ExpenseArrow />
-                            )}
-                          </td>
+                        {/* Тип */}
+                        <td className={styles.tdType}>
+                          {value !== 0 && (
+                            isIncome ? <IncomeArrow /> : <ExpenseArrow />
+                          )}
+                        </td>
 
-                          {/* Контрагент */}
-                          <td className={styles.tdCounterparty}>—</td>
+                        {/* Контрагент */}
+                        <td className={styles.tdCounterparty}>
+                          {row.type === 'counterparty' ? row.name : '—'}
+                        </td>
 
-                          {/* Статья */}
-                          <td className={styles.tdArticle}>
-                            <span
-                              className={styles.articleName}
-                              style={{ fontWeight: 500 }}
-                            >
-                              {row.name}
-                            </span>
-                          </td>
+                        {/* Статья */}
+                        <td className={styles.tdArticle}>
+                          <span
+                            className={styles.articleName}
+                            style={{ fontWeight: row._depth === 1 ? 500 : 400 }}
+                          >
+                            {row.type === 'counterparty' ? '—' : row.name}
+                          </span>
+                        </td>
 
-                          {/* Сумма */}
-                          <td className={styles.tdAmount}>
-                            <span className={cn(
-                              styles.amountValue,
-                              isIncome ? styles.positive : styles.negative
-                            )}>
-                              {formatAmount(value)}
-                            </span>
-                          </td>
-                        </tr>
-                        
-                        {/* Detail rows */}
-                        {isExpanded && detailData.map((detail) => (
-                          <tr key={`${rowId}-detail-${detail.id}`} className={styles.detailRow}>
-                            <td className={styles.tdDate}>
-                              <div className={styles.detailDateCell}>
-                                {detail.date}
-                              </div>
-                            </td>
-                            <td className={styles.tdType}>
-                              {detail.amount >= 0 ? <IncomeArrow /> : <ExpenseArrow />}
-                            </td>
-                            <td className={styles.tdCounterparty}>{detail.counterparty}</td>
-                            <td className={styles.tdArticle}>
-                              <span className={styles.detailArticleName}>{detail.article}</span>
-                            </td>
-                            <td className={styles.tdAmount}>
-                              <span className={cn(
-                                styles.detailAmountValue,
-                                detail.amount >= 0 ? styles.positive : styles.negative
-                              )}>
-                                {formatAmount(detail.amount)}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
+                        {/* Сумма */}
+                        <td className={styles.tdAmount}>
+                          <span className={cn(
+                            styles.amountValue,
+                            isIncome ? styles.positive : styles.negative
+                          )}>
+                            {formatAmount(value)}
+                          </span>
+                        </td>
+                      </tr>
                     )
                   })
                 )}

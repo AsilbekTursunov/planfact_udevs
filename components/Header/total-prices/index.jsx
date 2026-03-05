@@ -13,10 +13,15 @@ const TotalPrice = () => {
     const [expandedGroups, setExpandedGroups] = useState(['unallocated'])
     const [activeGroupMenu, setActiveGroupMenu] = useState(null)
     const [modalMode, setModalMode] = useState('compact')
-    const today = formatDateTime(new Date())
+    const [today, setToday] = useState('')
 
     const balanceRef = useRef(null)
     const groupMenuRef = useRef(null)
+
+    // Set date only on client side to avoid hydration mismatch
+    useEffect(() => {
+        setToday(formatDateTime(new Date()))
+    }, [])
 
     useEffect(() => {
         function handleClickOutside(event) {
