@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect, Fragment, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { cn } from '@/app/lib/utils'
 import {
-	useCounterpartiesGroupsPlanFact,
-	useMyAccountsV2,
+	useCounterpartiesGroupsPlanFact, 
 	useLegalEntitiesPlanFact,
 	useOperationsList,
 	useDeleteOperation,
@@ -13,7 +12,7 @@ import {
 import { OperationsFiltersSidebar } from '@/components/operations/OperationsFiltersSidebar/OperationsFiltersSidebar'
 import { OperationsHeader } from '@/components/operations/OperationsHeader/OperationsHeader'
 import { OperationsFooter } from '@/components/operations/OperationsFooter/OperationsFooter'
-import { OperationModal } from '@/components/operations/OperationModal/OperationModal'
+import OperationModal from '@/components/operations/OperationModal/OperationModal'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
 import OperationTableRow from '@/components/operations/TableRow'
 import styles from './operations.module.scss'
@@ -58,6 +57,7 @@ export default function OperationsPage() {
 	const [selectedFinancialAccounts, setSelectedFinancialAccounts] = useState({})
 	const [amountRange, setAmountRange] = useState({ min: '', max: '' })
 	const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
+	const [paymentType, setPaymentType] = useState(null)
 
 	// Debounce search query
 	useEffect(() => {
@@ -200,10 +200,11 @@ export default function OperationsPage() {
 				}
 			}),
 			...(selectedChartOfAccounts.length > 0 && { chart_of_accounts_ids: selectedChartOfAccounts }),
+			...(paymentType && { payment_type: paymentType }),
 			podtverzhdena: dateFilters.podtverzhdena,
 			ne_podtverzhdena: dateFilters.nePodtverzhdena,
 		}
-	}, [page, limit, debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
+	}, [page, limit, debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters, paymentType])
 
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList(requestOperationFilters)
 
@@ -214,7 +215,7 @@ export default function OperationsPage() {
 		setPage(1)
 		setHasMore(true)
 		setAllOperations([])
-	}, [debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters])
+	}, [debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters, paymentType])
 
 	// Update operations when new data arrives
 	useEffect(() => {
@@ -718,6 +719,8 @@ export default function OperationsPage() {
 				chartOfAccountsOptions={chartOfAccountsOptions}
 				selectedChartOfAccounts={selectedChartOfAccounts}
 				onChartOfAccountsChange={setSelectedChartOfAccounts}
+				paymentType={paymentType}
+				onPaymentTypeChange={setPaymentType}
 			/>
 
 			{/* Filter Toggle Bar */}
@@ -950,7 +953,7 @@ export default function OperationsPage() {
 					modalType={modalType}
 					isClosing={isModalClosing}
 					isOpening={isModalOpening}
-					onClose={closeOperationModal} 
+					onClose={closeOperationModal}
 					onSuccess={(operationData, isUpdate) => {
 						console.log('=== onSuccess callback ===')
 						console.log('operationData:', operationData)

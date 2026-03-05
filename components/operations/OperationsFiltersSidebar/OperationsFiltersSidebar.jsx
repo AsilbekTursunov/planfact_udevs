@@ -8,8 +8,11 @@ import NewDateRangeComponent from '../../directories/NewDateRangeComponent'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { FaSortDown } from 'react-icons/fa'
 import Input from '../../shared/Input'
+import { GroupedSelect } from '../../common/GroupedSelect/GroupedSelect'
+import { appStore } from '../../../store/app.store'
+import { observer } from 'mobx-react-lite'
 
-export function OperationsFiltersSidebar({
+export const OperationsFiltersSidebar = observer(({
   isOpen,
   onClose,
   selectedFilters = [],
@@ -36,10 +39,12 @@ export function OperationsFiltersSidebar({
   chartOfAccountsOptions,
   selectedChartOfAccounts,
   onChartOfAccountsChange,
-}) {
+  paymentType,
+  onPaymentTypeChange,
+}) => {
   // Ensure selectedFilters is always an array
   const safeSelectedFilters = Array.isArray(selectedFilters) ? selectedFilters : []
-  
+
   const [activeTab, setActiveTab] = useState('general')
   const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)
   const [currentMonthStart, setCurrentMonthStart] = useState(new Date(2026, 0))
@@ -366,7 +371,7 @@ export function OperationsFiltersSidebar({
                     </svg>
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {/* Юрлица */} 
+                    {/* Юрлица */}
                     <MultiSelect
                       data={legalEntities}
                       value={selectedLegalEntities}
@@ -397,6 +402,18 @@ export function OperationsFiltersSidebar({
                       placeholder="Все статьи"
                       valueKey="value"
                     /> */}
+
+                    {/* Payment filter  */}
+                    {appStore.isPayment && <GroupedSelect
+                      data={[{ label: 'Наличный', value: 'cash' }, { label: 'Карта', value: 'card' }, { value: 'transfer', label: 'Перечисление' }]}
+                      value={paymentType}
+                      onChange={onPaymentTypeChange}
+                      placeholder='Выберите тип платежа...'
+                      groupBy={false}
+                      labelKey='label'
+                      valueKey='value'
+                      className={'flex-1'}
+                    />}
 
 
                     {/* Статьи учета */}
@@ -452,4 +469,6 @@ export function OperationsFiltersSidebar({
 
     </>
   )
-}
+})
+
+

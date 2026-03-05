@@ -1,11 +1,10 @@
 "use client"
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
-import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
-import { DateRangePicker } from '@/components/directories/DateRangePicker/DateRangePicker'
+import { SearchBar } from '@/components/directories/SearchBar/SearchBar' 
 import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useChartOfAccountsPlanFact, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
 import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
 import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
@@ -31,17 +30,7 @@ const calculationOptions = [
   { value: "Calculation", label: 'Учет методом начисления' },
 ]
 
-export default function CounterpartiesPage() {
-  // Block body scroll for this page only
-  // useEffect(() => {
-  //   document.body.style.overflow = 'hidden'
-  //   document.body.style.height = '100vh'
-
-  //   return () => {
-  //     document.body.style.overflow = ''
-  //     document.body.style.height = ''
-  //   }
-  // }, [])
+export default function CounterpartiesPage() { 
 
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -447,12 +436,9 @@ export default function CounterpartiesPage() {
       isGroup: true,
       items: [] // Empty for groups-only view
     }))
-  }, [counterpartiesGroupsItems])
-
-  console.log(counterpartiesGroups, 'counterpartiesGroups')
+  }, [counterpartiesGroupsItems]) 
 
 
-  const totalCounterparties = flatCounterparties.length
 
   // Calculate totals for footer
   const { totalReceivables, totalPayables, totalIncome, totalExpenses, totalDifference } = useMemo(() => {
@@ -493,7 +479,6 @@ export default function CounterpartiesPage() {
     })
   }
 
-  console.log(chartOfAccountsOptions, 'chartOfAccountsOptions')
 
   return (
     <div className={styles.container}>

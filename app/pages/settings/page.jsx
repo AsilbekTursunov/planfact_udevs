@@ -1,12 +1,9 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import { useUcodeRequestMutation, useUcodeRequestQuery } from '@/hooks/useDashboard'
 import {
   Settings as SettingsIcon,
-  User,
-  Shield,
-  DollarSign,
-  Clock,
   Trash2,
   ChevronDown,
   GitBranch,
@@ -64,14 +61,13 @@ function formatPhone998(raw) {
 /* ═══════════════════════════════════════════════════════ */
 
 function DeleteBranchModal({ open, onClose, onConfirm, branch }) {
-  console.log('DeleteBranchModal render:', { open, branch })
-  
+
   if (!open || typeof window === 'undefined') return null
 
   return createPortal(
     <>
-      <div 
-        className={styles.deleteModalOverlay} 
+      <div
+        className={styles.deleteModalOverlay}
         onClick={onClose}
         style={{
           position: 'fixed',
@@ -80,7 +76,7 @@ function DeleteBranchModal({ open, onClose, onConfirm, branch }) {
           background: 'rgba(0, 0, 0, 0.5)',
         }}
       />
-      <div 
+      <div
         className={styles.deleteModal}
         style={{
           position: 'fixed',
@@ -142,30 +138,17 @@ function DeleteBranchModal({ open, onClose, onConfirm, branch }) {
 /* ═══════════════════════════════════════════════════════ */
 
 function BranchModal({ open, onClose, onSubmit, initial }) {
-  const [form, setForm] = useState({
-    name: '',
-    username: '',
-    email: '',
+  const [form, setForm] = useState(() => ({
+    name: initial?.branchName || initial?.name || '',
+    username: initial?.username || initial?.name || '',
+    email: initial?.email || '',
     password: '',
-    phone: '+998',
-  })
+    phone: initial?.phone || '+998',
+  }))
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
 
-  useEffect(() => {
-    if (initial) {
-      setForm({
-        name: initial.branchName || initial.name || '',
-        username: initial.username || initial.name || '',
-        email: initial.email || '',
-        password: '',
-        phone: initial.phone || '+998',
-      })
-    } else {
-      setForm({ name: '', username: '', email: '', password: '', phone: '+998' })
-    }
-    setErrors({})
-  }, [initial, open])
+  const { mutateAsync: createBranchUser, isPending: isCreating } = useUcodeRequestMutation()
 
   if (!open) return null
 
@@ -207,9 +190,24 @@ function BranchModal({ open, onClose, onSubmit, initial }) {
     return errs
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const errs = validate()
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
+
+    if (!initial) {
+      // Create new branch via API
+      await createBranchUser({
+        method: 'create_branch_user',
+        data: {
+          branch_name: form.name,
+          email: form.email,
+          password: form.password,
+          branch_user_name: form.username,
+          branch_user_phone: form.phone,
+        },
+      })
+    }
+
     onSubmit(form)
     onClose()
   }
@@ -261,9 +259,9 @@ function BranchModal({ open, onClose, onSubmit, initial }) {
         </div>
 
         <div className={styles.modalFooter}>
-          <button className={styles.modalCancelBtn} onClick={onClose}>Отменить</button>
-          <button className={styles.modalSubmitBtn} onClick={handleSubmit}>
-            {initial ? 'Сохранить' : 'Создать'}
+          <button className={styles.modalCancelBtn} onClick={onClose} disabled={isCreating}>Отменить</button>
+          <button className={styles.modalSubmitBtn} onClick={handleSubmit} disabled={isCreating}>
+            {isCreating ? 'Создание...' : initial ? 'Сохранить' : 'Создать'}
           </button>
         </div>
       </div>
@@ -272,6 +270,8 @@ function BranchModal({ open, onClose, onSubmit, initial }) {
 }
 
 import { createPortal } from 'react-dom'
+import { appStore } from '../../../store/app.store'
+import { observer } from 'mobx-react-lite'
 
 function RowDropdown({ onEdit, onDelete }) {
   const [open, setOpen] = useState(false)
@@ -328,55 +328,21 @@ function RowDropdown({ onEdit, onDelete }) {
 /*  SettingsPage                                         */
 /* ═══════════════════════════════════════════════════════ */
 
-export default function SettingsPage() {
+const SettingsPage = observer(() => {
   const [activeSection, setActiveSection] = useState('general')
 
   /* ── general form state ──────────────────────────── */
   const [currency, setCurrency] = useState('RUB')
   const [currencyOpen, setCurrencyOpen] = useState(false)
-
-  const [insertDateOnCopy, setInsertDateOnCopy] = useState(false)
   const [purposeOptional, setPurposeOptional] = useState(false)
 
   /* ── branches state ──────────────────────────────── */
-  const [branches, setBranches] = useState([
-    {
-      id: 1,
-      email: 'branch1@example.com',
-      role: 'Администратор',
-      name: 'Иван Иванов',
-      position: 'Менеджер',
-      status: 'Активный',
-      lastLogin: '15.01.2024, 14:30',
-      createdAt: '10.01.2024, 10:00',
-      branchName: 'Филиал №1',
-      phone: '+998 90 123 45 67',
-    },
-    {
-      id: 2,
-      email: 'branch2@example.com',
-      role: 'Администратор',
-      name: 'Петр Петров',
-      position: 'Директор',
-      status: 'Активный',
-      lastLogin: '14.01.2024, 16:45',
-      createdAt: '08.01.2024, 09:15',
-      branchName: 'Филиал №2',
-      phone: '+998 91 234 56 78',
-    },
-    {
-      id: 3,
-      email: 'branch3@example.com',
-      role: 'Администратор',
-      name: 'Сергей Сергеев',
-      position: '—',
-      status: 'Приглашен',
-      lastLogin: '—',
-      createdAt: '12.01.2024, 11:20',
-      branchName: 'Филиал №3',
-      phone: '+998 93 345 67 89',
-    },
-  ])
+  const { data: branchesData, isLoading: branchesLoading, refetch: refetchBranches } = useUcodeRequestQuery({
+    method: 'get_branch_users',
+    data: { page: 1, limit: 50, search: '', include_owner: true },
+  })
+  const branches = branchesData?.data?.data?.data?.response ?? branchesData?.data?.data?.response ?? []
+
   const [branchModalOpen, setBranchModalOpen] = useState(false)
   const [editingBranch, setEditingBranch] = useState(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -384,52 +350,35 @@ export default function SettingsPage() {
 
   /* ── branch handlers ─────────────────────────────── */
 
-  function handleAddBranch(form) {
-    const newBranch = {
-      id: Date.now(),
-      email: form.email,
-      role: 'Администратор',
-      name: form.username,
-      position: '—',
-      status: 'Приглашен',
-      lastLogin: '—',
-      createdAt: new Date().toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      branchName: form.name,
-      phone: form.phone,
-    }
-    setBranches(prev => [...prev, newBranch])
+  function handleAddBranch() {
+    refetchBranches()
   }
 
-  function handleEditBranch(form) {
-    setBranches(prev =>
-      prev.map(b =>
-        b.id === editingBranch.id
-          ? { ...b, branchName: form.name, name: form.username, email: form.email, phone: form.phone }
-          : b
-      )
-    )
+  function handleEditBranch() {
     setEditingBranch(null)
+    refetchBranches()
   }
 
   function handleDeleteBranch(branch) {
-    console.log('handleDeleteBranch called with:', branch)
     setBranchToDelete(branch)
     setDeleteModalOpen(true)
   }
 
   function confirmDeleteBranch() {
-    console.log('confirmDeleteBranch called')
     if (branchToDelete) {
-      setBranches(prev => prev.filter(b => b.id !== branchToDelete.id))
       setDeleteModalOpen(false)
       setBranchToDelete(null)
+      refetchBranches()
     }
   }
 
   function cancelDeleteBranch() {
-    console.log('cancelDeleteBranch called')
     setDeleteModalOpen(false)
     setBranchToDelete(null)
+  }
+
+  function handleSwitchPayment() {
+    appStore.setIsPayment(!appStore.isPayment);
   }
 
 
@@ -479,7 +428,7 @@ export default function SettingsPage() {
           <h2 className={styles.sectionTitle}>Настройки учета</h2>
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Создание и редактирование операций</h2>
-            <OperationCheckbox checked={insertDateOnCopy} onChange={() => setInsertDateOnCopy(v => !v)} label='Подставлять текущую дату при копировании операции' />
+            <OperationCheckbox checked={appStore.isPayment} onChange={handleSwitchPayment} label='Тип платежа' />
             <OperationCheckbox checked={purposeOptional} onChange={() => setPurposeOptional(v => !v)} label='Сделать поле «Назначение платежа» необязательным' />
           </section>
         </section>
@@ -502,7 +451,31 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        {branches.length > 0 ? (
+        {branchesLoading ? (
+          <div className={styles.branchesTableWrap}>
+            <table className={styles.branchesTable}>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Роль</th>
+                  <th>ФИО / Должность</th>
+                  <th>Последний вход</th>
+                  <th>Дата создания</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3].map(i => (
+                  <tr key={i}>
+                    {[1, 2, 3, 4, 5, 6].map(j => (
+                      <td key={j}><span style={{ opacity: 0.3 }}>—</span></td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : branches.length > 0 ? (
           <div className={styles.branchesTableWrap}>
             <table className={styles.branchesTable}>
               <thead>
@@ -519,17 +492,23 @@ export default function SettingsPage() {
                 {branches.map(branch => (
                   <tr key={branch.id}>
                     <td>{branch.email}</td>
-                    <td>{branch.role}</td>
+                    <td>{branch.role ?? 'Администратор'}</td>
                     <td>
-                      <div>{branch.name}</div>
-                      <div className={styles.cellSub}>{branch.position}</div>
+                      <div>{branch.branch_user_name ?? branch.name ?? '—'}</div>
+                      <div className={styles.cellSub}>{branch.branch_name ?? '—'}</div>
                     </td>
-                    <td>{branch.lastLogin}</td>
-                    <td>{branch.createdAt}</td>
+                    <td>{branch.last_login_at ?? '—'}</td>
+                    <td>{branch.created_at ?? '—'}</td>
                     <td>
                       <RowDropdown
                         onEdit={() => {
-                          setEditingBranch(branch)
+                          setEditingBranch({
+                            id: branch.id,
+                            branchName: branch.branch_name,
+                            username: branch.branch_user_name ?? branch.name,
+                            email: branch.email,
+                            phone: branch.branch_user_phone ?? branch.phone,
+                          })
                           setBranchModalOpen(true)
                         }}
                         onDelete={() => handleDeleteBranch(branch)}
@@ -544,14 +523,14 @@ export default function SettingsPage() {
           <div className={styles.emptyStateBranches}>
             <h2 className={styles.emptyTitle}>Создайте филиал</h2>
             <p className={styles.emptyDescription}>
-              Филиалы помогают сравнивать прибыль и рентабельность разных частей бизнеса. 
+                  Филиалы помогают сравнивать прибыль и рентабельность разных частей бизнеса.
               Например, заказов, направлений или каналов продаж.
             </p>
             <p className={styles.emptyHint}>
               Для удобства филиалы можно объединять в группы.<br />
               Как ими пользоваться, <a href="#">посмотрите видео</a> или <a href="#">почитайте статью</a>.
             </p>
-            <button 
+                <button
               className={styles.addButtonLarge}
               onClick={() => { setEditingBranch(null); setBranchModalOpen(true) }}
               aria-label="Создать филиал"
@@ -566,6 +545,7 @@ export default function SettingsPage() {
         )}
 
         <BranchModal
+          key={`${branchModalOpen}-${editingBranch?.id ?? 'new'}`}
           open={branchModalOpen}
           onClose={() => { setBranchModalOpen(false); setEditingBranch(null) }}
           onSubmit={editingBranch ? handleEditBranch : handleAddBranch}
@@ -582,7 +562,7 @@ export default function SettingsPage() {
     )
   }
 
-/* ── placeholder for other sections ──────────────── */
+  /* ── placeholder for other sections ──────────────── */
 
   function renderPlaceholder(title) {
     return (
@@ -628,4 +608,6 @@ export default function SettingsPage() {
       {renderContent()}
     </div>
   )
-}
+})
+
+export default SettingsPage

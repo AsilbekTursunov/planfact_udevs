@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './GroupedSelect.module.scss'
 
-export function GroupedSelect({ 
-  data = [], 
-  value, 
-  onChange, 
+export function GroupedSelect({
+  data = [],
+  value,
+  onChange,
   placeholder = "Выберите...",
   groupBy = null,
   labelKey = 'label',
@@ -28,7 +28,8 @@ export function GroupedSelect({
   onSearch = null,
   searchDebounceMs = 500,
   hasError = false,
-  autoHeight = false // New prop for auto height
+  autoHeight = false, // New prop for auto height
+  dropdownClassName = ""
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -88,18 +89,18 @@ export function GroupedSelect({
   }, [onLoadMore, hasMore, isLoadingMore])
 
   // Filter data by search (only if no server-side search)
-  const filteredData = onSearch ? data : data.filter(item => 
+  const filteredData = onSearch ? data : data.filter(item =>
     item[labelKey]?.toLowerCase().includes(search.toLowerCase())
   )
 
   // Group data if groupBy is enabled
-  const groupedData = groupBy 
+  const groupedData = groupBy
     ? filteredData.reduce((acc, item) => {
-        const group = item[groupKey] || 'Без группы'
-        if (!acc[group]) acc[group] = []
-        acc[group].push(item)
-        return acc
-      }, {})
+      const group = item[groupKey] || 'Без группы'
+      if (!acc[group]) acc[group] = []
+      acc[group].push(item)
+      return acc
+    }, {})
     : { 'all': filteredData }
 
   // Check if data is empty
@@ -132,10 +133,10 @@ export function GroupedSelect({
       >
         <div className={styles.buttonContent}>
           <span className={styles.buttonText}>{loading ? "Загрузка..." : selectedLabel}</span>
-          <svg 
-            className={cn(styles.buttonIcon, isOpen && styles.open)} 
-            fill="none" 
-            viewBox="0 0 24 24" 
+          <svg
+            className={cn(styles.buttonIcon, isOpen && styles.open)}
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -144,7 +145,7 @@ export function GroupedSelect({
       </button>
 
       {isOpen && (
-        <div className={cn(styles.dropdown, autoHeight && styles.dropdownAutoHeight)}>
+        <div className={cn(styles.dropdown, autoHeight && styles.dropdownAutoHeight, dropdownClassName)}>
           {/* Search input - always visible */}
           <div className={styles.searchContainer}>
             <input
@@ -164,12 +165,12 @@ export function GroupedSelect({
                 }}
                 className={styles.searchClearButton}
               >
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
                   strokeWidth="2"
                 >
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -189,110 +190,110 @@ export function GroupedSelect({
               <>
                 {Object.entries(groupedData).map(([groupName, items]) => (
                   <div key={groupName} className={styles.group}>
-                  {groupBy && (
-                    <div className={styles.groupHeader}>
-                      <span>{groupName}</span>
-                      {showGroupActions && items.length > 0 && items[0][groupKey] === groupName && (
-                        <div className={styles.groupActions}>
-                          {onEditGroup && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onEditGroup(items[0])
-                                setIsOpen(false)
-                              }}
-                              className={styles.groupActionButton}
-                              title="Редактировать группу"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                              </svg>
-                            </button>
+                    {groupBy && (
+                      <div className={styles.groupHeader}>
+                        <span>{groupName}</span>
+                        {showGroupActions && items.length > 0 && items[0][groupKey] === groupName && (
+                          <div className={styles.groupActions}>
+                            {onEditGroup && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onEditGroup(items[0])
+                                  setIsOpen(false)
+                                }}
+                                className={styles.groupActionButton}
+                                title="Редактировать группу"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                            )}
+                            {onDeleteGroup && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onDeleteGroup(items[0])
+                                  setIsOpen(false)
+                                }}
+                                className={styles.groupActionButton}
+                                title="Удалить группу"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {items.map((item) => (
+                      <div key={item[valueKey]} className={styles.optionWrapper}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelect(item)}
+                          className={cn(
+                            styles.option,
+                            value === item[valueKey] ? styles.selected : ''
                           )}
-                          {onDeleteGroup && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onDeleteGroup(items[0])
-                                setIsOpen(false)
-                              }}
-                              className={styles.groupActionButton}
-                              title="Удалить группу"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-                      )}
+                        >
+                          {item[labelKey]}
+                        </button>
+                        {showGroupActions && !groupBy && (onEditGroup || onDeleteGroup) && (
+                          <div className={styles.optionActions}>
+                            {onEditGroup && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onEditGroup(item)
+                                  setIsOpen(false)
+                                }}
+                                className={styles.optionActionButton}
+                                title="Редактировать"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                            )}
+                            {onDeleteGroup && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onDeleteGroup(item)
+                                  setIsOpen(false)
+                                }}
+                                className={styles.optionActionButton}
+                                title="Удалить"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+
+                  {/* Loading more indicator */}
+                  {isLoadingMore && (
+                    <div className={styles.loadingMore}>
+                      <div className={styles.loadingSpinner}></div>
+                      <span>Загрузка...</span>
                     </div>
                   )}
-                  {items.map((item) => (
-                    <div key={item[valueKey]} className={styles.optionWrapper}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelect(item)}
-                        className={cn(
-                          styles.option,
-                          value === item[valueKey] ? styles.selected : ''
-                        )}
-                      >
-                        {item[labelKey]}
-                      </button>
-                      {showGroupActions && !groupBy && (onEditGroup || onDeleteGroup) && (
-                        <div className={styles.optionActions}>
-                          {onEditGroup && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onEditGroup(item)
-                                setIsOpen(false)
-                              }}
-                              className={styles.optionActionButton}
-                              title="Редактировать"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                              </svg>
-                            </button>
-                          )}
-                          {onDeleteGroup && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onDeleteGroup(item)
-                                setIsOpen(false)
-                              }}
-                              className={styles.optionActionButton}
-                              title="Удалить"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-              
-              {/* Loading more indicator */}
-              {isLoadingMore && (
-                <div className={styles.loadingMore}>
-                  <div className={styles.loadingSpinner}></div>
-                  <span>Загрузка...</span>
-                </div>
-              )}
-            </>
+                </>
             )}
           </div>
 

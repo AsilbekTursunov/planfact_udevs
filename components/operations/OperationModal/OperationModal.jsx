@@ -22,12 +22,16 @@ import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 import { CreditIcon, DebitIcon, FilesClipIcon } from '../../../constants/icons'
 import SplitAmount from './SplitAmount'
 import SentMessages from './SentMessages'
+import { appStore } from '../../../store/app.store'
+import { observer } from 'mobx-react-lite'
+import { TruckElectric } from 'lucide-react'
 
 const today = new Date().toISOString().split('T')[0]
+const todayDate = new Date().getDate()
 
 const emptyRow = (preselectedCounterparty = '') => ({
 	calculationDate: today,
-	isCalculationCommitted: true,
+	isCalculationCommitted: TruckElectric,
 	contrAgentId: preselectedCounterparty,
 	operationCategoryId: '',
 	value: '',
@@ -44,10 +48,19 @@ function rowsReducer(state, action) {
 			return [...state, emptyRow()]
 		case 'REMOVE':
 			return state.filter((_, i) => i !== action.index)
-		case 'UPDATE':
+		case 'UPDATE': {
+			if (action.field === 'calculationDate') {
+				const pickDate = Number(action.value?.split(' ')?.[0])
+				const isFuture = pickDate > todayDate
+				return state.map((row, i) =>
+					i === action.index ? { ...row, [action.field]: action.value, isCalculationCommitted: isFuture ? false : true } : row
+				)
+			}
 			return state.map((row, i) =>
 				i === action.index ? { ...row, [action.field]: action.value } : row
 			)
+		}
+
 		case 'DIVIDE_EQUAL': {
 			const count = state.length
 			if (count === 0) return state
@@ -62,16 +75,15 @@ function rowsReducer(state, action) {
 				percent: i === count - 1 ? String(lastPercent) : String(equalPercent),
 			}))
 		}
-		case "CLEAR": {
-			state = []
-		}
+		case 'RESET':
+			return [emptyRow()]
 		default:
 			return state
 	}
 }
 
 
-export function OperationModal({
+const OperationModal = observer(({
 	operation,
 	modalType,
 	isClosing,
@@ -80,7 +92,7 @@ export function OperationModal({
 	onSuccess,
 	preselectedCounterparty = null,
 	disableCounterpartySelect = false,
-}) {
+}) => {
 	const queryClient = useQueryClient()
 	const isNew = operation?.isNew || false
 
@@ -141,8 +153,6 @@ export function OperationModal({
 	const showDate = has('Начисление')
 	const showAgent = has('Контрагент')
 	const showStatya = has('Статья')
-
-	console.log('selectedSplits', selectedSplits)
 
 	// Block body scroll when modal is open
 	useEffect(() => {
@@ -206,6 +216,7 @@ export function OperationModal({
 				cashMethod: true,
 				creditItem: null,
 				currenies_id: raw.currenies_id || null,
+				paymentType: ''
 			}
 		}
 
@@ -288,7 +299,6 @@ export function OperationModal({
 	// Reset form when modal opens
 	useEffect(() => {
 		if (isOpening) {
-			console.log('Modal opening, resetting form')
 			const newFormData = getInitialFormData()
 			setFormStates({
 				income: { ...newFormData },
@@ -303,9 +313,10 @@ export function OperationModal({
 	// Validation errors state
 	const [errors, setErrors] = useState({})
 
-	// Clear errors when switching tabs
+	// Clear errors and reset split rows when switching tabs
 	useEffect(() => {
 		setErrors({})
+		dispatch({ type: 'RESET' })
 	}, [activeTab])
 
 	// Fetch data from API - using groups endpoint which includes children
@@ -327,7 +338,6 @@ export function OperationModal({
 	})
 	const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
 
-	console.log(modalType)
 
 	// Build tree structure for counterparties (groups and their children)
 	// Use data directly from API - groups already contain children
@@ -493,17 +503,7 @@ export function OperationModal({
 		}))
 	}, [bankAccountsData, legalEntitiesData, currenciesData])
 
-	// Transform currencies data
-	// const currencies = (
-	// 	currenciesData?.data?.data?.response ||
-	// 	currenciesData?.data?.response ||
-	// 	[]
-	// ).map(item => ({
-	// 	guid: item.guid,
-	// 	label: `${item.kod || ''} (${item.nazvanie || ''})`.trim(),
-	// 	kod: item.kod || '',
-	// 	nazvanie: item.nazvanie || '',
-	// }))
+
 
 	// Get currency from selected account
 	const getAccountCurrency = accountGuid => {
@@ -704,7 +704,7 @@ export function OperationModal({
 			}
 
 			if (divivedAmounts.length > 0) {
-				requestData.items = divivedAmounts.map(item => ({ ...item, value: Number(item?.value), percent: Number(item?.percent) }))
+				requestData.items = divivedAmounts.map(item => ({ ...item, value: Number(item?.value), percent: Number(item?.percent), isCalculationCommitted: showDate ? item?.isCalculationCommitted : false }))
 			}
 
 
@@ -777,13 +777,12 @@ export function OperationModal({
 				headers['Authorization'] = `Bearer ${authToken}`
 			}
 
-			console.log('requestData', requestData)
-
 			const response = await fetch(apiUrl, {
 				method: 'POST',
 				headers,
 				body: JSON.stringify(apiRequestBody),
 			})
+
 
 			const result = await response.json()
 
@@ -843,6 +842,13 @@ export function OperationModal({
 			)
 		} finally {
 			setIsSubmitting(false)
+		}
+	}
+
+	const handleUpdateSplit = (splits) => {
+		setSelectedSplits(splits)
+		if (splits.some(split => split.value === 'Начисление')) {
+			setFormData({ ...formData, confirmAccrual: false })
 		}
 	}
 
@@ -961,7 +967,9 @@ export function OperationModal({
 											<DatePicker
 												value={formData.paymentDate}
 												onChange={value => {
-													setFormData({ ...formData, paymentDate: value })
+													const pickDate = Number(value?.split('.')?.[0])
+													const isFuture = pickDate > todayDate
+													setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : !formData?.confirmPayment })
 													if (errors.paymentDate) {
 														setErrors({ ...errors, paymentDate: null })
 													}
@@ -971,9 +979,12 @@ export function OperationModal({
 												showCheckbox={true}
 												checkboxLabel='Подтвердить оплату'
 												checkboxValue={formData.confirmPayment}
-												onCheckboxChange={checked =>
+												onCheckboxChange={checked => {
+													const pickDate = Number(formData.paymentDate?.split('.')?.[0])
+													const isFuture = pickDate > todayDate
+													if (isFuture) return
 													setFormData({ ...formData, confirmPayment: checked })
-												}
+												}}
 											/>
 											{errors.paymentDate && (
 												<span className={styles.errorText}>{errors.paymentDate}</span>
@@ -1000,7 +1011,6 @@ export function OperationModal({
 												groupBy={false}
 												labelKey='label'
 												valueKey='guid'
-												groupKey='group'
 												loading={loadingBankAccounts}
 												hasError={!!errors.accountAndLegalEntity}
 											/>
@@ -1029,10 +1039,11 @@ export function OperationModal({
 														placeholder='0'
 														className={styles.input}
 													/>
-													<div>
-														{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
-														{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
-													</div>
+													{!showDate
+														&& <div>
+															{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
+															{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+														</div>}
 													{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
 														{getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
 													</div>}
@@ -1044,18 +1055,22 @@ export function OperationModal({
 											<label className={styles.label}>
 												&nbsp;
 											</label>
-											<SplitAmount
-												amount={formData?.amount}
-												counterAgents={counterAgents}
-												chartOfAccountsOptions={chartOfAccountsTree}
-												onChange={setdivivedAmounts}
-												rows={rows}
-												dispatch={dispatch}
-												emptyRow={emptyRow}
-												selectedSplits={selectedSplits}
-												preselectedCounterparty={preselectedCounterparty}
-												setSelectedSplits={setSelectedSplits}
-											/>
+											<div className={styles.fieldWrapper}>
+												<SplitAmount
+													amount={formData?.amount}
+													counterAgents={counterAgents}
+													chartOfAccountsOptions={chartOfAccountsTree}
+													onChange={setdivivedAmounts}
+													rows={rows}
+													dispatch={dispatch}
+													emptyRow={emptyRow}
+													confirmAccural={formData.confirmAccrual}
+													confirmPayment={formData.confirmPayment}
+													selectedSplits={selectedSplits}
+													preselectedCounterparty={preselectedCounterparty}
+													setSelectedSplits={handleUpdateSplit}
+												/>
+											</div>
 										</div>
 									</div>
 
@@ -1064,16 +1079,25 @@ export function OperationModal({
 										<label className={styles.label}>Дата начисления</label>
 										<DatePicker
 											value={formData.accrualDate}
-											onChange={value => setFormData({ ...formData, accrualDate: value })}
+											onChange={value => {
+												const pickDate = Number(value?.split('.')?.[0])
+												const isFuture = pickDate > todayDate
+												setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : !formData?.confirmAccrual })
+												if (errors.accrualDate) {
+													setErrors({ ...errors, accrualDate: null })
+												}
+											}}
 											placeholder='Выберите дату'
 											showCheckbox
 											className={styles.datePicker}
 											checkboxLabel='Подтвердить начисление'
 											checkboxValue={formData.confirmAccrual}
-											onCheckboxChange={checked =>
-												//  payment_accrual
+											onCheckboxChange={checked => {
+												const pickDate = Number(formData.accrualDate?.split('.')?.[0])
+												const isFuture = pickDate > todayDate
+												if (isFuture) return
 												setFormData({ ...formData, confirmAccrual: checked })
-											}
+											}}
 										/>
 									</div>}
 
@@ -1102,6 +1126,19 @@ export function OperationModal({
 											placeholder='Выберите статью...'
 											loading={loadingChartOfAccounts}
 											className='flex-1'
+										/>
+									</div>}
+									{appStore.isPayment && <div className={styles.formRow}>
+										<label className={styles.label}>Тип платежа</label>
+										<GroupedSelect
+											data={[{ label: 'Наличный', value: 'cash' }, { label: 'Карта', value: 'card' }, { value: 'transfer', label: 'Перечисление' }]}
+											value={formData.paymentType}
+											onChange={value => setFormData(prev => ({ ...prev, paymentType: value }))}
+											placeholder='Выберите тип платежа...'
+											groupBy={false}
+											labelKey='label'
+											valueKey='value'
+											className={'flex-1'}
 										/>
 									</div>}
 
@@ -1141,7 +1178,9 @@ export function OperationModal({
 											<DatePicker
 												value={formData.paymentDate}
 												onChange={value => {
-													setFormData({ ...formData, paymentDate: value })
+													const pickDate = Number(value?.split('.')?.[0])
+													const isFuture = pickDate > todayDate
+													setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : !formData?.confirmPayment })
 													if (errors.paymentDate) {
 														setErrors({ ...errors, paymentDate: null })
 													}
@@ -1151,9 +1190,12 @@ export function OperationModal({
 
 												checkboxLabel='Подтвердить оплату'
 												checkboxValue={formData.confirmPayment}
-												onCheckboxChange={checked =>
+												onCheckboxChange={checked => {
+													const pickDate = Number(formData.paymentDate?.split('.')?.[0])
+													const isFuture = pickDate > todayDate
+													if (isFuture) return
 													setFormData({ ...formData, confirmPayment: checked })
-												}
+												}}
 												className={[styles.datePicker, errors.paymentDate ? styles.error : ''].join(' ')}
 											/>
 										</div>
@@ -1208,10 +1250,11 @@ export function OperationModal({
 														placeholder='0'
 														className={cn(styles.input, errors.amount && styles.error)}
 													/>
-													<div>
-														{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
-														{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
-													</div>
+													{!showDate
+														&& <div>
+															{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
+															{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+														</div>}
 													{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
 														{getAccountCurrency(formData.accountAndLegalEntity)}
 													</div>}
@@ -1222,18 +1265,22 @@ export function OperationModal({
 											<label className={styles.label}>
 												&nbsp;
 											</label>
-											<SplitAmount
-												amount={formData?.amount}
-												counterAgents={counterAgents}
-												chartOfAccountsOptions={chartOfAccountsTree}
-												onChange={setdivivedAmounts}
-												rows={rows}
-												dispatch={dispatch}
-												emptyRow={emptyRow}
-												selectedSplits={selectedSplits}
-												preselectedCounterparty={preselectedCounterparty}
-												setSelectedSplits={setSelectedSplits}
-											/>
+											<div className={styles.fieldWrapper}>
+												<SplitAmount
+													amount={formData?.amount}
+													counterAgents={counterAgents}
+													chartOfAccountsOptions={chartOfAccountsTree}
+													onChange={setdivivedAmounts}
+													rows={rows}
+													dispatch={dispatch}
+													emptyRow={emptyRow}
+													confirmAccural={formData.confirmAccrual}
+													confirmPayment={formData.confirmPayment}
+													selectedSplits={selectedSplits}
+													preselectedCounterparty={preselectedCounterparty}
+													setSelectedSplits={handleUpdateSplit}
+												/>
+											</div>
 										</div>
 									</div>
 
@@ -1242,14 +1289,25 @@ export function OperationModal({
 										<label className={styles.label}>Дата начисления</label>
 										<DatePicker
 											value={formData.accrualDate}
-											onChange={value => setFormData({ ...formData, accrualDate: value })}
+											// onChange={value => setFormData({ ...formData, accrualDate: value })}
+											onChange={value => {
+												const pickDate = Number(value?.split('.')?.[0])
+												const isFuture = pickDate > todayDate
+												setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : !formData?.confirmAccrual })
+												if (errors.accrualDate) {
+													setErrors({ ...errors, accrualDate: null })
+												}
+											}}
 											placeholder='Выберите дату'
 											showCheckbox
 											checkboxLabel='Подтвердить начисление'
 											checkboxValue={formData.confirmAccrual}
-											onCheckboxChange={checked =>
+											onCheckboxChange={checked => {
+												const pickDate = Number(formData.accrualDate?.split('.')?.[0])
+												const isFuture = pickDate > todayDate
+												if (isFuture) return
 												setFormData({ ...formData, confirmAccrual: checked })
-											}
+											}}
 											className={cn(styles.datePicker, errors.accrualDate ? styles.error : '')}
 										/>
 									</div>}
@@ -1266,7 +1324,7 @@ export function OperationModal({
 											loading={isLoadingGroups}
 											disabled={disableCounterpartySelect}
 										/>
-									</div>}	
+									</div>}
 
 									{/* Статья */}
 									{!showStatya && <div className={styles.formRow}>
@@ -1279,6 +1337,20 @@ export function OperationModal({
 											placeholder='Выберите статью...'
 											loading={loadingChartOfAccounts}
 											className='flex-1'
+										/>
+									</div>}
+
+									{appStore.isPayment && <div className={styles.formRow}>
+										<label className={styles.label}>Тип платежа</label>
+										<GroupedSelect
+											data={[{ label: 'Наличный', value: 'cash' }, { label: 'Карта', value: 'card' }, { value: 'transfer', label: 'Перечисление' }]}
+											value={formData.paymentType}
+											onChange={value => setFormData(prev => ({ ...prev, paymentType: value }))}
+											placeholder='Выберите тип платежа...'
+											groupBy={false}
+											labelKey='label'
+											valueKey='value'
+											className={'flex-1'}
 										/>
 									</div>}
 
@@ -1754,4 +1826,7 @@ export function OperationModal({
 			</div>
 		</>
 	)
-}
+})
+
+
+export default OperationModal

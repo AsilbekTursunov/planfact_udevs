@@ -8,15 +8,15 @@ function TreeNode({ node, level = 0, selectedValue, onSelect, expandedNodes, tog
   const hasChildren = node.children && node.children.length > 0
   const isExpanded = expandedNodes.has(node.value)
   const isSelected = selectedValue === node.value
-  
+
   // Get type badge info - only show if showTypeBadge is true
   const getTypeBadge = () => {
     if (!showTypeBadge) return null
     if (!node.tip || !Array.isArray(node.tip) || node.tip.length === 0) return null
-    
+
     const tipText = node.tip[0]
     if (!tipText) return null
-    
+
     if (tipText.includes('Актив')) {
       return { text: 'Актив', className: styles.badgeAsset }
     } else if (tipText.includes('Капитал')) {
@@ -30,7 +30,7 @@ function TreeNode({ node, level = 0, selectedValue, onSelect, expandedNodes, tog
     }
     return null
   }
-  
+
   const typeBadge = getTypeBadge()
 
   return (
@@ -58,10 +58,10 @@ function TreeNode({ node, level = 0, selectedValue, onSelect, expandedNodes, tog
               disabled={alwaysExpanded}
               style={{ cursor: alwaysExpanded ? 'default' : 'pointer' }}
             >
-              <svg 
-                className={cn(styles.treeNodeIcon, isExpanded && styles.expanded)} 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                className={cn(styles.treeNodeIcon, isExpanded && styles.expanded)}
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
                 style={{ opacity: alwaysExpanded ? 0.5 : 1 }}
               >
@@ -133,10 +133,10 @@ function TreeNode({ node, level = 0, selectedValue, onSelect, expandedNodes, tog
   )
 }
 
-export function TreeSelect({ 
-  data = [], 
-  value, 
-  onChange, 
+export function TreeSelect({
+  data = [],
+  value,
+  onChange,
   placeholder = "Выберите статью...",
   className = "",
   disabled = false,
@@ -149,7 +149,8 @@ export function TreeSelect({
   hasMore = false,
   isLoadingMore = false,
   onSearch = null,
-  searchDebounceMs = 500
+  searchDebounceMs = 500,
+  dropdownClassName = ""
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -185,10 +186,10 @@ export function TreeSelect({
 
       // Check if click is on modal overlay - don't close if it is
       if (target instanceof HTMLElement) {
-        const isModalOverlay = target.classList.contains('overlay') || 
-                               target.closest('.modal') !== null ||
-                               target.closest('[class*="overlay"]') !== null
-        
+        const isModalOverlay = target.classList.contains('overlay') ||
+          target.closest('.modal') !== null ||
+          target.closest('[class*="overlay"]') !== null
+
         if (!isModalOverlay) {
           setIsOpen(false)
         }
@@ -278,17 +279,17 @@ export function TreeSelect({
   }
 
   const selectedNode = findNodeByValue(data, value)
-  const selectedLabel = isRoot && allowRoot 
-    ? "Корневой элемент" 
-    : selectedNode 
-      ? selectedNode.title 
+  const selectedLabel = isRoot && allowRoot
+    ? "Корневой элемент"
+    : selectedNode
+      ? selectedNode.title
       : placeholder
   const filteredData = onSearch ? data : filterTree(data, search)
 
   // Auto-expand nodes marked as expanded
   useEffect(() => {
     if (filteredData.length === 0) return
-    
+
     if (alwaysExpanded) {
       // When alwaysExpanded is true, expand all nodes with children
       const expandAll = (nodes) => {
@@ -305,7 +306,7 @@ export function TreeSelect({
         return expanded
       }
       const newExpanded = expandAll(filteredData)
-      
+
       // Only update if different
       const currentKeys = Array.from(expandedNodes).sort().join(',')
       const newKeys = Array.from(newExpanded).sort().join(',')
@@ -330,7 +331,7 @@ export function TreeSelect({
         return expanded
       }
       const newExpanded = expandMarkedNodes(filteredData)
-      
+
       // Only update if different
       const currentKeys = Array.from(expandedNodes).sort().join(',')
       const newKeys = Array.from(newExpanded).sort().join(',')
@@ -357,7 +358,7 @@ export function TreeSelect({
         return expanded
       }
       const newExpanded = expandAll(filteredData)
-      
+
       // Only update if different
       const currentKeys = Array.from(expandedNodes).sort().join(',')
       const newKeys = Array.from(newExpanded).sort().join(',')
@@ -434,10 +435,10 @@ export function TreeSelect({
       >
         <div className={styles.buttonContent}>
           <span className={styles.buttonText}>{loading ? "Загрузка..." : selectedLabel}</span>
-          <svg 
-            className={cn(styles.buttonIcon, isOpen && styles.open)} 
-            fill="none" 
-            viewBox="0 0 24 24" 
+          <svg
+            className={cn(styles.buttonIcon, isOpen && styles.open)}
+            fill="none"
+            viewBox="0 0 24 24"
             stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -446,8 +447,8 @@ export function TreeSelect({
       </button>
 
       {isOpen && (
-        <div 
-          className={styles.dropdown}
+        <div
+          className={cn(styles.dropdown, dropdownClassName)}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         >
@@ -473,12 +474,12 @@ export function TreeSelect({
                 onMouseDown={(e) => e.stopPropagation()}
                 className={styles.searchClearButton}
               >
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
                   strokeWidth="2"
                 >
                   <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -526,7 +527,7 @@ export function TreeSelect({
                     showTypeBadge={true}
                   />
                 ))}
-                
+
                 {/* Loading more indicator */}
                 {isLoadingMore && (
                   <div className={styles.loadingMore}>

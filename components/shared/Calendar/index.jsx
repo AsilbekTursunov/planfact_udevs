@@ -5,8 +5,8 @@ export default function CustomCalendar({ value, onChange, format = "DD MMM, YYYY
   return (
     <div className="calendar_wrapper">
       <Calendar
-        value={value || new Date()} 
-        onChange={onChange}
+        value={value || new Date()}
+        onChange={(dataObj => onChange(dataObj.format(format)))}
         format={format}
         {...props}
       />
