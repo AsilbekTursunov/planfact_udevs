@@ -694,12 +694,23 @@ const OperationModal = observer(({
 
 
 			// Build request data object with all fields
+			// Parse amount - remove spaces before converting to number
+			const parseAmount = (amountStr) => {
+				if (!amountStr) return 0
+				// Remove all spaces and convert to number
+				const cleaned = String(amountStr).replace(/\s/g, '')
+				const num = parseFloat(cleaned)
+				return isNaN(num) ? 0 : num
+			}
+
 			const requestData = {
 				tip: [tipMap[activeTab] || 'Поступление'],
 				data_operatsii: activeTab === 'accrual' ? null : formData?.paymentDate,
 				data_nachisleniya: formData?.accrualDate,
 				opisanie: formData.purpose || '',
-				summa: Number(activeTab === 'transfer' ? Number(formData.fromAmount || formData.toAmount || 0) : Number(activeTab === 'accrual' ? formData.amount || 0 : formData.amount || 0).toFixed(2)),
+				summa: activeTab === 'transfer' 
+					? parseAmount(formData.fromAmount || formData.toAmount || 0)
+					: parseAmount(formData.amount || 0),
 				oplata_podtverzhdena: formData.confirmPayment || false,
 				payment_confirmed: formData.confirmPayment || false,
 				payment_accrual: activeTab === 'transfer' || activeTab === 'accrual' ? false : formData.confirmAccrual,
@@ -754,6 +765,14 @@ const OperationModal = observer(({
 				}
 			}
 
+			console.log('🔵🔵🔵 ===== FINAL REQUEST DATA =====')
+			console.log('🔵 Method:', isUpdate ? 'update_operation' : 'create_operation')
+			console.log('🔵 isNew:', isNew)
+			console.log('🔵 isUpdate:', isUpdate)
+			console.log('🔵 operation.isCopy:', operation?.isCopy)
+			console.log('🔵 formData.amount:', formData.amount)
+			console.log('🔵 requestData:', JSON.stringify(requestData, null, 2))
+			console.log('🔵🔵🔵 ================================')
 
 			const result = await createUcodeOperation({ method: isUpdate ? 'update_operation' : 'create_operation', data: requestData })
 
