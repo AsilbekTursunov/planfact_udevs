@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import styles from './GroupedSelect.module.scss'
 
@@ -29,26 +30,57 @@ export function GroupedSelect({
   searchDebounceMs = 500,
   hasError = false,
   autoHeight = false, // New prop for auto height
-  dropdownClassName = ""
+  dropdownClassName = "",
+  usePortal = false // New prop for rendering in portal
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
+  const [isPositioned, setIsPositioned] = useState(false)
   const dropdownRef = useRef(null)
+  const buttonRef = useRef(null)
   const listRef = useRef(null)
   const searchTimeoutRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false)
-        setSearch('')
+      // Check if click is on the button
+      if (buttonRef.current && buttonRef.current.contains(event.target)) {
+        return
       }
+
+      // Check if click is inside the dropdown
+      if (dropdownRef.current && dropdownRef.current.contains(event.target)) {
+        return
+      }
+
+      setIsOpen(false)
+      setSearch('')
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Update dropdown position when opened and using portal
+  useEffect(() => {
+    if (usePortal && isOpen && buttonRef.current) {
+      setIsPositioned(false)
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      })
+      // Use requestAnimationFrame to ensure position is set before showing
+      requestAnimationFrame(() => {
+        setIsPositioned(true)
+      })
+    } else if (!isOpen) {
+      setIsPositioned(false)
+    }
+  }, [isOpen, usePortal])
 
   // Handle search with debounce
   useEffect(() => {
@@ -117,8 +149,9 @@ export function GroupedSelect({
   }
 
   return (
-    <div className={cn(styles.container, className)} ref={dropdownRef}>
+    <div className={cn(styles.container, className)} ref={!usePortal ? dropdownRef : null}>
       <button
+        ref={buttonRef}
         type="button"
         id='button'
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -144,8 +177,22 @@ export function GroupedSelect({
         </div>
       </button>
 
-      {isOpen && (
-        <div className={cn(styles.dropdown, autoHeight && styles.dropdownAutoHeight, dropdownClassName)}>
+      {isOpen && (() => {
+        const dropdownContent = (
+          <div
+            ref={usePortal ? dropdownRef : null}
+            className={cn(styles.dropdown, autoHeight && styles.dropdownAutoHeight, dropdownClassName)}
+            style={usePortal ? {
+              position: 'fixed',
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              width: `${dropdownPosition.width}px`,
+              opacity: isPositioned ? 1 : 0,
+              visibility: isPositioned ? 'visible' : 'hidden',
+              zIndex: 9999
+            } : undefined}
+            onClick={(e) => usePortal && e.stopPropagation()}
+          >
           {/* Search input - always visible */}
           <div className={styles.searchContainer}>
             <input
@@ -316,7 +363,12 @@ export function GroupedSelect({
             </div>
           )}
         </div>
-      )}
+        )
+
+        return usePortal && typeof window !== 'undefined'
+          ? createPortal(dropdownContent, document.body)
+          : dropdownContent
+      })()}
     </div>
   )
 }

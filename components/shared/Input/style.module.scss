@@ -12,9 +12,9 @@
   font-size: 13px;
   color: #0f172a;
   border: 1px solid $gray-200;
-    border-radius: 8px;
+  border-radius: 8px;
   background-color: white;
-  height: 36px;
+  height: 36px !important;
   transition: all 0.2s;
 
   &::placeholder {

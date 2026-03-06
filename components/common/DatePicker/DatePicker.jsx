@@ -8,6 +8,7 @@ import styles from './DatePicker.module.scss'
 import { cn } from '@/app/lib/utils'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 import CustomCalendar from '../../shared/Calendar'
+import CustomDatePicker from '../../shared/DatePicker'
 
 export function DatePicker({ value, onChange, placeholder = 'Выберите дату', showCheckbox = false, checkboxLabel = '', checkboxValue = false, onCheckboxChange, className, dateFormat = 'DD.MM.YYYY' }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -60,8 +61,7 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
-  const handleDateChange = (date) => {
-    console.log('date', date)
+  const handleDateChange = (date) => { 
     if (date) {
       onChange(date)
       setInputValue(date)
@@ -74,64 +74,18 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
 
   return (
     <div className={styles.container} ref={containerRef}>
-      <div onClick={() => setIsOpen(!isOpen)} className={cn(styles.inputWrapper, className)}>
-        <input
-          type="text"
-          value={inputValue}
-          placeholder={placeholder}
-          className={styles.input}
-        />
-        <button
-          type="button"
-          className={styles.calendarButton}
-        >
-          <svg className={styles.calendarIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </button>
-      </div>
-
-      {/* <div>
-        <ExclamationIcon />
-      </div> */}
-
+      <CustomDatePicker
+        ref={datePickerRef}
+        value={dateValue}
+        format={dateFormat}
+        onChange={handleDateChange}
+      />
       {showCheckbox && (
         <OperationCheckbox
           checked={checkboxValue}
           onChange={(e) => onCheckboxChange?.(e.target.checked)}
           label={checkboxLabel}
         />
-      )}
-
-      {isOpen && pickerPosition.ready && typeof document !== 'undefined' && createPortal(
-        <div
-          ref={pickerRef}
-          className={styles.pickerWrapper}
-          style={{
-            position: 'fixed',
-            top: `${pickerPosition.top}px`,
-            left: `${pickerPosition.left}px`,
-            zIndex: 9999
-          }}
-        >
-          <CustomCalendar
-            ref={datePickerRef}
-            value={dateValue}
-            format={dateFormat}
-            onChange={handleDateChange}
-          />
-          {/* <ReactDatePicker
-            ref={datePickerRef}
-            selected={dateValue}
-            onChange={handleDateChange}
-            onClickOutside={() => setIsOpen(false)}
-            locale={ru}
-            inline
-            dateFormat="dd.MM.yyyy"
-            calendarClassName={styles.calendar}
-          /> */}
-        </div>,
-        document.body
       )}
     </div>
   )

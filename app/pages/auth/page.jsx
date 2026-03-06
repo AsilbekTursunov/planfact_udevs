@@ -193,9 +193,9 @@ export default function LoginPage() {
       if (!formData.password) {
         errors.password = 'Введите пароль'
       }
-      if (!selectedBranch) {
-        errors.branch = 'Выберите филиал'
-      }
+      // if (!selectedBranch) {
+      //   errors.branch = 'Выберите филиал'
+      // }
     }
 
     return errors
@@ -213,26 +213,15 @@ export default function LoginPage() {
     }
 
     try {
-      if (fromType === 'login') {
-        console.log('=== STARTING LOGIN ===')
-        console.log('Email:', formData.email)
-        
-        const result = await loginMutation.mutateAsync({
+      if (fromType === 'login') { 
+
+        await loginMutation.mutateAsync({
           email: formData.email,
           password: formData.password,
         })
-        
-        console.log('Login mutation result:', result)
-        console.log('=== LOGIN COMPLETED ===')
-      } else {
-        console.log('=== STARTING REGISTRATION ===')
-        const cleanPhone = getCleanPhoneNumber(formData.phone)
-        console.log('Registration data:', {
-          name: formData.name,
-          email: formData.email,
-          phone: cleanPhone,
-          branch_name: formData.branchName
-        })
+
+      } else { 
+        const cleanPhone = getCleanPhoneNumber(formData.phone) 
         
         const response = await registerAsync({
           method: 'auth_register_legal_entity',
@@ -244,14 +233,8 @@ export default function LoginPage() {
             legal_entity_name: formData.name,
             branch_name: formData.branchName,
           }
-        })
-        
-        console.log('=== REGISTRATION RESPONSE ===')
-        console.log('Full response:', response)
-        console.log('Response data:', response?.data)
-        console.log('Response data.data:', response?.data?.data)
-        console.log('Response data.data.data:', response?.data?.data?.data)
-        
+        }) 
+
         // Сохраняем токен после успешной регистрации
         // Структура может быть: response.data.data.data.token или response.data.data.token
         const innerData = response?.data?.data?.data || response?.data?.data
@@ -261,41 +244,19 @@ export default function LoginPage() {
           name: formData.name,
           phone: cleanPhone
         }
-        
-        console.log('Inner data:', innerData)
-        console.log('Token data:', tokenData)
-        console.log('User data:', userData)
+
         
         if (tokenData) {
           console.log('✅ Token found!')
           
           // Используем authStore для сохранения
-          const { authStore } = await import('@/store/auth.store')
-          console.log('Setting authentication in authStore...')
+          const { authStore } = await import('@/store/auth.store') 
           
           authStore.setAuthentication({
             token: tokenData,
             user_data: userData
-          })
-          
-          console.log('✅ Authentication set successfully')
-          console.log('authStore state:', {
-            isAuthenticated: authStore.isAuthenticated,
-            authToken: authStore.authToken,
-            userEmail: authStore.userEmail,
-            userData: authStore.userData
-          })
-          
-          console.log('localStorage check:', {
-            authToken: localStorage.getItem('authToken'),
-            isAuthenticated: localStorage.getItem('isAuthenticated'),
-            userEmail: localStorage.getItem('userEmail')
-          })
-          
-          console.log('=== REGISTRATION COMPLETED ===')
-          
-          // Перенаправляем на главную страницу
-          console.log('Redirecting to /pages/operations...')
+          }) 
+
           setTimeout(() => {
             window.location.href = '/pages/operations'
           }, 100)
@@ -305,11 +266,7 @@ export default function LoginPage() {
           throw new Error('Токен не получен от сервера')
         }
       }
-    } catch (error) {
-      console.error('=== AUTH ERROR ===')
-      console.error('Error:', error)
-      console.error('Error message:', error.message)
-      console.error('Error details:', error.details)
+    } catch (error) { 
       const errorMessage = error.message || (fromType === 'login' ? 'Ошибка при входе' : 'Ошибка при регистрации')
       setError(errorMessage)
     }
@@ -505,7 +462,7 @@ export default function LoginPage() {
             </div>
 
             {/* Branch Selector (Only on login) */}
-            {fromType === 'login' && (
+            {/* {fromType === 'login' && (
               <div className={styles.inputGroup}>
                 <div className={styles.selectWrapper} ref={branchDropdownRef}>
                   <div
@@ -518,8 +475,8 @@ export default function LoginPage() {
                     onClick={() => setBranchDropdownOpen(!branchDropdownOpen)}
                   >
                     <span className={selectedBranch ? styles.selectedText : styles.placeholderText}>
-                      {selectedBranch 
-                        ? mockBranches.find(b => b.id === selectedBranch)?.name 
+                      {selectedBranch
+                        ? mockBranches.find(b => b.id === selectedBranch)?.name
                         : 'Выберите филиал'}
                     </span>
                     <div className={styles.selectIcons}>
@@ -536,9 +493,9 @@ export default function LoginPage() {
                           <X size={16} />
                         </button>
                       )}
-                      <ChevronDown 
-                        size={16} 
-                        className={cn(styles.chevronIcon, branchDropdownOpen && styles.chevronOpen)} 
+                      <ChevronDown
+                        size={16}
+                        className={cn(styles.chevronIcon, branchDropdownOpen && styles.chevronOpen)}
                       />
                     </div>
                   </div>
@@ -567,7 +524,7 @@ export default function LoginPage() {
                   <div className={styles.fieldError}>{fieldErrors.branch}</div>
                 )}
               </div>
-            )}
+            )} */}
 
             {/* Confirm Password (Only on register) */}
             {fromType === 'register' && (

@@ -10,6 +10,7 @@ import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityModal/CreateLegalEntityModal'
 import styles from './CreateMyAccountModal.module.scss'
 import Input from '@/components/shared/Input'
+import CustomDatePicker from '../../shared/DatePicker'
 
 export default function CreateMyAccountModal({ isOpen, onClose, account = null }) {
   const queryClient = useQueryClient()
@@ -135,18 +136,19 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
     if (!validateForm()) return
 
     setIsSubmitting(true)
+ 
     try {
       const submitData = {
         nazvanie: formData.nazvanie.trim(),
         tip: formData.tip,
         ...(formData.nachalьnyy_ostatok && { nachalьnyy_ostatok: Number(formData.nachalьnyy_ostatok) }),
         ...(formData.data_sozdaniya && {
-          data_sozdaniya: new Date(formData.data_sozdaniya + 'T19:00:00.000Z').toISOString()
+          data_sozdaniya: formData.data_sozdaniya
         }),
         ...(formData.currenies_id && { currenies_id: formData.currenies_id }),
         ...(formData.komentariy && { komentariy: formData.komentariy }),
         ...(formData.legal_entity_id && { legal_entity_id: formData.legal_entity_id }),
-        attributes: {}
+        // attributes: {}
       }
 
       if (isEdit && account && account.guid) {
@@ -158,7 +160,6 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
       handleClose()
     } catch (error) {
-      console.error(`Error ${isEdit ? 'updating' : 'creating'} account:`, error)
       setErrors({ submit: error.message || `Не удалось ${isEdit ? 'обновить' : 'создать'} счет` })
     } finally {
       setIsSubmitting(false)
@@ -175,7 +176,6 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       />
       <div
         className={cn(styles.modal, isClosing && styles.closing, !isClosing && isVisible && styles.opening)}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
           <h2 className={styles.title}>{isEdit ? 'Редактирование счета' : 'Создание счета'}</h2>
@@ -198,7 +198,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   value={formData.nazvanie}
                   onChange={(e) => setFormData({ ...formData, nazvanie: e.target.value })}
                   placeholder="Например, ВТБ"
-                  className={cn(styles.input, errors.nazvanie && styles.inputError)}
+                  className={cn(errors.nazvanie && styles.inputError)}
                 />
                 {errors.nazvanie && (
                   <div className={styles.errorMessage}>{errors.nazvanie}</div>
@@ -262,12 +262,20 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                     className={styles.input}
                     onWheel={(e) => e.target.blur()}
                   />
-                  <DatePicker
+
+                  <CustomDatePicker
+                    value={formData.data_sozdaniya}
+                    onChange={(value) => setFormData({ ...formData, data_sozdaniya: value })}
+                    placeholder="Выберите дату"
+                    format='YYYY-MM-DD'
+                    className={styles.datePicker}
+                  />
+                  {/* <DatePicker
                     value={formData.data_sozdaniya}
                     onChange={(value) => setFormData({ ...formData, data_sozdaniya: value })}
                     placeholder="Выберите дату"
                     className={styles.datePicker}
-                  />
+                  /> */}
                 </div>
               </div>
             )}

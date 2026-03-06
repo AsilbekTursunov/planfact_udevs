@@ -8,7 +8,6 @@ import { MoreHorizontal, PenLine, Archive, Trash2 } from 'lucide-react'
 import { useCounterpartyById, useUcodeRequestMutation } from '@/hooks/useDashboard'
 import { useLegalEntitiesPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
-import { OperationModal } from '@/components/operations/OperationModal/OperationModal'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
@@ -19,6 +18,8 @@ import PriceStatus from '@/components/operations/PriceStatus'
 
 import Select from '@/components/common/Select'
 import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
+import OperationModal from '../../../../../components/operations/OperationModal/OperationModal'
+import { useUcodeRequestQuery } from '../../../../../hooks/useDashboard'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -55,6 +56,7 @@ export default function KontragentDetailPage() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
   const [selectedLegalEntities, setSelectedLegalEntities] = useState([])
   const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
   const [isCreateOperationModalOpen, setIsCreateOperationModalOpen] = useState(false)
@@ -76,6 +78,14 @@ export default function KontragentDetailPage() {
   // Fetch data for filters
   const { data: legalEntitiesData } = useLegalEntitiesPlanFact()
   const { data: chartOfAccountsData } = useChartOfAccountsPlanFact()
+  const { data: myaccountsData } = useUcodeRequestQuery({
+    method: 'get_my_accounts',
+    data: {},
+    skip: !counterpartyGuid,
+    querySetting: {
+      select: (data) => data.data.data
+    }
+  })
 
   // Transform chart of accounts data for MultiSelect
   const chartOfAccountsOptions = useMemo(() => {
@@ -106,6 +116,7 @@ export default function KontragentDetailPage() {
   const counterpartyOperations = useMemo(() => {
     return responseData?.operations || []
   }, [responseData])
+ 
 
 
   // Use operations from counterparty response directly
@@ -253,8 +264,7 @@ export default function KontragentDetailPage() {
   }, [counterparty])
 
   // Calculate stats from operations
-  const stats = useMemo(() => {
-    console.log('=== Calculating stats from operations ===')
+  const stats = useMemo(() => { 
     let receipts = 0
     let payments = 0
     let receiptsCount = 0
@@ -752,7 +762,7 @@ export default function KontragentDetailPage() {
                 <div className={styles.filtersPanelContent}>
                   <div className={styles.filterGroup}>
                     <MultiSelect
-                      data={legalEntitiesData?.data?.data?.data?.map(entity => ({
+                      data={myaccountsData?.data?.map(entity => ({
                         value: entity.guid,
                         label: entity.nazvanie
                       })) || []}
@@ -882,7 +892,7 @@ export default function KontragentDetailPage() {
                           {filteredOperations.filter(op => op.section === 'today').map((op, index) => {
                             const isExpanded = expandedRows[op.id]
                             const detailData = isExpanded ? getDetailData(op.id) : []
-                            
+
                             return (
                               <Fragment key={op.id}>
                                 <tr
@@ -942,7 +952,7 @@ export default function KontragentDetailPage() {
                                     <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
                                   </td>
                                 </tr>
-                                
+
                                 {/* Detail rows */}
                                 {isExpanded && detailData.map((detail) => (
                                   <tr key={`${op.id}-detail-${detail.id}`} className={styles.detailRow}>
@@ -990,7 +1000,7 @@ export default function KontragentDetailPage() {
                           {filteredOperations.filter(op => op.section === 'yesterday').map((op, index) => {
                             const isExpanded = expandedRows[op.id]
                             const detailData = isExpanded ? getDetailData(op.id) : []
-                            
+
                             return (
                               <Fragment key={op.id}>
                                 <tr
@@ -1050,7 +1060,7 @@ export default function KontragentDetailPage() {
                                     <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
                                   </td>
                                 </tr>
-                                
+
                                 {/* Detail rows */}
                                 {isExpanded && detailData.map((detail) => (
                                   <tr key={`${op.id}-detail-${detail.id}`} className={styles.detailRow}>
@@ -1128,6 +1138,7 @@ export default function KontragentDetailPage() {
           isClosing={isCreateModalClosing}
           isOpening={isCreateModalOpening}
           onClose={handleCloseCreateModal}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['counterpartyById', counterpartyGuid] })}
           preselectedCounterparty={counterpartyGuid}
           disableCounterpartySelect={true}
         />

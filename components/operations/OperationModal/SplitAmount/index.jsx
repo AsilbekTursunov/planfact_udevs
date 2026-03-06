@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import './style.scss'
 import MultipleSelect from '../../../shared/MultipleSelect'
 import { CalendarCellIcon, CalendarIcon, CreditIcon, DebitIcon, MergeArrowsIcon, SortArrow } from '../../../../constants/icons'
@@ -14,6 +15,52 @@ import { TreeSelect } from '../../../common/TreeSelect/TreeSelect'
 import { SplitAmountCancelModal } from './SplitAmountCancelModal'
 
 const today = new Date().getDate()
+
+const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx }) => {
+  const cellRef = useRef(null)
+  const isOpened = openCalendarIdx === i
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
+
+  useEffect(() => {
+    if (isOpened && cellRef.current) {
+      const rect = cellRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left
+      })
+    }
+  }, [isOpened])
+
+  return (
+    <div className="date-cell-wrapper" ref={cellRef}>
+      <div className="date-cell" onClick={(e) => {
+        e.stopPropagation()
+        setOpenCalendarIdx(isOpened ? null : i)
+      }}>
+        <CalendarCellIcon />
+        <span className="date-value">{formatDateRu(row.calculationDate)}</span>
+      </div>
+      {isOpened && typeof window !== 'undefined' && createPortal(
+        <div
+          className="date-calendar-popover"
+          style={{ position: 'fixed', top: dropdownPosition.top, left: dropdownPosition.left, zIndex: 9999 }}
+          onClick={e => e.stopPropagation()}
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <CustomCalendar
+            value={new Date(row.calculationDate)}
+            onChange={(value) => {
+              dispatch({ type: 'UPDATE', index: i, field: 'calculationDate', value: value })
+              setOpenCalendarIdx(null)
+            }}
+            format="DD-MM-YYYY"
+          />
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
 
 // ── Main component ──────────────────────────────────────────
 const SplitAmount = ({ amount, counterAgents,
@@ -138,9 +185,6 @@ const SplitAmount = ({ amount, counterAgents,
                     const rowDate = row.calculationDate ? Number(row.calculationDate?.split(' ')?.[0]) : today;
                     const isFutureDate = rowDate ? rowDate > today : false;
 
-                    console.log('rowDate', row.calculationDate)
-                    console.log('today', today)
-                    console.log('isFutureDate', isFutureDate)
 
                     return (
                       <tr key={i} className="split-tr">
@@ -148,27 +192,13 @@ const SplitAmount = ({ amount, counterAgents,
                           <>
                             {/* Date cell */}
                             <td className="split-td col-date">
-
-                              <div className="date-cell-wrapper">
-                                <div className="date-cell" onClick={() => setOpenCalendarIdx(openCalendarIdx === i ? null : i)}>
-                                  <CalendarCellIcon />
-                                  <span className="date-value">{formatDateRu(row.calculationDate)}</span>
-                                </div>
-                                {openCalendarIdx === i && (
-                                  <div className="date-calendar-popover">
-                                    <CustomCalendar
-                                      value={new Date(row.calculationDate)}
-                                      onChange={(value) => {
-                                        dispatch({ type: 'UPDATE', index: i, field: 'calculationDate', value: value })
-                                        setOpenCalendarIdx(null)
-                                      }}
-                                      format="DD MMM, YYYY"
-                                    />
-                                  </div>
-                                )}
-                              </div>
-
-                            </td>
+                              <DateCell
+                                row={row}
+                                i={i}
+                                dispatch={dispatch}
+                                openCalendarIdx={openCalendarIdx}
+                                setOpenCalendarIdx={setOpenCalendarIdx}
+                              />                            </td>
                             {/* Confirm checkbox */}
                             <td className="split-td col-confirm">
                               <OperationCheckbox
@@ -193,6 +223,7 @@ const SplitAmount = ({ amount, counterAgents,
                                 valueKey="guid"
                                 className="grouped-select"
                                 dropdownClassName='grouped-select-dropdown'
+                                usePortal={true}
                               />
                             </div>
                           </td>
@@ -210,6 +241,7 @@ const SplitAmount = ({ amount, counterAgents,
                                 placeholder='Выберите статью...'
                                 className="TreeSelect"
                                 dropdownClassName="TreeSelectDropDown"
+                                usePortal={true}
                               />
                             </div>
                           </td>

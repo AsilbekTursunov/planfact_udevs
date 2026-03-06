@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import styles from './TreeSelect.module.scss'
 
@@ -150,13 +151,16 @@ export function TreeSelect({
   isLoadingMore = false,
   onSearch = null,
   searchDebounceMs = 500,
-  dropdownClassName = ""
+  dropdownClassName = "",
+  usePortal = false
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [expandedNodes, setExpandedNodes] = useState(new Set())
   const [isRoot, setIsRoot] = useState(!value)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
+  const [isPositioned, setIsPositioned] = useState(false)
   const dropdownRef = useRef(null)
   const buttonRef = useRef(null)
   const listRef = useRef(null)
@@ -203,11 +207,26 @@ export function TreeSelect({
       document.addEventListener('mousedown', handleClickOutside)
     }, 0)
 
+    // Update portal position
+    if (usePortal && isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      })
+      requestAnimationFrame(() => {
+        setIsPositioned(true)
+      })
+    } else if (!isOpen) {
+      setIsPositioned(false)
+    }
+
     return () => {
       clearTimeout(timeoutId)
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isOpen, search])
+  }, [isOpen, search, usePortal])
 
   // Handle search with debounce
   useEffect(() => {
@@ -409,7 +428,7 @@ export function TreeSelect({
   }, [value])
 
   return (
-    <div className={cn(styles.container, className)} ref={dropdownRef}>
+    <div className={cn(styles.container, className)} ref={!usePortal ? dropdownRef : null}>
       <button
         ref={buttonRef}
         id='tree-select-button'
@@ -446,9 +465,20 @@ export function TreeSelect({
         </div>
       </button>
 
-      {isOpen && (
+      {isOpen && (() => {
+        const dropdownContent = (
         <div
+            ref={usePortal ? dropdownRef : null}
           className={cn(styles.dropdown, dropdownClassName)}
+            style={usePortal ? {
+              position: 'fixed',
+              top: `${dropdownPosition.top}px`,
+              left: `${dropdownPosition.left}px`,
+              width: `${dropdownPosition.width}px`,
+              opacity: isPositioned ? 1 : 0,
+              visibility: isPositioned ? 'visible' : 'hidden',
+              zIndex: 9999
+            } : undefined}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         >
@@ -539,7 +569,12 @@ export function TreeSelect({
             )}
           </div>
         </div>
-      )}
+        )
+
+        return usePortal && typeof window !== 'undefined'
+          ? createPortal(dropdownContent, document.body)
+          : dropdownContent
+      })()}
     </div>
   )
 }

@@ -3,14 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
-import { useQueryClient } from '@tanstack/react-query'
 import { useCreateLegalEntity, useUpdateLegalEntity } from '@/hooks/useDashboard'
 import styles from './CreateLegalEntityModal.module.scss'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 
 export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = null }) {
-  const queryClient = useQueryClient()
   const createMutation = useCreateLegalEntity()
   const updateMutation = useUpdateLegalEntity()
   const isEdit = !!legalEntity && !!legalEntity.guid
@@ -145,7 +143,6 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.header}>
           <h3 id="modal-title" className={styles.title}>

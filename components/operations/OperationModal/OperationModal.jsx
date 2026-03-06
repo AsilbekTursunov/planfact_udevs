@@ -24,7 +24,6 @@ import SplitAmount from './SplitAmount'
 import SentMessages from './SentMessages'
 import { appStore } from '../../../store/app.store'
 import { observer } from 'mobx-react-lite'
-import { TruckElectric } from 'lucide-react'
 import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
 
 const today = new Date().toISOString().split('T')[0]
@@ -32,7 +31,7 @@ const todayDate = new Date().getDate()
 
 const emptyRow = (preselectedCounterparty = '') => ({
 	calculationDate: today,
-	isCalculationCommitted: TruckElectric,
+	isCalculationCommitted: true,
 	contrAgentId: preselectedCounterparty,
 	operationCategoryId: '',
 	value: '',
@@ -141,7 +140,7 @@ const OperationModal = observer(({
 
 	// Current active tab
 	const type = operationData?.type == 'Начисление' ? 'accrual' : operationData?.type == 'Поступление' ? 'income' : operationData?.type == 'Перемещение' ? 'transfer' : 'payment'
-	const [activeTab, setActiveTab] = useState(type)
+	const [activeTab, setActiveTab] = useState(isNew ? 'income' : type)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
 
@@ -506,8 +505,6 @@ const OperationModal = observer(({
 		}))
 	}, [bankAccountsData, legalEntitiesData, currenciesData])
 
-
-
 	// Get currency from selected account
 	const getAccountCurrency = accountGuid => {
 		if (!accountGuid) return null
@@ -746,14 +743,14 @@ const OperationModal = observer(({
 
 			// For update, add guid and preserve original creation date
 			if (isUpdate && updateGuid) {
-				requestData.guid = updateGuid
-				console.log('Adding guid to request:', updateGuid)
+				requestData.guid = updateGuid 
 
 				// Keep original creation date for update
 				if (operationData.rawData?.data_sozdaniya) {
 					requestData.data_sozdaniya = operationData.rawData.data_sozdaniya
 				}
 			}
+
 
 			const result = await createUcodeOperation({ method: isUpdate ? 'update_operation' : 'create_operation', data: requestData })
 
@@ -840,7 +837,6 @@ const OperationModal = observer(({
 					styles.modal,
 					isOpening ? styles.opening : isClosing ? styles.closing : styles.open,
 				)}
-				onClick={e => e.stopPropagation()}
 			>
 				<div className={styles.modalContent}>
 					{/* Header */}
