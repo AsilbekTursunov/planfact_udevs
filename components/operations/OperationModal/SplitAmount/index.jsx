@@ -53,7 +53,7 @@ const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx }) => 
               dispatch({ type: 'UPDATE', index: i, field: 'calculationDate', value: value })
               setOpenCalendarIdx(null)
             }}
-            format="DD-MM-YYYY"
+            format="YYYY-MM-DD"
           />
         </div>,
         document.body

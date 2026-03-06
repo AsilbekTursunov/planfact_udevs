@@ -25,7 +25,7 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency }) => {
         <CreditIcon />
       )}
       <span className={styles.amountText}>{tab == "Перемещение" ? <>
-        <div className={`${styles.doubleAccount} ${confirmed && styles.confirmed}`}>
+        <div className={`${styles.doubleAccount}`}>
           <span className=''>-{amount} <span className={styles.currency}>{
             currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
           <span className=''>+{amount} <span className={styles.currency}>{

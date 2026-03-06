@@ -511,8 +511,8 @@
   }
 
   &.tableHeaderCellActions {
-    position: sticky;
-    right: 0;
+    // position: sticky;
+      // right: 0;
     background: linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%);
     border-left: none;
     box-shadow: none;
@@ -563,8 +563,8 @@
   }
 
   &.tableCellActions {
-    position: sticky;
-    right: 0;
+    // position: sticky;
+      // right: 0;
     background-color: inherit;
     border-left: 1px solid #e5e7eb;
     box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);

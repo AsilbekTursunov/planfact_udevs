@@ -159,8 +159,9 @@ export function TreeSelect({
   const [isSearching, setIsSearching] = useState(false)
   const [expandedNodes, setExpandedNodes] = useState(new Set())
   const [isRoot, setIsRoot] = useState(!value)
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 'auto', bottom: 'auto', left: 0, width: 0 })
   const [isPositioned, setIsPositioned] = useState(false)
+  const [openUpwards, setOpenUpwards] = useState(false)
   const dropdownRef = useRef(null)
   const buttonRef = useRef(null)
   const listRef = useRef(null)
@@ -208,16 +209,35 @@ export function TreeSelect({
     }, 0)
 
     // Update portal position
-    if (usePortal && isOpen && buttonRef.current) {
+    if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
-      setDropdownPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width
-      })
-      requestAnimationFrame(() => {
-        setIsPositioned(true)
-      })
+      const windowHeight = window.innerHeight
+      const spaceBelow = windowHeight - rect.bottom
+      const spaceAbove = rect.top
+
+      const shouldOpenUpwards = spaceBelow < 350 && spaceAbove > spaceBelow
+      setOpenUpwards(shouldOpenUpwards)
+
+      if (usePortal) {
+        if (shouldOpenUpwards) {
+          setDropdownPosition({
+            bottom: windowHeight - rect.top + 4,
+            top: 'auto',
+            left: rect.left,
+            width: rect.width
+          })
+        } else {
+          setDropdownPosition({
+            top: rect.bottom + 4,
+            bottom: 'auto',
+            left: rect.left,
+            width: rect.width
+          })
+        }
+        requestAnimationFrame(() => {
+          setIsPositioned(true)
+        })
+      }
     } else if (!isOpen) {
       setIsPositioned(false)
     }
@@ -472,13 +492,19 @@ export function TreeSelect({
           className={cn(styles.dropdown, dropdownClassName)}
             style={usePortal ? {
               position: 'fixed',
-              top: `${dropdownPosition.top}px`,
-              left: `${dropdownPosition.left}px`,
-              width: `${dropdownPosition.width}px`,
-              opacity: isPositioned ? 1 : 0,
-              visibility: isPositioned ? 'visible' : 'hidden',
-              zIndex: 9999
-            } : undefined}
+            top: dropdownPosition.top !== 'auto' ? `${dropdownPosition.top}px` : 'auto',
+            bottom: dropdownPosition.bottom !== 'auto' ? `${dropdownPosition.bottom}px` : 'auto',
+            left: `${dropdownPosition.left}px`,
+            width: `${dropdownPosition.width}px`,
+            opacity: isPositioned ? 1 : 0,
+            visibility: isPositioned ? 'visible' : 'hidden',
+            zIndex: 9999
+          } : {
+            bottom: openUpwards ? '100%' : 'auto',
+            top: openUpwards ? 'auto' : '100%',
+            marginBottom: openUpwards ? '0.25rem' : '0',
+            marginTop: openUpwards ? '0' : '0.25rem'
+          }}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
         >

@@ -37,9 +37,9 @@
   color: $gray-400;
   font-weight: 400;
 
-  .confirmed {
-    color: $primary-dark;
-  }
+}
+.confirmed {
+  color: $primary-dark !important;
 }
 .debitIcon,
 .creditIcon { 

@@ -19,6 +19,7 @@ import styles from './operations.module.scss'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
 import { formatDate } from '../../../utils/formatDate'
 import { useBankAccountsPlanFact } from '../../../hooks/useDashboard'
+import CustomTreeSelect from '../../../components/shared/TreeSelect'
 
 export default function OperationsPage() {
 	// Block body scroll for this page only
@@ -302,7 +303,7 @@ export default function OperationsPage() {
 		today.setHours(0, 0, 0, 0)
 
 		return filteredOperationsItems.map((item, index) => {
-			const operationDate = item.data_operatsii ? new Date(item.data_operatsii) : null
+			const operationDate = item.data_nachisleniya ? new Date(item.data_nachisleniya) : null
 			const accrualDate = item.data_nachisleniya ? new Date(item.data_nachisleniya) : null
 
 			// Determine section based on date
@@ -753,7 +754,7 @@ export default function OperationsPage() {
 					selectedCount={selectedOperations.length}
 					searchQuery={searchQuery}
 					onSearchChange={setSearchQuery}
-				/>
+				/> 
 
 				{/* Table */}
 				<div className={styles.tableArea} style={{ position: 'relative' }}>

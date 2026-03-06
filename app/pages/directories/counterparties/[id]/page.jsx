@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontal, PenLine, Archive, Trash2 } from 'lucide-react'
-import { useCounterpartyById, useUcodeRequestMutation } from '@/hooks/useDashboard'
+import { MoreHorizontal, PenLine, Trash2 } from 'lucide-react'
+import {  useUcodeRequestMutation } from '@/hooks/useDashboard'
 import { useLegalEntitiesPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
@@ -33,8 +33,11 @@ export default function KontragentDetailPage() {
   const counterpartyGuid = params?.id
   const ucodeRequestMutation = useUcodeRequestMutation()
 
-  const [dateRange, setDateRange] = useState(null)
-  const [calculationMethod, setCalculationMethod] = useState('Cashflow')
+  const [filters, setFilters] = useState({
+    operationDateStart: "",
+    operationDateEnd: "",
+    calculationMethod: "Cashflow",
+  }) 
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -60,6 +63,8 @@ export default function KontragentDetailPage() {
   const [selectedLegalEntities, setSelectedLegalEntities] = useState([])
   const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
   const [isCreateOperationModalOpen, setIsCreateOperationModalOpen] = useState(false)
+  const [creatingOperation, setCreatingOperation] = useState({ isNew: true })
+  const [createModalType, setCreateModalType] = useState('income')
   const [isCreateModalClosing, setIsCreateModalClosing] = useState(false)
   const [isCreateModalOpening, setIsCreateModalOpening] = useState(false)
   const [selectedOperations, setSelectedOperations] = useState([])
@@ -72,8 +77,24 @@ export default function KontragentDetailPage() {
   const deleteOperationMutation = useDeleteOperation()
   const queryClient = useQueryClient()
 
+  const filterCounterParty = useMemo(() => {
+    return {
+      guid: counterpartyGuid,
+      operationDateStart: filters.operationDateStart,
+      operationDateEnd: filters.operationDateEnd,
+      calculationMethod: filters.calculationMethod,
+    }
+  }, [counterpartyGuid, filters])
+
   // Fetch counterparty data by GUID using get_counterparty_by_id
-  const { data: counterpartyData, isLoading: isLoadingCounterparty, error: counterpartyError } = useCounterpartyById(counterpartyGuid)
+  const { data: counterpartyData, isLoading: isLoadingCounterparty, error: counterpartyError } = useUcodeRequestQuery({
+    method: 'get_counterparty_by_id',
+    data: filterCounterParty,
+    skip: !counterpartyGuid,
+    // querySetting: {
+    //   select: (data) => data.data.data
+    // }
+  })
 
   // Fetch data for filters
   const { data: legalEntitiesData } = useLegalEntitiesPlanFact()
@@ -116,8 +137,6 @@ export default function KontragentDetailPage() {
   const counterpartyOperations = useMemo(() => {
     return responseData?.operations || []
   }, [responseData])
- 
-
 
   // Use operations from counterparty response directly
   const operations = useMemo(() => {
@@ -264,7 +283,7 @@ export default function KontragentDetailPage() {
   }, [counterparty])
 
   // Calculate stats from operations
-  const stats = useMemo(() => { 
+  const stats = useMemo(() => {
     let receipts = 0
     let payments = 0
     let receiptsCount = 0
@@ -347,12 +366,51 @@ export default function KontragentDetailPage() {
     }, 50)
   }
 
+  const handleCopyOperation = (operation) => {
+    const copiedOperation = { ...operation };
+
+    delete copiedOperation.guid;
+    delete copiedOperation.id;
+
+    if (copiedOperation.rawData) {
+      copiedOperation.rawData = { ...copiedOperation.rawData };
+      delete copiedOperation.rawData.guid;
+    }
+
+    setCreatingOperation({
+      ...copiedOperation,
+      id: 'new',
+      isNew: true,
+      isCopy: true
+    })
+
+    let modalType = 'payment'
+    if (operation.typeCategory === 'transfer') {
+      modalType = 'accrual'
+    } else if (operation.typeCategory === 'out') {
+      modalType = 'payment'
+    } else if (operation.typeCategory === 'in') {
+      modalType = 'income'
+    }
+
+    setCreateModalType(modalType)
+    setIsCreateOperationModalOpen(true)
+    setIsCreateModalClosing(false)
+    setIsCreateModalOpening(true)
+
+    setTimeout(() => {
+      setIsCreateModalOpening(false)
+    }, 50)
+  }
+
   const handleCloseCreateModal = () => {
     setIsCreateModalClosing(true)
     setTimeout(() => {
       setIsCreateOperationModalOpen(false)
       setIsCreateModalClosing(false)
-      setIsCreateModalOpening(false)
+      setIsCreateModalOpening(false) 
+      setCreatingOperation({ isNew: true })
+      setCreateModalType('income')
     }, 300)
   }
 
@@ -560,17 +618,25 @@ export default function KontragentDetailPage() {
 
             <div className={styles.headerFilters}>
               <NewDateRangeComponent
-                value={dateRange}
+                value={filters.dateRange}
                 onChange={(range) => {
-                  setDateRange(range)
+                  const startDate = range?.start ? formatDate(new Date(range.start)) : ''
+                  const endDate = range?.end ? formatDate(new Date(range.end)) : ''
+                  setFilters((prev) => ({
+                    ...prev,
+                    operationDateStart: startDate,
+                    operationDateEnd: endDate,
+                    dateRange: range,
+                  }))
                 }}
               />
               <div style={{ width: '250px' }}>
                 <Select
                   instanceId="counterparty-detail-calculation-method"
                   options={calculationOptions}
-                  value={calculationOptions.find(opt => opt.value === calculationMethod) || null}
-                  onChange={(selected) => setCalculationMethod(selected ? selected.value : 'Cashflow')}
+                  value={calculationOptions.find(opt => opt.value === filters?.calculationMethod) || null}
+                  onChange={(selected) =>
+                    setFilters(prev => ({ ...prev, calculationMethod: selected ? selected.value : 'Cashflow' }))}
                   placeholder="Выбирать"
                   isSearchable={false}
                   isClearable={false}
@@ -727,6 +793,8 @@ export default function KontragentDetailPage() {
                 <button
                   className={styles.createButton}
                   onClick={() => {
+                    setCreatingOperation({ isNew: true })
+                    setCreateModalType('income')
                     setIsCreateOperationModalOpen(true)
                     setIsCreateModalClosing(false)
                     setIsCreateModalOpening(true)
@@ -949,9 +1017,9 @@ export default function KontragentDetailPage() {
                                     <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
                                   </td>
                                   <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
-                                    <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
-                                  </td>
-                                </tr>
+                              <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} onCopy={handleCopyOperation} />
+                            </td>
+                          </tr>
 
                                 {/* Detail rows */}
                                 {isExpanded && detailData.map((detail) => (
@@ -1057,9 +1125,9 @@ export default function KontragentDetailPage() {
                                     <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
                                   </td>
                                   <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
-                                    <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} />
-                                  </td>
-                                </tr>
+                              <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} onCopy={handleCopyOperation} />
+                            </td>
+                          </tr>
 
                                 {/* Detail rows */}
                                 {isExpanded && detailData.map((detail) => (
@@ -1133,8 +1201,8 @@ export default function KontragentDetailPage() {
       {/* Create Operation Modal */}
       {isCreateOperationModalOpen && (
         <OperationModal
-          operation={{ isNew: true }}
-          modalType="income"
+          operation={creatingOperation}
+          modalType={createModalType}
           isClosing={isCreateModalClosing}
           isOpening={isCreateModalOpening}
           onClose={handleCloseCreateModal}

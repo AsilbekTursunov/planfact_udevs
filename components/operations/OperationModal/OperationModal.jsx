@@ -138,9 +138,11 @@ const OperationModal = observer(({
 	// Determine if this is create or update
 	const isUpdate = !isNew && !operation?.isCopy && (operationData?.rawData?.guid || operationData?.guid)
 
+	// console.log('operationData', operationData)
+
 	// Current active tab
-	const type = operationData?.type == 'Начисление' ? 'accrual' : operationData?.type == 'Поступление' ? 'income' : operationData?.type == 'Перемещение' ? 'transfer' : 'payment'
-	const [activeTab, setActiveTab] = useState(isNew ? 'income' : type)
+	const type = operationData?.typeLabel == 'Начисление' ? 'accrual' : operationData?.typeLabel == 'Поступление' ? 'income' : operationData?.typeLabel == 'Перемещение' ? 'transfer' : 'payment'
+	const [activeTab, setActiveTab] = useState(type)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
 
@@ -580,9 +582,10 @@ const OperationModal = observer(({
 				if (!formData.toAccount) {
 					validationErrors.toAccount = 'Не выбран счет и юрлицо'
 				}
-				if (!formData.toAmount || parseFloat(formData.toAmount) <= 0) {
-					validationErrors.toAmount = 'Не указана сумма'
-				}
+				// if (!formData.toAmount || parseFloat(formData.toAmount) <= 0) {
+				// 	validationErrors.toAmount = 'Не указана сумма'
+				// }
+
 				if (!formData.purpose || formData.purpose.trim() === '') {
 					validationErrors.purpose = 'Укажите назначение платежа'
 				}
@@ -743,7 +746,7 @@ const OperationModal = observer(({
 
 			// For update, add guid and preserve original creation date
 			if (isUpdate && updateGuid) {
-				requestData.guid = updateGuid 
+				requestData.guid = updateGuid
 
 				// Keep original creation date for update
 				if (operationData.rawData?.data_sozdaniya) {

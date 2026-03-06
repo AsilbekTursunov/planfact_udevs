@@ -40,7 +40,7 @@ const OperationTableRow = ({
       <td className={cn(styles.tableCell, styles.dateCell)}>{op.operationDate || ''}</td>
       <td className={cn(styles.tableCell, styles.accountCell)}>
         {op?.type == "Перемещение" ? <>
-          <div className={`${styles.doubleAccount} ${op.paymentConfirmed && styles.confirmed}`}>
+          <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
             <span>{op.bankAccount}</span>
             <span>{op.bankAccount2}</span>
           </div>
@@ -106,7 +106,7 @@ const OperationTableRow = ({
         {op.counterparty || ''}
       </td>
       <td className={cn(styles.tableCell, styles.statusCell)}>
-        {op?.type == "Перемещение" ? <div className={`${styles.doubleAccount} ${op.paymentConfirmed && styles.confirmed}`}>
+        {op?.type == "Перемещение" ? <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
           <span>[Перемещение - списание]</span>
           <span>[Перемещение - зачисление]</span>
         </div> : op.chartOfAccounts || ''}
