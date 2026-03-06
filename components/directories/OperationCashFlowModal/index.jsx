@@ -141,14 +141,11 @@ const OperationCashFlowModal = ({ isOpen, onClose, data, selectedMonth }) => {
                     
                     const isIncome = isExpenseCategory ? false : value >= 0
                     const rowId = row.id ?? idx
-                    
-                    // Add indentation based on depth
-                    const indent = (row._depth || 0) * 20
 
                     return (
                       <tr key={rowId} className={styles.tableRow}>
                         {/* Дата */}
-                        <td className={styles.tdDate} style={{ paddingLeft: `${16 + indent}px` }}>
+                        <td className={styles.tdDate}>
                           <span>{periodLabel}</span>
                         </td>
 
