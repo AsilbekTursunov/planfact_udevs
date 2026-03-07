@@ -21,7 +21,8 @@ import EditCounterpartyModal from '@/components/directories/EditCounterpartyModa
 import OperationModal from '../../../../../components/operations/OperationModal/OperationModal'
 import { useUcodeRequestQuery } from '../../../../../hooks/useDashboard'
 import { formatDate } from '../../../../../utils/formatDate'
-import { ExpendClose, ExpendOpen } from '../../../../../constants/icons'
+import { formatDateRu } from '../../../../../utils/helpers'
+import OperationTableRow from '../../../../../components/operations/TableRow'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -141,7 +142,7 @@ export default function KontragentDetailPage() {
     return responseData?.operations || []
   }, [responseData])
 
-  console.log('counterpartyOperations', counterpartyOperations)
+  console.log(counterpartyOperations)
 
   // Use operations from counterparty response directly
   const operations = useMemo(() => {
@@ -187,7 +188,6 @@ export default function KontragentDetailPage() {
       // Format amount
       const amount = item.summa || 0
       const amountFormatted = amount.toLocaleString('ru-RU')
-      const amountSign = type === 'in' ? '+' : type === 'out' ? '-' : ''
 
       // Determine section (today vs yesterday/earlier)
       const today = new Date()
@@ -200,6 +200,9 @@ export default function KontragentDetailPage() {
         id: item.guid || index,
         guid: item.guid,
         date: formatDate(operationDate),
+        accrualDate: formatDateRu(item?.data_nachisleniya),
+        operationDate: formatDateRu(operationDate),
+        paymentConfirmed: item.oplata_podtverzhdena,
         account: item.my_accounts_name || item.bank_accounts_id_data?.nazvanie || '',
         type: type,
         typeCategory: type,
@@ -210,6 +213,13 @@ export default function KontragentDetailPage() {
         deal: '',
         amount: amountFormatted,
         amountRaw: amount,
+        chartOfAccounts: item.chart_of_accounts_id_data?.nazvanie || item.chart_of_accounts_name || '',
+        chartOfAccountsId: item.chart_of_accounts_id || null,
+        bankAccount: item.my_accounts_name || '',
+        bankAccount2: item.my_accounts_name_2 || '',
+        bankAccountId: item.my_accounts_id || null,
+        counterparty: item.counterparties_name || '',
+        counterpartyId: item.counterparties_id || null,
         paymentConfirmed: item.oplata_podtverzhdena,
         payment_confirmed: item.payment_confirmed !== undefined
           ? item.payment_confirmed
@@ -219,10 +229,43 @@ export default function KontragentDetailPage() {
           : false,
         currency: item.currenies_kod || '',
         section: isToday ? 'today' : 'yesterday',
-        operationParts: counterparty?.operation_parts,
+        operationParts: item?.operation_parts?.map(part => ({
+          ...part,
+          tip: part.tip?.[0],
+          typeCategory: part.tip?.[0] === 'Поступление' ? 'in' : part.tip?.[0] === 'Выплата' ? 'out' : 'transfer',
+          amount: part?.summa?.toLocaleString('ru-RU'),
+          amountFormatted: part.summa.toLocaleString('ru-RU'),
+          currency: part.currenies_kod || part.currenies_id_data?.nazvanie || '',
+          currencyId: part.currenies_id || null,
+          description: part.opisanie || '',
+          chartOfAccounts: part.chart_of_accounts_id_data?.nazvanie || part.chart_of_accounts_name || '',
+          chartOfAccountsId: part.chart_of_accounts_id || null,
+          bankAccount: part.my_accounts_name || '',
+          bankAccount2: part.my_accounts_name_2 || '',
+          bankAccountId: part.my_accounts_id || null,
+          counterparty: part.counterparties_name || '',
+          counterpartyId: part.counterparties_id || null,
+          data_nachisleniya: part?.data_nachisleniya,
+          accrualDate: formatDateRu(part?.data_nachisleniya),
+          operationDate: formatDateRu(part?.data_operatsii),
+          createdAt: formatDate(part.data_sozdaniya ? new Date(part.data_sozdaniya) : null),
+          createdAtRaw: part.data_sozdaniya,
+          updatedAt: formatDate(part.data_obnovleniya ? new Date(part.data_obnovleniya) : null),
+          updatedAtRaw: part.data_obnovleniya,
+          section: isToday ? 'today' : 'yesterday',
+          payment_confirmed: part.payment_confirmed !== undefined
+            ? part.payment_confirmed
+            : (part.oplata_podtverzhdena !== undefined ? part.oplata_podtverzhdena : false),
+          payment_accrual: part.payment_accrual !== undefined
+            ? part.payment_accrual
+            : false,
+        })),
+        rawData: item
       }
     })
   }, [counterpartyOperations])
+
+  console.log('operations', operations)
 
   const filteredOperations = useMemo(() => {
     let result = operations;
@@ -963,99 +1006,19 @@ export default function KontragentDetailPage() {
                               </td>
                             </tr>
                           )}
-                          {filteredOperations.filter(op => op.section === 'today').map((op, index) => {
-                            const isExpanded = expandedRows[op.id]
-                      const detailData = isExpanded ? getDetailData(op) : []
-
-                      return (
-                        <Fragment key={op.id}>
-                          <tr
-                            className={styles.tableRow}
-                            onClick={() => handleEditOperation(op)}
-                          >
-                            <td className={cn(styles.tableCell, styles.tableCellIndex)}>{index + 1}</td>
-                            <td className={styles.tableCell}>
-                              <div className={styles.dateCell}>
-                                <button
-                                  className={styles.expandButton}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    toggleRowExpansion(op.id)
-                                  }}
-                                >
-                                  {isExpanded ? <ExpendClose /> : <ExpendOpen />}
-                                </button>
-                                <span>{op.date}</span>
-                              </div>
-                            </td>
-                            <td className={styles.tableCell}>{op.account}</td>
-                            <td className={styles.tableCell}>
-                              <span className={styles.typeBadge}>
-                                {op.typeLabel === 'Поступление' ? (
-                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                ) : op.typeLabel === 'Выплата' ? (
-                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                ) : (
-                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                )}
-                              </span>
-                            </td>
-                            <td className={styles.tableCell}>{op.counterparty}</td>
-                            <td className={styles.tableCell}>{op.category}</td>
-                            <td className={styles.tableCell}>{op.project}</td>
-                            <td className={cn(styles.tableCell, styles.amountCell,
-                              op.typeCategory === 'in' && styles.positive,
-                              op.typeCategory === 'out' && styles.negative,
-                              op.typeCategory === 'transfer' && styles.neutral
-                            )}>
-                              <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
-                            </td>
-                            <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
-                              <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} onCopy={handleCopyOperation} />
-                            </td>
-                          </tr>
-
-                          {/* Detail rows */}
-                          {isExpanded && detailData.map((detail) => (
-                            <tr key={`${op.id}-detail-${detail.id}`} className={styles.detailRow}>
-                              <td className={cn(styles.tableCell, styles.tableCellIndex)}></td>
-                              <td className={styles.tableCell}>
-                                <div className={styles.detailDateCell}>
-                                  {detail.date}
-                                </div>
-                              </td>
-                              <td className={styles.tableCell}>{detail.account}</td>
-                              <td className={styles.tableCell}>
-                                <span className={styles.typeBadge}>
-                                  {detail.typeLabel === 'Поступление' ? (
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  ) : (
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  )}
-                                </span>
-                              </td>
-                              <td className={styles.tableCell}>{detail.counterparty}</td>
-                              <td className={styles.tableCell}>{detail.category}</td>
-                              <td className={styles.tableCell}></td>
-                              <td className={cn(styles.tableCell, styles.amountCell, detail.type === 'in' ? styles.positive : styles.negative)}>
-                                <span className={styles.detailAmount}>{detail.amount}</span>
-                              </td>
-                              <td className={cn(styles.tableCell, styles.tableCellActions)}></td>
-                            </tr>
-                          ))}
-                        </Fragment>
-                      )
-                    })}
+                          {filteredOperations.filter(op => op.section === 'today').map((op, index) => (
+                            <OperationTableRow
+                              key={op.id}
+                              op={op}
+                              showIndex={index + 1}
+                              selectedOperations={selectedOperations}
+                              openOperationModal={handleEditOperation}
+                              handleEditOperation={handleEditOperation}
+                              handleDeleteOperation={handleDeleteOperation}
+                              handleCopyOperation={handleCopyOperation}
+                            />
+                          )
+                          )}
 
                           {/* Вчера и ранее — Section Header */}
                           {filteredOperations.filter(op => op.section === 'yesterday').length > 0 && (
@@ -1065,105 +1028,17 @@ export default function KontragentDetailPage() {
                         </td>
                             </tr>
                           )}
-                          {filteredOperations.filter(op => op.section === 'yesterday').map((op, index) => {
-                            const isExpanded = expandedRows[op.id]
-                      const detailData = isExpanded ? getDetailData(op) : []
-
-                      return (
-                        <Fragment key={op.id}>
-                          <tr
-                            className={styles.tableRow}
-                            onClick={() => handleEditOperation(op)}
-                          >
-                            <td className={cn(styles.tableCell, styles.tableCellIndex)}>{index + 1}</td>
-                            <td className={styles.tableCell}>
-                              <div className={styles.dateCell}>
-                                <button
-                                  className={styles.expandButton}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    toggleRowExpansion(op.id)
-                                  }}
-                                >
-                                  <svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="1.42383" y="0.5" width="13" height="13" rx="2.5" stroke="#999999"></rect>
-                                    <path d="M10.9223 6.87934H4.92535" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
-                                    {!isExpanded && (
-                                      <path d="M7.92383 3.88086V9.87782" stroke="#999999" strokeLinecap="round" strokeLinejoin="round"></path>
-                                    )}
-                                  </svg>
-                                </button>
-                                <span>{op.date}</span>
-                              </div>
-                            </td>
-                            <td className={styles.tableCell}>{op.account}</td>
-                            <td className={styles.tableCell}>
-                              <span className={styles.typeBadge}>
-                                {op.typeLabel === 'Поступление' ? (
-                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                ) : op.typeLabel === 'Выплата' ? (
-                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                ) : (
-                                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667" stroke="#1D2939" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                )}
-                              </span>
-                            </td>
-                            <td className={styles.tableCell}>{op.counterparty}</td>
-                            <td className={styles.tableCell}>{op.category}</td>
-                            <td className={styles.tableCell}>{op.project}</td>
-                            <td className={cn(styles.tableCell, styles.amountCell,
-                              op.typeCategory === 'in' && styles.positive,
-                              op.typeCategory === 'out' && styles.negative,
-                              op.typeCategory === 'transfer' && styles.neutral
-                            )}>
-                              <PriceStatus amount={op.amount} tab={op.typeLabel} type={op.typeCategory} confirmed={op.payment_confirmed} accrual={op.payment_accrual} currency={op.currency} />
-                            </td>
-                            <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={e => e.stopPropagation()}>
-                              <OperationMenu operation={op} onEdit={handleEditOperation} onDelete={handleDeleteOperation} onCopy={handleCopyOperation} />
-                            </td>
-                          </tr>
-
-                          {/* Detail rows */}
-                          {isExpanded && detailData.map((detail) => (
-                            <tr key={`${op.id}-detail-${detail.id}`} className={styles.detailRow}>
-                              <td className={cn(styles.tableCell, styles.tableCellIndex)}></td>
-                              <td className={styles.tableCell}>
-                                <div className={styles.detailDateCell}>
-                                  {detail.date}
-                                </div>
-                              </td>
-                              <td className={styles.tableCell}>{detail.account}</td>
-                              <td className={styles.tableCell}>
-                                <span className={styles.typeBadge}>
-                                  {detail.typeLabel === 'Поступление' ? (
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675" stroke="#065986" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  ) : (
-                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15" stroke="#F04438" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  )}
-                                </span>
-                              </td>
-                              <td className={styles.tableCell}>{detail.counterparty}</td>
-                              <td className={styles.tableCell}>{detail.category}</td>
-                              <td className={styles.tableCell}></td>
-                              <td className={cn(styles.tableCell, styles.amountCell, detail.type === 'in' ? styles.positive : styles.negative)}>
-                                <span className={styles.detailAmount}>{detail.amount}</span>
-                              </td>
-                              <td className={cn(styles.tableCell, styles.tableCellActions)}></td>
-                            </tr>
-                          ))}
-                        </Fragment>
-                      )
-                    })}
+                          {filteredOperations.filter(op => op.section === 'yesterday').map((op, index) =>
+                            <OperationTableRow
+                              key={op.id}
+                              op={op}
+                              showIndex={index + 1}
+                              selectedOperations={selectedOperations}
+                              openOperationModal={handleEditOperation}
+                              handleEditOperation={handleEditOperation}
+                              handleDeleteOperation={handleDeleteOperation}
+                              handleCopyOperation={handleCopyOperation}
+                            />)}
                   </tbody>
                 </table>
               </div>

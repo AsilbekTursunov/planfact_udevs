@@ -14,8 +14,11 @@ const OperationTableRow = ({
   handleEditOperation,
   handleDeleteOperation,
   handleCopyOperation,
+  showIndex
 }) => {
-  const [open, setOpen] = useState(false) 
+  const [open, setOpen] = useState(false)
+
+  console.log('op', op)
 
   return (
     <>
@@ -35,10 +38,10 @@ const OperationTableRow = ({
           className={cn(styles.tableCell, styles.tableCellIndex)}
           onClick={e => e.stopPropagation()}
         >
-          <OperationCheckbox
+          {toggleOperation ? <OperationCheckbox
             checked={selectedOperations.includes(op.id)}
             onChange={() => toggleOperation(op.id)}
-          />
+          /> : <span>{showIndex}</span>}
         </td>
         {/* ExpendClose
 ExpendOpen */}

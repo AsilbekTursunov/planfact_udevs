@@ -1,6 +1,6 @@
 
 'use client'
-import React, { useReducer } from 'react'
+import React, { useReducer, useRef } from 'react'
 import { useState, useMemo, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
@@ -52,6 +52,26 @@ function rowsReducer(state, action) {
 				const isFuture = pickDate > todayDate
 				return state.map((row, i) =>
 					i === action.index ? { ...row, [action.field]: action.value, isCalculationCommitted: isFuture ? false : true } : row
+				)
+			}
+			if (action.field === 'value' && action.amount) {
+				const numAmount = Number(String(action.amount).replace(/\s/g, ''))
+				let percent = ''
+				if (numAmount > 0 && action.value !== '') {
+					percent = String(((Number(action.value) / numAmount) * 100).toFixed(2))
+				}
+				return state.map((row, i) =>
+					i === action.index ? { ...row, value: action.value, percent } : row
+				)
+			}
+			if (action.field === 'percent' && action.amount) {
+				const numAmount = Number(String(action.amount).replace(/\s/g, ''))
+				let value = ''
+				if (numAmount > 0 && action.value !== '') {
+					value = String(((Number(action.value) / 100) * numAmount).toFixed(2))
+				}
+				return state.map((row, i) =>
+					i === action.index ? { ...row, percent: action.value, value } : row
 				)
 			}
 			return state.map((row, i) =>
@@ -130,7 +150,6 @@ const OperationModal = observer(({
 				rawData: fullOperationData.data.data.data
 			}
 		}
-		console.log('Using passed operation data:', operation)
 		return operation
 	}, [isNew, operation, fullOperationData])
 
@@ -156,25 +175,26 @@ const OperationModal = observer(({
 	const showStatya = has('Статья')
 
 
-	const calculatePercent = (amount) => {
-		const totaloperationPartsLength = operation.operationParts?.length
-		return Number((amount * totaloperationPartsLength) / 100).toFixed(2).toString()
+	const calculatePercent = (partAmount, totalAmount) => {
+		const numPart = Number(String(partAmount || 0).replace(/\s/g, ''))
+		const numTotal = Number(String(totalAmount || 0).replace(/\s/g, ''))
+		if (!numTotal || numTotal === 0) return '0.00'
+		return ((numPart / numTotal) * 100).toFixed(2)
 	}
-
-	console.log('operationData', operationData)
 
 	useEffect(() => {
 		if (operationData?.operationParts && operationData?.operationParts?.length > 0) {
+			const cleanNum = (val) => Number(String(val || 0).replace(/\s/g, ''))
+			const totalAmount = operationData.summa || operationData.amount || operationData.operationParts.reduce((sum, p) => sum + cleanNum(p.summa || p.amount || p.value), 0)
 			const newRows = operationData.operationParts.map(part => ({
 				calculationDate: part.data_nachisleniya ? part.data_nachisleniya : today,
 				isCalculationCommitted: part.payment_accrual !== undefined ? part.payment_accrual : true,
 				contrAgentId: part.counterparties_id || '',
 				operationCategoryId: part.chart_of_accounts_id || part.operationCategoryId || '',
-				value: part?.amount || part?.value || '',
-				percent: calculatePercent(part.summa || part?.amount),
+				value: String(part?.summa || part?.amount || part?.value || '').replace(/\s/g, ''),
+				percent: calculatePercent(part.summa || part?.amount || part?.value, totalAmount),
 			}))
-
-			console.log('newRows', newRows)
+ 
 			dispatch({ type: 'SET_ROWS', payload: newRows })
 
 			const newSelectedSplits = []
@@ -202,10 +222,8 @@ const OperationModal = observer(({
 	// Format number with spaces (1000000 -> 1 000 000)
 	const formatAmount = value => {
 		if (!value) return ''
-		// Remove all non-digit characters
 		const digitsOnly = value.toString().replace(/\D/g, '')
 		if (!digitsOnly) return ''
-		// Add spaces every 3 digits from the right
 		return digitsOnly.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 	}
 
@@ -349,9 +367,13 @@ const OperationModal = observer(({
 	const [errors, setErrors] = useState({})
 
 	// Clear errors and reset split rows when switching tabs
+	const prevActiveTab = useRef(activeTab)
 	useEffect(() => {
-		setErrors({})
-		dispatch({ type: 'RESET' })
+		if (prevActiveTab.current !== activeTab) {
+			prevActiveTab.current = activeTab
+			setErrors({})
+			dispatch({ type: 'RESET' })
+		}
 	}, [activeTab])
 
 	// Fetch data from API - using groups endpoint which includes children
@@ -504,6 +526,7 @@ const OperationModal = observer(({
 		// Default - show all
 		return rootItems.map(item => convertToTreeNode(item))
 	}, [chartOfAccountsData, activeTab])
+
 
 	const bankAccounts = useMemo(() => {
 		const items = bankAccountsData?.data?.data?.data || []
@@ -725,7 +748,6 @@ const OperationModal = observer(({
 				}
 			}
 
-
 			// Build request data object with all fields
 			const requestData = {
 				tip: [tipMap[activeTab] || 'Поступление'],
@@ -742,7 +764,6 @@ const OperationModal = observer(({
 			if (divivedAmounts.length > 0) {
 				requestData.items = divivedAmounts.map(item => ({ ...item, value: Number(item?.value), percent: Number(item?.percent), isCalculationCommitted: showDate ? item?.isCalculationCommitted : false }))
 			}
-
 
 			// Special handling for transfer operations
 			if (activeTab === 'transfer') {
@@ -773,7 +794,6 @@ const OperationModal = observer(({
 					requestData[key] = null
 				}
 			})
-
 
 			const updateGuid = (!isNew && !operation?.isCopy) ? (operationData?.rawData?.guid || operationData?.guid) : null
 
@@ -1057,6 +1077,7 @@ const OperationModal = observer(({
 													chartOfAccountsOptions={chartOfAccountsTree}
 													onChange={setdivivedAmounts}
 													rows={rows}
+													modalType={activeTab}
 													dispatch={dispatch}
 													emptyRow={emptyRow}
 													confirmAccural={formData.confirmAccrual}
@@ -1270,6 +1291,7 @@ const OperationModal = observer(({
 													chartOfAccountsOptions={chartOfAccountsTree}
 													onChange={setdivivedAmounts}
 													rows={rows}
+													modalType={activeTab}
 													dispatch={dispatch}
 													emptyRow={emptyRow}
 													confirmAccural={formData.confirmAccrual}

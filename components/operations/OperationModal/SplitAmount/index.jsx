@@ -63,7 +63,7 @@ const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx }) => 
 // ── Main component ──────────────────────────────────────────
 const SplitAmount = ({ amount, counterAgents,
   chartOfAccountsOptions, onChange, rows,
-  dispatch, selectedSplits, setSelectedSplits, confirmPayment, initiallyOpen = false }) => {
+  dispatch, selectedSplits, setSelectedSplits, confirmPayment, initiallyOpen = false, modalType }) => {
   const [open, setOpen] = useState(initiallyOpen)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
 
@@ -115,13 +115,15 @@ const SplitAmount = ({ amount, counterAgents,
     setIsCancelModalOpen(false)
   }
 
-  const handleCheckRow = (isFutureDate, index, check) => { 
+  const handleCheckRow = (isFutureDate, index, check) => {
     console.log(isFutureDate, index, check)
     if (isFutureDate) {
       return
     }
     dispatch({ type: 'UPDATE', index, field: 'isCalculationCommitted', value: check })
   }
+
+  console.log('rows', rows)
 
   return (
     <div className="split-wrapper">
@@ -253,8 +255,10 @@ const SplitAmount = ({ amount, counterAgents,
                         {/* Сумма */}
                         <td className="split-td col-value">
                           <div className="value-cell-wrapper">
-                            {showDate && !isFutureDate && !row.isCalculationCommitted && confirmPayment && <CreditIcon />}
-                            {showDate && !isFutureDate && row.isCalculationCommitted && !confirmPayment && <DebitIcon />}
+                            {modalType === 'income' && showDate && !isFutureDate && row.isCalculationCommitted && !confirmPayment && <DebitIcon />}
+                            {modalType === 'income' && showDate && !isFutureDate && !row.isCalculationCommitted && confirmPayment && <CreditIcon />}
+                            {modalType === 'payment' && showDate && !isFutureDate && !row.isCalculationCommitted && confirmPayment && <DebitIcon />}
+                            {modalType === 'payment' && showDate && !isFutureDate && row.isCalculationCommitted && !confirmPayment && <CreditIcon />}
 
                             <input
                               type="text"
@@ -263,12 +267,7 @@ const SplitAmount = ({ amount, counterAgents,
                               value={row.value}
                               onChange={e => {
                                 const val = e.target.value.replace(/\D/g, '');
-                                dispatch({ type: 'UPDATE', index: i, field: 'value', value: val });
-                                const numAmount = Number(String(amount).replace(/\s/g, ''));
-                                if (numAmount > 0) {
-                                  const perc = ((Number(val) / numAmount) * 100).toFixed(2);
-                                  dispatch({ type: 'UPDATE', index: i, field: 'percent', value: String(perc) });
-                                }
+                                dispatch({ type: 'UPDATE', index: i, field: 'value', value: val, amount });
                               }}
                             />
                           </div>
@@ -281,16 +280,11 @@ const SplitAmount = ({ amount, counterAgents,
                               type="text"
                               className="percent-input"
                               placeholder="0"
-                              maxLength={5}
+                              maxLength={5} 
                               value={row.percent}
                               onChange={e => {
-                                const perc = e.target.value.replace(/\D/g, '');
-                                dispatch({ type: 'UPDATE', index: i, field: 'percent', value: perc });
-                                const numAmount = Number(String(amount).replace(/\s/g, ''));
-                                if (numAmount > 0) {
-                                  const val = ((Number(perc) / 100) * numAmount).toFixed(2);
-                                  dispatch({ type: 'UPDATE', index: i, field: 'value', value: String(val) });
-                                }
+                                const perc = e.target.value.replace(/[^\d.]/g, '');
+                                dispatch({ type: 'UPDATE', index: i, field: 'percent', value: perc, amount });
                               }}
                             />
                             <span className="percent-symbol">%</span>
