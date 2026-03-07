@@ -45,7 +45,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
   // Transform currencies data
   const currencies = useMemo(() => {
-    return (currenciesData?.data?.data?.response || currenciesData?.data?.response || []).map(item => ({
+    return (currenciesData?.data?.data?.data || []).map(item => ({
       guid: item.guid,
       label: `${item.kod || ''} (${item.nazvanie || ''})`.trim(),
       kod: item.kod || '',

@@ -2,7 +2,6 @@ import { useMutation } from '@tanstack/react-query'
 import { apiConfig } from '@/lib/config/api'
 import { showErrorNotification, showSuccessNotification } from '@/lib/utils/notifications'
 import { authStore } from '@/store/auth.store'
-
 /**
  * Login mutation hook
  * Handles user authentication - direct call to u-code API
@@ -85,16 +84,7 @@ export function useLogin() {
           token: tokenData,
           refresh_token: refreshToken,
           user_data: userData 
-        })
-        console.log('Authentication set successfully')
-        console.log('authStore state:', {
-          isAuthenticated: authStore.isAuthenticated,
-          authToken: authStore.authToken,
-          userEmail: authStore.userEmail
-        })
-        
-        // Перенаправляем на главную страницу после успешного логина
-        console.log('Redirecting to /pages/operations...')
+        })  
         setTimeout(() => {
           window.location.href = '/pages/operations'
         }, 100)

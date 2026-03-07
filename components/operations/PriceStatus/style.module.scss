@@ -36,6 +36,7 @@
   font-size: 12px;
   color: $gray-400;
   font-weight: 400;
+  letter-spacing: 10;
 
 }
 .confirmed {
@@ -69,13 +70,13 @@
 .amountText {
   min-width: 80px;
   text-align: end;
-  font-size: 12px;
-    font-weight: 600;
+  font-size: 13px;
+    font-weight: 400;
   font-variant-numeric: tabular-nums;
   color: #0f172a; 
 }
 .currency {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   font-variant-numeric: tabular-nums; 
 }

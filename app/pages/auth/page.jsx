@@ -9,6 +9,7 @@ import styles from './styles.module.scss'
 import Input from '@/components/shared/Input'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
 import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
+import { authStore } from '@/store/auth.store'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -249,17 +250,16 @@ export default function LoginPage() {
         if (tokenData) {
           console.log('✅ Token found!')
           
-          // Используем authStore для сохранения
-          const { authStore } = await import('@/store/auth.store') 
+          // Используем authStore для сохранения 
           
           authStore.setAuthentication({
             token: tokenData,
             user_data: userData
           }) 
 
-          setTimeout(() => {
-            window.location.href = '/pages/operations'
-          }, 100)
+          // setTimeout(() => {
+          //   window.location.href = '/pages/operations'
+          // }, 100)
         } else {
           console.error('❌ Token not found in response!')
           console.log('Response structure:', JSON.stringify(response, null, 2))

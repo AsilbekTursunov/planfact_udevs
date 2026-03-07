@@ -132,7 +132,7 @@ export default function NewDateRangeComponent({ value, onChange }) {
           className={styles.input}
           placeholder="Укажите период"
           readOnly
-          onFocus={() => setOpen(true)} 
+          onFocus={() => setOpen(true)}
         />
         {(startDate || endDate) && <CgClose onClick={() => handleReset()} className={styles.closeIcon} />}
       </div>
@@ -177,14 +177,12 @@ export default function NewDateRangeComponent({ value, onChange }) {
           </button>
         </div>
         <div className={styles.calendarWrapper} style={{ display: dateType ? 'block' : 'none' }}>
-          {dateType === 'startDate' && <CustomCalendar maxDate={endDate} format="DD MMM, YYYY" value={startDate} onChange={(dateObj) => {
-            const nativeDate = dateObj?.toDate?.() ?? dateObj
-            setStartDate(nativeDate)
+          {dateType === 'startDate' && <CustomCalendar maxDate={endDate} format="DD MMM, YYYY" value={startDate} onChange={(value) => {
+            setStartDate(value)
             setDateType('endDate')
           }} />}
-          {dateType === 'endDate' && <CustomCalendar minDate={startDate} format="DD MMM, YYYY" value={endDate} onChange={(dateObj) => {
-            const nativeDate = dateObj?.toDate?.() ?? dateObj
-            setEndDate(nativeDate)
+          {dateType === 'endDate' && <CustomCalendar minDate={startDate} format="DD MMM, YYYY" value={endDate} onChange={(value) => {
+            setEndDate(value)
             setDateType('')
           }} />}
         </div>

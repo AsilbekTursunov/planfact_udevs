@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { cn } from '@/app/lib/utils'
 import {
-	useCounterpartiesGroupsPlanFact, 
+	useCounterpartiesGroupsPlanFact,
 	useLegalEntitiesPlanFact,
 	useOperationsList,
 	useDeleteOperation,
@@ -19,7 +19,7 @@ import styles from './operations.module.scss'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
 import { formatDate } from '../../../utils/formatDate'
 import { useBankAccountsPlanFact } from '../../../hooks/useDashboard'
-import CustomTreeSelect from '../../../components/shared/TreeSelect'
+import { formatDateRu } from '../../../utils/helpers'
 
 export default function OperationsPage() {
 	// Block body scroll for this page only
@@ -55,7 +55,6 @@ export default function OperationsPage() {
 	const [selectedDateStartRange, setSelectedDateStartRange] = useState(null)
 	const [selectedLegalEntities, setSelectedLegalEntities] = useState([]) // Will store legal entity GUIDs
 	const [selectedCounterAgents, setSelectedCounterAgents] = useState([])
-	const [selectedFinancialAccounts, setSelectedFinancialAccounts] = useState({})
 	const [amountRange, setAmountRange] = useState({ min: '', max: '' })
 	const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
 	const [paymentType, setPaymentType] = useState(null)
@@ -79,12 +78,6 @@ export default function OperationsPage() {
 		console.log('Filters for API:', filtersForAPI)
 	}, [filtersForAPI])
 
-	// Don't reset pagination on filter changes - filters are just UI
-	// Pagination only resets manually or on data refresh
-
-	// Fetch data from API - using V2 endpoints
-	// Fetch data from API - using groups endpoint which includes children
-
 
 	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact()
 	const { data: legalEntitiesData } = useLegalEntitiesPlanFact({
@@ -101,8 +94,6 @@ export default function OperationsPage() {
 		page: 1,
 		limit: 100,
 	})
-
-
 
 	const leagatEntities = useMemo(() => {
 		const data = myAccountsData?.data?.data?.data || []
@@ -211,6 +202,8 @@ export default function OperationsPage() {
 
 
 
+
+
 	// Reset pagination when filters change
 	useEffect(() => {
 		setPage(1)
@@ -273,6 +266,7 @@ export default function OperationsPage() {
 		return () => tableWrapper.removeEventListener('scroll', handleScroll)
 	}, [hasMore, isLoadingOperations, isLoadingMore])
 
+
 	// Extract and transform data from API responses - use groups with children
 	const counterAgents = useMemo(() => {
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
@@ -289,22 +283,18 @@ export default function OperationsPage() {
 		]).flat()
 	}, [counterpartiesGroupsData])
 
-	// Extract operations list from API response - no filtering
-	const operationsItems = allOperations
-
-	// No frontend filtering - just pass through all operations
-	const filteredOperationsItems = operationsItems
-
 	// Transform operations data for display
 	const operations = useMemo(() => {
-		if (!filteredOperationsItems || filteredOperationsItems.length === 0) return []
+		if (!allOperations || allOperations.length === 0) return []
 
 		const today = new Date()
 		today.setHours(0, 0, 0, 0)
 
-		return filteredOperationsItems.map((item, index) => {
-			const operationDate = item.data_nachisleniya ? new Date(item.data_nachisleniya) : null
+		return allOperations.map((item, index) => {
+			const operationDate = item.data_operatsii ? new Date(item.data_operatsii) : null
 			const accrualDate = item.data_nachisleniya ? new Date(item.data_nachisleniya) : null
+
+			// operation_parts
 
 			// Determine section based on date
 			let section = 'yesterday'
@@ -343,30 +333,6 @@ export default function OperationsPage() {
 				}
 			}
 
-			// Format dates
-			const formatDate = date => {
-				if (!date) return ''
-				try {
-					const d = new Date(date)
-					const months = [
-						'янв',
-						'фев',
-						'мар',
-						'апр',
-						'май',
-						'июн',
-						'июл',
-						'авг',
-						'сен',
-						'окт',
-						'ноя',
-						'дек',
-					]
-					return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
-				} catch {
-					return ''
-				}
-			}
 
 			// Format amount
 			const amount = item.summa || 0
@@ -381,12 +347,9 @@ export default function OperationsPage() {
 				type: typeText,
 				typeCategory: type, // 'in', 'out', 'transfer'
 				typeLabel: typeLabel,
-				accrualDate: formatDate(accrualDate),
-				operationDate: formatDate(operationDate),
+				accrualDate: formatDateRu(accrualDate),
+				operationDate: formatDateRu(operationDate),
 				paymentConfirmed: item.oplata_podtverzhdena,
-				// payment_confirmed - дебет (подтверждена оплата)
-				// payment_accrual - кредит (подтверждено начисление)
-				// Используем новые поля из API, с fallback на старые
 				payment_confirmed: item.payment_confirmed !== undefined
 					? item.payment_confirmed
 					: (item.oplata_podtverzhdena !== undefined ? item.oplata_podtverzhdena : false),
@@ -411,21 +374,45 @@ export default function OperationsPage() {
 				updatedAtRaw: item.data_obnovleniya,
 				section: section,
 				rawData: item,
+				operationParts: item.operation_parts?.map(part => ({
+					tip: part.tip?.[0],
+					typeCategory: part.tip?.[0] === 'Поступление' ? 'in' : part.tip?.[0] === 'Выплата' ? 'out' : 'transfer',
+					amount: part?.summa?.toLocaleString('ru-RU'),
+					amountFormatted: part.summa.toLocaleString('ru-RU'),
+					currency: part.currenies_kod || part.currenies_id_data?.nazvanie || '',
+					currencyId: part.currenies_id || null,
+					description: part.opisanie || '',
+					chartOfAccounts: part.chart_of_accounts_id_data?.nazvanie || part.chart_of_accounts_name || '',
+					chartOfAccountsId: part.chart_of_accounts_id || null,
+					bankAccount: part.my_accounts_name || '',
+					bankAccount2: part.my_accounts_name_2 || '',
+					bankAccountId: part.my_accounts_id || null,
+					counterparty: part.counterparties_name || '',
+					counterpartyId: part.counterparties_id || null,
+					accrualDate: formatDateRu(part?.data_nachisleniya),
+					operationDate: formatDateRu(part?.data_operatsii),
+					createdAt: formatDate(part.data_sozdaniya ? new Date(part.data_sozdaniya) : null),
+					createdAtRaw: part.data_sozdaniya,
+					updatedAt: formatDate(part.data_obnovleniya ? new Date(part.data_obnovleniya) : null),
+					updatedAtRaw: part.data_obnovleniya,
+					section: section,
+					payment_confirmed: part.payment_confirmed !== undefined
+						? part.payment_confirmed
+						: (part.oplata_podtverzhdena !== undefined ? part.oplata_podtverzhdena : false),
+					payment_accrual: part.payment_accrual !== undefined
+						? part.payment_accrual
+						: false,
+				}))
 			}
 		})
-	}, [filteredOperationsItems])
+	}, [allOperations])
 
 	const [isDatePaymentModalOpen, setIsDatePaymentModalOpen] = useState(false)
 	const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)
-	const [currentMonth, setCurrentMonth] = useState(new Date(2026, 0))
 	const [activeInput, setActiveInput] = useState(null) // 'start' or 'end'
-	const [tempStartDate, setTempStartDate] = useState(null)
-	const [tempEndDate, setTempEndDate] = useState(null)
 	const [isClosing, setIsClosing] = useState(false)
 	const datePickerRef = useRef(null)
 	const dateStartPickerRef = useRef(null)
-	const [openParameterDropdown, setOpenParameterDropdown] = useState(null)
-	const parameterDropdownRef = useRef(null)
 
 	const closeDatePaymentModal = () => {
 		setIsClosing(true)
@@ -685,8 +672,6 @@ export default function OperationsPage() {
 		}
 	}
 
-	console.log('counterAgents', counterAgents)
-
 
 
 
@@ -754,7 +739,7 @@ export default function OperationsPage() {
 					selectedCount={selectedOperations.length}
 					searchQuery={searchQuery}
 					onSearchChange={setSearchQuery}
-				/> 
+				/>
 
 				{/* Table */}
 				<div className={styles.tableArea} style={{ position: 'relative' }}>

@@ -445,8 +445,7 @@ export default function AccountsPage() {
         <CreateMyAccountModal
           isOpen={isCreateModalOpen}
           onClose={() => {
-            setIsCreateModalOpen(false)
-            // Invalidate queries to refresh data
+            setIsCreateModalOpen(false) 
             queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
             queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
           }}
@@ -458,8 +457,7 @@ export default function AccountsPage() {
         <CreateMyAccountModal
           isOpen={!!editingAccount}
           onClose={() => {
-            setEditingAccount(null)
-            // Invalidate queries to refresh data
+            setEditingAccount(null) 
             queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
             queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
           }}

@@ -259,8 +259,8 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
         const submitData = {
           nazvanie_gruppy: groupFormData.nazvanie_gruppy.trim(),
           ...(groupFormData.opisanie_gruppy && { opisanie_gruppy: groupFormData.opisanie_gruppy }),
-          data_sozdaniya: formatDate(new Date()),
-          attributes: {}
+          // data_sozdaniya: formatDate(new Date()),
+          // attributes: {}
         }
 
         await createGroupMutation.mutateAsync(submitData)
@@ -315,7 +315,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
           ...(formData.chart_of_accounts_id_2 && { chart_of_accounts_id_2: formData.chart_of_accounts_id_2 }),
           ...(formData.komentariy && { komentariy: formData.komentariy }),
           data_sozdaniya: formatDate(new Date()),
-          attributes: {}
+          // attributes: {}
         }
 
         await createMutation.mutateAsync(submitData)

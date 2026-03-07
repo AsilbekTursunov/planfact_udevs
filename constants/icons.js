@@ -176,3 +176,21 @@ export const FilesSendIcon = ({ className = '', ...props }) => (
     <path d="M0.0104598 0.572266L0 7.90558L15.7143 10.0008L0 12.0961L0.0104598 19.4294L22 10.0008L0.0104598 0.572266Z" fill="currentColor"></path>
   </svg>
 )
+
+export const TypeIncomeIcon = () => (
+  <svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>
+    <path d='M15.8334 10.0001H4.16675M4.16675 10.0001L10.0001 15.8334M4.16675 10.0001L10.0001 4.16675' stroke='#16a34a' strokeWidth='1.33333' strokeLinecap='round' strokeLinejoin='round' />
+  </svg>
+)
+
+export const TypeExpenseIcon = () => (
+  <svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>
+    <path d='M3.33325 10H16.6666M16.6666 10L11.6666 5M16.6666 10L11.6666 15' stroke='#F04438' strokeWidth='1.33333' strokeLinecap='round' strokeLinejoin='round' />
+  </svg>
+)
+
+export const TypeTransferIcon = () => (
+  <svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>
+    <path d='M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667' stroke='#64748b' strokeWidth='1.33333' strokeLinecap='round' strokeLinejoin='round' />
+  </svg>
+)

@@ -31,7 +31,7 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency }) => {
           <span className=''>+{amount} <span className={styles.currency}>{
             currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
         </div>
-      </> : amount}</span>
+      </> : `${type == 'in' ? '+' : '-'}${amount}`}</span>
       {tab != "Перемещение" && <span className={styles.currency}>{
         currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span>}
     </div>

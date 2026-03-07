@@ -1273,7 +1273,6 @@ export const useUcodeRequestMutation = () => {
 /**
  * Universal useUcodeRequestQuery globally accessible
  */
-
 export const useUcodeRequestQuery = ({ method, data, skip = false, querySetting = {} }) => {
   return useQuery({
     queryKey: [method, data],

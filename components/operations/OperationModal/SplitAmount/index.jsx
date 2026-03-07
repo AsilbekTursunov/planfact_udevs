@@ -110,10 +110,8 @@ const SplitAmount = ({ amount, counterAgents,
     setIsCancelModalOpen(false)
   }
 
-  const handleCheckRow = (isFutureDate, index, check) => {
-    console.log('isFutureDate', isFutureDate)
-    console.log('index', index)
-    console.log('check', check)
+  const handleCheckRow = (isFutureDate, index, check) => { 
+    console.log(isFutureDate, index, check)
     if (isFutureDate) {
       return
     }
@@ -182,7 +180,7 @@ const SplitAmount = ({ amount, counterAgents,
 
                 <tbody>
                   {rows.map((row, i) => {
-                    const rowDate = row.calculationDate ? Number(row.calculationDate?.split(' ')?.[0]) : today;
+                    const rowDate = row.calculationDate ? Number(row.calculationDate?.slice(-2)) : today;
                     const isFutureDate = rowDate ? rowDate > today : false;
 
 
