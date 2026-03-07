@@ -15,9 +15,7 @@ const OperationTableRow = ({
   handleDeleteOperation,
   handleCopyOperation,
 }) => {
-  const [open, setOpen] = useState(false)
-
-  console.log('op', op)
+  const [open, setOpen] = useState(false) 
 
   return (
     <>

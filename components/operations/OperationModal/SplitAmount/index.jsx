@@ -10,8 +10,6 @@ import { GroupedSelect } from '../../../common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '../../../common/TreeSelect/TreeSelect'
 
 
-
-
 import { SplitAmountCancelModal } from './SplitAmountCancelModal'
 
 const today = new Date().getDate()
@@ -65,11 +63,18 @@ const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx }) => 
 // ── Main component ──────────────────────────────────────────
 const SplitAmount = ({ amount, counterAgents,
   chartOfAccountsOptions, onChange, rows,
-  dispatch, selectedSplits, setSelectedSplits, confirmPayment, confirmAccural }) => {
-  const [open, setOpen] = useState(false)
+  dispatch, selectedSplits, setSelectedSplits, confirmPayment, initiallyOpen = false }) => {
+  const [open, setOpen] = useState(initiallyOpen)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
 
   const [openCalendarIdx, setOpenCalendarIdx] = useState(null)
+
+  const [prevInitiallyOpen, setPrevInitiallyOpen] = useState(initiallyOpen)
+
+  if (initiallyOpen !== prevInitiallyOpen) {
+    setPrevInitiallyOpen(initiallyOpen)
+    if (initiallyOpen) setOpen(true)
+  }
 
   const has = (label) => selectedSplits.some(s => s.value === label)
   const showDate = has('Начисление')
@@ -105,7 +110,7 @@ const SplitAmount = ({ amount, counterAgents,
   }
 
   const handleConfirmCancel = () => {
-    dispatch({ type: 'CLEAR' })
+    dispatch({ type: 'RESET' })
     setOpen(false)
     setIsCancelModalOpen(false)
   }

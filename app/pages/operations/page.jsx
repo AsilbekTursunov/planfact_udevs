@@ -375,6 +375,7 @@ export default function OperationsPage() {
 				section: section,
 				rawData: item,
 				operationParts: item.operation_parts?.map(part => ({
+					...part,
 					tip: part.tip?.[0],
 					typeCategory: part.tip?.[0] === 'Поступление' ? 'in' : part.tip?.[0] === 'Выплата' ? 'out' : 'transfer',
 					amount: part?.summa?.toLocaleString('ru-RU'),
@@ -389,6 +390,7 @@ export default function OperationsPage() {
 					bankAccountId: part.my_accounts_id || null,
 					counterparty: part.counterparties_name || '',
 					counterpartyId: part.counterparties_id || null,
+					data_nachisleniya: part?.data_nachisleniya,
 					accrualDate: formatDateRu(part?.data_nachisleniya),
 					operationDate: formatDateRu(part?.data_operatsii),
 					createdAt: formatDate(part.data_sozdaniya ? new Date(part.data_sozdaniya) : null),
@@ -563,14 +565,24 @@ export default function OperationsPage() {
 			delete copiedOperation.rawData.guid;
 		}
 
+		// const rows = operation.operationParts.map(part => ({
+		// 	calculationDate: part.data_nachisleniya,
+		// 	isCalculationCommitted: part.payment_accrual,
+		// 	contrAgentId: part.counterparties_id,
+		// 	operationCategoryId: '',
+		// 	value: part?.amount,
+		// 	percent: calculatePercent(part.summa),
+		// }))
+
 		setOpenModal({
-			...copiedOperation,
+			...copiedOperation, 
 			id: 'new',
 			isNew: true,
 			isCopy: true
 		})
+
 		setIsModalClosing(false)
-		setIsModalOpening(true)
+		// setIsModalOpening(true)
 
 
 		if (operation.typeCategory === 'transfer') {

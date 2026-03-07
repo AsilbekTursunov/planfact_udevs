@@ -75,6 +75,8 @@ function rowsReducer(state, action) {
 		}
 		case 'RESET':
 			return [emptyRow()]
+		case 'SET_ROWS':
+			return action.payload
 		default:
 			return state
 	}
@@ -119,7 +121,6 @@ const OperationModal = observer(({
 	// Use full operation data if available, otherwise use passed operation
 	const operationData = useMemo(() => {
 		if (isNew) {
-			console.log('Using new operation mode')
 			return operation
 		}
 		if (fullOperationData?.data?.data?.data) {
@@ -146,13 +147,49 @@ const OperationModal = observer(({
 
 	// Разбить сумму
 	const [divivedAmounts, setdivivedAmounts] = useState([])
-	const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(preselectedCounterparty), emptyRow()])
+	const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(disableCounterpartySelect && preselectedCounterparty), emptyRow()])
 	const [selectedSplits, setSelectedSplits] = useState([])
 
 	const has = (label) => selectedSplits.some(s => s.value === label)
 	const showDate = has('Начисление')
 	const showAgent = has('Контрагент')
 	const showStatya = has('Статья')
+
+
+	const calculatePercent = (amount) => {
+		const totaloperationPartsLength = operation.operationParts?.length
+		return Number((amount * totaloperationPartsLength) / 100).toFixed(2).toString()
+	}
+
+	console.log('operationData', operationData)
+
+	useEffect(() => {
+		if (operationData?.operationParts && operationData?.operationParts?.length > 0) {
+			const newRows = operationData.operationParts.map(part => ({
+				calculationDate: part.data_nachisleniya ? part.data_nachisleniya : today,
+				isCalculationCommitted: part.payment_accrual !== undefined ? part.payment_accrual : true,
+				contrAgentId: part.counterparties_id || '',
+				operationCategoryId: part.chart_of_accounts_id || part.operationCategoryId || '',
+				value: part?.amount || part?.value || '',
+				percent: calculatePercent(part.summa || part?.amount),
+			}))
+
+			console.log('newRows', newRows)
+			dispatch({ type: 'SET_ROWS', payload: newRows })
+
+			const newSelectedSplits = []
+			if (operationData.operationParts.some(p => p.data_nachisleniya || p.payment_accrual !== undefined)) {
+				newSelectedSplits.push({ value: 'Начисление', label: 'Начисление' })
+			}
+			if (operationData.operationParts.some(p => p.counterparties_id)) {
+				newSelectedSplits.push({ value: 'Контрагент', label: 'Контрагент' })
+			}
+			if (operationData.operationParts.some(p => p.chart_of_accounts_id || p.operationCategoryId)) {
+				newSelectedSplits.push({ value: 'Статья', label: 'Статья' })
+			}
+			setSelectedSplits(newSelectedSplits)
+		}
+	}, [operationData])
 
 	// Block body scroll when modal is open
 	useEffect(() => {
@@ -276,9 +313,7 @@ const OperationModal = observer(({
 	// Update form data when operationData changes (for editing)
 	useEffect(() => {
 		if ((!isNew || operation?.isCopy) && operationData && !isLoadingOperation) {
-			console.log('Updating form data with operationData:', operationData)
 			const newFormData = getInitialFormData()
-			console.log('New form data:', newFormData)
 			setFormStates({
 				income: { ...newFormData },
 				payment: { ...newFormData },
@@ -1029,6 +1064,7 @@ const OperationModal = observer(({
 													selectedSplits={selectedSplits}
 													preselectedCounterparty={preselectedCounterparty}
 													setSelectedSplits={handleUpdateSplit}
+													initiallyOpen={operationData?.operationParts && operationData.operationParts.length > 0}
 												/>
 											</div>
 										</div>
@@ -1214,8 +1250,8 @@ const OperationModal = observer(({
 													/>
 													{!showDate
 														&& <div>
-															{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
-															{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
+															{formData.confirmPayment && !formData.confirmAccrual && <DebitIcon />}
+															{!formData.confirmPayment && formData.confirmAccrual && <CreditIcon />}
 														</div>}
 													{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
 														{getAccountCurrency(formData.accountAndLegalEntity)}
@@ -1241,6 +1277,7 @@ const OperationModal = observer(({
 													selectedSplits={selectedSplits}
 													preselectedCounterparty={preselectedCounterparty}
 													setSelectedSplits={handleUpdateSplit}
+													initiallyOpen={operationData?.operationParts && operationData.operationParts.length > 0}
 												/>
 											</div>
 										</div>
