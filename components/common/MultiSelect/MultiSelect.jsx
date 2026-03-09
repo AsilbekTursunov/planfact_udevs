@@ -17,6 +17,7 @@ export function MultiSelect({
   disabled = false,
   loading = false,
   hideSelectAll = false,
+  buttonClassname = ''
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -40,7 +41,7 @@ export function MultiSelect({
     if (isOpen && containerRef.current) {
       // Reset positioned state when opening
       setIsPositioned(false)
-      
+
       // Defer state update to next tick to avoid synchronous setState warning
       const timer = setTimeout(() => {
         if (!containerRef.current) return;
@@ -58,7 +59,7 @@ export function MultiSelect({
         } else {
           setDropdownPosition('bottom')
         }
-        
+
         // Mark as positioned
         setIsPositioned(true)
       }, 0)
@@ -112,7 +113,7 @@ export function MultiSelect({
         className={cn(
           styles.button,
           disabled || loading ? styles.disabled : styles.enabled,
-          value.length === 0 && styles.empty
+          value.length === 0 && styles.empty, buttonClassname
         )}
       >
         <div className={`${styles.buttonContent} line-clamp-1`}>

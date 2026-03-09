@@ -7,20 +7,25 @@ const Input = forwardRef(({
   error,
   type = 'text',
   action = 'default',
+  leftIcon,
   ...props
 }, ref) => {
   return (
-    <input
-      ref={ref}
-      type={type}
-      className={cn(
-        styles.input,
-        error && styles.error,
-        action === 'filter' && styles.filter,
-        className
-      )}
-      {...props}
-    />
+    <>
+      <span className={styles.leftIcon}>{leftIcon}</span>
+      <input
+        ref={ref}
+        type={type}
+        className={cn(
+          styles.input,
+          error && styles.error,
+          action === 'filter' && styles.filter,
+          leftIcon && styles.icon,
+          className
+        )}
+        {...props}
+      />
+    </>
   )
 })
 

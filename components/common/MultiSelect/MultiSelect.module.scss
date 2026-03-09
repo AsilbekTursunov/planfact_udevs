@@ -6,9 +6,9 @@
 .button {
   width: 100%;
   padding: 7px 10px 5px 10px !important;
-    background: $gray-25 !important;
+  background: $gray-25 ;
   border: 1px solid $gray-200 !important;
-    border-radius: 8px !important;
+  border-radius: 8px !important;
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
@@ -65,7 +65,7 @@
 .buttonIcon {
   width: 14px;
   height: 14px;
-    color: $gray-400;
+  color: $gray-400;
   transition: transform 0.2s;
   flex-shrink: 0;
 
@@ -90,7 +90,8 @@
   flex-direction: column;
   opacity: 1;
   transition: opacity 0.15s ease-in-out;
-&.dropdownTop {
+
+  &.dropdownTop {
     top: auto;
     bottom: calc(100% + 4px);
     box-shadow: 0px -4px 6px -2px rgba(16, 24, 40, 0.03), 0px -12px 16px -4px rgba(16, 24, 40, 0.08);

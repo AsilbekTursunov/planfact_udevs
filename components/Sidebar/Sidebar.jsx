@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { RefreshCw, ClipboardList, Settings, Library } from 'lucide-react'
+import { RefreshCw, ClipboardList, Library } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import styles from './Sidebar.module.scss'
 import { UsersIcon, DealIcon } from '@/constants/icons'
@@ -33,7 +33,8 @@ const navItems = [
             { label: 'Контрагенты', href: '/pages/directories/counterparties', hasPage: true },
             { label: 'Учетные статьи', href: '/pages/directories/transaction-categories', hasPage: true },
             { label: 'Мои счета', href: '/pages/directories/accounts', hasPage: true },
-            { label: 'Мои юрлица', href: '/pages/directories/legal-entities', hasPage: true }
+            { label: 'Мои юрлица', href: '/pages/directories/legal-entities', hasPage: true },
+            { label: 'Товары & Услуги', href: '/pages/directories/product-service', hasPage: true }
         ]
     },
     {
@@ -45,8 +46,7 @@ const navItems = [
 ]
 
 export function Sidebar() {
-    const pathname = usePathname()
-    const [expandedMenu, setExpandedMenu] = useState(null)
+    const pathname = usePathname() 
     const [hoveredItem, setHoveredItem] = useState(null)
     const [clickedItem, setClickedItem] = useState(null)
     const [activeIndicatorStyle, setActiveIndicatorStyle] = useState({ top: 0, height: 0, opacity: 0 })

@@ -1,4 +1,5 @@
-import ReactSelect from 'react-select'
+import ReactSelect, { components } from 'react-select'
+import { Check } from 'lucide-react'
 
 const customStyles = {
   control: (base, state) => ({
@@ -80,17 +81,20 @@ const customStyles = {
   option: (base, state) => ({
     ...base,
     fontSize: '13px',
-    padding: '6px 10px',
+    padding: '8px 10px',
     borderRadius: '6px',
     cursor: 'pointer',
     backgroundColor: state.isSelected
-      ? '#307FE2'
+      ? '#ffffff'
       : state.isFocused
         ? '#f3f4f6'
         : 'transparent',
-    color: state.isSelected ? 'white' : '#0f172a',
+    color: '#0f172a',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     '&:active': {
-      backgroundColor: state.isSelected ? '#307FE2' : '#e5e7eb',
+      backgroundColor: state.isSelected ? '#ffffff' : '#e5e7eb',
     },
   }),
   noOptionsMessage: (base) => ({
@@ -100,11 +104,21 @@ const customStyles = {
   }),
 }
 
-const Select = ({ styles: userStyles, instanceId, ...props }) => {
+const CustomOption = (props) => {
+  return (
+    <components.Option {...props}>
+      {props.children}
+      {props.isSelected && <Check size={16} color="#0E73F6" />}
+    </components.Option>
+  )
+}
+
+const Select = ({ styles: userStyles, instanceId, components: userComponents, ...props }) => {
   return (
     <ReactSelect
       instanceId={instanceId}
       styles={{ ...customStyles, ...userStyles }}
+      components={{ Option: CustomOption, ...userComponents }}
       {...props}
     />
   )

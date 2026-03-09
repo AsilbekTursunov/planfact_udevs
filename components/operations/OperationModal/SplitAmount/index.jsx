@@ -122,8 +122,7 @@ const SplitAmount = ({ amount, counterAgents,
     }
     dispatch({ type: 'UPDATE', index, field: 'isCalculationCommitted', value: check })
   }
-
-  console.log('rows', rows)
+ 
 
   return (
     <div className="split-wrapper">

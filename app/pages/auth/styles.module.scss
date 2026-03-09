@@ -27,7 +27,7 @@
   border-radius: 1.5rem;
   padding: 2rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
- 
+
 }
 
 .cardLogo {
@@ -73,7 +73,7 @@
   cursor: pointer;
   text-align: left;
   background: white;
-  
+
   &:hover {
     border-color: #cbd5e1;
   }
@@ -97,7 +97,7 @@
   color: #94a3b8;
   border-radius: 4px;
   transition: all 0.2s;
-  
+
   &:hover {
     color: #475569;
     background-color: #f1f5f9;
@@ -148,11 +148,11 @@
   color: #334155;
   cursor: pointer;
   transition: background-color 0.15s;
-  
+
   &:hover {
     background-color: #f8fafc;
   }
-  
+
   &.selectOptionActive {
     background-color: #eff6ff;
     color: #104CA2;
@@ -161,8 +161,6 @@
 
 .inputField {
   width: 100%;
-  border: 1px solid #e2e8f0;
-  padding: 1.25rem 0.75rem !important;
   border-radius: 0.75rem;
   transition: all 0.2s;
   outline: none;
@@ -170,6 +168,7 @@
   font-size: 14px;
   font-weight: 500;
   color: $gray-500 !important;
+
   &::placeholder {
     font-size: 14px;
     font-weight: 500;
@@ -184,18 +183,18 @@
     border-color: #104CA2;
     box-shadow: 0 0 0 1px rgba(16, 76, 162, 0.2);
   }
-  
+
   &.passwordField {
     padding-right: 3rem;
   }
-  
+
   &.error {
     border-color: #ef4444;
-    
+
     &:hover {
       border-color: #dc2626;
     }
-    
+
     &.focused {
       border-color: #ef4444;
       box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
@@ -285,7 +284,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 0.875rem; 
+  font-size: 0.875rem;
   color: #64748b;
 }
 
@@ -294,7 +293,7 @@
   font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  
+
   &:hover {
     text-decoration: underline;
   }
@@ -322,17 +321,17 @@
     opacity: 0.7;
     cursor: not-allowed;
   }
-  
+
   &.loginButton {
     background-color: #0E73F6;
-    
+
     &:hover {
       background-color: #7aa0e0;
     }
   }
 }
 
-.termsText { 
+.termsText {
   text-align: center;
   font-size: 0.75rem;
   color: #1e293b;

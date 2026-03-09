@@ -1,8 +1,9 @@
+import { MaterialReactTable } from "material-react-table";
 
-const Table = () => {
-  return (
-    <div>Table</div>
-  )
+const CustomTable = ({ table }) => {
+
+  return <MaterialReactTable table={table} />;
 }
 
-export default Table
+export default CustomTable
+

@@ -5,6 +5,36 @@
   width: 100%;
 }
 
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.leftIcon {
+  position: absolute;
+  display: flex;
+  top: 50%;
+  padding: 0px 8px;
+  transform: translateY(-50%);
+  align-items: center;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.rightIcon {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.icon {
+  padding-left: 35px !important;
+}
 .input {
   width: 100%;
   min-width: 50px !important;
@@ -17,6 +47,13 @@
   height: 36px !important;
   transition: all 0.2s;
 
+  &.hasLeftIcon {
+      padding-left: 36px;
+    }
+  
+    &.hasRightIcon {
+      padding-right: 36px;
+    }
   &::placeholder {
     color: #9ca3af;
     opacity: 1;
@@ -45,6 +82,7 @@
                 &.filter {
                   background-color: $gray-25;
                 }
+
   // Type specific styles
   &[type="date"] {
     &::-webkit-calendar-picker-indicator {

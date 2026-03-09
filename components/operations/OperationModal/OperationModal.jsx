@@ -194,7 +194,7 @@ const OperationModal = observer(({
 				value: String(part?.summa || part?.amount || part?.value || '').replace(/\s/g, ''),
 				percent: calculatePercent(part.summa || part?.amount || part?.value, totalAmount),
 			}))
- 
+
 			dispatch({ type: 'SET_ROWS', payload: newRows })
 
 			const newSelectedSplits = []
@@ -762,7 +762,7 @@ const OperationModal = observer(({
 			}
 
 			if (divivedAmounts.length > 0) {
-				requestData.items = divivedAmounts.map(item => ({ ...item, value: Number(item?.value), percent: Number(item?.percent), isCalculationCommitted: showDate ? item?.isCalculationCommitted : false }))
+				requestData.items = divivedAmounts.map(item => ({ ...item, value: Number(item?.value), percent: Number(item?.percent), isCalculationCommitted: showDate ? item?.isCalculationCommitted : false, contrAgentId: showAgent ? item?.contrAgentId : '' }))
 			}
 
 			// Special handling for transfer operations
@@ -806,6 +806,8 @@ const OperationModal = observer(({
 					requestData.data_sozdaniya = operationData.rawData.data_sozdaniya
 				}
 			}
+
+			console.log('requestData', requestData)
 
 
 			const result = await createUcodeOperation({ method: isUpdate ? 'update_operation' : 'create_operation', data: requestData })
