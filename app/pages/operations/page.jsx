@@ -20,6 +20,7 @@ import OperationCheckbox from '../../../components/shared/Checkbox/operationChec
 import { formatDate } from '../../../utils/formatDate'
 import { useBankAccountsPlanFact } from '../../../hooks/useDashboard'
 import { formatDateRu } from '../../../utils/helpers'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function OperationsPage() {
 	// Block body scroll for this page only
@@ -458,6 +459,7 @@ export default function OperationsPage() {
 	const [isModalOpening, setIsModalOpening] = useState(false)
 	const [operationToDelete, setOperationToDelete] = useState(null)
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+	const queryClient = useQueryClient()
 
 	// Close modal when clicking on header
 	useEffect(() => {
@@ -565,14 +567,6 @@ export default function OperationsPage() {
 			delete copiedOperation.rawData.guid;
 		}
 
-		// const rows = operation.operationParts.map(part => ({
-		// 	calculationDate: part.data_nachisleniya,
-		// 	isCalculationCommitted: part.payment_accrual,
-		// 	contrAgentId: part.counterparties_id,
-		// 	operationCategoryId: '',
-		// 	value: part?.amount,
-		// 	percent: calculatePercent(part.summa),
-		// }))
 
 		setOpenModal({
 			...copiedOperation, 
@@ -613,6 +607,10 @@ export default function OperationsPage() {
 			await deleteOperationMutation.mutateAsync([guid])
 			setIsDeleteModalOpen(false)
 			setOperationToDelete(null)
+			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
+			queryClient.invalidateQueries({ queryKey: ['operations'] })
+			queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
 		} catch (error) {
 			console.error('Error deleting operation:', error)
 		}
@@ -683,8 +681,6 @@ export default function OperationsPage() {
 			setSelectedCounterAgents(newSelected)
 		}
 	}
-
-
 
 
 	return (

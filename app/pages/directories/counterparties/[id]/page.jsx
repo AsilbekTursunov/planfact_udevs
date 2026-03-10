@@ -8,13 +8,11 @@ import { MoreHorizontal, PenLine, Trash2 } from 'lucide-react'
 import { useUcodeRequestMutation } from '@/hooks/useDashboard'
 import { useLegalEntitiesPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
-import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 import { useDeleteOperation } from '@/hooks/useDashboard'
 import { cn } from '@/app/lib/utils'
 import styles from './counterparty-detail.module.scss'
-import PriceStatus from '@/components/operations/PriceStatus'
 
 import Select from '@/components/common/Select'
 import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
@@ -142,7 +140,6 @@ export default function KontragentDetailPage() {
     return responseData?.operations || []
   }, [responseData])
 
-  console.log(counterpartyOperations)
 
   // Use operations from counterparty response directly
   const operations = useMemo(() => {
@@ -265,7 +262,6 @@ export default function KontragentDetailPage() {
     })
   }, [counterpartyOperations])
 
-  console.log('operations', operations)
 
   const filteredOperations = useMemo(() => {
     let result = operations;
@@ -486,7 +482,7 @@ export default function KontragentDetailPage() {
       }
 
       await deleteOperationMutation.mutateAsync([guid])
-      queryClient.invalidateQueries({ queryKey: ['counterpartyById', counterpartyGuid] })
+      queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
       setDeletingOperation(null)
     } catch (error) {
       console.error('Error deleting operation:', error)
@@ -1011,6 +1007,7 @@ export default function KontragentDetailPage() {
                               key={op.id}
                               op={op}
                               showIndex={index + 1}
+                              counterpartyGuid={counterpartyGuid}
                               selectedOperations={selectedOperations}
                               openOperationModal={handleEditOperation}
                               handleEditOperation={handleEditOperation}
@@ -1032,6 +1029,7 @@ export default function KontragentDetailPage() {
                             <OperationTableRow
                               key={op.id}
                               op={op}
+                              counterpartyGuid={counterpartyGuid}
                               showIndex={index + 1}
                               selectedOperations={selectedOperations}
                               openOperationModal={handleEditOperation}

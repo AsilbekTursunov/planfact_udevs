@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './style.module.scss'
 import PriceStatus from '@/components/operations/PriceStatus'
@@ -14,11 +14,25 @@ const OperationTableRow = ({
   handleEditOperation,
   handleDeleteOperation,
   handleCopyOperation,
+  counterpartyGuid,
   showIndex
 }) => {
   const [open, setOpen] = useState(false)
+  const children = new Set()
 
-  console.log('op', op)
+  op.operationParts?.forEach(part => {
+    children.add(part?.counterpartyId)
+  })
+
+  const titleContragent = useMemo(() => {
+    if (children.size === 1 && children.has(counterpartyGuid)) {
+      return op.counterparty || ''
+    } else if (children.size > 1) {
+      return `${children.size || 2} статьи`
+    } else {
+      return op.counterparty || ''
+    }
+  }, [children, counterpartyGuid, op.bankAccount])
 
   return (
     <>
@@ -43,8 +57,6 @@ const OperationTableRow = ({
             onChange={() => toggleOperation(op.id)}
           /> : <span>{showIndex}</span>}
         </td>
-        {/* ExpendClose
-ExpendOpen */}
         <td className={cn(styles.tableCell, styles.dateCell)}>
           {op.operationParts?.length > 0 ? <>
             <div className={styles.childrenControl} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
@@ -76,7 +88,7 @@ ExpendOpen */}
           ) : null}
         </td>
         <td className={cn(styles.tableCell, styles.counterpartyCell)}>
-          {op.counterparty || ''}
+          {titleContragent}
         </td>
         <td className={cn(styles.tableCell, styles.statusCell)}>
           {op?.type == "Перемещение" ? <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
@@ -108,69 +120,72 @@ ExpendOpen */}
         </td>
       </tr>
       {open &&
-        op.operationParts?.map(part => (
-          <tr
-            key={part.id}
-            className={`${styles.tableRow} ${styles.child}`}
-            onClick={e => {
-              if (!e.target.closest('input') && !e.target.closest('button')) {
-                openOperationModal(part)
-              }
-            }}
-          >
-            <td colSpan={2}
-              className={cn(styles.tableCell, styles.tableCellIndex)}
-            />
-            <td className={cn(styles.tableCell, styles.dateCell)}>
-              {part?.accrualDate}
-            </td>
-            <td className={styles.tableCell}>
-              {op.typeLabel ? (
-                <div className={styles.typeIcon}>
-                  {op.typeLabel === 'Поступление' ? (
-                    <TypeIncomeIcon />
-                  ) : op.typeLabel === 'Выплата' ? (
-                    <TypeExpenseIcon />
-                  ) : op.typeLabel === 'Перемещение' ||
-                    op.typeLabel === 'Начисление' ? (
-                    <TypeTransferIcon />
-                  ) : null}
-                </div>
-              ) : null}
-            </td>
-            <td className={cn(styles.tableCell, styles.counterpartyCell)}>
-              {part.counterparty || ''}
-            </td>
-            <td className={cn(styles.tableCell, styles.statusCell)}>
-              {part?.type == 'Перемещение' ? (
-                <div
-                  className={`${styles.doubleAccount} ${!part.paymentConfirmed && styles.confirmed
-                    }`}
-                >
-                  <span>[Перемещение - списание]</span>
-                  <span>[Перемещение - зачисление]</span>
-                </div>
-              ) : (
-                part.chartOfAccounts || ''
-              )}
-            </td>
-            <td className={styles.tableCell}></td>
-            <td colSpan={2} className={styles.tableCell} onClick={e => e.stopPropagation()}>
-              <PriceStatus
-                amount={part.amount}
-                tab={part?.tip}
-                type={part.typeCategory}
-                confirmed={part.payment_confirmed}
-                accrual={part.payment_accrual}
-                currency={part.currency}
+        op.operationParts?.map(part => {
+          return (
+            <tr
+              key={part.id}
+              className={`${styles.tableRow} ${styles.child} ${counterpartyGuid !== part?.counterpartyId ? styles.disabled : ''}`}
+              aria-disabled={counterpartyGuid === part?.counterpartyId}
+              onClick={e => {
+                if (!e.target.closest('input') && !e.target.closest('button') && counterpartyGuid === part?.counterpartyId) {
+                  openOperationModal(part)
+                }
+              }}
+            >
+              <td colSpan={2}
+                className={cn(styles.tableCell, styles.tableCellIndex)}
               />
-            </td>
-            {/* <td
+              <td className={cn(styles.tableCell, styles.dateCell)}>
+                {part?.accrualDate}
+              </td>
+              <td className={styles.tableCell}>
+                {op.typeLabel ? (
+                  <div className={styles.typeIcon}>
+                    {op.typeLabel === 'Поступление' ? (
+                      <TypeIncomeIcon />
+                    ) : op.typeLabel === 'Выплата' ? (
+                      <TypeExpenseIcon />
+                    ) : op.typeLabel === 'Перемещение' ||
+                      op.typeLabel === 'Начисление' ? (
+                      <TypeTransferIcon />
+                    ) : null}
+                  </div>
+                ) : null}
+              </td>
+              <td className={cn(styles.tableCell, styles.counterpartyCell)}>
+                {part.counterparty || ''}
+              </td>
+              <td className={cn(styles.tableCell, styles.statusCell)}>
+                {part?.type == 'Перемещение' ? (
+                  <div
+                    className={`${styles.doubleAccount} ${!part.paymentConfirmed && styles.confirmed
+                      }`}
+                  >
+                    <span>[Перемещение - списание]</span>
+                    <span>[Перемещение - зачисление]</span>
+                  </div>
+                ) : (
+                  part.chartOfAccounts || ''
+                )}
+              </td>
+              <td className={styles.tableCell}></td>
+              <td colSpan={2} className={styles.tableCell} onClick={e => e.stopPropagation()}>
+                <PriceStatus
+                  amount={part.amount}
+                  tab={part?.tip}
+                  type={part.typeCategory}
+                  confirmed={part.payment_confirmed}
+                  accrual={part.payment_accrual}
+                  currency={part.currency}
+                />
+              </td>
+              {/* <td
               className={cn(styles.tableCell, styles.tableCellActions)}
               onClick={e => e.stopPropagation()}
             ></td> */}
-          </tr>
-        ))}
+            </tr>
+          )
+        })}
     </>
   )
 }

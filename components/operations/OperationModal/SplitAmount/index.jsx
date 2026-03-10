@@ -81,7 +81,14 @@ const SplitAmount = ({ amount, counterAgents,
   const showAgent = has('Контрагент')
   const showStatya = has('Статья')
 
-  const totalPercent = rows.reduce((s, r) => s + (parseFloat(r.percent) || 0), 0)
+  const rawPercentSum = rows.reduce((s, r) => s + (parseFloat(r.percent) || 0), 0)
+  const totalPercent = Number(rawPercentSum.toFixed(2))
+
+  useEffect(() => {
+    if (open && amount) {
+      dispatch({ type: 'RECALCULATE_VALUES', amount })
+    }
+  }, [amount, open, dispatch])
 
   useEffect(() => {
     if (onChange) {
@@ -115,8 +122,8 @@ const SplitAmount = ({ amount, counterAgents,
     setIsCancelModalOpen(false)
   }
 
+
   const handleCheckRow = (isFutureDate, index, check) => {
-    console.log(isFutureDate, index, check)
     if (isFutureDate) {
       return
     }
@@ -290,13 +297,12 @@ const SplitAmount = ({ amount, counterAgents,
                           </div>
                         </td>
 
-                        {/* Remove row */}
                         <td className="split-td col-remove">
                           {rows.length > 1 && (
                             <button
                               type="button"
                               className="remove-row-btn"
-                              onClick={() => dispatch({ type: 'REMOVE', index: i })}
+                              onClick={() => dispatch({ type: 'REMOVE', index: i, amount })}
                               title="Удалить строку"
                             >×</button>
                           )}
@@ -313,7 +319,7 @@ const SplitAmount = ({ amount, counterAgents,
                       <button
                         type="button"
                         className="add-row-btn"
-                        onClick={() => dispatch({ type: 'ADD' })}
+                        onClick={() => dispatch({ type: 'ADD', amount })}
                       >
                         Добавить строку
                       </button>

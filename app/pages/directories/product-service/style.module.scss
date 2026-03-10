@@ -103,7 +103,7 @@
 }
 
 .searchInput {
-  width: 240px;
+  width: 240px !important;
   font-size: 13px;
   color: #0f172a; 
   border-radius: 0.25rem;
@@ -116,9 +116,7 @@
 .filtersContainer {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-left: auto;
-  margin-right: 1.5rem;
+  gap: .625rem;
 }
 
 .filtersColumn {

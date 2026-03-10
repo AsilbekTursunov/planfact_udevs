@@ -257,9 +257,9 @@ export default function LoginPage() {
             user_data: userData
           }) 
 
-          // setTimeout(() => {
-          //   window.location.href = '/pages/operations'
-          // }, 100)
+          setTimeout(() => {
+            window.location.href = '/pages/operations'
+          }, 100)
         } else {
           console.error('❌ Token not found in response!')
           console.log('Response structure:', JSON.stringify(response, null, 2))

@@ -42,10 +42,66 @@ const emptyRow = (preselectedCounterparty = '') => ({
 
 function rowsReducer(state, action) {
 	switch (action.type) {
-		case 'ADD':
-			return [...state, emptyRow()]
-		case 'REMOVE':
-			return state.filter((_, i) => i !== action.index)
+		case 'ADD': {
+			const newState = [...state, emptyRow()]
+			// Calculate divide equal on the new state
+			const count = newState.length
+			const totalAmount = parseFloat(action.amount) || 0
+			const equalValue = Math.floor((totalAmount / count) * 100) / 100
+			const equalPercent = Math.floor((100 / count) * 100) / 100
+			const lastValue = +(totalAmount - equalValue * (count - 1)).toFixed(2)
+			const lastPercent = +(100 - equalPercent * (count - 1)).toFixed(2)
+
+			return newState.map((row, i) => ({
+				...row,
+				value: i === count - 1 ? String(lastValue) : String(equalValue),
+				percent: i === count - 1 ? String(Number(lastPercent).toFixed(2)).replace('.00', '') : String(Number(equalPercent).toFixed(2)).replace('.00', ''),
+			}))
+		}
+		case 'REMOVE': {
+			const newState = state.filter((_, i) => i !== action.index)
+			const count = newState.length
+			if (count === 0) return newState
+			const totalAmount = parseFloat(action.amount) || 0
+			const remainingPercentSum = newState.reduce((s, r) => s + (parseFloat(r.percent) || 0), 0)
+
+			if (remainingPercentSum > 0) {
+				let remainingValueForFinal = totalAmount
+				let remainingPercentForFinal = 100
+				return newState.map((row, i) => {
+					if (i === count - 1) {
+						return {
+							...row,
+							value: String(remainingValueForFinal.toFixed(2)).replace('.00', ''),
+							percent: String(remainingPercentForFinal.toFixed(2)).replace('.00', '')
+						}
+					}
+					const rowPercent = parseFloat(row.percent) || 0
+					const scaledPercent = (rowPercent / remainingPercentSum) * 100
+					const rowValue = Math.floor(totalAmount * (scaledPercent / 100) * 100) / 100
+					const calculatedPercent = Math.floor(scaledPercent * 100) / 100
+
+					remainingValueForFinal -= rowValue
+					remainingPercentForFinal -= calculatedPercent
+
+					return {
+						...row,
+						value: String(rowValue.toFixed(2)).replace('.00', ''),
+						percent: String(calculatedPercent.toFixed(2)).replace('.00', '')
+					}
+				})
+			} else {
+				const equalValue = Math.floor((totalAmount / count) * 100) / 100
+				const equalPercent = Math.floor((100 / count) * 100) / 100
+				const lastValue = +(totalAmount - equalValue * (count - 1)).toFixed(2)
+				const lastPercent = +(100 - equalPercent * (count - 1)).toFixed(2)
+				return newState.map((row, i) => ({
+					...row,
+					value: i === count - 1 ? String(lastValue) : String(equalValue),
+					percent: i === count - 1 ? String(Number(lastPercent).toFixed(2)).replace('.00', '') : String(Number(equalPercent).toFixed(2)).replace('.00', ''),
+				}))
+			}
+		}
 		case 'UPDATE': {
 			if (action.field === 'calculationDate') {
 				const pickDate = Number(action.value?.slice(-2))
@@ -58,27 +114,99 @@ function rowsReducer(state, action) {
 				const numAmount = Number(String(action.amount).replace(/\s/g, ''))
 				let percent = ''
 				if (numAmount > 0 && action.value !== '') {
-					percent = String(((Number(action.value) / numAmount) * 100).toFixed(2))
+					percent = String(Number((Number(action.value) / numAmount) * 100).toFixed(2))
+					if (percent.endsWith('.00')) percent = parseInt(percent).toString()
 				}
-				return state.map((row, i) =>
+				let newState = state.map((row, i) =>
 					i === action.index ? { ...row, value: action.value, percent } : row
 				)
+
+				if (numAmount > 0) {
+					const totalValues = newState.reduce((s, r) => s + (Number(String(r.value).replace(/\s/g, '')) || 0), 0)
+					if (Math.abs(totalValues - numAmount) < 0.01) {
+						const totalPercent = newState.reduce((s, r) => s + (parseFloat(r.percent) || 0), 0)
+						if (Math.abs(totalPercent - 100) > 0.001) {
+							const residual = 100 - (totalPercent - (parseFloat(percent) || 0));
+							newState = newState.map((row, i) =>
+								i === action.index ? {
+									...row,
+									percent: String(Number(residual).toFixed(2)).replace('.00', '')
+								} : row
+							)
+						}
+					}
+				}
+				return newState
 			}
 			if (action.field === 'percent' && action.amount) {
 				const numAmount = Number(String(action.amount).replace(/\s/g, ''))
 				let value = ''
+				let calculatedValueStr = ''
 				if (numAmount > 0 && action.value !== '') {
 					value = String(((Number(action.value) / 100) * numAmount).toFixed(2))
+					calculatedValueStr = value.endsWith('.00') ? parseInt(value).toString() : value
 				}
-				return state.map((row, i) =>
-					i === action.index ? { ...row, percent: action.value, value } : row
+				let newState = state.map((row, i) =>
+					i === action.index ? { ...row, percent: action.value, value: calculatedValueStr } : row
 				)
+
+				if (numAmount > 0) {
+					const totalPercents = newState.reduce((s, r) => s + (parseFloat(r.percent) || 0), 0)
+					if (Math.abs(totalPercents - 100) < 0.01) {
+						const totalValues = newState.reduce((s, r) => s + (Number(String(r.value).replace(/\s/g, '')) || 0), 0)
+						if (Math.abs(totalValues - numAmount) > 0.001) {
+							const residualValue = numAmount - (totalValues - (Number(calculatedValueStr) || 0));
+							newState = newState.map((row, i) =>
+								i === action.index ? {
+									...row,
+									value: String(Number(residualValue).toFixed(2)).replace('.00', '')
+								} : row
+							)
+						}
+					}
+				}
+				return newState
 			}
 			return state.map((row, i) =>
 				i === action.index ? { ...row, [action.field]: action.value } : row
 			)
 		}
 
+		case 'RECALCULATE_VALUES': {
+			// Used when the parent 'amount' changes. Keep percentages as close as possible, scaling values.
+			const totalAmount = parseFloat(action.amount) || 0
+			if (state.length === 0 || totalAmount === 0) return state
+
+			const currentTotalPercent = state.reduce((s, r) => s + (parseFloat(r.percent) || 0), 0)
+			const scaleRatio = currentTotalPercent > 0 ? (100 / currentTotalPercent) : 0
+
+			let remainingValue = totalAmount
+			let remainingPercent = 100
+			const lastIdx = state.length - 1
+
+			return state.map((row, i) => {
+				if (i === lastIdx) {
+					return {
+						...row,
+						value: String(remainingValue.toFixed(2)).replace('.00', ''),
+						percent: String(remainingPercent.toFixed(2)).replace('.00', '')
+					}
+				}
+				const rowPercent = parseFloat(row.percent) || 0
+				const targetPercent = rowPercent * scaleRatio
+
+				const rowValue = Math.floor(totalAmount * (targetPercent / 100) * 100) / 100
+				const actualPercent = Math.floor(targetPercent * 100) / 100
+
+				remainingValue -= rowValue
+				remainingPercent -= actualPercent
+				return {
+					...row,
+					value: String(rowValue.toFixed(2)).replace('.00', ''),
+					percent: String(actualPercent.toFixed(2)).replace('.00', '')
+				}
+			})
+		}
 		case 'DIVIDE_EQUAL': {
 			const count = state.length
 			if (count === 0) return state
@@ -90,7 +218,7 @@ function rowsReducer(state, action) {
 			return state.map((row, i) => ({
 				...row,
 				value: i === count - 1 ? String(lastValue) : String(equalValue),
-				percent: i === count - 1 ? String(lastPercent) : String(equalPercent),
+				percent: i === count - 1 ? String(Number(lastPercent).toFixed(2)).replace('.00', '') : String(Number(equalPercent).toFixed(2)).replace('.00', ''),
 			}))
 		}
 		case 'RESET':
@@ -807,9 +935,6 @@ const OperationModal = observer(({
 				}
 			}
 
-			console.log('requestData', requestData)
-
-
 			const result = await createUcodeOperation({ method: isUpdate ? 'update_operation' : 'create_operation', data: requestData })
 
 			showSuccessNotification(`Операция успешно ${isUpdate ? 'обновлена' : 'создана'}!`)
@@ -846,6 +971,7 @@ const OperationModal = observer(({
 			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
 			queryClient.invalidateQueries({ queryKey: ['operations'] })
+			queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
 
 			onClose()
 		} catch (error) {

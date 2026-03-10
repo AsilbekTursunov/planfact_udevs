@@ -109,7 +109,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-    width: 100%;
+  width: 100%;
 }
 
 .searchContainer {
@@ -142,7 +142,7 @@
   cursor: pointer;
 
   &:first-child {
-      border-radius: 6px 0 0 6px;
+    border-radius: 6px 0 0 6px;
   }
 
   &:last-child {
@@ -289,7 +289,7 @@
 
 .tableHeaderCell {
   padding: 0.5rem 0.625rem;
-  text-align: left;
+  // text-align: start;
   white-space: nowrap;
   min-width: fit-content;
   font-size: 12px;
@@ -322,8 +322,12 @@
   background: none;
   border: none;
   padding: 0;
-  justify-content: flex-end !important;
   cursor: pointer;
+&:first-child {
+    justify-content: flex-start !important;
+  }
+
+  justify-content: center !important;
 }
 
 .tableHeaderIcon {
@@ -404,7 +408,7 @@
   white-space: nowrap;
   height: 40px;
   font-weight: 500;
-    color: #0f172a;
+  color: #0f172a;
     text-align: end !important;
   
     &:nth-child(1) {
@@ -441,6 +445,7 @@
     &.textRed {
       color: #ea0000 !important;
     }
+
   &.emptyCell {
     background-color: #f3f4f6;
     color: #9ca3af;
@@ -493,7 +498,7 @@
   align-items: center;
   gap: 0.5rem;
   height: 100%;
-    /* Ensure it takes full height if possible, though td padding restricts it. aligned via flex */
+  /* Ensure it takes full height if possible, though td padding restricts it. aligned via flex */
 }
 
 .groupCellContent {

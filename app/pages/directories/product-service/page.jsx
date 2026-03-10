@@ -174,7 +174,7 @@ export default function LegalEntitiesPage() {
                       className={styles.dropdownItem}
                       onClick={handleCreateSingle}
                     >
-                      Создать услугу
+                      Создать
                     </button>
                     <button
                       className={styles.dropdownItem}
@@ -217,20 +217,21 @@ export default function LegalEntitiesPage() {
                   isSearchable={false}
                 />
               </div>
+              {/* Search */}
+
+              <div className={styles.searchContainer}>
+
+                <Input
+                  type="text"
+                  placeholder="Поиск по краткому названию"
+                  className={styles.searchInput}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  leftIcon={<Search size={18} />}
+                />
+              </div>
             </div>
 
-            {/* Search */}
-            <div className={styles.searchContainer}>
-
-              <Input
-                type="text"
-                placeholder="Поиск по краткому названию"
-                className={styles.searchInput}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                leftIcon={<Search size={18}/>}
-              />
-            </div>
           </div>
         </div>
 
@@ -242,23 +243,27 @@ export default function LegalEntitiesPage() {
                 <tr>
                   <th className={cn(styles.th, styles.thIndex)}>
                     №
-                  </th>
+                  </th> 
                   <th className={styles.th}>
                     <button className={styles.headerButton}>
-                      Краткое название
+                      Наименование
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                   </th>
-                  <th className={styles.th}>Полное название</th>
-                  <th className={styles.th}>ИНН</th>
-                  <th className={styles.th}>КПП</th>
+                  <th className={styles.th}>Тип</th>
+                  <th className={styles.th}>Артикул</th>
+                  <th className={styles.th}>Цена за ед</th>
+                  <th className={styles.th}>Единица</th>
+                  <th className={styles.th}>НДС</th>
+                  <th className={styles.th}>Цена с НДС</th>
+                  <th className={styles.th}>Комментарий</th>
                   <th className={cn(styles.th, styles.thActions)}></th>
                 </tr>
               </thead>
 
-              <tbody className={styles.tbody}>
+              {/* <tbody className={styles.tbody}>
                 {isLoadingLegalEntities ? (
                   <tr>
                     <td colSpan={6} className={styles.td} style={{ textAlign: 'center', padding: '2rem' }}>
@@ -291,7 +296,7 @@ export default function LegalEntitiesPage() {
                     </tr>
                   ))
                 )}
-              </tbody>
+              </tbody> */}
             </table>
           </div>
         </div>
