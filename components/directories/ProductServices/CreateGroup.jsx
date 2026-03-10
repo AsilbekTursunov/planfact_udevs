@@ -1,4 +1,4 @@
-import { Modal } from '@mui/material'
+import Modal from '../../common/Modal/Modal'
 import styles from './style.module.scss'
 import { X } from 'lucide-react'
 import { useState } from 'react'
@@ -53,7 +53,6 @@ const CreateGroup = ({ open = true, setOpen }) => {
       open={open}
       className={styles.modalBackdrop}
       onClose={setOpen}
-      disableAutoFocus
     >
       <div className={styles.groupcontainer}>
         <div className={styles.header}>
