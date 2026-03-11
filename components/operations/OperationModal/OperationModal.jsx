@@ -526,8 +526,6 @@ const OperationModal = observer(({
 	const { mutateAsync: createUcodeOperation, isPending: isLoadingUcodeOperation } = useUcodeRequestMutation()
 
 
-	// Build tree structure for counterparties (groups and their children)
-	// Use data directly from API - groups already contain children
 	const counterAgentsTree = useMemo(() => {
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
 
@@ -1572,7 +1570,7 @@ const OperationModal = observer(({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<GroupedSelect
-													data={bankAccounts}
+													data={bankAccounts.filter(acc => acc.guid !== formData.toAccount)}
 													value={formData.fromAccount}
 													onChange={value => {
 														setFormData({ ...formData, fromAccount: value })
@@ -1655,7 +1653,7 @@ const OperationModal = observer(({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<GroupedSelect
-													data={bankAccounts}
+													data={bankAccounts.filter(acc => acc.guid !== formData.fromAccount)}
 													value={formData.toAccount}
 													onChange={value => {
 														setFormData({ ...formData, toAccount: value })

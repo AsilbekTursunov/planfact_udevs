@@ -2,27 +2,43 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
-import { useDeleteLegalEntities, useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
-import LegalEntityMenu from '@/components/directories/LegalEntityMenu/LegalEntityMenu'
+import { useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
 import styles from './style.module.scss'
 import CreateGroup from '../../../../components/directories/ProductServices/CreateGroup'
 import CreateSingle from '../../../../components/directories/ProductServices/CreateSingle'
-import { ChevronDown, ChevronUp, ScanSearch, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, Search, MoreVertical } from 'lucide-react'
 import Select from '../../../../components/common/Select'
 import Input from '../../../../components/shared/Input'
+import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation } from '../../../../hooks/useDashboard'
+
+import { MdOutlineModeEdit } from "react-icons/md";
+import { GoTrash } from "react-icons/go";
+import { IoCopyOutline } from "react-icons/io5";
+import CustomModal from '../../../../components/shared/CustomModal';
+import Loader from '../../../../components/shared/Loader' 
+
 
 export default function LegalEntitiesPage() {
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-  const [selectedRows, setSelectedRows] = useState([])
   const [isCreateSingleOpen, setIsCreateSingleOpen] = useState(false)
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
-  const [editingLegalEntity, setEditingLegalEntity] = useState(null)
-  const [deletingLegalEntity, setDeletingLegalEntity] = useState(null)
+  const [filters, setFilters] = useState({
+    type: { value: 'all', label: 'Все' },
+    group: { value: 'all', label: 'Все' },
+  })
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [openRowMenuId, setOpenRowMenuId] = useState(null)
+  const [itemToDelete, setItemToDelete] = useState(null)
+  const [isDeletingItem, setIsDeletingItem] = useState(false)
+  const [itemToEdit, setItemToEdit] = useState(null)
+  const [isCopying, setIsCopying] = useState(false)
   const menuRef = useRef(null)
+  const rowMenuRef = useRef(null)
+
+  const { mutateAsync: deleteProductService } = useUcodeDefaultApiMutation({ mutationKey: 'DELETE_PRODUCT_SERVICE' })
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -37,11 +53,68 @@ export default function LegalEntitiesPage() {
     }
   }, [])
 
+  // Close row action menu on outside click
+  useEffect(() => {
+    const handleRowMenuClose = (event) => {
+      if (rowMenuRef.current && !rowMenuRef.current.contains(event.target)) {
+        setOpenRowMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleRowMenuClose)
+    return () => document.removeEventListener('mousedown', handleRowMenuClose)
+  }, [])
+
+  const { data: productServices, isLoading } = useUcodeDefaultApiQuery({
+    queryKey: "get_product_services_list",
+    urlMethod: "GET",
+    urlParams: "/items/product_and_service?from-ofs=true&offset=0&limit=10",
+    querySetting: {
+      select: data => data?.data?.data?.response
+    }
+  })
+
+  const { data: groupedProductServicesList } = useUcodeDefaultApiQuery({
+    queryKey: "get_group_product_services_list",
+    urlMethod: "GET",
+    urlParams: "/items/group_product_and_service",
+    querySetting: {
+      select: data => data?.data?.data?.response
+    }
+  })
+
+
+
+
+  const productServicesList = useMemo(() => {
+    return productServices?.filter(item => filters?.type?.value === 'all' ? item : item.status?.includes(filters?.type?.value)).map(item => {
+      const price = Number(item?.tsena_za_ed) || 0;
+      const vatStr = item?.nds || '';
+      const vatNum = parseFloat(vatStr) || 0;
+      const priceWithVat = vatNum > 0 ? price * (1 + vatNum / 100) : price;
+      return {
+        guid: item?.guid,
+        name: item?.naimenovanie,
+        artikul: item?.artikul,
+        group: item?.group_data?.nazvanie_gruppy || '—',
+        price,
+        unit: item?.units_of_measurement_id_data?.full_name || item?.units_of_measurement_id_data?.abbreviation || '—',
+        vat: vatStr ? `${vatStr}%` : '—',
+        priceWithVat: Math.round(priceWithVat),
+        comment: item?.commentary || '',
+        type: item?.status ? item?.status?.[0] === 'product' ? 'Товары' : 'Услуги' : '',
+        raw: item,
+        groupName: item?.group_product_and_service_id_data?.name
+      }
+    }) || []
+  }, [productServices, filters])
+
   const handleMenuClick = () => {
     setIsMenuOpen(!isMenuOpen)
   }
 
   const handleCreateSingle = () => {
+    setItemToEdit(null)
+    setIsCopying(false)
     setIsCreateSingleOpen(true)
     setIsMenuOpen(false)
   }
@@ -51,7 +124,6 @@ export default function LegalEntitiesPage() {
     setIsMenuOpen(false)
   }
 
-  const deleteMutation = useDeleteLegalEntities()
 
   // Debounce search query
   useEffect(() => {
@@ -69,8 +141,6 @@ export default function LegalEntitiesPage() {
     ...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
   })
 
-  console.log('Legal entities data:', legalEntitiesData)
-
   // Extract legal entities from response - correct path is data.data.data
   const legalEntitiesItems = useMemo(() => {
     const items = legalEntitiesData?.data?.data?.data || []
@@ -79,62 +149,66 @@ export default function LegalEntitiesPage() {
   }, [legalEntitiesData])
 
   // Transform API data to component format
-  const entities = useMemo(() => {
-    return legalEntitiesItems.map((item) => ({
-      id: item.guid,
-      guid: item.guid,
-      shortName: item.nazvanie || 'Без названия',
-      fullName: item.polnoe_nazvanie || '-',
-      inn: item.inn?.toString() || '-',
-      kpp: item.kpp?.toString() || '-',
-      rawData: item // Store raw data for editing
-    }))
-  }, [legalEntitiesItems])
+  // const entities = useMemo(() => {
+  //   return legalEntitiesItems.map((item) => ({
+  //     id: item.guid,
+  //     guid: item.guid,
+  //     shortName: item.nazvanie || 'Без названия',
+  //     fullName: item.polnoe_nazvanie || '-',
+  //     inn: item.inn?.toString() || '-',
+  //     kpp: item.kpp?.toString() || '-',
+  //     rawData: item // Store raw data for editing
+  //   }))
+  // }, [legalEntitiesItems])
 
-  const isRowSelected = (id) => selectedRows.includes(id)
+  // const isRowSelected = (id) => selectedRows.includes(id)
 
-  const toggleRowSelection = (id) => {
-    if (selectedRows.includes(id)) {
-      setSelectedRows(prev => prev.filter(rid => rid !== id))
-    } else {
-      setSelectedRows(prev => [...prev, id])
-    }
-  }
+  // const toggleRowSelection = (id) => {
+  //   if (selectedRows.includes(id)) {
+  //     setSelectedRows(prev => prev.filter(rid => rid !== id))
+  //   } else {
+  //     setSelectedRows(prev => [...prev, id])
+  //   }
+  // }
 
-  const allSelected = selectedRows.length === entities.length && entities.length > 0
+  // const allSelected = selectedRows.length === entities.length && entities.length > 0
 
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedRows([])
-    } else {
-      setSelectedRows(entities.map(e => e.id))
-    }
-  }
+  // const toggleSelectAll = () => {
+  //   if (allSelected) {
+  //     setSelectedRows([])
+  //   } else {
+  //     setSelectedRows(entities.map(e => e.id))
+  //   }
+  // }
 
-  const filteredData = useMemo(() => {
-    // Search is now handled by API, so just return entities
-    return entities
-  }, [entities])
+  // const filteredData = useMemo(() => {
+  //   // Search is now handled by API, so just return entities
+  //   return entities
+  // }, [entities])
 
-  const handleEdit = (legalEntity) => {
-    setEditingLegalEntity(legalEntity.rawData)
-  }
+  // const handleEdit = (legalEntity) => {
+  //   setEditingLegalEntity(legalEntity.rawData)
+  // }
 
-  const handleDelete = (legalEntity) => {
-    setDeletingLegalEntity(legalEntity.rawData)
-  }
+  // const handleDelete = (legalEntity) => {
+  //   setDeletingLegalEntity(legalEntity.rawData)
+  // }
 
   const handleDeleteConfirm = async () => {
-    if (deletingLegalEntity?.guid) {
-      try {
-        await deleteMutation.mutateAsync([deletingLegalEntity.guid])
-        setDeletingLegalEntity(null)
-        // Invalidate queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
-        queryClient.invalidateQueries({ queryKey: ['legalEntitiesV2'] })
-      } catch (error) {
-        console.error('Error deleting legal entity:', error)
-      }
+    if (!itemToDelete?.guid) return;
+    setIsDeletingItem(true);
+    try {
+      await deleteProductService({
+        urlMethod: 'DELETE',
+        urlParams: `/items/product_and_service/${itemToDelete.guid}?from-ofs=true`,
+        data: { guid: itemToDelete.guid }
+      });
+      queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] });
+      setItemToDelete(null);
+    } catch (e) {
+      console.error('delete error', e);
+    } finally {
+      setIsDeletingItem(false);
     }
   }
 
@@ -191,19 +265,17 @@ export default function LegalEntitiesPage() {
 
             <div className={styles.filtersContainer}>
               <div className={styles.filtersColumn}>
-                {/* <div className={styles.filterLabel}>Тип</div> */}
                 <Select
                   options={[
                     { value: 'all', label: 'Все' },
-                    { value: 'products', label: 'Товары' },
-                    { value: 'services', label: 'Услуги' }
+                    { value: 'product', label: 'Товары' },
+                    { value: 'service', label: 'Услуги' }
                   ]}
-                  defaultValue={{ value: 'all', label: 'Все' }}
+                  value={filters.type}
                   isSearchable={false}
+                  onChange={(value) => setFilters(prev => ({ ...prev, type: value }))}
                 />
               </div>
-
-              {/* <Select/> */}
 
               {/* filter by group and single  */}
               <div className={styles.filtersColumn}>
@@ -235,15 +307,14 @@ export default function LegalEntitiesPage() {
           </div>
         </div>
 
+
         {/* Table */}
         <div className={styles.tableWrapper}>
           <div className={styles.tableOuter}>
             <table className={styles.table}>
               <thead className={styles.theadDefault}>
                 <tr>
-                  <th className={cn(styles.th, styles.thIndex)}>
-                    №
-                  </th> 
+                  <th className={cn(styles.th, styles.thIndex)}>№</th>
                   <th className={styles.th}>
                     <button className={styles.headerButton}>
                       Наименование
@@ -254,7 +325,8 @@ export default function LegalEntitiesPage() {
                   </th>
                   <th className={styles.th}>Тип</th>
                   <th className={styles.th}>Артикул</th>
-                  <th className={styles.th}>Цена за ед</th>
+                  <th className={styles.th}>Группа</th>
+                  <th className={styles.th}>Цена за ед.</th>
                   <th className={styles.th}>Единица</th>
                   <th className={styles.th}>НДС</th>
                   <th className={styles.th}>Цена с НДС</th>
@@ -263,40 +335,73 @@ export default function LegalEntitiesPage() {
                 </tr>
               </thead>
 
-              {/* <tbody className={styles.tbody}>
-                {isLoadingLegalEntities ? (
+              <tbody className={styles.tbody}>
+                {isLoading ? (
                   <tr>
-                    <td colSpan={6} className={styles.td} style={{ textAlign: 'center', padding: '2rem' }}>
+                    <td colSpan={10} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
                       Загрузка...
                     </td>
                   </tr>
-                ) : filteredData.length === 0 ? (
+                ) : productServicesList.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
-                      {searchQuery ? 'Ничего не найдено' : 'Нет данных'}
+                      <td colSpan={10} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                        Нет данных
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map((entity, index) => (
-                    <tr key={entity.id} className={styles.row}>
-                      <td className={cn(styles.td, styles.tdIndex)}>
-                        {index + 1}
-                      </td>
-                      <td className={styles.td}>{entity.shortName}</td>
-                      <td className={styles.tdMuted}>{entity.fullName}</td>
-                      <td className={styles.tdMuted}>{entity.inn}</td>
-                      <td className={styles.tdMuted}>{entity.kpp}</td>
+                      productServicesList.map((item, index) => (
+                        <tr key={item.guid || index} className={styles.row}>
+                          <td className={cn(styles.td, styles.tdIndex)}>{index + 1}</td>
+                          <td className={styles.td} style={{ fontWeight: 500 }}>{item.name || '—'}</td>
+                          <td className={styles.tdMuted}>{item.type || '—'}</td>
+                          <td className={styles.tdMuted}>{item.artikul || '—'}</td>
+                          <td className={styles.tdMuted}>{item.groupName}</td>
+                          <td className={styles.td}>{item.price ? `${item.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                          <td className={styles.tdMuted}>{item.unit}</td>
+                          <td className={styles.tdMuted}>{item.vat}</td>
+                          <td className={styles.td}>{item.priceWithVat ? `${item.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                          <td className={styles.tdMuted} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.comment || '—'}</td>
                       <td className={cn(styles.td, styles.tdActions)} onClick={(e) => e.stopPropagation()}>
-                        <LegalEntityMenu
-                          legalEntity={entity}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
-                        />
+                            <div style={{ position: 'relative' }} ref={openRowMenuId === item.guid ? rowMenuRef : null}>
+                              <button
+                                className={styles.rowMenuButton}
+                                onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                              {openRowMenuId === item.guid && (
+                                <div className={styles.rowMenu}>
+                                  <button className={styles.rowMenuItem} onClick={() => {
+                                    setOpenRowMenuId(null);
+                                    setItemToEdit(item.raw);
+                                    setIsCopying(false);
+                                    setIsCreateSingleOpen(true);
+                                  }}>
+                                    <MdOutlineModeEdit size={14} color='#686868' />
+                                    Редактировать
+                                  </button>
+                                  <button className={styles.rowMenuItem} onClick={() => {
+                                    setOpenRowMenuId(null);
+                                    setItemToEdit(item.raw);
+                                    setIsCopying(true);
+                                    setIsCreateSingleOpen(true);
+                                  }}>
+                                    <IoCopyOutline size={14} color='#686868' />
+                                    Копировать
+                                  </button>
+                                  <button className={cn(styles.rowMenuItem, styles.rowMenuItemDanger)} onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
+                                    <GoTrash size={14} color='#ef4444' />
+                                    Удалить
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                       </td>
                     </tr>
                   ))
                 )}
-              </tbody> */}
+              </tbody>
+
             </table>
           </div>
         </div>
@@ -311,9 +416,42 @@ export default function LegalEntitiesPage() {
         </div>
       </div>
 
-      <CreateSingle open={isCreateSingleOpen} setOpen={() => setIsCreateSingleOpen(false)} />
+      <CreateSingle
+        open={isCreateSingleOpen}
+        setOpen={(open) => {
+          setIsCreateSingleOpen(!open);
+          if (!open) { setItemToEdit(null); setIsCopying(false); }
+        }}
+
+        initialData={itemToEdit}
+        isEditing={!!itemToEdit && !isCopying}
+      />
 
       <CreateGroup open={isCreateGroupOpen} setOpen={() => setIsCreateGroupOpen(false)} />
+
+      <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
+        <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: '#101828', fontFamily: 'Inter, sans-serif' }}>
+          Удалить товар
+        </h2>
+        <p style={{ margin: '0 0 28px', fontSize: 14, color: '#344054', lineHeight: '20px', fontFamily: 'Inter, sans-serif' }}>
+          Вы действительно хотите удалить товар «<strong>{itemToDelete?.name}</strong>» ?<br />Восстановить его будет невозможно.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+          <button
+            onClick={() => setItemToDelete(null)}
+            style={{ background: 'transparent', border: 'none', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: '#0c8c9a', padding: '8px 16px', cursor: 'pointer' }}
+          >
+            Отменить
+          </button>
+          <button
+            disabled={isDeletingItem}
+            onClick={handleDeleteConfirm}
+            style={{ background: isDeletingItem ? '#f98080' : '#F04438', color: '#fff', border: 'none', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, padding: '8px 20px', cursor: 'pointer' }}
+          >
+            {isDeletingItem ? <Loader /> : 'Удалить'}
+          </button>
+        </div>
+      </CustomModal>
 
     </div>
   )

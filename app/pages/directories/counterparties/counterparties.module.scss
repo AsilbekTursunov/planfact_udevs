@@ -286,10 +286,8 @@
 }
 
 
-
 .tableHeaderCell {
   padding: 0.5rem 0.625rem;
-  // text-align: start;
   white-space: nowrap;
   min-width: fit-content;
   font-size: 12px;
@@ -310,6 +308,7 @@
   &.right {
     text-align: right;
   }
+
 }
 
 .tableHeaderButton {
@@ -323,537 +322,551 @@
   border: none;
   padding: 0;
   cursor: pointer;
-&:first-child {
+
+  &:nth-child(1) {
     justify-content: flex-start !important;
   }
 
-  justify-content: center !important;
-}
-
-.tableHeaderIcon {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-.checkboxWrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.checkboxContainer {
-  position: relative;
-}
-
-.checkboxInput {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.checkbox {
-  width: 18px;
-  height: 18px;
-  border-radius: 0.125rem;
-  border: 2px solid;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  cursor: pointer;
-
-  &.checked {
-    background-color: #6366f1;
-    border-color: #6366f1;
+  &:nth-child(2) {
+    justify-content: flex-start !important;
   }
 
-  &.unchecked {
-    border-color: #d1d5db;
+  &.column {
+    justify-content: center !important;
+
+  
+  }
+}
+
+  .tableHeaderIcon {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .checkboxWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .checkboxContainer {
+    position: relative;
+  }
+
+  .checkboxInput {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 0.125rem;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    cursor: pointer;
+
+    &.checked {
+      background-color: #6366f1;
+      border-color: #6366f1;
+    }
+
+    &.unchecked {
+      border-color: #d1d5db;
+
+      &:hover {
+        border-color: #9ca3af;
+      }
+    }
+  }
+
+  .checkboxIcon {
+    width: 0.75rem;
+    height: 0.75rem;
+    color: white;
+  }
+
+  .tableRow {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    width: 100%;
+
+    &.selected {
+      background-color: #e3f2fd;
+    }
+
+    &:nth-child(odd) {
+      background-color: #fff;
+    }
+
+    &:hover {
+      background-color: #f0f4f8;
+    }
+  }
+
+  .tableCell {
+    padding: 0.5rem 0.625rem;
+    font-size: 12px;
+    white-space: nowrap;
+    height: 40px;
+    font-weight: 500;
+    color: #0f172a;
+    text-align: center !important;
+
+    &:nth-child(1) {
+      text-align: center !important;
+    }
+
+    &:nth-child(2) {
+      text-align: start !important;
+    }
+
+    &.text {
+      font-size: 12px;
+      font-weight: 400;
+      color: #0f172a;
+    }
+
+    &.textMuted {
+      font-size: 12px;
+      color: #0f172a;
+    }
+
+    &.textCenter {
+      text-align: center;
+    }
+
+    &.textRight {
+      text-align: right;
+    }
+
+    &.textGreen {
+      color: #088f44 !important;
+    }
+
+    &.textRed {
+      color: #ea0000 !important;
+    }
+
+    &.emptyCell {
+      background-color: #f3f4f6;
+      color: #9ca3af;
+      pointer-events: none;
+      user-select: none;
+      padding: 2rem;
+    }
+
+
+    &.groupFinal {
+      font-weight: 700;
+    }
+  }
+
+  .emptyRow {
+    cursor: default;
+    pointer-events: none;
+
+    &:hover {
+      background-color: #f3f4f6;
+    }
+
+    .tableCell {
+      background-color: #f3f4f6;
+    }
+
+    &.textRight {
+      text-align: right;
+    }
+
+    &.checkbox {
+      width: 2.5rem;
+      padding: 0.75rem 0.5rem;
+    }
+
+    &.commentCell {
+      white-space: normal;
+      max-width: 200px;
+    }
+  }
+
+  .groupRow {
+    background-color: #f9fafb;
+    font-weight: 500;
+
+    .tableCellCheckbox {
+      padding-right: 0.25rem;
+    }
+  }
+
+  .groupCell {
+    font-weight: 500;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 100%;
+    /* Ensure it takes full height if possible, though td padding restricts it. aligned via flex */
+  }
+
+  .groupCellContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 1rem;
+  }
+
+  .groupName {
+    font-weight: 500;
+    color: #0f172a;
+  }
+
+  .childRow {
+    background-color: #fafafa;
+    position: relative;
+  }
+
+  .expandButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280; // Default gray
+    transition: color 0.2s;
+    position: relative;
+    z-index: 2;
+
+    &:hover {
+      color: #334155;
+    }
+  }
+
+  .expandIcon {
+    width: 1rem; // 20px
+    height: 1rem;
+    color: #D0D5DD; // Blue color as requested/implied by active styles? Or just keep generic? User said #022565 for filter buttons. For this button, previous was gray.
+    // User "change this button icon to CgAddR and CgRemoveR". Didn't specify color.
+    // But usually these icons look good in primary color or gray. 
+    // I will leave color control to expandButton or explicit color.
+  }
+
+  .footer {
+    position: fixed;
+    bottom: 0;
+    left: 83px; // Sidebar width
+    right: 0;
+    background-color: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-shrink: 0;
+    z-index: 10;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+    transition: left 0.3s ease;
+  }
+
+  .footerWithFilter {
+    left: 313px; // Sidebar width (83px) + FilterSidebar width (230px)
+  }
+
+  .footerText {
+    font-size: 14px;
+    color: #0f172a; // slate-900
+  }
+
+  .footerTextBold {
+    font-weight: 600;
+    color: #0f172a; // slate-900
+    white-space: nowrap;
+  }
+
+  .footerDivider {
+    width: 1px;
+    height: 24px;
+    background-color: #e5e7eb;
+  }
+
+  .footerItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .footerLabel {
+    font-size: 11px;
+    color: #6b7280; // gray-500
+    font-weight: 500;
+  }
+
+  .footerValueContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+  }
+
+  .footerValue {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+
+    &.positive {
+      color: #10b981; // emerald-500
+    }
+
+    &.negative {
+      color: #ef4444; // red-500
+    }
+  }
+
+  .footerCurrencyIcon {
+    width: 13px;
+    height: 13px;
+    color: #9ca3af;
+
+    &.positive {
+      color: #10b981;
+    }
+
+    &.negative {
+      color: #ef4444;
+    }
+  }
+
+
+  .filterDropdown {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
 
     &:hover {
       border-color: #9ca3af;
     }
   }
-}
 
-.checkboxIcon {
-  width: 0.75rem;
-  height: 0.75rem;
-  color: white;
-}
-
-.tableRow {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s;
-  cursor: pointer;
-  width: 100%;
-
-  &.selected {
-    background-color: #e3f2fd;
+  .filterPlaceholder {
+    font-size: 14px;
+    color: #9ca3af;
   }
 
-  &:nth-child(odd) {
+  .filterChevron {
+    width: 1rem;
+    height: 1rem;
+    color: #9ca3af;
+  }
+
+  .filterCalendarIcon {
+    width: 1rem;
+    height: 1rem;
+    color: #9ca3af;
+    margin-right: 0.5rem;
+  }
+
+  // Sticky actions column
+  .tableHeaderCellActions {
+    position: sticky;
+    right: 0;
+    background: linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%) !important;
+    border-left: none;
+    box-shadow: none;
+    z-index: 21;
+    min-width: 32px;
+    width: 32px;
+    text-align: center;
+    padding: 0.5rem 0.25rem;
+  }
+
+  .tableCellActions {
+    position: sticky;
+    right: 0;
+    border-left: 1px solid #e5e7eb;
+    box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
+    // z-index: 20;
+    min-width: 32px;
+    width: 32px;
+    text-align: center;
+    padding: 0.5rem 0.25rem;
+    isolation: isolate;
+    overflow: visible;
     background-color: #fff;
-  }
 
-  &:hover {
-    background-color: #f0f4f8;
-  }
-}
-
-.tableCell {
-  padding: 0.5rem 0.625rem;
-  font-size: 12px;
-  white-space: nowrap;
-  height: 40px;
-  font-weight: 500;
-  color: #0f172a;
-    text-align: end !important;
-  
-    &:nth-child(1) {
-      text-align: center !important;
-    }
-  
-    &:nth-child(2) {
-      text-align: start !important;
+    .tableRow:nth-child(even) & {
+      background-color: #fafbfc;
     }
 
-  &.text {
-    font-size: 12px;
-    font-weight: 400;
-    color: #0f172a;
+    .tableRow:hover & {
+      background-color: #f0f4f8 !important;
+    }
+
+    .tableRow.selected & {
+      background-color: #eff6ff !important;
+    }
+
+    .tableRow.selected:hover & {
+      background-color: #dbeafe !important;
+    }
+
   }
 
-  &.textMuted {
-    font-size: 12px;
-    color: #0f172a;
-  }
 
-  &.textCenter {
+  // Index column styles
+  .tableHeaderCellIndex {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
     text-align: center;
   }
 
-    &.textRight {
-      text-align: right;
-    }
-  
-    &.textGreen {
-      color: #088f44 !important;
-    }
-  
-    &.textRed {
-      color: #ea0000 !important;
-    }
-
-  &.emptyCell {
-    background-color: #f3f4f6;
-    color: #9ca3af;
-    pointer-events: none;
-    user-select: none;
-    padding: 2rem;
-  }
-}
-
-.emptyRow {
-  cursor: default;
-  pointer-events: none;
-
-  &:hover {
-    background-color: #f3f4f6;
+  .tableCellIndex {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    text-align: center;
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 11px;
+    vertical-align: middle;
   }
 
-  .tableCell {
-    background-color: #f3f4f6;
+  .childIndex {
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 11px;
   }
 
-  &.textRight {
-    text-align: right;
+  // Date modal styles
+  .dateModalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99;
   }
 
-  &.checkbox {
-    width: 2.5rem;
-    padding: 0.75rem 0.5rem;
+  .dateModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 400px;
+    max-width: 90vw;
   }
 
-  &.commentCell {
-    white-space: normal;
-    max-width: 200px;
-  }
-}
-
-.groupRow {
-  background-color: #f9fafb;
-  font-weight: 500;
-
-  .tableCellCheckbox {
-    padding-right: 0.25rem;
-  }
-}
-
-.groupCell {
-  font-weight: 500;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  height: 100%;
-  /* Ensure it takes full height if possible, though td padding restricts it. aligned via flex */
-}
-
-.groupCellContent {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 1rem;
-}
-
-.groupName {
-  font-weight: 500;
-  color: #0f172a;
-}
-
-.childRow {
-  background-color: #fafafa;
-  position: relative;
-}
-
-.expandButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280; // Default gray
-  transition: color 0.2s;
-  position: relative;
-  z-index: 2;
-
-  &:hover {
-    color: #334155;
-  }
-}
-
-.expandIcon {
-  width: 1rem; // 20px
-  height: 1rem;
-  color: #D0D5DD; // Blue color as requested/implied by active styles? Or just keep generic? User said #022565 for filter buttons. For this button, previous was gray.
-  // User "change this button icon to CgAddR and CgRemoveR". Didn't specify color.
-  // But usually these icons look good in primary color or gray. 
-  // I will leave color control to expandButton or explicit color.
-}
-
-.footer {
-  position: fixed;
-  bottom: 0;
-  left: 83px; // Sidebar width
-  right: 0;
-  background-color: white;
-  border-top: 1px solid #e5e7eb;
-  padding: 0.75rem 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  flex-shrink: 0;
-  z-index: 10;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-  transition: left 0.3s ease;
-}
-
-.footerWithFilter {
-  left: 313px; // Sidebar width (83px) + FilterSidebar width (230px)
-}
-
-.footerText {
-  font-size: 14px;
-  color: #0f172a; // slate-900
-}
-
-.footerTextBold {
-  font-weight: 600;
-  color: #0f172a; // slate-900
-  white-space: nowrap;
-}
-
-.footerDivider {
-  width: 1px;
-  height: 24px;
-  background-color: #e5e7eb;
-}
-
-.footerItem {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.footerLabel {
-  font-size: 11px;
-  color: #6b7280; // gray-500
-  font-weight: 500;
-}
-
-.footerValueContainer {
-  display: flex;
-  align-items: center;
-  gap: 0.125rem;
-}
-
-.footerValue {
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-
-  &.positive {
-    color: #10b981; // emerald-500
+  .dateModalContent {
+    padding: 1.5rem;
   }
 
-  &.negative {
-    color: #ef4444; // red-500
-  }
-}
-
-.footerCurrencyIcon {
-  width: 13px;
-  height: 13px;
-  color: #9ca3af;
-
-  &.positive {
-    color: #10b981;
+  .dateModalTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 1.5rem 0;
   }
 
-  &.negative {
-    color: #ef4444;
-  }
-}
-
-
-.filterDropdown {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  background-color: white;
-  cursor: pointer;
-  transition: border-color 0.2s;
-
-  &:hover {
-    border-color: #9ca3af;
-  }
-}
-
-.filterPlaceholder {
-  font-size: 14px;
-  color: #9ca3af;
-}
-
-.filterChevron {
-  width: 1rem;
-  height: 1rem;
-  color: #9ca3af;
-}
-
-.filterCalendarIcon {
-  width: 1rem;
-  height: 1rem;
-  color: #9ca3af;
-  margin-right: 0.5rem;
-}
-
-// Sticky actions column
-.tableHeaderCellActions {
-  position: sticky;
-  right: 0;
-  background: linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%) !important;
-  border-left: none;
-  box-shadow: none;
-  z-index: 21;
-  min-width: 32px;
-  width: 32px;
-  text-align: center;
-  padding: 0.5rem 0.25rem;
-}
-
-.tableCellActions {
-  position: sticky;
-  right: 0;
-  border-left: 1px solid #e5e7eb;
-  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
-  // z-index: 20;
-  min-width: 32px;
-  width: 32px;
-  text-align: center;
-  padding: 0.5rem 0.25rem;
-  isolation: isolate;
-  overflow: visible;
-  background-color: #fff;
-
-  .tableRow:nth-child(even) & {
-    background-color: #fafbfc;
+  .dateModalBody {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
   }
 
-  .tableRow:hover & {
-    background-color: #f0f4f8 !important;
+  .dateModalRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
 
-  .tableRow.selected & {
-    background-color: #eff6ff !important;
-  }
-
-  .tableRow.selected:hover & {
-    background-color: #dbeafe !important;
-  }
-
-}
-
-
-// Index column styles
-.tableHeaderCellIndex {
-  width: 50px;
-  min-width: 50px;
-  max-width: 50px;
-  text-align: center;
-}
-
-.tableCellIndex {
-  width: 50px;
-  min-width: 50px;
-  max-width: 50px;
-  text-align: center;
-  font-weight: 500;
-  color: #6b7280;
-  font-size: 11px;
-  vertical-align: middle;
-}
-
-.childIndex {
-  font-weight: 500;
-  color: #6b7280;
-  font-size: 11px;
-}
-
-// Date modal styles
-.dateModalBackdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 99;
-}
-
-.dateModal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 100;
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  width: 400px;
-  max-width: 90vw;
-}
-
-.dateModalContent {
-  padding: 1.5rem;
-}
-
-.dateModalTitle {
-  font-size: 18px;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 1.5rem 0;
-}
-
-.dateModalBody {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.dateModalRow {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.dateModalLabel {
-  width: 40px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #0f172a;
-}
-
-.dateModalFooter {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-.dateModalButtonCancel {
-  padding: 0.5rem 1rem;
-  font-size: 14px;
-  color: #6b7280;
-  background: none;
-  border: none;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: #f3f4f6;
+  .dateModalLabel {
+    width: 40px;
+    font-size: 14px;
+    font-weight: 500;
     color: #0f172a;
   }
-}
 
-.dateModalButtonApply {
-  padding: 0.5rem 1rem;
-  font-size: 14px;
-  color: white;
-  background-color: #6366f1;
-  border: none;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: #4f46e5;
+  .dateModalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
   }
-}
 
-// Spinner
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+  .dateModalButtonCancel {
+    padding: 0.5rem 1rem;
+    font-size: 14px;
+    color: #6b7280;
+    background: none;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: #f3f4f6;
+      color: #0f172a;
+    }
   }
-}
 
-.loadingSpinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #e5e7eb;
-  border-top-color: #0F51B9;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  flex-shrink: 0;
-}
+  .dateModalButtonApply {
+    padding: 0.5rem 1rem;
+    font-size: 14px;
+    color: white;
+    background-color: #6366f1;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
 
-.fetchOverlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 30;
-  border-radius: 4px;
-  pointer-events: none;
-}
+    &:hover {
+      background-color: #4f46e5;
+    }
+  }
+
+  // Spinner
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .loadingSpinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #0F51B9;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .fetchOverlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    border-radius: 4px;
+    pointer-events: none;
+  }

@@ -21,6 +21,7 @@ import { formatDate } from '../../../utils/formatDate'
 import { useBankAccountsPlanFact } from '../../../hooks/useDashboard'
 import { formatDateRu } from '../../../utils/helpers'
 import { useQueryClient } from '@tanstack/react-query'
+import CustomTable from '../../../components/shared/Table'
 
 export default function OperationsPage() {
 	// Block body scroll for this page only
@@ -123,6 +124,7 @@ export default function OperationsPage() {
 			group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
 		}))
 	}, [chartOfAccountsData])
+
 
 	// Pagination state
 	const [page, setPage] = useState(1)
@@ -284,6 +286,8 @@ export default function OperationsPage() {
 		]).flat()
 	}, [counterpartiesGroupsData])
 
+
+
 	// Transform operations data for display
 	const operations = useMemo(() => {
 		if (!allOperations || allOperations.length === 0) return []
@@ -409,6 +413,7 @@ export default function OperationsPage() {
 			}
 		})
 	}, [allOperations])
+	console.table(operations)
 
 	const [isDatePaymentModalOpen, setIsDatePaymentModalOpen] = useState(false)
 	const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)
@@ -569,7 +574,7 @@ export default function OperationsPage() {
 
 
 		setOpenModal({
-			...copiedOperation, 
+			...copiedOperation,
 			id: 'new',
 			isNew: true,
 			isCopy: true
@@ -727,6 +732,8 @@ export default function OperationsPage() {
 					</button>
 				</div>
 			)}
+
+
 
 			{/* Main Content */}
 			<div className={styles.mainContent}>

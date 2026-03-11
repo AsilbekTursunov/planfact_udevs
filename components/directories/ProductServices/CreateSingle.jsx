@@ -1,19 +1,17 @@
 import Modal from '../../common/Modal/Modal'
 import styles from './style.module.scss'
 import { X } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import SegmentedControl from '../../shared/SegmentedControl'
 import Input from '../../shared/Input'
 import TextArea from '../../shared/TextArea'
-import { MultiSelect } from '../../common/MultiSelect/MultiSelect'
 import Select from '../../common/Select'
+import { useUcodeDefaultApiMutation, useUcodeDefaultApiQuery } from '../../../hooks/useDashboard'
+import { queryClient } from '../../../lib/queryClient'
+import Loader from '../../shared/Loader'
 
 
-const options = []
-
-// Изделие (изд) 
-
-const CreateSingle = ({ open = true, setOpen }) => {
+const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = false }) => {
   const [viewMode, setViewMode] = useState('product')
 
   const viewOptions = [
@@ -21,7 +19,87 @@ const CreateSingle = ({ open = true, setOpen }) => {
     { value: 'service', label: 'Услуги' }
   ]
 
-  const unitOptions = [
+  const { mutateAsync: mutateProductService, isPending } = useUcodeDefaultApiMutation({
+    mutationKey: "CREATE_PRODUCT_SERVICE"
+  })
+
+  const { data: units, } = useUcodeDefaultApiQuery({
+    queryKey: "get_product_services_units",
+    urlMethod: "GET",
+    urlParams: "/items/units_of_measurement?from-ofs=true&offset=0&limit=100",
+    querySetting: {
+      select: data => data?.data?.data?.response
+    }
+  })
+
+  const { data: groups } = useUcodeDefaultApiQuery({
+    queryKey: "get_product_services_groups",
+    urlMethod: "GET",
+    urlParams: "/items/group_product_and_service",
+    querySetting: {
+      select: data => data?.data?.data?.response
+    }
+  })
+
+  const groupsList = useMemo(() => {
+    return groups?.map(item => {
+      return {
+        value: item?.guid,
+        label: item?.name
+      }
+    })
+  }, [groups])
+
+  const apiOptions = useMemo(() => {
+    return units?.map(item => ({
+      value: item?.guid, label: item?.full_name
+    }))
+  }, [units])
+
+  const productOptions = [
+    { value: 'a', label: 'Ар (а)', },
+    { value: 'bob', label: 'Бобина (боб)' },
+    { value: 'ga', label: 'Гектар (га)' },
+    { value: 'year', label: 'Год (г)' },
+    { value: 'g', label: 'Грамм (г)' },
+    { value: 'ed', label: 'Единица (ед)' },
+    { value: 'izd', label: 'Изделие (изд)' },
+    { value: 'km2', label: 'Квадратный километр (км 2)' },
+    { value: 'm2', label: 'Квадратный метр (м 2)' },
+    { value: 'mm2', label: 'Квадратный миллиметр (мм 2)' },
+    { value: 'sm2', label: 'Квадратный сантиметр (см 2)' },
+    { value: 'kg', label: 'Килограмм (кг)' },
+    { value: 'km', label: 'Километр (км)' },
+    { value: 'm3', label: 'Кубический метр (м 3)' },
+    { value: 'mm3', label: 'Кубический миллиметр (мм 3)' },
+    { value: 'sm3', label: 'Кубический сантиметр (см 3)' },
+    { value: 'list', label: 'Лист (л.)' },
+    { value: 'l', label: 'Литр (л)' },
+    { value: 'month', label: 'Месяц (мес)' },
+    { value: 'm', label: 'Метр (м)' },
+    { value: 'mg', label: 'Миллиграмм (мг)' },
+    { value: 'ml', label: 'Миллилитр (мл)' },
+    { value: 'mm', label: 'Миллиметр (мм)' },
+    { value: 'nabor', label: 'Набор (набор)' },
+    { value: 'pm', label: 'Погонный метр (пог. м)' },
+    { value: 'rulon', label: 'Рулон (рул)' },
+    { value: 'sm', label: 'Сантиметр (см)' },
+    { value: 'sec', label: 'Секунда (с)' },
+    { value: 'sut', label: 'Сутки (сут)' },
+    { value: 't', label: 'Тонна (т)' },
+    { value: 'upak', label: 'Упаковка (упак)' },
+    { value: 'usl_m', label: 'Условный метр (усл. м)' },
+    { value: 'c', label: 'Центнер (ц)' },
+    { value: 'hour', label: 'Час (ч)' },
+    { value: 'chast', label: 'Часть (часть)' },
+    { value: 'chel_dn', label: 'Человеко-день (чел.дн)' },
+    { value: 'chel_ch', label: 'Человеко-час (чел.ч)' },
+    { value: 'pcs', label: 'Штука (шт)' },
+    { value: 'elem', label: 'Элемент (элем)' },
+    { value: 'box', label: 'Ящик (ящ.)' }
+  ]
+
+  const serviceOptions = [
     { value: 'a', label: 'Ар (а)' },
     { value: 'bob', label: 'Бобина (боб)' },
     { value: 'ga', label: 'Гектар (га)' },
@@ -77,13 +155,50 @@ const CreateSingle = ({ open = true, setOpen }) => {
   const [formData, setFormData] = useState({
     name: '',
     article: '',
-    unit: unitOptions[0],
+    unit: apiOptions?.[0],
     group: [],
     price: '',
     currency: currencyOptions[0],
     vat: '',
     comment: ''
   })
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      article: '',
+      unit: apiOptions?.[0],
+      group: [],
+      price: '',
+      currency: currencyOptions[0],
+      vat: '',
+      comment: ''
+    })
+    setViewMode('product')
+  }
+
+  useEffect(() => {
+
+    if (open) {
+      if (initialData) {
+        setViewMode(initialData?.status?.[0] === 'service' ? 'service' : 'product')
+        setFormData({
+          name: initialData?.naimenovanie || '',
+          article: initialData?.artikul || '',
+          unit: apiOptions?.find(opt => opt.value === initialData?.units_of_measurement_id) || apiOptions?.[0],
+          group: [],
+          price: (initialData?.tsena_za_ed || '').toString(),
+          currency: currencyOptions[0],
+          vat: initialData?.nds?.toString() || '',
+          comment: initialData?.commentary || ''
+        })
+      } else {
+        resetForm()
+      }
+    }
+    // eslint-disable-next-line
+  }, [open, initialData, apiOptions])
+
   const [isSubmitted, setIsSubmitted] = useState(false)
 
   const handleFieldChange = (field, value) => {
@@ -93,28 +208,62 @@ const CreateSingle = ({ open = true, setOpen }) => {
     }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitted(true)
 
     if (!formData.name) {
       return
     }
-
     const payload = {
-      ...formData,
+      naimenovanie: formData?.name,
+      tsena_za_ed: parseInt((formData?.price || '').replace(/\s/g, '').replace(/[^\d]/g, '')) || 0,
+      units_of_measurement_id: formData?.unit?.value,
+      artikul: formData?.article,
+      nds: parseInt((formData?.vat || '').replace('%', '')) || 0,
+      commentary: formData?.comment,
+      status: [viewMode],
+      group_product_and_service_id: formData?.group?.value
     }
 
     if (viewMode === 'product') {
       payload.article = formData.article;
-      // create product action   
-      console.log('Create product:', payload)
-      return
+    } else {
+      // create service action
+      delete payload.article;
     }
 
-    // create service action
-    delete payload.article;
-    console.log('Create service:', payload)
+    if (isEditing && initialData?.guid) {
+      payload.guid = initialData.guid;
+    }
+
+    try {
+      await mutateProductService({
+        urlMethod: isEditing ? "PUT" : "POST",
+        urlParams: "/items/product_and_service?from-ofs=true",
+        data: payload
+      })
+      resetForm()
+      setOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] })
+    } catch (error) {
+      console.error('mutateProductService', error?.message)
+    }
   }
+
+  // const handleDelete = async (guid) => {
+  //   try {
+  //     await mutateProductService({
+  //       urlMethod: "DELETE",
+  //       urlParams: "/items/product_and_service?from-ofs=true",
+  //       data: {
+  //         guid
+  //       }
+  //     })
+  //     queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] })
+  //   } catch (error) {
+  //     console.error('mutateProductService', error?.message)
+  //   }
+  // }
 
   return (
     <Modal
@@ -125,7 +274,9 @@ const CreateSingle = ({ open = true, setOpen }) => {
       <div className={styles.singlecontainer}>
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {viewMode === 'product' ? 'Создание товара' : 'Создание услуги'}
+            {isEditing
+              ? (viewMode === 'product' ? 'Редактирование товара' : 'Редактирование услуги')
+              : (viewMode === 'product' ? 'Создание товара' : 'Создание услуги')}
           </h2>
 
           <div className={styles.headerActions}>
@@ -174,11 +325,10 @@ const CreateSingle = ({ open = true, setOpen }) => {
             </div>
             <div className={`${styles.fieldContainer} ${viewMode === 'service' ? styles.service : ''}`}>
               <Select
-                buttonClassname={styles.multiSelect}
-                options={unitOptions}
+                options={apiOptions}
                 value={formData.unit}
                 onChange={val => handleFieldChange('unit', val)}
-                defaultValue={unitOptions[0]}
+                defaultValue={viewMode == 'product' ? productOptions[0] : serviceOptions[0]}
               />
             </div>
           </div>
@@ -186,9 +336,8 @@ const CreateSingle = ({ open = true, setOpen }) => {
           <div className={styles.formRow}>
             <div className={styles.label}>Группа товаров</div>
             <div className={styles.fieldContainer}>
-              <MultiSelect
-                buttonClassname={styles.multiSelect}
-                options={groupOptions}
+              <Select
+                options={groupsList}
                 value={formData.group}
                 onChange={val => handleFieldChange('group', val)}
                 placeholder="Выберите группу"
@@ -205,7 +354,17 @@ const CreateSingle = ({ open = true, setOpen }) => {
                 className={styles.priceInput}
                 placeholder="0.00"
                 value={formData.price}
-                onChange={e => handleFieldChange('price', e.target.value)}
+                onChange={e => {
+                  const raw = e.target.value.replace(/\s/g, '').replace(/[^0-9.]/g, '');
+                  if (raw === '' || raw === '.') {
+                    handleFieldChange('price', raw);
+                    return;
+                  }
+                  const num = parseFloat(raw);
+                  if (!isNaN(num)) {
+                    handleFieldChange('price', num.toLocaleString('ru-RU'));
+                  }
+                }}
               />
               <Select
                 className={styles.currencySelect}
@@ -223,8 +382,18 @@ const CreateSingle = ({ open = true, setOpen }) => {
               <Input
                 placeholder="0%"
                 className={styles.fullWidth}
-                value={formData.vat}
-                onChange={e => handleFieldChange('vat', e.target.value)}
+                value={formData.vat ? `${formData.vat}%` : ''}
+                onChange={e => {
+                  const raw = e.target.value.replace(/%/g, '').replace(/\D/g, '').slice(0, 2);
+                  handleFieldChange('vat', raw);
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    const val = String(formData.vat || '');
+                    handleFieldChange('vat', val.slice(0, -1));
+                  }
+                }}
               />
             </div>
           </div>
@@ -249,8 +418,8 @@ const CreateSingle = ({ open = true, setOpen }) => {
             <button type="button" className={styles.cancelButton} onClick={setOpen}>
               Отменить
             </button>
-            <button type="button" className={styles.saveButton} onClick={handleSubmit}>
-              Создать
+            <button type="button" className={styles.saveButton} onClick={handleSubmit} disabled={isPending}>
+              {isPending ? <Loader /> : isEditing ? "Сохранить" : "Создать"}
             </button>
           </div>
         </div>

@@ -46,7 +46,7 @@ const navItems = [
 ]
 
 export function Sidebar() {
-    const pathname = usePathname() 
+    const pathname = usePathname()
     const [hoveredItem, setHoveredItem] = useState(null)
     const [clickedItem, setClickedItem] = useState(null)
     const [activeIndicatorStyle, setActiveIndicatorStyle] = useState({ top: 0, height: 0, opacity: 0 })
@@ -198,7 +198,6 @@ export function Sidebar() {
                             >
                                 {hasSubmenu ? (
                                     <button
-                                        onClick={handleItemClick}
                                         className={cn(
                                             styles.navLink,
                                             styles.navButton,

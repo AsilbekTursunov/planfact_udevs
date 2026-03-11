@@ -23,4 +23,12 @@ export const formatedToday = () => {
 }
 
 
+export const formatDateFormat = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+};
+
+
 

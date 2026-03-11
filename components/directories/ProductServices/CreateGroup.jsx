@@ -5,18 +5,20 @@ import { useState } from 'react'
 import SegmentedControl from '../../shared/SegmentedControl'
 import Input from '../../shared/Input'
 import TextArea from '../../shared/TextArea'
+import { useUcodeDefaultApiMutation } from '../../../hooks/useDashboard'
+import Loader from '../../shared/Loader'
+import { queryClient } from '../../../lib/queryClient'
 
 const CreateGroup = ({ open = true, setOpen }) => {
   const [viewMode, setViewMode] = useState('product')
 
-  const viewOptions = [
-    { value: 'product', label: 'Товары' },
-    { value: 'service', label: 'Услуги' }
-  ]
+  const { mutateAsync: createProductServiceGroup, isPending } = useUcodeDefaultApiMutation({
+    mutationKey: "product_service_group"
+  })
 
   const [formData, setFormData] = useState({
     name: '',
-    comment: ''
+    commentary: ''
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
 
@@ -27,9 +29,8 @@ const CreateGroup = ({ open = true, setOpen }) => {
     }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitted(true)
-    
     if (!formData.name) {
       return
     }
@@ -38,14 +39,18 @@ const CreateGroup = ({ open = true, setOpen }) => {
       ...formData,
     }
 
-    if (viewMode === 'product') {
-      // create product action   
-      console.log('Create product:', payload)
-      return
+    try {
+      await createProductServiceGroup({
+        urlMethod: "POST",
+        urlParams: "/items/group_product_and_service",
+        data: payload
+      })
+      queryClient.invalidateQueries({ queryKey: "get_product_services_groups" })
+      setOpen(false)
+      setFormData({ name: "", commentary: "" })
+    } catch (error) {
+      console.error('createProductServiceGroup', error)
     }
-
-    // create service action
-    console.log('Create service:', payload)
   }
 
   return (
@@ -61,11 +66,6 @@ const CreateGroup = ({ open = true, setOpen }) => {
           </h2>
 
           <div className={styles.headerActions}>
-            <SegmentedControl
-              options={viewOptions}
-              value={viewMode}
-              onChange={setViewMode}
-            />
             <button type="button" className={styles.closeButton} onClick={setOpen}>
               <X size={20} color="#9ca3af" />
             </button>
@@ -95,8 +95,8 @@ const CreateGroup = ({ open = true, setOpen }) => {
                 placeholder="Добавьте комментарий к этому товару"
                 className={styles.textArea}
                 rows={4}
-                value={formData.comment}
-                onChange={e => handleFieldChange('comment', e.target.value)}
+                value={formData.commentary}
+                onChange={e => handleFieldChange('commentary', e.target.value)}
               />
             </div>
           </div>
@@ -109,7 +109,7 @@ const CreateGroup = ({ open = true, setOpen }) => {
               Отменить
             </button>
             <button type="button" className={styles.saveButton} onClick={handleSubmit}>
-              Создать
+              {isPending ? <Loader /> : 'Создать'}
             </button>
           </div>
         </div>

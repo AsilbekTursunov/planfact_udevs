@@ -124,8 +124,8 @@ const OperationTableRow = ({
           return (
             <tr
               key={part.id}
-              className={`${styles.tableRow} ${styles.child} ${counterpartyGuid !== part?.counterpartyId ? styles.disabled : ''}`}
-              aria-disabled={counterpartyGuid === part?.counterpartyId}
+              className={`${styles.tableRow} ${styles.child} ${counterpartyGuid && counterpartyGuid !== part?.counterpartyId ? styles.disabled : ''}`}
+              aria-disabled={counterpartyGuid && counterpartyGuid === part?.counterpartyId}
               onClick={e => {
                 if (!e.target.closest('input') && !e.target.closest('button') && counterpartyGuid === part?.counterpartyId) {
                   openOperationModal(part)

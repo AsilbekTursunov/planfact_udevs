@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { dashboardAPI } from '@/lib/api/dashboard'
 import { chartOfAccountsAPI } from '@/lib/api/ucode/chartOfAccounts'
-import { ucodeRequest } from '@/lib/api/ucode/base'
+import { ucodeRequest, defaultUcodeApiRequest } from '@/lib/api/ucode/base'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
 
 // Get dashboard data
@@ -1264,10 +1264,11 @@ export const useUcodeRequestMutation = () => {
     mutationFn: ({ method, data }) => ucodeRequest({ method, data }),
     onError: (error) => {
       console.error('useUcodeRequestMutation Error:', error)
-      showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
+      showErrorNotification(error.message || error.details?.description || 'Ошибка при выполнении запроса')
     }
   })
 }
+
 
 
 /**
@@ -1285,3 +1286,32 @@ export const useUcodeRequestQuery = ({ method, data, skip = false, querySetting 
     ...querySetting
   })
 }
+
+
+// vaqtinchalik UcodeDefaultApi uchun
+export const useUcodeDefaultApiMutation = ({ mutationKey = '' }) => {
+  return useMutation({
+    mutationKey: [mutationKey],
+    mutationFn: ({ urlMethod, urlParams, data }) => defaultUcodeApiRequest({ urlMethod, urlParams, data }),
+    onError: (error) => {
+      console.error('useUcodeDefaultApiMutation Error:', error)
+    }
+  })
+}
+
+
+export const useUcodeDefaultApiQuery = ({ queryKey = '', urlMethod, urlParams, data, querySetting = {} }) => {
+  return useQuery({
+    queryKey: [queryKey, data],
+    queryFn: () => defaultUcodeApiRequest({ urlMethod, urlParams, data }),
+    onError: (error) => {
+      console.error('useUcodeDefaultApiQuery Error:', error)
+    },
+    ...querySetting
+  })
+}
+
+
+
+
+

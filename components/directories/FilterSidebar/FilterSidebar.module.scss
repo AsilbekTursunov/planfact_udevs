@@ -41,6 +41,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -61,6 +62,26 @@
   color: #1f2937;
 }
 
+.clearButton {
+  display: flex;
+  grid-area: .325rem;
+  border: none;
+  align-items: center;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+  gap: 4px;
+}
+
+.clearCount {
+  color: #374151;
+}
+
+.deleteIcon {
+  &:hover {
+    color: red;
+  }
+}
 .filterTabs {
   display: flex;
   justify-content: space-between;
@@ -86,19 +107,19 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   border: none;
-  
+
   &.active {
     background-color: white;
     color: #0F51B9;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     transform: scale(1);
   }
-  
+
   &.inactive {
     background-color: transparent;
     color: #6b7280;
     transform: scale(0.98);
-    
+
     &:hover {
       color: #374151;
       background-color: rgba(0, 0, 0, 0.02);

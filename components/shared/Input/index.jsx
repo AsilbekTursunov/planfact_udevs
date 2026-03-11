@@ -22,7 +22,7 @@ const Input = forwardRef(({
           action === 'filter' && styles.filter,
           leftIcon && styles.icon,
           className
-        )}
+        )} 
         {...props}
       />
     </>
