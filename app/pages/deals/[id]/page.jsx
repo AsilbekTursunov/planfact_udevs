@@ -2,18 +2,15 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-// import { useQuery } from '@tanstack/react-query';
 import styles from './deal-detail.module.scss';
-import { useUcodeDefaultApiQuery, useUcodeRequestQuery } from '../../../../hooks/useDashboard';
-// import { getSalesTransactionByGuid } from '@/lib/api/ucode/sales';
+import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'; 
 
 export default function DealDetailPage() {
   const params = useParams();
   const router = useRouter();
   const dealId = params.id;
 
-
-  const { data: dealData, isLoading: loadingDeal } = useUcodeRequestQuery({
+  const { data: dealData } = useUcodeRequestQuery({
     method: "get_sales_transaction_by_guid",
     data: {
       guid: dealId
@@ -25,18 +22,6 @@ export default function DealDetailPage() {
 
   console.log('dealdata', dealData)
 
-  // Fetch deal data - COMMENTED OUT until API is ready
-  // const { data: dealData, isLoading } = useQuery({
-  //   queryKey: ['deal', dealId],
-  //   queryFn: () => getSalesTransactionByGuid(dealId),
-  //   enabled: !!dealId,
-  //   retry: 0,
-  //   onError: (error) => {
-  //     console.error('Error fetching deal:', error);
-  //   }
-  // });
-
-  // const apiDeal = dealData?.data?.data?.data || null;
 
   // Mock data
   const deal = useMemo(() => {
@@ -96,7 +81,6 @@ export default function DealDetailPage() {
         <span className={styles.breadcrumbSeparator}>/</span>
         <span className={styles.breadcrumbCurrent}>{deal.nazvanie || 'Без названия'}</span>
       </div>
-
       {/* Header */}
       <div className={styles.header}>
         <h1 className={styles.title}>{deal.nazvanie || 'Без названия'}</h1>
@@ -108,10 +92,7 @@ export default function DealDetailPage() {
         <div className={styles.infoCard}>
           <div className={styles.cardHeader}>
             <span className={styles.cardLabel}>
-              Сделка на сумму
-              <svg className={styles.cardLabelIcon} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8.00001 10.6666V7.99998M8.00001 5.33331H8.00668M14.6667 7.99998C14.6667 11.6819 11.6819 14.6666 8.00001 14.6666C4.31811 14.6666 1.33334 11.6819 1.33334 7.99998C1.33334 4.31808 4.31811 1.33331 8.00001 1.33331C11.6819 1.33331 14.6667 4.31808 14.6667 7.99998Z" stroke="#D0D5DD" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              Сделка на сумму /
             </span>
             <span className={styles.cardStatus}>
               <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
