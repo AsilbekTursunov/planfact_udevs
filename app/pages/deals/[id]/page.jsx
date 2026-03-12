@@ -1,14 +1,33 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import styles from './deal-detail.module.scss';
-import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'; 
+import { useUcodeRequestQuery, useUcodeDefaultApiQuery, useUcodeDefaultApiMutation } from '../../../../hooks/useDashboard';
+import { useQueryClient } from '@tanstack/react-query';
+import DealStatus from '../../../../components/deals/details/Status';
+import CreateShipment from '../../../../components/deals/details/CreatingShipment';
+import { CirclePlus, Ellipsis, Search, MoreVertical } from 'lucide-react';
+import { HiOutlineDatabase } from "react-icons/hi";
+import { PiDatabaseFill } from "react-icons/pi";
+import { MdOutlineModeEdit } from "react-icons/md";
+import { GoTrash } from "react-icons/go";
+import { IoCopyOutline } from "react-icons/io5";
+import Input from '../../../../components/shared/Input';
+import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox';
+import OperationModal from '../../../../components/operations/OperationModal/OperationModal';
+import CreateProductService from '../../../../components/deals/details/CreateProductService';
+import CreateSingle from '../../../../components/directories/ProductServices/CreateSingle';
+import CustomModal from '../../../../components/shared/CustomModal';
+import Loader from '../../../../components/shared/Loader';
+import { formatDateFormat } from '../../../../utils/formatDate';
+import { formatAmount } from '../../../../utils/helpers';
 
 export default function DealDetailPage() {
   const params = useParams();
   const router = useRouter();
   const dealId = params.id;
+  const queryClient = useQueryClient();
 
   const { data: dealData } = useUcodeRequestQuery({
     method: "get_sales_transaction_by_guid",
@@ -20,20 +39,17 @@ export default function DealDetailPage() {
     }
   })
 
-  console.log('dealdata', dealData)
-
-
-  // Mock data
+  // Deal data
   const deal = useMemo(() => {
     return {
       guid: dealId,
       nazvanie: dealData?.Nazvanie,
       kontragent: { nazvanie: 'test' },
       data_nachala: '2026-05-26',
-      summa_sdelki: 63000000,
-      postupilo_summa: 3000000,
-      otgruzheno_summa: 17000000,
-      pribyl: 16000000,
+      summa_sdelki: dealData?.total_products_summa,
+      postupilo_summa: dealData?.total_receipts_summa,
+      otgruzheno_summa: dealData?.total_shipments_summa,
+      pribyl: dealData?.accural_profit,
       status: dealData?.status?.[0]
     }
   }, [dealData, dealId]);
@@ -41,18 +57,115 @@ export default function DealDetailPage() {
   const isLoading = false;
 
   const [activeTab, setActiveTab] = useState('products');
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [showOperationModal, setShowOperationModal] = useState(false);
+  const [operation, setOperation] = useState(null)
+  const [isModalClosing, setIsModalClosing] = useState(false)
+  const [isModalOpening, setIsModalOpening] = useState(false)
+  const [showProductModal, setShowProductModal] = useState(false)
+  const [selectedRows, setSelectedRows] = useState([])
 
-  const formatAmount = (amount) => {
-    if (!amount && amount !== 0) return '0';
-    return Number(amount).toLocaleString('ru-RU');
-  };
+  const toggleRowSelection = (guid) => {
+    setSelectedRows(prev =>
+      prev.includes(guid) ? prev.filter(id => id !== guid) : [...prev, guid]
+    )
+  }
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-    return `${String(date.getDate()).padStart(2, '0')} ${months[date.getMonth()]} '${String(date.getFullYear()).slice(2)}`;
-  };
+
+
+  // Product/service row action menu state
+  const [openRowMenuId, setOpenRowMenuId] = useState(null)
+  const [itemToDelete, setItemToDelete] = useState(null)
+  const [isDeletingItem, setIsDeletingItem] = useState(false)
+  const [itemToEdit, setItemToEdit] = useState(null)
+  const [isCopying, setIsCopying] = useState(false)
+  const [isEditSingleOpen, setIsEditSingleOpen] = useState(false)
+  const rowMenuRef = useRef(null)
+
+  // Close row action menu on outside click
+  useEffect(() => {
+    const handleRowMenuClose = (event) => {
+      if (rowMenuRef.current && !rowMenuRef.current.contains(event.target)) {
+        setOpenRowMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleRowMenuClose)
+    return () => document.removeEventListener('mousedown', handleRowMenuClose)
+  }, [])
+
+  // Fetch product/service list
+  const { data: productServices, isLoading: isLoadingProducts } = useUcodeDefaultApiQuery({
+    queryKey: 'product_services_list',
+    urlMethod: 'GET',
+    urlParams: '/items/product_and_service?from-ofs=true&offset=0&limit=100',
+    querySetting: {
+      select: data => data?.data?.data?.response
+    }
+  })
+
+  const { mutateAsync: deleteProductService } = useUcodeDefaultApiMutation({ mutationKey: 'DELETE_PRODUCT_SERVICE' })
+
+  // Transform product services for table display
+  const productServicesList = useMemo(() => {
+    return productServices?.map(item => {
+      const price = Number(item?.tsena_za_ed) || 0;
+      const vatStr = item?.nds || '';
+      const vatNum = parseFloat(vatStr) || 0;
+      const qty = Number(item?.quantity) || 1;
+      const discountNum = parseFloat(item?.discount || 0);
+      const subtotal = qty * price;
+      const afterDiscount = subtotal * (1 - discountNum / 100);
+      const total = vatNum > 0 ? afterDiscount * (1 + vatNum / 100) : afterDiscount;
+      return {
+        guid: item?.guid,
+        name: item?.naimenovanie || '—',
+        quantity: qty,
+        unit: item?.units_of_measurement_id_data?.short_name || item?.units_of_measurement_id_data?.abbreviation || '—',
+        price,
+        discount: item?.discount != null ? `${item.discount}%` : '0%',
+        vat: vatStr ? `${vatStr}%` : '0%',
+        total: Math.round(total),
+        raw: item,
+      }
+    }) || []
+  }, [productServices])
+
+  const allSelected = productServicesList.length > 0 && selectedRows.length === productServicesList.length
+  const toggleSelectAll = () => {
+    setSelectedRows(allSelected ? [] : productServicesList.map(i => i.guid))
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete?.guid) return;
+    setIsDeletingItem(true);
+    try {
+      await deleteProductService({
+        urlMethod: 'DELETE',
+        urlParams: `/items/product_and_service/${itemToDelete.guid}?from-ofs=true`,
+        data: { guid: itemToDelete.guid }
+      });
+      queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] });
+      setItemToDelete(null);
+    } catch (e) {
+      console.error('delete error', e);
+    } finally {
+      setIsDeletingItem(false);
+    }
+  }
+
+  // Deal statuses
+  const [dealStatuses, setDealStatuses] = useState([
+    { guid: '1', name: 'Новая', color: '#F79009' },
+    { guid: '2', name: 'В работе', color: '#2E90FA' },
+    { guid: '3', name: 'Завершена', color: '#12B76A' },
+  ]);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+
+  // Set initial status from deal data
+  const currentDealStatus = selectedStatus || (
+    deal.status ? { guid: deal.status.guid, name: deal.status.name, color: deal.status.color || '#F79009' } : dealStatuses[0]
+  );
+
 
   if (isLoading) {
     return (
@@ -69,7 +182,17 @@ export default function DealDetailPage() {
   const receivedPercent = dealAmount > 0 ? Math.round((received / dealAmount) * 100) : 0;
   const shippedPercent = dealAmount > 0 ? Math.round((shipped / dealAmount) * 100) : 0;
   const profitPercent = dealAmount > 0 ? Math.round((profit / dealAmount) * 100) : 0;
-  const clientOwes = dealAmount - received;
+
+
+  const handleCreateOperation = () => {
+    setOperation({ isNew: true })
+    setShowOperationModal(true)
+    setIsModalClosing(false)
+    setIsModalOpening(true)
+    setTimeout(() => {
+      setIsModalOpening(false)
+    }, 50)
+  }
 
   return (
     <div className={styles.container}>
@@ -82,8 +205,13 @@ export default function DealDetailPage() {
         <span className={styles.breadcrumbCurrent}>{deal.nazvanie || 'Без названия'}</span>
       </div>
       {/* Header */}
-      <div className={styles.header}>
-        <h1 className={styles.title}>{deal.nazvanie || 'Без названия'}</h1>
+      <div className='flex items-center justify-between '>
+        <div className={styles.header}>
+          <h1 className={styles.title}>{deal.nazvanie || 'Без названия'}</h1>
+        </div>
+        <button className={styles.detailsDots}>
+          <Ellipsis size={18} className='text-neutral-800' />
+        </button>
       </div>
 
       {/* Info Cards */}
@@ -94,15 +222,20 @@ export default function DealDetailPage() {
             <span className={styles.cardLabel}>
               Сделка на сумму /
             </span>
-            <span className={styles.cardStatus}>
-              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="4" cy="4" r="3" fill="#12B76A" />
-              </svg>
-              Завершена
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
+            <DealStatus
+              statuses={dealStatuses}
+              currentStatus={currentDealStatus}
+              onStatusChange={(status) => setSelectedStatus(status)}
+              onStatusEdit={(updated) => {
+                setDealStatuses(prev => prev.map(s => s.guid === updated.guid ? updated : s))
+              }}
+              onStatusDelete={(status) => {
+                setDealStatuses(prev => prev.filter(s => s.guid !== status.guid))
+              }}
+              onStatusCreate={(newStatus) => {
+                setDealStatuses(prev => [...prev, { ...newStatus, guid: Date.now().toString() }])
+              }}
+            />
           </div>
           <div className={styles.cardAmount}>{formatAmount(dealAmount)} ₽</div>
 
@@ -112,9 +245,7 @@ export default function DealDetailPage() {
             <div className={styles.infoRowInCard}>
               <span className={styles.infoLabelInCard}>Тип</span>
               <span className={styles.infoValueInCard}>
-                <svg className={styles.infoIcon} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8.66668 3.33333C8.66668 4.06971 7.02505 4.66667 5.00001 4.66667C2.97497 4.66667 1.33334 4.06971 1.33334 3.33333M8.66668 3.33333C8.66668 2.59695 7.02505 2 5.00001 2C2.97497 2 1.33334 2.59695 1.33334 3.33333M8.66668 3.33333V4.33333M1.33334 3.33333V11.3333C1.33334 12.0697 2.97497 12.6667 5.00001 12.6667M5.00001 7.33333C4.88765 7.33333 4.77646 7.3315 4.66668 7.3279C2.79784 7.26666 1.33334 6.69552 1.33334 6M5.00001 10C2.97497 10 1.33334 9.40305 1.33334 8.66667M14.6667 7.66667C14.6667 8.40305 13.0251 9 11 9C8.97497 9 7.33334 8.40305 7.33334 7.66667M14.6667 7.66667C14.6667 6.93029 13.0251 6.33333 11 6.33333C8.97497 6.33333 7.33334 6.93029 7.33334 7.66667M14.6667 7.66667V12.6667C14.6667 13.403 13.0251 14 11 14C8.97497 14 7.33334 13.403 7.33334 12.6667V7.66667M14.6667 10.1667C14.6667 10.903 13.0251 11.5 11 11.5C8.97497 11.5 7.33334 10.903 7.33334 10.1667" stroke="#98A2B3" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <PiDatabaseFill size={16} className='text-neutral-400' />
                 Продажа
               </span>
             </div>
@@ -124,7 +255,7 @@ export default function DealDetailPage() {
             </div>
             <div className={styles.infoRowInCard}>
               <span className={styles.infoLabelInCard}>Создана</span>
-              <span className={styles.infoValueInCard}>{formatDate(deal.data_nachala)}</span>
+              <span className={styles.infoValueInCard}>{formatDateFormat(deal.data_nachala)}</span>
             </div>
           </div>
         </div>
@@ -134,17 +265,14 @@ export default function DealDetailPage() {
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Поступления</span>
             <button className={styles.addButton}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 8V16M8 12H16M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D0D5DD" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+
+              <CirclePlus />
             </button>
           </div>
 
           <div className={styles.cardContent}>
             <div className={styles.iconBox}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 17C12 19.7614 14.2386 22 17 22C19.7614 22 22 19.7614 22 17C22 14.2386 19.7614 12 17 12C14.2386 12 12 14.2386 12 17ZM12 17C12 15.8742 12.3721 14.8353 13 13.9995V5M12 17C12 17.8254 12.2 18.604 12.5541 19.2901C11.7117 20.0018 9.76584 20.5 7.5 20.5C4.46243 20.5 2 19.6046 2 18.5V5M13 5C13 6.10457 10.5376 7 7.5 7C4.46243 7 2 6.10457 2 5M13 5C13 3.89543 10.5376 3 7.5 3C4.46243 3 2 3.89543 2 5M2 14C2 15.1046 4.46243 16 7.5 16C9.689 16 11.5793 15.535 12.4646 14.8618M13 9.5C13 10.6046 10.5376 11.5 7.5 11.5C4.46243 11.5 2 10.6046 2 9.5" stroke="#98A2B3" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <HiOutlineDatabase size={20} className='text-neutral-400' />
             </div>
 
             <div className={styles.amountSection}>
@@ -160,7 +288,7 @@ export default function DealDetailPage() {
 
           <div className={styles.clientDebt}>
             <span className={styles.clientDebtLabel}>Клиент должен:</span>
-            <span className={styles.clientDebtAmount}>{formatAmount(clientOwes)} ₽</span>
+            <span className={styles.clientDebtAmount}>{formatAmount(shipped)} ₽</span>
           </div>
         </div>
 
@@ -260,132 +388,187 @@ export default function DealDetailPage() {
             >
               Отгрузки
             </button>
-            <button
-              className={`${styles.tab} ${activeTab === 'invoices' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('invoices')}
-            >
-              Счета
-            </button>
           </div>
 
           {/* Tab Content */}
           <div className={styles.tabContent}>
-            {activeTab === 'products' && (
-              <div className={styles.productsSection}>
-                <div className={styles.sectionHeader}>
-                  <div className={styles.sectionTitle}>Выберите товары или услуги для продажи</div>
-                  <div className={styles.searchContainer}>
-                    <svg className={styles.searchIcon} width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.5 17.5L13.875 13.875M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z" stroke="#667085" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <input
-                      type="text"
-                      placeholder="Поиск по названию"
-                      className={styles.searchInput}
-                    />
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitle}>
+                {activeTab === 'products' && 'Выберите товары или услуги для продажи'}
+                {activeTab === 'receipts' && 'Платежи от клиентов за проданные товары или оказанные услуги '}
+                {activeTab === 'expenses' && 'Понесенные затраты по сделке'}
+                {activeTab === 'shipments' && 'Товары и услуги, которые вы отгрузили клиенту '}
+              </div>
+              <div className={styles.searchContainer}>
+                <Input
+                  leftIcon={<Search size={18} />}
+                  type="text"
+                  placeholder="Поиск по названию"
+                  className={styles.searchInput}
+                />
+                <button
+                  className='primary-btn'
+                  onClick={() => {
+                    if (activeTab === 'shipments') {
+                      setShowShipmentModal(true);
+                    } else if (activeTab === 'receipts' || activeTab === 'expenses') {
+                      handleCreateOperation()
+                    } else if (activeTab === 'products') {
+                      setShowProductModal(true)
+                    }
+                  }}
+                >
+                  Добавить
+                </button>
+              </div>
+            </div>
+            <div className={styles.contentContainer}>
+              {activeTab === 'products' && (
+                <div className={styles.productsSection}>
+                  <div className={styles.tableContainer}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th className={styles.checkboxColumn}>
+                            <div className='flex items-center justify-center'><OperationCheckbox
+                              checked={allSelected}
+                              onChange={toggleSelectAll}
+                            /></div>
+                          </th>
+                          <th>Наименование</th>
+                          <th className={styles.rightAlign}>Кол-во</th>
+                          <th>Единица</th>
+                          <th className={styles.rightAlign}>Цена за ед.</th>
+                          <th className='text-center'>Скидка</th>
+                          <th className='text-center'>НДС</th>
+                          <th className={styles.rightAlign}>Сумма</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {isLoadingProducts ? (
+                          <tr>
+                            <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>Загрузка...</td>
+                          </tr>
+                        ) : productServicesList.length === 0 ? (
+                            <tr>
+                              <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>Нет данных</td>
+                            </tr>
+                          ) : (
+                            productServicesList.map((item) => (
+                              <tr key={item.guid}>
+                                <td className={styles.checkboxColumn}>
+                                  <div className='flex items-center justify-center'> <OperationCheckbox
+                                    checked={selectedRows.includes(item.guid)}
+                                    onChange={() => toggleRowSelection(item.guid)}
+                                  /></div>
+                                </td>
+                                <td>{item.name}</td>
+                                <td className={styles.rightAlign}>{item.quantity}</td>
+                                <td>{item.unit}</td>
+                                <td className={styles.rightAlign}>{item.price ? `${formatAmount(item.price)} ₽` : '—'}</td>
+                                <td className='text-center'>{item.discount}</td>
+                                <td className='text-center'>{item.vat}</td>
+                                <td className={styles.rightAlign}>{item.total ? `${formatAmount(item.total)} ₽` : '—'}</td>
+                                <td onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: 40 }}>
+                                  <div style={{ position: 'relative' }} ref={openRowMenuId === item.guid ? rowMenuRef : null}>
+                                    <button
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: 4 }}
+                                      onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}
+                                    >
+                                      <MoreVertical size={16} />
+                                    </button>
+                                    {openRowMenuId === item.guid && (
+                                      <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', zIndex: 100, minWidth: 160, padding: '4px 0' }}>
+                                        <button
+                                          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#344054' }}
+                                          onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(false); setIsEditSingleOpen(true); }}
+                                        >
+                                          <MdOutlineModeEdit size={14} color='#686868' />
+                                          Редактировать
+                                        </button>
+                                        <button
+                                          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#344054' }}
+                                          onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(true); setIsEditSingleOpen(true); }}
+                                        >
+                                          <IoCopyOutline size={14} color='#686868' />
+                                          Копировать
+                                        </button>
+                                        <button
+                                          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#ef4444' }}
+                                          onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}
+                                        >
+                                          <GoTrash size={14} color='#ef4444' />
+                                          Удалить
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className={styles.tableFooter}>
+                    <span className={styles.footerText}>{productServicesList.length} позиций на сумму:</span>
+                    <span className={styles.footerAmount}>{formatAmount(productServicesList.reduce((sum, i) => sum + (i.total || 0), 0))} ₽</span>
                   </div>
                 </div>
+              )}
 
-                <div className={styles.tableContainer}>
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th className={styles.checkboxColumn}>
-                          <input type="checkbox" className={styles.checkbox} />
-                        </th>
-                        <th>Наименование</th>
-                        <th className={styles.rightAlign}>Кол-во</th>
-                        <th>Единица</th>
-                        <th className={styles.rightAlign}>Цена за ед.</th>
-                        <th>Скидка</th>
-                        <th>НДС</th>
-                        <th className={styles.rightAlign}>Сумма</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className={styles.checkboxColumn}>
-                          <input type="checkbox" className={styles.checkbox} />
-                        </td>
-                        <td className={styles.nameColumn}>Hodim farzandi</td>
-                        <td className={styles.rightAlign}>10</td>
-                        <td>мес.</td>
-                        <td className={styles.rightAlign}>2 800 000 ₽</td>
-                        <td>0 %</td>
-                        <td>0 %</td>
-                        <td className={`${styles.amountColumn} ${styles.rightAlign}`}>28 000 000 ₽</td>
-                      </tr>
-                      <tr>
-                        <td className={styles.checkboxColumn}>
-                          <input type="checkbox" className={styles.checkbox} />
-                        </td>
-                        <td className={styles.nameColumn}>standart</td>
-                        <td className={styles.rightAlign}>10</td>
-                        <td>мес.</td>
-                        <td className={styles.rightAlign}>3 500 000 ₽</td>
-                        <td>0 %</td>
-                        <td>0 %</td>
-                        <td className={`${styles.amountColumn} ${styles.rightAlign}`}>35 000 000 ₽</td>
-                      </tr>
-                    </tbody>
-                  </table>
+              {activeTab === 'receipts' && (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyStateIcon}>
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="48" height="48" rx="24" fill="#F9FAFB" />
+                      <path d="M24 18C20 18 18 19.3431 18 21C18 22.6569 20 24 24 24C28 24 30 22.6569 30 21C30 19.3431 28 18 24 18Z" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M18 21V25C18 26.6569 20 28 24 28C28 28 30 26.6569 30 25V21" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M18 25V29C18 30.6569 20 32 24 32C28 32 30 30.6569 30 29V25" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M30 25C30 24 29 23.5001 27 23.0001V28.0001C29 27.5001 30 27.0001 30 26.0001V25Z" fill="white" />
+                    </svg>
+                  </div>
+                  <div className={styles.emptyStateTitle}>Добавьте поступления по сделке</div>
+                  <div className={styles.emptyStateSubtext}>Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке</div>
+                  <button className="primary-btn" onClick={handleCreateOperation}>
+                    Добавить
+                  </button>
                 </div>
+              )}
 
-                <div className={styles.tableFooter}>
-                  <span className={styles.footerText}>2 позиции на сумму:</span>
-                  <span className={styles.footerAmount}>63 000 000 ₽</span>
+              {activeTab === 'expenses' && (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyStateIcon}>
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="48" height="48" rx="24" fill="#F9FAFB" />
+                      <path d="M24 18C20 18 18 19.3431 18 21C18 22.6569 20 24 24 24C28 24 30 22.6569 30 21C30 19.3431 28 18 24 18Z" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M18 21V25C18 26.6569 20 28 24 28C28 28 30 26.6569 30 25V21" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M18 25V29C18 30.6569 20 32 24 32C28 32 30 30.6569 30 29V25" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div className={styles.emptyStateTitle}>Добавьте затраты по сделке</div>
+                  <div className={styles.emptyStateSubtext}>Учитывайте затраты по сделке, чтобы контролировать ее прибыльность</div>
+                  <button className="primary-btn" onClick={handleCreateOperation}>
+                    Добавить
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'receipts' && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="48" height="48" rx="24" fill="#F2F4F7" />
-                    <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+              {activeTab === 'shipments' && (
+                <div className={styles.emptyState}>
+                  <div className={styles.emptyStateIcon}>
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="48" height="48" rx="24" fill="#F2F4F7" />
+                      <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div className={styles.emptyStateText}>Нет данных</div>
                 </div>
-                <div className={styles.emptyStateText}>Нет данных</div>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'expenses' && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="48" height="48" rx="24" fill="#F2F4F7" />
-                    <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div className={styles.emptyStateText}>Нет данных</div>
-              </div>
-            )}
-
-            {activeTab === 'shipments' && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="48" height="48" rx="24" fill="#F2F4F7" />
-                    <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div className={styles.emptyStateText}>Нет данных</div>
-              </div>
-            )}
-
-            {activeTab === 'invoices' && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="48" height="48" rx="24" fill="#F2F4F7" />
-                    <path d="M20 18H28M20 22H28M20 26H24M16 30H32C33.1046 30 34 29.1046 34 28V20C34 18.8954 33.1046 18 32 18H16C14.8954 18 14 18.8954 14 20V28C14 29.1046 14.8954 30 16 30Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div className={styles.emptyStateTitle}>Выставляйте счета своим клиентам</div>
-                <div className={styles.emptyStateSubtext}>Отправляйте счета на оплату своим контрагентам прямо из ПланФакта</div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -448,6 +631,76 @@ export default function DealDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Shipment Creation Modal */}
+      <CreateShipment
+        open={showShipmentModal}
+        onClose={() => setShowShipmentModal(false)}
+        dealName={deal.nazvanie}
+        dealGuid={deal.guid}
+        kontragentName={deal.kontragent?.nazvanie}
+      />
+
+      {/* Operation Modal */}
+      {showOperationModal && (
+        <OperationModal
+          operation={operation}
+          isClosing={isModalClosing}
+          isOpening={isModalOpening}
+          onClose={() => {
+            setIsModalClosing(true)
+            setTimeout(() => {
+              setShowOperationModal(false)
+              setIsModalClosing(false)
+            }, 300)
+          }}
+          onSuccess={() => setShowOperationModal(false)}
+          initialTab={activeTab === 'expenses' ? 'payment' : 'income'}
+        />
+      )}
+
+      {/* Create Product/Service Modal */}
+      <CreateProductService
+        open={showProductModal}
+        onClose={() => setShowProductModal(false)}
+        dealGuid={deal.guid}
+      />
+
+      {/* Edit / Copy Product/Service Modal */}
+      <CreateSingle
+        open={isEditSingleOpen}
+        setOpen={(open) => {
+          setIsEditSingleOpen(open);
+          if (!open) { setItemToEdit(null); setIsCopying(false); }
+        }}
+        initialData={itemToEdit}
+        isEditing={!!itemToEdit && !isCopying}
+      />
+
+      {/* Delete Confirm Modal */}
+      <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
+        <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: '#101828', fontFamily: 'Inter, sans-serif' }}>
+          Удалить товар
+        </h2>
+        <p style={{ margin: '0 0 28px', fontSize: 14, color: '#344054', lineHeight: '20px', fontFamily: 'Inter, sans-serif' }}>
+          Вы действительно хотите удалить «<strong>{itemToDelete?.name}</strong>»?<br />Восстановить его будет невозможно.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+          <button
+            onClick={() => setItemToDelete(null)}
+            style={{ background: 'transparent', border: 'none', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: '#0c8c9a', padding: '8px 16px', cursor: 'pointer' }}
+          >
+            Отменить
+          </button>
+          <button
+            disabled={isDeletingItem}
+            onClick={handleDeleteConfirm}
+            style={{ background: isDeletingItem ? '#f98080' : '#F04438', color: '#fff', border: 'none', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, padding: '8px 20px', cursor: 'pointer' }}
+          >
+            {isDeletingItem ? <Loader /> : 'Удалить'}
+          </button>
+        </div>
+      </CustomModal>
     </div>
   );
 }

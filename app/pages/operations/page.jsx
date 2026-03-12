@@ -82,6 +82,7 @@ export default function OperationsPage() {
 
 
 	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact()
+
 	const { data: legalEntitiesData } = useLegalEntitiesPlanFact({
 		page: 1,
 		limit: 100,
@@ -124,6 +125,7 @@ export default function OperationsPage() {
 			group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
 		}))
 	}, [chartOfAccountsData])
+
 
 
 	// Pagination state
@@ -733,8 +735,6 @@ export default function OperationsPage() {
 				</div>
 			)}
 
-
-
 			{/* Main Content */}
 			<div className={styles.mainContent}>
 				{/* Header */}
@@ -955,10 +955,7 @@ export default function OperationsPage() {
 					isClosing={isModalClosing}
 					isOpening={isModalOpening}
 					onClose={closeOperationModal}
-					onSuccess={(operationData, isUpdate) => {
-						console.log('=== onSuccess callback ===')
-						console.log('operationData:', operationData)
-						console.log('isUpdate:', isUpdate)
+					onSuccess={(operationData, isUpdate) => { 
 
 						if (isUpdate) {
 							// Обновляем существующую операцию в списке

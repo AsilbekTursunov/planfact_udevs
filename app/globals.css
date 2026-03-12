@@ -138,11 +138,15 @@
   --font-mono: var(--font-geist-mono);
 
   /*  custom colors for project  ucode colors for project */ 
-  --color-gray-25: #fcfcfd;   
-  --color-gray-300: #d0d5dd;  
-  --color-gray-500: #667085; 
-  --color-gray-600: #475467;  
-  --color-gray-800: #1D2939;  
+  --color-gray-ucode-25: #fcfcfd;   
+  --color-gray-ucode-300: #d0d5dd;  
+  --color-gray-ucode-500: #667085; 
+  --color-gray-ucode-600: #475467;  
+  --color-gray-ucode-800: #1D2939;  
+
+  --color-primary: #0E73F6;
+  --color-primary-dark: #0b5fd4;
+
 }
 
 @media (prefers-color-scheme: dark) {
@@ -173,4 +177,17 @@ body {
 
 .loader {
   animation: spin 1s linear infinite;
+}
+
+
+.primary-btn{
+  border:none;
+  outline:none;
+  cursor:pointer;
+  background-color: var(--color-primary);
+  color: var(--color-foreground);
+  font-size: var(--font-size-sm);
+  padding: var(--padding-xs) var(--padding-sm);
+  border-radius: 6px; 
+  padding: 5px 18px;
 }

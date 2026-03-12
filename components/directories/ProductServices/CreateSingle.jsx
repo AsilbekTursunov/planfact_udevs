@@ -141,11 +141,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
     { value: 'elem', label: 'Элемент (элем)' },
     { value: 'box', label: 'Ящик (ящ.)' }
   ]
-
-  const groupOptions = [
-    { value: 'g1', label: 'Группа 1' },
-    { value: 'g2', label: 'Группа 2' }
-  ]
+ 
 
   const currencyOptions = [
     { value: 'rub', label: 'RUB' },

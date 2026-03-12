@@ -1,0 +1,302 @@
+.statusWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+// ── Trigger Button ──
+.statusTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statusName {
+  font-size: 13px;
+}
+
+.chevron {
+  transition: transform 0.2s;
+  transform: rotate(180deg);
+
+  &.open {
+    transform: rotate(0deg);
+  }
+}
+
+// ── Dropdown ──
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 240px;
+  background: white;
+  border: 1px solid #EAECF0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  padding: 6px 0;
+  animation: fadeIn 0.12s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ── Status List ──
+.statusList {
+  display: flex;
+  flex-direction: column;
+}
+
+.statusItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+
+  &:hover {
+    background: #F9FAFB;
+
+    .gripIcon {
+      opacity: 1;
+    }
+
+    .moreBtn {
+      opacity: 1;
+    }
+  }
+}
+
+.statusItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.gripIcon {
+  color: #D0D5DD;
+  opacity: 0;
+  transition: opacity 0.1s;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.statusItemName {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: #344054;
+}
+
+.statusItemRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.checkIcon {
+  color: #12B76A;
+}
+
+.moreBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #667085;
+  font-size: 16px;
+  opacity: 0;
+  transition: all 0.1s;
+  letter-spacing: 1px;
+
+  &:hover {
+    background: #F2F4F7;
+  }
+}
+
+// ── Context Menu ──
+.contextMenu {
+  position: absolute;
+  top: 0;
+  right: -150px;
+  min-width: 160px;
+  background: white;
+  border: 1px solid #EAECF0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 200;
+  padding: 4px 0;
+  animation: fadeIn 0.1s ease;
+}
+
+.contextItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: #344054;
+  transition: background 0.1s;
+
+  &:hover {
+    background: #F9FAFB;
+  }
+
+  &.contextDelete {
+    color: #F04438;
+
+    &:hover {
+      background: #FEF3F2;
+    }
+  }
+}
+
+// ── Edit Row / New Status Form ──
+.editRow,
+.newStatusForm {
+  padding: 10px 12px;
+  border-top: 1px solid #EAECF0;
+}
+
+.editInput {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #D0D5DD;
+  border-radius: 6px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: #344054;
+  outline: none;
+  margin-bottom: 8px;
+
+  &::placeholder {
+    color: #98A2B3;
+  }
+
+  &:focus {
+    border-color: #0E73F6;
+    box-shadow: 0 0 0 2px rgba(14, 115, 246, 0.15);
+  }
+}
+
+.colorPicker {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.colorOption {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &.colorActive {
+    border-color: #344054;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px currentColor;
+  }
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cancelBtn {
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0E73F6;
+  border-radius: 6px;
+  transition: background 0.1s;
+
+  &:hover {
+    background: #F0F7FF;
+  }
+}
+
+.saveBtn {
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #12B76A;
+  border-radius: 6px;
+  transition: background 0.1s;
+
+  &:hover {
+    background: #ECFDF3;
+  }
+}
+
+// ── Add Status Button ──
+.addStatusBtn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-top: 1px solid #EAECF0;
+  background: none;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  color: #667085;
+  transition: all 0.1s;
+
+  &:hover {
+    background: #F9FAFB;
+    color: #344054;
+  }
+}

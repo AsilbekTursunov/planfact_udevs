@@ -25,7 +25,7 @@ import SplitAmount from './SplitAmount'
 import SentMessages from './SentMessages'
 import { appStore } from '../../../store/app.store'
 import { observer } from 'mobx-react-lite'
-import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
+import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard'
 
 const today = new Date().toISOString().split('T')[0]
 const todayDate = new Date().getDate()
@@ -240,15 +240,14 @@ const OperationModal = observer(({
 	onSuccess,
 	preselectedCounterparty = null,
 	disableCounterpartySelect = false,
+	initialTab = null,
 }) => {
 	const queryClient = useQueryClient()
 	const isNew = operation?.isNew || false
 
 
-	// Extract guid from operation - check multiple possible locations
 	const operationGuid = useMemo(() => {
 		if (isNew) return null
-		// Try to get guid from various possible locations
 		return operation?.rawData?.guid || operation?.guid || null
 	}, [isNew, operation])
 
@@ -257,6 +256,22 @@ const OperationModal = observer(({
 	const { data: fullOperationData, isLoading: isLoadingOperation, refetch } = useOperation(operationGuid, {
 		enabled: !isNew && !!operationGuid
 	})
+
+	const { data: dealsData } = useUcodeDefaultApiQuery({
+		queryKey: 'deals',
+		urlMethod: 'GET',
+		urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=20'
+	});
+	const formattedDeals = useMemo(() => {
+		const items = dealsData?.data?.data?.response || [];
+		return items.map(deal => ({
+			guid: deal.guid,
+			label: deal.name,
+		}));
+	}, [dealsData]);
+
+	console.log('formattedDeals', formattedDeals)
+
 
 	// Refetch operation data when modal opens (when isOpening becomes true)
 	useEffect(() => {
@@ -287,7 +302,7 @@ const OperationModal = observer(({
 	// console.log('operationData', operationData)
 
 	// Current active tab
-	const type = operationData?.typeLabel == 'Начисление' ? 'accrual' : operationData?.typeLabel == 'Поступление' ? 'income' : operationData?.typeLabel == 'Перемещение' ? 'transfer' : operationData?.typeLabel == 'Выплата' ? 'payment' : 'income'
+	const type = operationData?.typeLabel == 'Начисление' ? 'accrual' : operationData?.typeLabel == 'Поступление' ? 'income' : operationData?.typeLabel == 'Перемещение' ? 'transfer' : operationData?.typeLabel == 'Выплата' ? 'payment' : (initialTab || 'income')
 	const [activeTab, setActiveTab] = useState(type)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
@@ -1286,6 +1301,34 @@ const OperationModal = observer(({
 											className={'flex-1'}
 										/>
 									</div>}
+
+									{/* Счет и юрлицо currenies_id currencyID */}
+									<div className={styles.formRow}>
+										<label className={styles.label}>
+											Сделка продажи
+										</label>
+										<div className={styles.fieldWrapper}>
+											<GroupedSelect
+												data={formattedDeals}
+												value={formData.salesDeal}
+												onChange={value => {
+													setFormData({ ...formData, salesDeal: value })
+													if (errors.salesDeal) {
+														setErrors({ ...errors, salesDeal: null })
+													}
+												}}
+												placeholder='Выберите счет...'
+												groupBy={false}
+												labelKey='label'
+												valueKey='guid'
+												loading={loadingBankAccounts}
+												hasError={!!errors.salesDeal}
+											/>
+											{errors.salesDeal && (
+												<span className={styles.errorText}>{errors.salesDeal}</span>
+											)}
+										</div>
+									</div>
 
 									{/* Назначение платежа */}
 									<div className={styles.formRowStart}>
