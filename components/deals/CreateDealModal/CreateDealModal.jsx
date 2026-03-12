@@ -181,6 +181,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
             </label>
             <div className={styles.formElement}>
               <Select
+                instanceId="create-deal-nds-select"
                 options={ndsOptions}
                 value={ndsOptions.find(opt => opt.value === nds) || ''}
                 onChange={(selected) => setNds(selected ? selected.value : '')}

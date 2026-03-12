@@ -266,6 +266,7 @@ export default function LegalEntitiesPage() {
             <div className={styles.filtersContainer}>
               <div className={styles.filtersColumn}>
                 <Select
+                  instanceId="product-service-type-filter"
                   options={[
                     { value: 'all', label: 'Все' },
                     { value: 'product', label: 'Товары' },
@@ -281,6 +282,7 @@ export default function LegalEntitiesPage() {
               <div className={styles.filtersColumn}>
                 {/* <div className={styles.filterLabel}>Группировка</div> */}
                 <Select
+                  instanceId="product-service-grouping-filter"
                   options={[
                     { value: 'none', label: 'Без группировки' },
                     { value: 'group', label: 'По группам' }
@@ -419,7 +421,7 @@ export default function LegalEntitiesPage() {
       <CreateSingle
         open={isCreateSingleOpen}
         setOpen={(open) => {
-          setIsCreateSingleOpen(!open);
+          setIsCreateSingleOpen(open);
           if (!open) { setItemToEdit(null); setIsCopying(false); }
         }}
 

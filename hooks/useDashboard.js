@@ -1264,6 +1264,18 @@ export const useUcodeRequestMutation = () => {
     mutationFn: ({ method, data }) => ucodeRequest({ method, data }),
     onError: (error) => {
       console.error('useUcodeRequestMutation Error:', error)
+      
+      // Handle specific "already exists" error for registration
+      const errorMessage = error.message || error.details?.data || error.details?.description || ''
+      if (errorMessage.includes('already exists') || 
+        errorMessage.includes('уже существует') ||
+        errorMessage.includes('already registered') ||
+        errorMessage.includes('уже зарегистрирован')
+      ) {
+        showErrorNotification('Пользователь с таким email уже существует')
+        return
+      }
+      
       showErrorNotification(error.message || error.details?.description || 'Ошибка при выполнении запроса')
     }
   })

@@ -243,7 +243,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
         data: payload
       })
       resetForm()
-      setOpen(false)
+      setOpen(false) // Close modal after successful creation
       queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] })
     } catch (error) {
       console.error('mutateProductService', error?.message)
@@ -269,7 +269,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
     <Modal
       open={open}
       className={styles.modalBackdrop}
-      onClose={setOpen}
+      onClose={() => setOpen(false)}
     >
       <div className={styles.singlecontainer}>
         <div className={styles.header}>
@@ -280,18 +280,24 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
           </h2>
 
           <div className={styles.headerActions}>
-            <SegmentedControl
-              options={viewOptions}
-              value={viewMode}
-              onChange={setViewMode}
-            />
-            <button type="button" className={styles.closeButton} onClick={setOpen}>
+            <button type="button" className={styles.closeButton} onClick={() => setOpen(false)}>
               <X size={20} color="#9ca3af" />
             </button>
           </div>
         </div>
 
         <div className={styles.body}>
+
+          <div className={styles.formRow}>
+            <div className={styles.label}>Тип</div>
+            <div className={styles.fieldContainer}>
+              <SegmentedControl
+                options={viewOptions}
+                value={viewMode}
+                onChange={setViewMode}
+              />
+            </div>
+          </div>
 
           <div className={styles.formRow}>
             <div className={styles.label}>Название товара</div>
@@ -325,6 +331,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
             </div>
             <div className={`${styles.fieldContainer} ${viewMode === 'service' ? styles.service : ''}`}>
               <Select
+                instanceId="create-single-unit-select"
                 options={apiOptions}
                 value={formData.unit}
                 onChange={val => handleFieldChange('unit', val)}
@@ -337,6 +344,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
             <div className={styles.label}>Группа товаров</div>
             <div className={styles.fieldContainer}>
               <Select
+                instanceId="create-single-group-select"
                 options={groupsList}
                 value={formData.group}
                 onChange={val => handleFieldChange('group', val)}
@@ -367,6 +375,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
                 }}
               />
               <Select
+                instanceId="create-single-currency-select"
                 className={styles.currencySelect}
                 options={currencyOptions}
                 value={formData.currency}
@@ -415,7 +424,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
 
         <div className={styles.footer}>
           <div className={styles.footerButtons}>
-            <button type="button" className={styles.cancelButton} onClick={setOpen}>
+            <button type="button" className={styles.cancelButton} onClick={() => setOpen(false)}>
               Отменить
             </button>
             <button type="button" className={styles.saveButton} onClick={handleSubmit} disabled={isPending}>

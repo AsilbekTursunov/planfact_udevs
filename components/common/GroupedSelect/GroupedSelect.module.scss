@@ -35,7 +35,7 @@
     color: #9ca3af;
     
     .buttonText {
-      color: #9ca3af;
+      color: #9ca3af; /* Плейсхолдер остается светло-серым */
     }
   }
 }
@@ -51,7 +51,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: inherit;
+  color: #0f172a; /* Черный цвет для выбранного значения */
 }
 
 .buttonIcon {

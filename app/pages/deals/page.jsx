@@ -7,14 +7,13 @@ import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealMo
 import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import Input from '../../../components/shared/Input';
-import { Search, Trash2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { formatDateFormat } from '../../../utils/formatDate';
 import { formatAmount } from '../../../utils/helpers';
 import { MdOutlineModeEdit } from "react-icons/md";
 import { IoCloseOutline } from "react-icons/io5";
 import { IoCopyOutline } from "react-icons/io5";
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox';
-import CustomModal from '../../../components/shared/CustomModal';
 import { DeleteDealModal } from '../../../components/deals/DeleteDealModal/DeleteDealModal';
 
 export default function DealsPage() {
@@ -28,7 +27,7 @@ export default function DealsPage() {
   const queryClient = useQueryClient();
   const [selectedDeals, setSelectedDeals] = useState(new Set());
 
-  const { data } = useUcodeRequestQuery({
+  useUcodeRequestQuery({
     method: "get_sales_list",
     object_data: {
       from_date: "",
@@ -40,7 +39,7 @@ export default function DealsPage() {
   })
 
 
-  const { data: dealsData, isLoading: isLoadingDeals } = useUcodeDefaultApiQuery({
+  const { data: dealsData } = useUcodeDefaultApiQuery({
     queryKey: 'deals',
     urlMethod: 'GET',
     urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=20'
@@ -145,15 +144,15 @@ export default function DealsPage() {
     const statusMap = {
       'Новая': 'orange',
       'New': 'orange',
-      'В работе': 'blue',
-      'in_work': 'blue',
+      'В_работе': 'blue',
+      'in_work': 'blue', 
       'InProgress': 'blue',
       'Завершена': 'green',
       'Completed': 'green',
       'Cancelled': 'gray'
-    };
-    return statusMap[status] || 'gray';
-  };
+    }
+    return statusMap[status] || 'gray'
+  }
 
   return (
     <div className={styles.container}>

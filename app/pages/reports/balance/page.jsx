@@ -1,156 +1,126 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar'
+import { getBalanceReport } from '@/lib/api/ucode/balance'
+import { legalEntitiesAPI } from '@/lib/api/ucode/legalEntities'
 import styles from './balance.module.scss'
 import '@/styles/report-filters.css'
 
 export default function BalancePage() {
+  // Balance page component - updated
   const [expandedRows, setExpandedRows] = useState(new Set())
-  const [loading, setLoading] = useState(true)
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   // Calculate default date
   const getDefaultDate = () => {
-    return new Date()
+    return new Date().toISOString().split('T')[0] // Format: YYYY-MM-DD
   }
 
   // Filter states
   const [selectedDate, setSelectedDate] = useState(getDefaultDate())
-  const [selectedEntity, setSelectedEntity] = useState('all')
-  const [selectedAccounts, setSelectedAccounts] = useState([])
+  const [selectedEntity, setSelectedEntity] = useState('')
   const [selectedCurrency, setSelectedCurrency] = useState('RUB')
 
-  // Mock data for selects
+  // Fetch legal entities for dropdown
+  const { data: legalEntitiesResponse } = useQuery({
+    queryKey: ['legal-entities'],
+    queryFn: () => legalEntitiesAPI.getLegalEntitiesInvokeFunction({ page: 1, limit: 100 }),
+    retry: 1,
+    onError: (error) => {
+      console.error('Error fetching legal entities:', error)
+    }
+  })
+
+  // Fetch balance report data
+  const { data: balanceResponse, isLoading, error, refetch } = useQuery({
+    queryKey: ['balance-report', selectedDate, selectedEntity, selectedCurrency],
+    queryFn: () => getBalanceReport({
+      as_of: selectedDate,
+      account_ids: [],
+      legal_entity_id: selectedEntity === '' ? '' : selectedEntity,
+      user_currency_code: selectedCurrency,
+      contr_agent_ids: []
+    }),
+    retry: 1,
+    onError: (error) => {
+      console.error('Error fetching balance report:', error)
+    }
+  })
+
+  // Extract balance data from API response
+  const balanceData = useMemo(() => {
+    if (!balanceResponse?.data?.data) {
+      return {
+        assets: [],
+        liabilities: [],
+        equity: []
+      }
+    }
+
+    // Transform API data to component format
+    const apiData = balanceResponse.data.data
+    
+    // Helper function to transform API items to component format
+    const transformItems = (items, level = 0) => {
+      if (!items || !Array.isArray(items)) return []
+      
+      return items.map(item => {
+        // Ensure value is always a number
+        const value = typeof item.value === 'number' ? item.value : 0
+        
+        return {
+          id: item.id || `item-${Math.random()}`,
+          name: item.name || 'Неизвестно',
+          level,
+          value,
+          totalValue: value,
+          isSubtotal: Boolean(item.isSubtotal),
+          details: item.children ? transformItems(item.children, level + 1) : []
+        }
+      })
+    }
+    
+    return {
+      assets: transformItems(apiData.assets || []),
+      liabilities: transformItems(apiData.liabilities || []),
+      equity: transformItems(apiData.equity || [])
+    }
+  }, [balanceResponse])
+
+  // Currency options
   const currencyOptions = [
     { guid: 'RUB', label: 'RUB' },
     { guid: 'USD', label: 'USD' },
     { guid: 'EUR', label: 'EUR' }
   ]
 
-  const entityOptions = [
-    { guid: 'all', label: 'Все организации' },
-    { guid: 'entity1', label: 'ООО "Компания 1"' },
-    { guid: 'entity2', label: 'ООО "Компания 2"' }
-  ]
+  // Entity options from API
+  const entityOptions = useMemo(() => {
+    const baseOptions = [{ guid: '', label: 'Все счета' }]
+    
+    // Обрабатываем ответ от get_legal_entities
+    if (legalEntitiesResponse?.data?.data?.data && Array.isArray(legalEntitiesResponse.data.data.data)) {
+      const entitiesArray = legalEntitiesResponse.data.data.data
+      
+      const apiEntities = entitiesArray.map(entity => ({
+        guid: entity.guid,
+        label: entity.nazvanie || entity.polnoe_nazvanie || 'Неизвестный счет'
+      }))
+      return [...baseOptions, ...apiEntities]
+    }
+    
+    // Логируем структуру ответа для отладки
+    if (legalEntitiesResponse) {
+      console.log('Legal entities API response structure:', legalEntitiesResponse)
+    }
+    
+    return baseOptions
+  }, [legalEntitiesResponse])
 
-  // Mock legend (months)
-  const legend = useMemo(() => [
-    { key: '2025-09', title: 'Сен 2025' },
-    { key: '2025-10', title: 'Окт 2025' },
-    { key: '2025-11', title: 'Ноя 2025' },
-    { key: '2025-12', title: 'Дек 2025' },
-    { key: '2026-01', title: 'Янв 2026' },
-    { key: '2026-02', title: 'Фев 2026' }
-  ], [])
-
-  // Mock balance data with values per month
-  const balanceData = useMemo(() => ({
-    assets: [
-      {
-        id: 'assets',
-        name: 'Активы',
-        level: 0,
-        values: { '2025-09': 15000, '2025-10': 15500, '2025-11': 16000, '2025-12': 16100, '2026-01': 16200, '2026-02': 16266 },
-        totalValue: 16266,
-        details: [
-          {
-            id: 'current-assets',
-            name: 'Оборотные активы',
-            level: 1,
-            values: { '2025-09': 15100, '2025-10': 15600, '2025-11': 16100, '2025-12': 16200, '2026-01': 16300, '2026-02': 16377 },
-            totalValue: 16377,
-            details: [
-              { 
-                id: 'cash', 
-                name: 'Денежные средства', 
-                level: 2, 
-                values: { '2025-09': 14800, '2025-10': 15300, '2025-11': 15800, '2025-12': 15900, '2026-01': 16000, '2026-02': 16037 },
-                totalValue: 16037 
-              },
-              { 
-                id: 'receivables', 
-                name: 'Дебиторская задолженность', 
-                level: 2, 
-                values: { '2025-09': 300, '2025-10': 300, '2025-11': 300, '2025-12': 300, '2026-01': 300, '2026-02': 340 },
-                totalValue: 340 
-              }
-            ]
-          },
-          {
-            id: 'fixed-assets',
-            name: 'Внеоборотные активы',
-            level: 1,
-            values: { '2025-09': -100, '2025-10': -100, '2025-11': -100, '2025-12': -100, '2026-01': -100, '2026-02': -111 },
-            totalValue: -111,
-            details: [
-              { 
-                id: 'equipment', 
-                name: 'Основные средства', 
-                level: 2, 
-                values: { '2025-09': -100, '2025-10': -100, '2025-11': -100, '2025-12': -100, '2026-01': -100, '2026-02': -111 },
-                totalValue: -111 
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    liabilities: [
-      {
-        id: 'liabilities',
-        name: 'Обязательства',
-        level: 0,
-        values: { '2025-09': 0, '2025-10': 0, '2025-11': 0, '2025-12': 0, '2026-01': 0, '2026-02': 0 },
-        totalValue: 0,
-        details: [
-          {
-            id: 'current-liabilities',
-            name: 'Краткосрочные обязательства',
-            level: 1,
-            values: { '2025-09': 0, '2025-10': 0, '2025-11': 0, '2025-12': 0, '2026-01': 0, '2026-02': 0 },
-            totalValue: 0,
-            details: [
-              { 
-                id: 'payables', 
-                name: 'Кредиторская задолженность', 
-                level: 2, 
-                values: { '2025-09': 0, '2025-10': 0, '2025-11': 0, '2025-12': 0, '2026-01': 0, '2026-02': 0 },
-                totalValue: 0 
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    equity: [
-      {
-        id: 'equity',
-        name: 'Капитал',
-        level: 0,
-        values: { '2025-09': 15000, '2025-10': 15500, '2025-11': 16000, '2025-12': 16100, '2026-01': 16200, '2026-02': 16266 },
-        totalValue: 16266,
-        details: [
-          { 
-            id: 'retained-earnings', 
-            name: 'Нераспределенная прибыль', 
-            level: 1, 
-            values: { '2025-09': 15000, '2025-10': 15500, '2025-11': 16000, '2025-12': 16100, '2026-01': 16200, '2026-02': 16266 },
-            totalValue: 16266 
-          }
-        ]
-      }
-    ]
-  }), [])
-
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Auto-expand first level on initial load
   useEffect(() => {
     if (!isInitialLoad) return
 
@@ -223,21 +193,9 @@ export default function BalancePage() {
               <span className={isTotalRow ? styles.boldText : ''}>{item.name}</span>
             </div>
           </td>
-          {legend.map(period => {
-            const value = item.values?.[period.key] || 0
-            const displayValue = value === 0 ? '–' : value.toLocaleString('ru-RU')
-
-            return (
-              <td key={period.key} className={styles.td}>
-                <span className={isTotalRow ? styles.boldNumber : ''}>
-                  {displayValue}
-                </span>
-              </td>
-            )
-          })}
           <td className={styles.td}>
             <span className={isTotalRow ? styles.boldNumber : ''}>
-              {item.totalValue === 0 ? '–' : item.totalValue.toLocaleString('ru-RU')}
+              {(item.totalValue === 0 || item.totalValue == null) ? '–' : Number(item.totalValue).toLocaleString('ru-RU')}
             </span>
           </td>
         </tr>
@@ -246,12 +204,17 @@ export default function BalancePage() {
     )
   }
 
-  if (loading) {
+  if (error) {
     return (
       <div className={styles.container}>
         <div className={styles.contentWrapper}>
           <div className={styles.mainContent}>
-            <div className={styles.loading}>Загрузка данных...</div>
+            <div className={styles.error}>
+              <p>Ошибка загрузки данных: {error.message}</p>
+              <button onClick={() => refetch()} className={styles.retryButton}>
+                Повторить
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -268,11 +231,16 @@ export default function BalancePage() {
           entityOptions={entityOptions}
           selectedEntity={selectedEntity}
           onEntityChange={setSelectedEntity}
-          accountOptions={[]}
-          selectedAccounts={selectedAccounts}
-          onAccountsChange={setSelectedAccounts}
           dateRange={{ start: selectedDate, end: selectedDate }}
-          onDateRangeChange={(range) => setSelectedDate(range.start)}
+          onDateRangeChange={(range) => {
+            if (range?.start) {
+              const dateStr = range.start instanceof Date 
+                ? range.start.toISOString().split('T')[0]
+                : range.start
+              setSelectedDate(dateStr)
+            }
+          }}
+          singleDateMode={true}
         />
 
         {/* Filter Toggle Bar */}
@@ -317,24 +285,33 @@ export default function BalancePage() {
           </div>
 
           <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead className={styles.thead}>
-                <tr>
-                  <th className={styles.th}>СЧЕТ</th>
-                  {legend.map(period => (
-                    <th key={period.key} className={styles.th}>
-                      {period.title}
-                    </th>
-                  ))}
-                  <th className={styles.th}>Итого</th>
-                </tr>
-              </thead>
-              <tbody className={styles.tbody}>
-                {balanceData.assets.map(row => renderRow(row))}
-                {balanceData.liabilities.map(row => renderRow(row))}
-                {balanceData.equity.map(row => renderRow(row))}
-              </tbody>
-            </table>
+            {isLoading ? (
+              <div className={styles.tableLoading}>
+                <div className={styles.spinner}></div>
+                <p>Загрузка данных...</p>
+              </div>
+            ) : error ? (
+              <div className={styles.tableError}>
+                <p>Ошибка загрузки данных: {error.message}</p>
+                <button onClick={() => refetch()} className={styles.retryButton}>
+                  Повторить
+                </button>
+              </div>
+            ) : (
+              <table className={styles.table}>
+                <thead className={styles.thead}>
+                  <tr>
+                    <th className={styles.th}>СЧЕТ</th>
+                    <th className={styles.th}>Итого</th>
+                  </tr>
+                </thead>
+                <tbody className={styles.tbody}>
+                  {balanceData.assets.map(row => renderRow(row))}
+                  {balanceData.liabilities.map(row => renderRow(row))}
+                  {balanceData.equity.map(row => renderRow(row))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>

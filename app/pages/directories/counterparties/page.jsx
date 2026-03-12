@@ -870,11 +870,11 @@ const CounterpartiesPage = observer(() => {
                             </td> {/* Выплаты || Расходы  */}
                             {filters.calculationMethod === 'Cashflow' ? (
                               <td className={cn(styles.tableCell, styles[styleDifference], styles.groupFinal)}>
-                                {`${styleDifference === 'textGreen' ? '+' : styleDifference === 'textRed' ? '-' : ''}${item.difference.toLocaleString('ru-RU') || '0'}`}
+                                {item.difference === 0 ? '0' : `${item.difference > 0 ? '+' : ''}${item.difference.toLocaleString('ru-RU') || '0'}`}
                               </td>
                             ) : (
-                              <td className={cn(styles.tableCell, styles[styleProfit], style.groupFinal)}>
-                                {`${styleProfit === 'textGreen' ? '+' : styleProfit === 'textRed' ? '-' : ''}${item.profit.toLocaleString('ru-RU') || '0'}`}
+                              <td className={cn(styles.tableCell, styles[styleProfit], styles.groupFinal)}>
+                                {item.profit === 0 ? '0' : `${item.profit > 0 ? '+' : ''}${item.profit.toLocaleString('ru-RU') || '0'}`}
                               </td>
                             )} {/* Разница || Прибыль*/}
                             <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
@@ -925,11 +925,11 @@ const CounterpartiesPage = observer(() => {
                                 <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.expenses?.toLocaleString('ru-RU') || '0'}</td>
                                 {filters.calculationMethod !== 'Cashflow' ? (
                                   <td className={cn(styles.tableCell, styles[styleDifference])}>
-                                    {`${styleDifference === 'textGreen' ? '+' : styleDifference === 'textRed' ? '-' : ''}${counterparty.difference.toLocaleString('ru-RU') || '0'}`}
+                                    {counterparty.difference === 0 ? '0' : `${counterparty.difference > 0 ? '+' : ''}${counterparty.difference.toLocaleString('ru-RU') || '0'}`}
                                   </td>
                                 ) : (
                                   <td className={cn(styles.tableCell, styles[styleProfit])}>
-                                    {`${styleProfit === 'textGreen' ? '+' : styleProfit === 'textRed' ? '-' : ''}${counterparty.profit.toLocaleString('ru-RU') || '0'}`}
+                                    {counterparty.profit === 0 ? '0' : `${counterparty.profit > 0 ? '+' : ''}${counterparty.profit.toLocaleString('ru-RU') || '0'}`}
                                   </td>
                                 )}
                                 <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
@@ -977,11 +977,13 @@ const CounterpartiesPage = observer(() => {
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.expenses?.toLocaleString('ru-RU') || '0'}</td>
 
                           {filters.calculationMethod !== 'Cashflow' ? (
-                            <td className={cn(styles.tableCell, item.difference > 0 ? styles.textGreen : styles.textRed)}>
-                              {item.difference?.toLocaleString('ru-RU')}
+                            <td className={cn(styles.tableCell, item.difference > 0 ? styles.textGreen : item.difference < 0 ? styles.textRed : styles.textMuted)}>
+                              {item.difference === 0 ? '0' : `${item.difference > 0 ? '+' : ''}${item.difference?.toLocaleString('ru-RU')}`}
                             </td>
                           ) : (
-                              <td className={cn(styles.tableCell, item.profit > 0 ? styles.textGreen : styles.textRed)}>{item.profit?.toLocaleString('ru-RU') || '0'}</td>
+                              <td className={cn(styles.tableCell, item.profit > 0 ? styles.textGreen : item.profit < 0 ? styles.textRed : styles.textMuted)}>
+                                {item.profit === 0 ? '0' : `${item.profit > 0 ? '+' : ''}${item.profit?.toLocaleString('ru-RU') || '0'}`}
+                              </td>
                           )}
                           <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                             <CounterpartyMenu
@@ -1092,7 +1094,7 @@ const CounterpartiesPage = observer(() => {
             <span className={styles.footerLabel}>Разница</span>
             <div className={styles.footerValueContainer}>
               <span className={cn(styles.footerValue, difference > 0 ? styles.positive : difference < 0 ? styles.negative : '')}>
-                {difference > 0 ? '+' : ''}{difference.toLocaleString('ru-RU')}
+                {difference === 0 ? '0' : `${difference > 0 ? '+' : ''}${difference.toLocaleString('ru-RU')}`}
               </span>
               <TbCurrencyRubel className={cn(styles.footerCurrencyIcon, difference > 0 ? styles.positive : difference < 0 ? styles.negative : '')} />
             </div>

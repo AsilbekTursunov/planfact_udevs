@@ -236,6 +236,15 @@ export default function LoginPage() {
             branch_name: formData.branchName,
           }
         }).catch((error) => {
+          // Handle specific "already exists" error
+          if (error.message && (
+            error.message.includes('already exists') || 
+            error.message.includes('уже существует') ||
+            error.message.includes('already registered') ||
+            error.message.includes('уже зарегистрирован')
+          )) {
+            throw new Error('Пользователь с таким email уже существует')
+          }
           throw error
         })
 
