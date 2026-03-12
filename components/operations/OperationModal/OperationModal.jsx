@@ -606,6 +606,7 @@ const OperationModal = observer(({
 	}, [legalEntitiesData])
 
 	// Transform chart of accounts data - show only children of relevant root based on tab
+
 	const chartOfAccountsTree = useMemo(() => {
 		const rootItems = chartOfAccountsData?.data?.data?.data || []
 		if (rootItems.length === 0) return []
@@ -623,50 +624,9 @@ const OperationModal = observer(({
 			}
 		}
 
-		// For income tab - show only children of "Доходы"
-		if (activeTab === 'income') {
-			const incomeRoot = rootItems.find(item => item.nazvanie === 'Доходы')
-			if (incomeRoot && incomeRoot.children) {
-				return incomeRoot.children.map(child => convertToTreeNode(child))
-			}
-			return []
-		}
-
-		// For payment tab - show only children of "Расходы"
-		if (activeTab === 'payment') {
-			const expenseRoot = rootItems.find(item => item.nazvanie === 'Расходы')
-			if (expenseRoot && expenseRoot.children) {
-				return expenseRoot.children.map(child => convertToTreeNode(child))
-			}
-			return []
-		}
-
-		// For accrual tab - show children of Актив, Обязательства, Капитал
-		if (activeTab === 'accrual') {
-			const result = []
-			const allowedRoots = ['Актив', 'Обязательства', 'Капитал']
-
-			allowedRoots.forEach(rootName => {
-				const root = rootItems.find(item => item.nazvanie === rootName)
-				if (root && root.children) {
-					// Add children of this root
-					root.children.forEach(child => {
-						result.push(convertToTreeNode(child))
-					})
-				}
-			})
-
-			return result
-		}
-
-		// For transfer tab - no chart of accounts needed
-		if (activeTab === 'transfer') {
-			return []
-		}
-
 		// Default - show all
 		return rootItems.map(item => convertToTreeNode(item))
-	}, [chartOfAccountsData, activeTab])
+	}, [chartOfAccountsData])
 
 
 	const bankAccounts = useMemo(() => {
