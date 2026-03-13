@@ -129,6 +129,49 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --padding-xs: 5px;
+  --padding-sm: 18px;
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px; 
+
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
+  --spacing-4xl: 40px;
+  --spacing-5xl: 48px;
+  --spacing-6xl: 64px;
+  --spacing-7xl: 80px;
+  --spacing-8xl: 96px;
+
+
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 4px;
+
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 @theme inline {
@@ -181,13 +224,9 @@ body {
 
 
 .primary-btn{
-  border:none;
-  outline:none;
-  cursor:pointer;
-  background-color: var(--color-primary);
-  color: var(--color-foreground);
-  font-size: var(--font-size-sm);
-  padding: var(--padding-xs) var(--padding-sm);
-  border-radius: 6px; 
-  padding: 5px 18px;
+  @apply border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-primary px-4 py-1 text-white hover:bg-primary-dark  rounded-md;
+}
+
+.secondary-btn {
+  @apply  border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-gray-ucode-25 px-4 py-1 text-neutral-700 hover:bg-gray-50  rounded-md;
 }

@@ -26,7 +26,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
   const { data: units, } = useUcodeDefaultApiQuery({
     queryKey: "get_product_services_units",
     urlMethod: "GET",
-    urlParams: "/items/units_of_measurement?from-ofs=true&offset=0&limit=100",
+    urlParams: "/items/units_of_measurement",
     querySetting: {
       select: data => data?.data?.data?.response
     }
@@ -52,7 +52,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
 
   const apiOptions = useMemo(() => {
     return units?.map(item => ({
-      value: item?.guid, label: item?.full_name
+      value: item?.guid, label: `${item?.full_name} ${item?.short_name}`
     }))
   }, [units])
 

@@ -17,7 +17,6 @@ import Input from '../../../../components/shared/Input';
 import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox';
 import OperationModal from '../../../../components/operations/OperationModal/OperationModal';
 import CreateProductService from '../../../../components/deals/details/CreateProductService';
-import CreateSingle from '../../../../components/directories/ProductServices/CreateSingle';
 import CustomModal from '../../../../components/shared/CustomModal';
 import Loader from '../../../../components/shared/Loader';
 import { formatDateFormat } from '../../../../utils/formatDate';
@@ -38,6 +37,8 @@ export default function DealDetailPage() {
       select: (response) => response?.data?.data?.data
     }
   })
+
+  console.log('dealData', dealData)
 
   // Deal data
   const deal = useMemo(() => {
@@ -79,7 +80,6 @@ export default function DealDetailPage() {
   const [isDeletingItem, setIsDeletingItem] = useState(false)
   const [itemToEdit, setItemToEdit] = useState(null)
   const [isCopying, setIsCopying] = useState(false)
-  const [isEditSingleOpen, setIsEditSingleOpen] = useState(false)
   const rowMenuRef = useRef(null)
 
   // Close row action menu on outside click
@@ -120,7 +120,7 @@ export default function DealDetailPage() {
         guid: item?.guid,
         name: item?.naimenovanie || '—',
         quantity: qty,
-        unit: item?.units_of_measurement_id_data?.short_name || item?.units_of_measurement_id_data?.abbreviation || '—',
+        unit: `${item?.units_of_measurement_id_data?.full_name} ${item?.units_of_measurement_id_data?.short_name}` || item?.units_of_measurement_id_data?.abbreviation || '—',
         price,
         discount: item?.discount != null ? `${item.discount}%` : '0%',
         vat: vatStr ? `${vatStr}%` : '0%',
@@ -129,6 +129,8 @@ export default function DealDetailPage() {
       }
     }) || []
   }, [productServices])
+
+
 
   const allSelected = productServicesList.length > 0 && selectedRows.length === productServicesList.length
   const toggleSelectAll = () => {
@@ -479,34 +481,34 @@ export default function DealDetailPage() {
                                       <MoreVertical size={16} />
                                     </button>
                                     {openRowMenuId === item.guid && (
-                                      <div style={{ position: 'absolute', right: 0, top: '100%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', zIndex: 100, minWidth: 160, padding: '4px 0' }}>
-                                        <button
-                                          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#344054' }}
-                                          onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(false); setIsEditSingleOpen(true); }}
-                                        >
-                                          <MdOutlineModeEdit size={14} color='#686868' />
-                                          Редактировать
-                                        </button>
-                                        <button
-                                          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#344054' }}
-                                          onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(true); setIsEditSingleOpen(true); }}
-                                        >
-                                          <IoCopyOutline size={14} color='#686868' />
-                                          Копировать
-                                        </button>
-                                        <button
-                                          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#ef4444' }}
-                                          onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}
-                                        >
-                                          <GoTrash size={14} color='#ef4444' />
-                                          Удалить
-                                        </button>
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
+                                    <div className='absolute z-50 bg-white rounded-md flex flex-col gap-2 right-4 border border-neutral-100 shadow-lg'>
+                                      <button
+                                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#344054' }}
+                                        onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(false); setShowProductModal(true); }}
+                                      >
+                                        <MdOutlineModeEdit size={14} color='#686868' />
+                                        Редактировать
+                                      </button>
+                                      <button
+                                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#344054' }}
+                                        onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(true); setShowProductModal(true); }}
+                                      >
+                                        <IoCopyOutline size={14} color='#686868' />
+                                        Копировать
+                                      </button>
+                                      <button
+                                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#ef4444' }}
+                                        onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}
+                                      >
+                                        <GoTrash size={14} color='#ef4444' />
+                                        Удалить
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
                         )}
                       </tbody>
                     </table>
@@ -647,6 +649,7 @@ export default function DealDetailPage() {
           operation={operation}
           isClosing={isModalClosing}
           isOpening={isModalOpening}
+          defaultDealGuid={deal.guid}
           onClose={() => {
             setIsModalClosing(true)
             setTimeout(() => {
@@ -662,20 +665,17 @@ export default function DealDetailPage() {
       {/* Create Product/Service Modal */}
       <CreateProductService
         open={showProductModal}
-        onClose={() => setShowProductModal(false)}
-        dealGuid={deal.guid}
-      />
-
-      {/* Edit / Copy Product/Service Modal */}
-      <CreateSingle
-        open={isEditSingleOpen}
-        setOpen={(open) => {
-          setIsEditSingleOpen(open);
-          if (!open) { setItemToEdit(null); setIsCopying(false); }
+        onClose={() => {
+          setShowProductModal(false);
+          setItemToEdit(null);
+          setIsCopying(false);
         }}
+        dealGuid={deal.guid}
         initialData={itemToEdit}
         isEditing={!!itemToEdit && !isCopying}
       />
+
+
 
       {/* Delete Confirm Modal */}
       <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>

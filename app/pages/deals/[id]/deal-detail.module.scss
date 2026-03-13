@@ -70,9 +70,10 @@
     background: $gray-25;
   }
 }
+
 .infoCards {
   display: grid;
-  grid-template-columns: minmax(340px, 1fr) 350px 350px 350px;
+  grid-template-columns: minmax(340px, 1fr) 330px 330px 330px;
   gap: 16px;
 }
 
@@ -424,7 +425,7 @@
 /* Main Content Layout */
 .mainContentLayout {
   display: grid;
-  grid-template-columns: 1fr 350px;
+  grid-template-columns: 1fr 330px;
   gap: 16px;
   align-items: start;
 }
@@ -505,6 +506,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .sectionHeader {
@@ -565,13 +567,12 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  justify-content: center;
-  overflow-y: auto;
-  max-height: 4000px;
+  justify-content: start;
+    overflow-y: auto;
 }
 .tableContainer {
   overflow-x: auto;
-  flex: 1;
+  flex: 1 !important;
 }
 
 .table {

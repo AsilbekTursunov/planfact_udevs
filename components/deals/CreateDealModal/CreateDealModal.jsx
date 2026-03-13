@@ -179,7 +179,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
             <label className={styles.label}>
               НДС
             </label>
-            <div className={styles.formElement}>
+            <div className="w-full">
               <Select
                 instanceId="create-deal-nds-select"
                 options={ndsOptions}
@@ -194,17 +194,15 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
             <label className={styles.label}>
               Комментарий
             </label>
-            <div className={styles.formElement}>
-              <TextArea className={styles.label} value={comment} onChange={(e) => setComment(e.target.value)} />
-            </div>
+            <TextArea className={styles.label} value={comment} onChange={(e) => setComment(e.target.value)} />
           </div>
         </form>
 
         <div className={styles.footer}>
-          <button type="button" className={styles.cancelButton} onClick={onClose}>
+          <button type="button" className="secondary-btn" onClick={onClose}>
             Отменить
           </button>
-          <button type="submit" className={styles.submitButton} onClick={handleSubmit}>
+          <button type="submit" className="primary-btn" onClick={handleSubmit}>
             {isCreatingDeal ? <Loader /> : (isEditing ? 'Сохранить' : 'Создать')}
           </button>
         </div>

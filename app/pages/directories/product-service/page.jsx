@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
 import { useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
@@ -15,7 +15,8 @@ import { MdOutlineModeEdit } from "react-icons/md";
 import { GoTrash } from "react-icons/go";
 import { IoCopyOutline } from "react-icons/io5";
 import CustomModal from '../../../../components/shared/CustomModal';
-import Loader from '../../../../components/shared/Loader' 
+import Loader from '../../../../components/shared/Loader'
+import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 
 
 export default function LegalEntitiesPage() {
@@ -26,7 +27,7 @@ export default function LegalEntitiesPage() {
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
   const [filters, setFilters] = useState({
     type: { value: 'all', label: 'Все' },
-    group: { value: 'all', label: 'Все' },
+    group: { value: 'none', label: 'Без группировки' },
   })
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -37,6 +38,19 @@ export default function LegalEntitiesPage() {
   const [isCopying, setIsCopying] = useState(false)
   const menuRef = useRef(null)
   const rowMenuRef = useRef(null)
+
+  const [expandedGroups, setExpandedGroups] = useState(new Set())
+  const toggleGroup = (id) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   const { mutateAsync: deleteProductService } = useUcodeDefaultApiMutation({ mutationKey: 'DELETE_PRODUCT_SERVICE' })
 
@@ -73,24 +87,20 @@ export default function LegalEntitiesPage() {
     }
   })
 
-  const { data: groupedProductServicesList } = useUcodeDefaultApiQuery({
-    queryKey: "get_group_product_services_list",
-    urlMethod: "GET",
-    urlParams: "/items/group_product_and_service",
-    querySetting: {
-      select: data => data?.data?.data?.response
-    }
-  })
-
 
 
 
   const productServicesList = useMemo(() => {
-    return productServices?.filter(item => filters?.type?.value === 'all' ? item : item.status?.includes(filters?.type?.value)).map(item => {
+    const rawList = productServices?.filter(item => filters?.type?.value === 'all' ? true : item.status?.includes(filters?.type?.value)).map(item => {
       const price = Number(item?.tsena_za_ed) || 0;
       const vatStr = item?.nds || '';
       const vatNum = parseFloat(vatStr) || 0;
       const priceWithVat = vatNum > 0 ? price * (1 + vatNum / 100) : price;
+
+      const groupData = item?.group_product_and_service_id_data;
+      const groupName = groupData ? (groupData.name || groupData.nazvanie || groupData.naimenovanie || 'Без группы') : 'Товары без группы';
+      const groupId = groupData ? groupData.guid : 'no-group';
+
       return {
         guid: item?.guid,
         name: item?.naimenovanie,
@@ -103,10 +113,38 @@ export default function LegalEntitiesPage() {
         comment: item?.commentary || '',
         type: item?.status ? item?.status?.[0] === 'product' ? 'Товары' : 'Услуги' : '',
         raw: item,
-        groupName: item?.group_product_and_service_id_data?.name
+        groupName: groupName,
+        groupId: groupId
       }
     }) || []
+
+    if (filters?.group?.value === 'none') {
+      return rawList;
+    }
+
+    const groupsMap = new Map();
+    rawList.forEach(item => {
+      if (!groupsMap.has(item.groupId)) {
+        groupsMap.set(item.groupId, {
+          isGroup: true,
+          guid: item.groupId,
+          name: item.groupName,
+          items: []
+        });
+      }
+      groupsMap.get(item.groupId).items.push(item);
+    });
+
+    const groupedArray = Array.from(groupsMap.values());
+    groupedArray.sort((a, b) => {
+      if (a.guid === 'no-group') return -1;
+      if (b.guid === 'no-group') return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    return groupedArray;
   }, [productServices, filters])
+
 
   const handleMenuClick = () => {
     setIsMenuOpen(!isMenuOpen)
@@ -147,52 +185,6 @@ export default function LegalEntitiesPage() {
     console.log('Legal entities items:', items)
     return Array.isArray(items) ? items : []
   }, [legalEntitiesData])
-
-  // Transform API data to component format
-  // const entities = useMemo(() => {
-  //   return legalEntitiesItems.map((item) => ({
-  //     id: item.guid,
-  //     guid: item.guid,
-  //     shortName: item.nazvanie || 'Без названия',
-  //     fullName: item.polnoe_nazvanie || '-',
-  //     inn: item.inn?.toString() || '-',
-  //     kpp: item.kpp?.toString() || '-',
-  //     rawData: item // Store raw data for editing
-  //   }))
-  // }, [legalEntitiesItems])
-
-  // const isRowSelected = (id) => selectedRows.includes(id)
-
-  // const toggleRowSelection = (id) => {
-  //   if (selectedRows.includes(id)) {
-  //     setSelectedRows(prev => prev.filter(rid => rid !== id))
-  //   } else {
-  //     setSelectedRows(prev => [...prev, id])
-  //   }
-  // }
-
-  // const allSelected = selectedRows.length === entities.length && entities.length > 0
-
-  // const toggleSelectAll = () => {
-  //   if (allSelected) {
-  //     setSelectedRows([])
-  //   } else {
-  //     setSelectedRows(entities.map(e => e.id))
-  //   }
-  // }
-
-  // const filteredData = useMemo(() => {
-  //   // Search is now handled by API, so just return entities
-  //   return entities
-  // }, [entities])
-
-  // const handleEdit = (legalEntity) => {
-  //   setEditingLegalEntity(legalEntity.rawData)
-  // }
-
-  // const handleDelete = (legalEntity) => {
-  //   setDeletingLegalEntity(legalEntity.rawData)
-  // }
 
   const handleDeleteConfirm = async () => {
     if (!itemToDelete?.guid) return;
@@ -278,7 +270,6 @@ export default function LegalEntitiesPage() {
                 />
               </div>
 
-              {/* filter by group and single  */}
               <div className={styles.filtersColumn}>
                 {/* <div className={styles.filterLabel}>Группировка</div> */}
                 <Select
@@ -287,7 +278,8 @@ export default function LegalEntitiesPage() {
                     { value: 'none', label: 'Без группировки' },
                     { value: 'group', label: 'По группам' }
                   ]}
-                  defaultValue={{ value: 'group', label: 'По группам' }}
+                  value={filters.group}
+                  onChange={(value) => setFilters(prev => ({ ...prev, group: value }))}
                   isSearchable={false}
                 />
               </div>
@@ -340,18 +332,83 @@ export default function LegalEntitiesPage() {
               <tbody className={styles.tbody}>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={10} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                    <td colSpan={11} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
                       Загрузка...
                     </td>
                   </tr>
                 ) : productServicesList.length === 0 ? (
                   <tr>
-                      <td colSpan={10} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
+                      <td colSpan={11} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
                         Нет данных
                     </td>
                   </tr>
                 ) : (
-                      productServicesList.map((item, index) => (
+                      productServicesList.map((item, index) => {
+                        if (item.isGroup) {
+                          const isExpanded = expandedGroups.has(item.guid);
+                          return (
+                            <React.Fragment key={item.guid}>
+                              <tr className={cn(styles.row, styles.groupRow)} onClick={() => toggleGroup(item.guid)} style={{ cursor: 'pointer', background: '#f9fafb' }}>
+                                <td colSpan={11} className={styles.td} style={{ padding: '12px 16px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid); }}
+                                    >
+                                      {isExpanded ? <ExpendClose /> : <ExpendOpen />}
+                                    </button>
+                                    <span style={{ fontWeight: 600, color: '#111827', fontSize: '13px' }}>{item.name} ({item.items.length})</span>
+                                  </div>
+                                </td>
+                              </tr>
+
+                              {isExpanded && item.items.length === 0 && (
+                                <tr className={styles.row}>
+                                  <td colSpan={11} className={styles.td} style={{ textAlign: 'center', padding: '16px', color: '#9ca3af' }}>
+                                    Нет данных
+                                  </td>
+                                </tr>
+                              )}
+
+                              {isExpanded && item.items.map((child, childIndex) => (
+                                <tr key={child.guid || childIndex} className={styles.row}>
+                                  <td className={cn(styles.td, styles.tdIndex)}>
+                                    <div style={{ borderLeft: '1px dashed #d1d5db', height: '40px', marginLeft: '20px' }} />
+                                  </td>
+                                  <td className={styles.td} style={{ fontWeight: 500, paddingLeft: '1rem' }}>{child.name || '—'}</td>
+                                  <td className={styles.tdMuted}>{child.type || '—'}</td>
+                                  <td className={styles.tdMuted}>{child.artikul || '—'}</td>
+                                  <td className={styles.tdMuted}>{child.groupName}</td>
+                                  <td className={styles.td}>{child.price ? `${child.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                                  <td className={styles.tdMuted}>{child.unit}</td>
+                                  <td className={styles.tdMuted}>{child.vat}</td>
+                                  <td className={styles.td}>{child.priceWithVat ? `${child.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                                  <td className={styles.tdMuted} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{child.comment || '—'}</td>
+                                  <td className={cn(styles.td, styles.tdActions)} onClick={(e) => e.stopPropagation()}>
+                                    <div style={{ position: 'relative' }} ref={openRowMenuId === child.guid ? rowMenuRef : null}>
+                                      <button className={styles.rowMenuButton} onClick={() => setOpenRowMenuId(openRowMenuId === child.guid ? null : child.guid)}>
+                                        <MoreVertical size={16} />
+                                      </button>
+                                      {openRowMenuId === child.guid && (
+                                        <div className={styles.rowMenu}>
+                                          <button className={styles.rowMenuItem} onClick={() => { setOpenRowMenuId(null); setItemToEdit(child.raw); setIsCopying(false); setIsCreateSingleOpen(true); }}>
+                                            <MdOutlineModeEdit size={14} color='#686868' /> Редактировать
+                                          </button>
+                                          <button className={styles.rowMenuItem} onClick={() => { setOpenRowMenuId(null); setItemToEdit(child.raw); setIsCopying(true); setIsCreateSingleOpen(true); }}>
+                                            <IoCopyOutline size={14} color='#686868' /> Копировать
+                                          </button>
+                                          <button className={cn(styles.rowMenuItem, styles.rowMenuItemDanger)} onClick={() => { setOpenRowMenuId(null); setItemToDelete(child); }}>
+                                            <GoTrash size={14} color='#ef4444' /> Удалить
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </React.Fragment>
+                          )
+                        } else {
+                          return (
                         <tr key={item.guid || index} className={styles.row}>
                           <td className={cn(styles.td, styles.tdIndex)}>{index + 1}</td>
                           <td className={styles.td} style={{ fontWeight: 500 }}>{item.name || '—'}</td>
@@ -363,44 +420,30 @@ export default function LegalEntitiesPage() {
                           <td className={styles.tdMuted}>{item.vat}</td>
                           <td className={styles.td}>{item.priceWithVat ? `${item.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
                           <td className={styles.tdMuted} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.comment || '—'}</td>
-                      <td className={cn(styles.td, styles.tdActions)} onClick={(e) => e.stopPropagation()}>
+                              <td className={cn(styles.td, styles.tdActions)} onClick={(e) => e.stopPropagation()}>
                             <div style={{ position: 'relative' }} ref={openRowMenuId === item.guid ? rowMenuRef : null}>
-                              <button
-                                className={styles.rowMenuButton}
-                                onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}
-                              >
+                                  <button className={styles.rowMenuButton} onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}>
                                 <MoreVertical size={16} />
                               </button>
                               {openRowMenuId === item.guid && (
                                 <div className={styles.rowMenu}>
-                                  <button className={styles.rowMenuItem} onClick={() => {
-                                    setOpenRowMenuId(null);
-                                    setItemToEdit(item.raw);
-                                    setIsCopying(false);
-                                    setIsCreateSingleOpen(true);
-                                  }}>
-                                    <MdOutlineModeEdit size={14} color='#686868' />
-                                    Редактировать
+                                      <button className={styles.rowMenuItem} onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(false); setIsCreateSingleOpen(true); }}>
+                                        <MdOutlineModeEdit size={14} color='#686868' /> Редактировать
                                   </button>
-                                  <button className={styles.rowMenuItem} onClick={() => {
-                                    setOpenRowMenuId(null);
-                                    setItemToEdit(item.raw);
-                                    setIsCopying(true);
-                                    setIsCreateSingleOpen(true);
-                                  }}>
-                                    <IoCopyOutline size={14} color='#686868' />
-                                    Копировать
+                                      <button className={styles.rowMenuItem} onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(true); setIsCreateSingleOpen(true); }}>
+                                        <IoCopyOutline size={14} color='#686868' /> Копировать
                                   </button>
                                   <button className={cn(styles.rowMenuItem, styles.rowMenuItemDanger)} onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
-                                    <GoTrash size={14} color='#ef4444' />
-                                    Удалить
+                                        <GoTrash size={14} color='#ef4444' /> Удалить
                                   </button>
                                 </div>
                               )}
                             </div>
-                      </td>
-                    </tr>
-                  ))
+                              </td>
+                            </tr>
+                          )
+                        }
+                      })
                 )}
               </tbody>
 

@@ -1,24 +1,31 @@
-import React, { useState, useEffect } from 'react'
-import { X, ChevronDown } from 'lucide-react'
+import React, { useState, useEffect, useMemo } from 'react'
+import { X, TrashIcon } from 'lucide-react'
 import styles from './style.module.scss'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import { useLegalEntitiesPlanFact, useCounterpartiesGroupsPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
 import { MultiSelect } from '../../../common/MultiSelect/MultiSelect'
+import { formatAmount } from '../../../../utils/helpers'
+import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
+import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../../hooks/useDashboard'
 
 const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) => {
   const today = new Date()
 
   const [shipmentDate, setShipmentDate] = useState(today.toISOString().split('T')[0])
+  const isFutureDate = new Date(shipmentDate).setHours(0, 0, 0, 0) > today.setHours(0, 0, 0, 0)
+
   const [isPlanned, setIsPlanned] = useState(false)
   const [legalEntity, setLegalEntity] = useState('')
   const [client, setClient] = useState(kontragentName || '')
   const [chartOfAccounts, setChartOfAccounts] = useState([])
   const [showChartOfAccounts, setShowChartOfAccounts] = useState(false)
   const [rows, setRows] = useState([
-    { id: 1, name: '', quantity: 0, price: 0, discount: '0 %', nds: '0 %', sum: 0 }
+    { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
   ])
+
+  const [selectedProducts, setSelectedProducts] = useState(new Set())
 
   const [errors, setErrors] = useState({})
 
@@ -26,6 +33,10 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
   const { data: legalEntitiesData, isLoading: loadingLegalEntities } = useLegalEntitiesPlanFact({
     page: 1,
     limit: 100,
+  })
+
+  const { mutateAsync: createShipment } = useUcodeRequestMutation({
+
   })
 
   // Transform legal entities data for GroupedSelect
@@ -42,6 +53,30 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
   const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({
     page: 1, limit: 100
   })
+
+  const { data: productServicesList } = useUcodeDefaultApiQuery({
+    queryKey: "get_group_product_services_list",
+    urlMethod: "GET",
+    urlParams: "/items/product_and_service?from-ofs=true&offset=0&limit=10",
+    querySetting: {
+      select: data => data?.data?.data?.response
+    }
+  })
+
+  const groupedProductServicesList = useMemo(() => {
+    if (!productServicesList) return []
+    return productServicesList.map(item => {
+      const groupData = item.group_product_and_service_id_data
+      const groupName = groupData ? (groupData.name || groupData.nazvanie || 'Без группы') : 'Без группы'
+
+      return {
+        ...item,
+        value: item.guid,
+        label: item.naimenovanie || 'Без названия',
+        group: groupName
+      }
+    })
+  }, [productServicesList])
 
   // Transform counterparties
   const counterAgentsTree = React.useMemo(() => {
@@ -73,21 +108,21 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
   const chartOfAccountsOptions = React.useMemo(() => {
     const rawData = chartOfAccountsData?.data?.data?.data || [];
     const flatten = (items) => {
-			let result = []
-			items.forEach(item => {
-				result.push(item)
-				if (item.children && item.children.length > 0) {
-					result = result.concat(flatten(item.children))
-				}
-			})
-			return result
-		}
-		const flat = Array.isArray(rawData) ? flatten(rawData) : []
-		return flat.map(item => ({
-			value: item.guid,
-			label: item.nazvanie || 'Без названия',
-			group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
-		}))
+      let result = []
+      items.forEach(item => {
+        result.push(item)
+        if (item.children && item.children.length > 0) {
+          result = result.concat(flatten(item.children))
+        }
+      })
+      return result
+    }
+    const flat = Array.isArray(rawData) ? flatten(rawData) : []
+    return flat.map(item => ({
+      value: item.guid,
+      label: item.nazvanie || 'Без названия',
+      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
+    }))
   }, [chartOfAccountsData])
 
   // Block body scroll when modal is open
@@ -106,8 +141,8 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
       name: '',
       quantity: 0,
       price: 0,
-      discount: '0 %',
-      nds: '0 %',
+      discount: '',
+      nds: '',
       sum: 0
     }])
   }
@@ -117,18 +152,68 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
       if (row.id !== id) return row
       const updated = { ...row, [field]: value }
       if (field === 'quantity' || field === 'price') {
-        updated.sum = (Number(updated.quantity) || 0) * (Number(updated.price) || 0)
+        const q = Number(updated.quantity?.toString().replace(/\s/g, '')) || 0
+        const p = Number(updated.price?.toString().replace(/\s/g, '')) || 0
+        updated.sum = q * p
       }
       return updated
     }))
   }
 
-  const totalSum = rows.reduce((acc, row) => acc + (Number(row.sum) || 0), 0)
+  const totalSum = useMemo(() => {
+    return rows.reduce((acc, row) => {
+      const sumVal = Number(row.sum?.toString().replace(/\s/g, '')) || 0;
+      return acc + sumVal;
+    }, 0)
+  }, [rows])
 
-  const handleCreate = () => {
-    // TODO: API call
-    console.log('Create shipment:', { shipmentDate, isPlanned, legalEntity, client, rows })
-    onClose?.()
+  const handleCreate = async () => {
+    const newErrors = {}
+    if (!shipmentDate) newErrors.shipmentDate = 'Выберите дату'
+    if (!legalEntity) newErrors.legalEntity = 'Выберите юрлицо'
+    if (!client) newErrors.client = 'Выберите клиента'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    try {
+      await createShipment({
+        "method": "create_shipment_transaction",
+        "data": {
+          "legal_entity_id": legalEntity,
+          "financial_accounts_id": null,
+          "account_id": chartOfAccounts?.[0] || null,
+          "sales_id": dealGuid,
+          "type": "Отгрузка",
+          "currency_code": "RUB",
+          "data_nachislenie": shipmentDate,
+          "partners_id": client,
+          "description": "Shipment",
+          "product_and_service_data": rows.filter(row => row.name).map(row => {
+            const product = groupedProductServicesList.find(p => p.value === row.name)
+            return {
+              "Naimenovanie": product ? product.label : "",
+              "Kol_vo": Number(row.quantity?.toString().replace(/\s/g, '')) || 0,
+              "TSena_za_ed": Number(row.price?.toString().replace(/\s/g, '')) || 0,
+              "Summa": Number(row.sum?.toString().replace(/\s/g, '')) || 0,
+              "Skidka": Number(row.discount?.toString().replace(/\s/g, '')) || 0,
+              "NDS": Number(row.nds?.toString().replace(/\s/g, '')) || 0
+            }
+          })
+        }
+      })
+      onClose?.()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleRemoveRow = () => {
+    const newRow = rows.filter(item => !selectedProducts.has(item.id))
+    setRows(newRow)
+    setSelectedProducts(new Set())
   }
 
   if (!open) return null
@@ -161,22 +246,31 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
               Дата отгрузки <span className={styles.required}>*</span>
             </label>
             <div className={styles.fieldGroup} style={{ flex: 1, maxWidth: '600px' }}>
-              <DatePicker
-                value={shipmentDate}
-                onChange={value => {
-                  setShipmentDate(value)
-                  if (errors.shipmentDate) {
-                    setErrors({ ...errors, shipmentDate: null })
-                  }
-                }}
-                dateFormat='YYYY-MM-DD'
-                className={styles.datePicker}
-                placeholder='Выберите дату'
-                showCheckbox={true}
-                checkboxLabel='Плановая отгрузка'
-                checkboxValue={isPlanned}
-                onCheckboxChange={checked => setIsPlanned(checked)}
-              />
+              <div className="flex items-center gap-4">
+                <DatePicker
+                  value={shipmentDate}
+                  onChange={value => {
+                    setShipmentDate(value)
+                    if (errors.shipmentDate) {
+                      setErrors({ ...errors, shipmentDate: null })
+                    }
+                  }}
+                  dateFormat='YYYY-MM-DD'
+                  className={styles.datePicker}
+                  placeholder='Выберите дату'
+                />
+                <div style={{ opacity: isFutureDate ? 0.5 : 1, pointerEvents: isFutureDate ? 'none' : 'auto' }}>
+                  <OperationCheckbox
+                    checked={isFutureDate ? true : isPlanned}
+                    onChange={e => {
+                      if (!isFutureDate) {
+                        setIsPlanned(e.target.checked)
+                      }
+                    }}
+                    label='Плановая отгрузка'
+                  />
+                </div>
+              </div>
               {errors.shipmentDate && (
                 <span className={styles.errorText}>{errors.shipmentDate}</span>
               )}
@@ -227,7 +321,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
             </div>
           </div>
 
-          {/* Chart of accounts */} 
+          {/* Chart of accounts */}
           {showChartOfAccounts && (
             <div className={styles.formRow}>
               <label className={styles.label}>
@@ -250,7 +344,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
           <div className={styles.productsSection}>
             <div className={styles.productsSectionHeader}>
               <span className={styles.productsTitle}>Товары/услуги для отгрузки</span>
-              <button 
+              <button
                 className={styles.fillFromDeal}
                 onClick={() => setShowChartOfAccounts(!showChartOfAccounts)}
               >
@@ -263,58 +357,132 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
                 <thead>
                   <tr>
                     <th className={styles.checkCol}>
-                      <input type="checkbox" className={styles.checkbox} />
+                      <div className='flex items-center justify-center'>
+                        <OperationCheckbox type="checkbox" checked={selectedProducts?.size > 0 && selectedProducts?.size === rows?.length} onChange={(e) => {
+                          if (e.target.checked) {
+                            const allrows = rows.map((row) => row.id)
+                            setSelectedProducts(new Set(allrows))
+                          } else {
+                            setSelectedProducts(new Set())
+                          }
+                        }} className={styles.checkbox} />
+                      </div>
                     </th>
-                    <th>Наименование</th>
-                    <th className={styles.numCol}>Кол-во</th>
-                    <th className={styles.numCol}>Цена за ед.</th>
-                    <th className={styles.numCol}>Скидка</th>
-                    <th className={styles.numCol}>НДС</th>
-                    <th className={styles.numCol}>Сумма</th>
+                    {selectedProducts?.size > 0 && <th colSpan={6}>
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-3'>
+                          <span className="text-sm font-bold text-neutral-900">Выбрано: {selectedProducts?.size}</span>
+                          <button
+                            className="outline-none border-none bg-transparent text-sm font-medium text-red-600 cursor-pointer flex items-center gap-2"
+                            onClick={handleRemoveRow}
+                          >
+                            <TrashIcon size={16} className='text-red-500' />
+                            Убрать из отгрузки
+                          </button>
+                        </div>
+                        <button
+                          className='outline-none border-none bg-transparent cursor-pointer'
+                          onClick={() => setSelectedProducts(new Set())}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </th>}
+                    {selectedProducts?.size === 0 && <>
+                      <th>Наименование</th>
+                      <th className={styles.numColHeader}>Кол-во</th>
+                      <th className={styles.numColHeader}>Цена за ед.</th>
+                      <th className={styles.numColHeader}>Скидка</th>
+                      <th className={styles.numColHeader}>НДС</th>
+                      <th className={styles.numColHeader}>Сумма</th>
+                    </>}
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row) => (
                     <tr key={row.id}>
                       <td className={styles.checkCol}>
-                        <input type="checkbox" className={styles.checkbox} />
+                        <div className='flex items-center justify-center'>
+                          <OperationCheckbox type="checkbox" checked={selectedProducts.has(row.id)} className={styles.checkbox} onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProducts(prev => {
+                                const next = new Set(prev)
+                                next.add(row.id)
+                                return next
+                              })
+                            } else {
+                              setSelectedProducts(prev => {
+                                const next = new Set(prev)
+                                next.delete(row.id)
+                                return next
+                              })
+                            }
+                          }} />
+                        </div>
                       </td>
                       <td>
                         <div className={styles.selectWrapper}>
-                          <select
-                            value={row.name}
-                            onChange={(e) => updateRow(row.id, 'name', e.target.value)}
-                            className={styles.selectSmall}
-                          >
-                            <option value="">Выберите или создайте позицию</option>
-                          </select>
-                          <ChevronDown size={14} className={styles.selectIcon} />
+                          <div>
+                            <GroupedSelect
+                              data={groupedProductServicesList}
+                              value={row.name}
+                              onChange={(value) => updateRow(row.id, 'name', value)}
+                              placeholder="Выберите позицию"
+                              groupBy={true}
+                              labelKey="label"
+                              valueKey="value"
+                              className="shipment-grouped-select"
+                              dropdownClassName='grouped-select-dropdown'
+                            />
+                          </div>
                         </div>
                       </td>
                       <td className={styles.numCol}>
                         <input
-                          type="number"
+                          type="text"
+                          min={0}
                           value={row.quantity}
-                          onChange={(e) => updateRow(row.id, 'quantity', e.target.value)}
+                          onChange={(e) => updateRow(row.id, 'quantity', formatAmount(e.target.value))}
                           className={styles.numInput}
                         />
                       </td>
                       <td className={styles.numCol}>
                         <input
-                          type="number"
+                          type="text"
+                          min={0}
                           value={row.price}
-                          onChange={(e) => updateRow(row.id, 'price', e.target.value)}
+                          onChange={(e) => updateRow(row.id, 'price', formatAmount(e.target.value))}
                           className={styles.numInput}
                         />
                       </td>
                       <td className={styles.numCol}>
-                        <span className={styles.readonlyVal}>{row.discount}</span>
+                        <input
+                          type="text"
+                          value={row.discount}
+                          maxLength={2}
+                          onChange={(e) => updateRow(row.id, 'discount', e.target.value)}
+                          className={`${styles.numInput} pr-2`}
+                        />
+                        <span className='absolute top-1/2 -translate-y-1/2 right-1'>%</span>
                       </td>
                       <td className={styles.numCol}>
-                        <span className={styles.readonlyVal}>{row.nds}</span>
+                        <input
+                          type="text"
+                          maxLength={2}
+                          value={row.nds}
+                          onChange={(e) => updateRow(row.id, 'nds', e.target.value)}
+                          className={`${styles.numInput} pr-2`}
+                        />
+                        <span className='absolute top-1/2 -translate-y-1/2 right-1'>%</span>
                       </td>
                       <td className={styles.numCol}>
-                        <span className={styles.sumVal}>{row.sum.toLocaleString('ru-RU')}</span>
+                        <input
+                          type="text"
+                          min={0}
+                          value={row.sum}
+                          onChange={(e) => updateRow(row.id, 'sum', formatAmount(e.target.value))}
+                          className={styles.numInput}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -336,7 +504,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
           </span>
           <div className={styles.footerActions}>
             <button className={styles.cancelBtn} onClick={onClose}>Отменить</button>
-            <button className={styles.createBtn} onClick={handleCreate}>Создать</button>
+            <button className="primary-btn" onClick={handleCreate}>Создать</button>
           </div>
         </div>
       </div>

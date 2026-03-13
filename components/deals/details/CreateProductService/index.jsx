@@ -11,7 +11,8 @@ import Input from '../../../shared/Input'
 const CreateProductService = ({
   open,
   onClose,
-  dealGuid,
+  initialData = null,
+  isEditing = false
 }) => {
   const { mutateAsync: mutateProductService, isPending } = useUcodeDefaultApiMutation({
     mutationKey: 'ADD_PRODUCT_SERVICE_TO_DEAL'
@@ -146,6 +147,31 @@ const CreateProductService = ({
     })
   }
 
+  // Auto-fill from initialData for Edit / Copy
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFormData({
+          product_and_service_id: { value: initialData.guid, label: initialData.naimenovanie || '' },
+          quantity: initialData.quantity != null ? String(initialData.quantity) : '',
+          units_of_measurement_id: initialData.units_of_measurement_id ? {
+            value: initialData.units_of_measurement_id,
+            label: (initialData.units_of_measurement_id_data?.full_name || '') + ' ' + (initialData.units_of_measurement_id_data?.short_name || '')
+          } : null,
+          tsena_za_ed: initialData.tsena_za_ed != null ? String(initialData.tsena_za_ed) : '',
+          discount: initialData.discount != null ? String(initialData.discount) : '',
+          status: initialData.status?.[0] || '',
+          nds: initialData.nds != null ? String(initialData.nds) : '',
+          artikul: initialData.artikul || initialData.article || '',
+          group_product_and_service_id: initialData.group_product_and_service_id || '',
+          naimenovanie: initialData.naimenovanie || ''
+        })
+      } else {
+        resetForm()
+      }
+    }
+  }, [open, initialData])
+
   // Block body scroll
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
@@ -173,16 +199,22 @@ const CreateProductService = ({
       nds: formData?.nds,
       commentary: formData?.comment,
       status: [formData?.status],
-      group_product_and_service_id: formData?.group_product_and_service_id
+      group_product_and_service_id: formData?.group_product_and_service_id,
+      quantity: formData?.quantity,
+      discount: formData?.discount
     }
 
     if (formData?.artikul) {
       payload.article = formData?.artikul;
     }
 
+    if (isEditing && initialData?.guid) {
+      payload.guid = initialData.guid;
+    }
+
     try {
       await mutateProductService({
-        urlMethod: "POST",
+        urlMethod: isEditing ? "PUT" : "POST",
         urlParams: "/items/product_and_service?from-ofs=true",
         data: payload
       })
@@ -204,7 +236,9 @@ const CreateProductService = ({
         {/* Header */}
         <div className={styles.header}>
           <div>
-            <h2 className={styles.title}>Добавить товар/услугу</h2>
+            <h2 className={styles.title}>
+              {isEditing ? 'Редактировать позицию' : 'Добавить товар/услугу'}
+            </h2>
             <p className={styles.subtitle}>Заполните данные позиции сделки</p>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>
@@ -306,7 +340,7 @@ const CreateProductService = ({
             Отменить
           </button>
           <button className="primary-btn" onClick={handleCreate} disabled={isPending}>
-            {isPending ? 'Сохранение...' : 'Создать'}
+            {isPending ? 'Сохранение...' : isEditing ? 'Сохранить' : 'Создать'}
           </button>
         </div>
       </div>

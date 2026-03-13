@@ -1249,9 +1249,9 @@ export const useCashFlowReport = (params = {}) => {
         console.error('useCashFlowReport: Error:', error)
         return { status: 'ERROR', data: { data: { data: null } } }
       }
-    },
-    enabled: true,
-    staleTime: 5 * 60 * 1000,
+    }, 
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
     retry: false
   })
 }
@@ -1264,10 +1264,10 @@ export const useUcodeRequestMutation = () => {
     mutationFn: ({ method, data }) => ucodeRequest({ method, data }),
     onError: (error) => {
       console.error('useUcodeRequestMutation Error:', error)
-      
+
       // Handle specific "already exists" error for registration
       const errorMessage = error.message || error.details?.data || error.details?.description || ''
-      if (errorMessage.includes('already exists') || 
+      if (errorMessage.includes('already exists') ||
         errorMessage.includes('уже существует') ||
         errorMessage.includes('already registered') ||
         errorMessage.includes('уже зарегистрирован')
@@ -1275,7 +1275,7 @@ export const useUcodeRequestMutation = () => {
         showErrorNotification('Пользователь с таким email уже существует')
         return
       }
-      
+
       showErrorNotification(error.message || error.details?.description || 'Ошибка при выполнении запроса')
     }
   })
@@ -1295,7 +1295,9 @@ export const useUcodeRequestQuery = ({ method, data, skip = false, querySetting 
       console.error('useUcodeRequestQuery Error:', error)
       showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
     },
-    ...querySetting
+    ...querySetting,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -1319,7 +1321,9 @@ export const useUcodeDefaultApiQuery = ({ queryKey = '', urlMethod, urlParams, d
     onError: (error) => {
       console.error('useUcodeDefaultApiQuery Error:', error)
     },
-    ...querySetting
+    ...querySetting,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true, 
   })
 }
 

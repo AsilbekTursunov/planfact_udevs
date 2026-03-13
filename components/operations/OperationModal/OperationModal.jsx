@@ -26,6 +26,7 @@ import SentMessages from './SentMessages'
 import { appStore } from '../../../store/app.store'
 import { observer } from 'mobx-react-lite'
 import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard'
+import Loader from '../../shared/Loader'
 
 const today = new Date().toISOString().split('T')[0]
 const todayDate = new Date().getDate()
@@ -240,6 +241,7 @@ const OperationModal = observer(({
 	onSuccess,
 	preselectedCounterparty = null,
 	disableCounterpartySelect = false,
+	defaultDealGuid = null,
 	initialTab = null,
 }) => {
 	const queryClient = useQueryClient()
@@ -270,7 +272,6 @@ const OperationModal = observer(({
 		}));
 	}, [dealsData]);
 
-	console.log('formattedDeals', formattedDeals)
 
 
 	// Refetch operation data when modal opens (when isOpening becomes true)
@@ -414,7 +415,7 @@ const OperationModal = observer(({
 				cashMethod: true,
 				creditItem: null,
 				currenies_id: raw.currenies_id || null,
-				paymentType: ''
+				paymentType: '', 
 			}
 		}
 
@@ -445,6 +446,7 @@ const OperationModal = observer(({
 			cashMethod: true,
 			creditItem: null,
 			currenies_id: null,
+			salesDeal: defaultDealGuid || null,
 		}
 	}
 
@@ -887,6 +889,10 @@ const OperationModal = observer(({
 				requestData.chart_of_accounts_id = formData.chartOfAccount || null
 				requestData.legal_entity_id = formData.legalEntity || null
 				requestData.currenies_id = currencyId || null
+			}
+
+			if (activeTab === 'income' || activeTab === 'payment') {
+				requestData.sales_transactions = formData.salesDeal || null
 			}
 
 			// Convert empty strings to null
@@ -1505,6 +1511,34 @@ const OperationModal = observer(({
 										/>
 									</div>}
 
+									{/* Счет и юрлицо currenies_id currencyID */}
+									<div className={styles.formRow}>
+										<label className={styles.label}>
+											Сделка продажи
+										</label>
+										<div className={styles.fieldWrapper}>
+											<GroupedSelect
+												data={formattedDeals}
+												value={formData.salesDeal}
+												onChange={value => {
+													setFormData({ ...formData, salesDeal: value })
+													if (errors.salesDeal) {
+														setErrors({ ...errors, salesDeal: null })
+													}
+												}}
+												placeholder='Выберите счет...'
+												groupBy={false}
+												labelKey='label'
+												valueKey='guid'
+												loading={loadingBankAccounts}
+												hasError={!!errors.salesDeal}
+											/>
+											{errors.salesDeal && (
+												<span className={styles.errorText}>{errors.salesDeal}</span>
+											)}
+										</div>
+									</div>
+
 									{/* Назначение платежа */}
 									<div className={styles.formRowStart}>
 										<label className={styles.label} style={{ paddingTop: '0.5rem' }}>
@@ -1932,11 +1966,11 @@ const OperationModal = observer(({
 
 					{/* Footer */}
 					<div className={styles.footer}>
-						<button className={styles.cancelButton} onClick={onClose}>
+						<button className='secondary-btn' onClick={onClose}>
 							Отмена
 						</button>
-						<button className={styles.saveButton} onClick={handleSubmit} disabled={isSubmitting}>
-							{isSubmitting ? 'Создание...' : isNew ? 'Создать' : 'Сохранить'}
+						<button className='primary-btn' onClick={handleSubmit} disabled={isSubmitting}>
+							{isSubmitting ? <Loader /> : isNew ? 'Создать' : 'Сохранить'}
 						</button>
 					</div>
 				</div>
