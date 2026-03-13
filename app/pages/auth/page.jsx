@@ -437,9 +437,9 @@ export default function LoginPage() {
                     placeholder="Email"
                   />
                 </div>
-                {fieldErrors.email && (
+                {/* {fieldErrors.email && (
                   <div className={styles.fieldError}>{fieldErrors.email}</div>
-                )}
+                )} */}
               </div>
             )}
 

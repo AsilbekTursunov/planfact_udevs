@@ -207,7 +207,7 @@ export default function OperationsPage() {
 
 
 
-
+	console.log('operations', operationsListData)
 
 	// Reset pagination when filters change
 	useEffect(() => {
@@ -414,8 +414,7 @@ export default function OperationsPage() {
 				}))
 			}
 		})
-	}, [allOperations])
-	console.table(operations)
+	}, [allOperations]) 
 
 	const [isDatePaymentModalOpen, setIsDatePaymentModalOpen] = useState(false)
 	const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)

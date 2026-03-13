@@ -30,11 +30,13 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
 
   const queryClient = useQueryClient();
 
+  console.log(initialData)
+
   useEffect(() => {
     if (isOpen && initialData) {
       // eslint-disable-next-line
       setDealName(initialData.name || '');
-      setDealDate(initialData.sale_date || '');
+      setDealDate(initialData.sale_date ? formatDate(initialData.sale_date) : '');
       setClient(initialData.counterparties_id || '');
       setNds(initialData.nds ? 'true' : 'false');
       setComment(initialData.commentary || '');

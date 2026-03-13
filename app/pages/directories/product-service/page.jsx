@@ -89,6 +89,14 @@ export default function LegalEntitiesPage() {
 
 
 
+  const { data: productServicesGrouped } = useUcodeDefaultApiQuery({
+    queryKey: 'product-services-grouped',
+    urlMethod: 'GET',
+    urlParams: '/items/group_product_and_service?from-ofs=true&offset=0&limit=10',
+    querySetting: {
+      select: data => data?.data?.data?.response
+    }
+  }); 
 
   const productServicesList = useMemo(() => {
     const rawList = productServices?.filter(item => filters?.type?.value === 'all' ? true : item.status?.includes(filters?.type?.value)).map(item => {
@@ -123,6 +131,18 @@ export default function LegalEntitiesPage() {
     }
 
     const groupsMap = new Map();
+
+    if (productServicesGrouped) {
+      productServicesGrouped.forEach(group => {
+        groupsMap.set(group.guid, {
+          isGroup: true,
+          guid: group.guid,
+          name: group.name || group.nazvanie_gruppy || 'Без названия',
+          items: []
+        });
+      });
+    }
+
     rawList.forEach(item => {
       if (!groupsMap.has(item.groupId)) {
         groupsMap.set(item.groupId, {
@@ -143,7 +163,7 @@ export default function LegalEntitiesPage() {
     });
 
     return groupedArray;
-  }, [productServices, filters])
+  }, [productServices, productServicesGrouped, filters])
 
 
   const handleMenuClick = () => {

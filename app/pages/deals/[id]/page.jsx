@@ -40,13 +40,13 @@ export default function DealDetailPage() {
 
   console.log('dealData', dealData)
 
-  // Deal data
   const deal = useMemo(() => {
     return {
       guid: dealId,
       nazvanie: dealData?.Nazvanie,
-      kontragent: { nazvanie: 'test' },
-      data_nachala: '2026-05-26',
+      kontragentId: dealData?.counterparties_id || dealData?.partners_id,
+      kontragent: { nazvanie: dealData?.counterparties_id_data?.nazvanie || 'test' },
+      data_nachala: dealData?.sale_date || dealData?.data_nachala || '2026-05-26',
       summa_sdelki: dealData?.total_products_summa,
       postupilo_summa: dealData?.total_receipts_summa,
       otgruzheno_summa: dealData?.total_shipments_summa,
@@ -157,9 +157,9 @@ export default function DealDetailPage() {
 
   // Deal statuses
   const [dealStatuses, setDealStatuses] = useState([
-    { guid: '1', name: 'Новая', color: '#F79009' },
-    { guid: '2', name: 'В работе', color: '#2E90FA' },
-    { guid: '3', name: 'Завершена', color: '#12B76A' },
+    { guid: 'new', name: 'new', color: '#F79009' },
+    { guid: 'in_progress', name: 'in_progress', color: '#2E90FA' },
+    { guid: 'completed', name: 'completed', color: '#12B76A' },
   ]);
   const [selectedStatus, setSelectedStatus] = useState(null);
 
@@ -640,7 +640,7 @@ export default function DealDetailPage() {
         onClose={() => setShowShipmentModal(false)}
         dealName={deal.nazvanie}
         dealGuid={deal.guid}
-        kontragentName={deal.kontragent?.nazvanie}
+        kontragentId={deal.kontragentId}
       />
 
       {/* Operation Modal */}

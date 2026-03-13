@@ -9,8 +9,9 @@ import { MultiSelect } from '../../../common/MultiSelect/MultiSelect'
 import { formatAmount } from '../../../../utils/helpers'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../../hooks/useDashboard'
+import Loader from '../../../shared/Loader'
 
-const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) => {
+const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId }) => {
   const today = new Date()
 
   const [shipmentDate, setShipmentDate] = useState(today.toISOString().split('T')[0])
@@ -18,7 +19,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
 
   const [isPlanned, setIsPlanned] = useState(false)
   const [legalEntity, setLegalEntity] = useState('')
-  const [client, setClient] = useState(kontragentName || '')
+  const [client, setClient] = useState(kontragentId || '')
   const [chartOfAccounts, setChartOfAccounts] = useState([])
   const [showChartOfAccounts, setShowChartOfAccounts] = useState(false)
   const [rows, setRows] = useState([
@@ -35,9 +36,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
     limit: 100,
   })
 
-  const { mutateAsync: createShipment } = useUcodeRequestMutation({
-
-  })
+  const { mutateAsync: createShipment, isPending: isCreating } = useUcodeRequestMutation()
 
   // Transform legal entities data for GroupedSelect
   const legalEntities = (legalEntitiesData?.data?.data?.data || []).map(item => ({
@@ -180,30 +179,42 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
 
     try {
       await createShipment({
-        "method": "create_shipment_transaction",
-        "data": {
-          "legal_entity_id": legalEntity,
-          "financial_accounts_id": null,
-          "account_id": chartOfAccounts?.[0] || null,
-          "sales_id": dealGuid,
-          "type": "Отгрузка",
-          "currency_code": "RUB",
-          "data_nachislenie": shipmentDate,
-          "partners_id": client,
-          "description": "Shipment",
-          "product_and_service_data": rows.filter(row => row.name).map(row => {
+        method: "create_shipment_transaction",
+        data: {
+          legal_entity_id: legalEntity,
+          sales_id: dealGuid,
+          partners_id: client,
+          planned_shipment: isFutureDate ? true : isPlanned,
+          data_nachislenie: shipmentDate,
+          currency_code: "RUB",
+          description: "Shipment",
+          product_and_service_data: rows.filter(row => row.name).map(row => {
             const product = groupedProductServicesList.find(p => p.value === row.name)
             return {
-              "Naimenovanie": product ? product.label : "",
-              "Kol_vo": Number(row.quantity?.toString().replace(/\s/g, '')) || 0,
-              "TSena_za_ed": Number(row.price?.toString().replace(/\s/g, '')) || 0,
-              "Summa": Number(row.sum?.toString().replace(/\s/g, '')) || 0,
-              "Skidka": Number(row.discount?.toString().replace(/\s/g, '')) || 0,
-              "NDS": Number(row.nds?.toString().replace(/\s/g, '')) || 0
+              guid: product?.guid || undefined,
+              Naimenovanie: product ? product.label : "",
+              Artikul: product?.artikul || "",
+              Kol_vo: Number(row.quantity?.toString().replace(/\s/g, '')) || 0,
+              TSena_za_ed: Number(row.price?.toString().replace(/\s/g, '')) || 0,
+              Summa: Number(row.sum?.toString().replace(/\s/g, '')) || 0,
+              Skidka: Number(row.discount?.toString().replace(/\s/g, '')) || 0,
+              NDS: Number(row.nds?.toString().replace(/\s/g, '')) || 0,
+              unit_of_measurement_id: product?.raw?.units_of_measurement_id || undefined
             }
           })
         }
       })
+
+      // Clear fields on success
+      setShipmentDate(today.toISOString().split('T')[0])
+      setIsPlanned(false)
+      setLegalEntity('')
+      setClient(kontragentId || '')
+      setChartOfAccounts([])
+      setRows([{ id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }])
+      setSelectedProducts(new Set())
+      setErrors({})
+
       onClose?.()
     } catch (error) {
       console.error(error)
@@ -504,7 +515,9 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentName }) =
           </span>
           <div className={styles.footerActions}>
             <button className={styles.cancelBtn} onClick={onClose}>Отменить</button>
-            <button className="primary-btn" onClick={handleCreate}>Создать</button>
+            <button className="primary-btn" onClick={handleCreate}>{
+              isCreating ? <Loader /> : 'Создать'
+            }</button>
           </div>
         </div>
       </div>

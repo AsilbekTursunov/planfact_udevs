@@ -73,7 +73,7 @@
 
 .infoCards {
   display: grid;
-  grid-template-columns: minmax(340px, 1fr) 330px 330px 330px;
+  grid-template-columns: minmax(340px, 1fr) minmax(250px, 310px) minmax(250px, 310px) minmax(250px, 310px);
   gap: 16px;
 }
 
@@ -425,7 +425,7 @@
 /* Main Content Layout */
 .mainContentLayout {
   display: grid;
-  grid-template-columns: 1fr 330px;
+  grid-template-columns: 1fr 310;
   gap: 16px;
   align-items: start;
 }

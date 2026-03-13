@@ -56,92 +56,6 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
     }))
   }, [units])
 
-  const productOptions = [
-    { value: 'a', label: 'Ар (а)', },
-    { value: 'bob', label: 'Бобина (боб)' },
-    { value: 'ga', label: 'Гектар (га)' },
-    { value: 'year', label: 'Год (г)' },
-    { value: 'g', label: 'Грамм (г)' },
-    { value: 'ed', label: 'Единица (ед)' },
-    { value: 'izd', label: 'Изделие (изд)' },
-    { value: 'km2', label: 'Квадратный километр (км 2)' },
-    { value: 'm2', label: 'Квадратный метр (м 2)' },
-    { value: 'mm2', label: 'Квадратный миллиметр (мм 2)' },
-    { value: 'sm2', label: 'Квадратный сантиметр (см 2)' },
-    { value: 'kg', label: 'Килограмм (кг)' },
-    { value: 'km', label: 'Километр (км)' },
-    { value: 'm3', label: 'Кубический метр (м 3)' },
-    { value: 'mm3', label: 'Кубический миллиметр (мм 3)' },
-    { value: 'sm3', label: 'Кубический сантиметр (см 3)' },
-    { value: 'list', label: 'Лист (л.)' },
-    { value: 'l', label: 'Литр (л)' },
-    { value: 'month', label: 'Месяц (мес)' },
-    { value: 'm', label: 'Метр (м)' },
-    { value: 'mg', label: 'Миллиграмм (мг)' },
-    { value: 'ml', label: 'Миллилитр (мл)' },
-    { value: 'mm', label: 'Миллиметр (мм)' },
-    { value: 'nabor', label: 'Набор (набор)' },
-    { value: 'pm', label: 'Погонный метр (пог. м)' },
-    { value: 'rulon', label: 'Рулон (рул)' },
-    { value: 'sm', label: 'Сантиметр (см)' },
-    { value: 'sec', label: 'Секунда (с)' },
-    { value: 'sut', label: 'Сутки (сут)' },
-    { value: 't', label: 'Тонна (т)' },
-    { value: 'upak', label: 'Упаковка (упак)' },
-    { value: 'usl_m', label: 'Условный метр (усл. м)' },
-    { value: 'c', label: 'Центнер (ц)' },
-    { value: 'hour', label: 'Час (ч)' },
-    { value: 'chast', label: 'Часть (часть)' },
-    { value: 'chel_dn', label: 'Человеко-день (чел.дн)' },
-    { value: 'chel_ch', label: 'Человеко-час (чел.ч)' },
-    { value: 'pcs', label: 'Штука (шт)' },
-    { value: 'elem', label: 'Элемент (элем)' },
-    { value: 'box', label: 'Ящик (ящ.)' }
-  ]
-
-  const serviceOptions = [
-    { value: 'a', label: 'Ар (а)' },
-    { value: 'bob', label: 'Бобина (боб)' },
-    { value: 'ga', label: 'Гектар (га)' },
-    { value: 'year', label: 'Год (г)' },
-    { value: 'g', label: 'Грамм (г)' },
-    { value: 'ed', label: 'Единица (ед)' },
-    { value: 'izd', label: 'Изделие (изд)' },
-    { value: 'km2', label: 'Квадратный километр (км 2)' },
-    { value: 'm2', label: 'Квадратный метр (м 2)' },
-    { value: 'mm2', label: 'Квадратный миллиметр (мм 2)' },
-    { value: 'sm2', label: 'Квадратный сантиметр (см 2)' },
-    { value: 'kg', label: 'Килограмм (кг)' },
-    { value: 'km', label: 'Километр (км)' },
-    { value: 'm3', label: 'Кубический метр (м 3)' },
-    { value: 'mm3', label: 'Кубический миллиметр (мм 3)' },
-    { value: 'sm3', label: 'Кубический сантиметр (см 3)' },
-    { value: 'list', label: 'Лист (л.)' },
-    { value: 'l', label: 'Литр (л)' },
-    { value: 'month', label: 'Месяц (мес)' },
-    { value: 'm', label: 'Метр (м)' },
-    { value: 'mg', label: 'Миллиграмм (мг)' },
-    { value: 'ml', label: 'Миллилитр (мл)' },
-    { value: 'mm', label: 'Миллиметр (мм)' },
-    { value: 'nabor', label: 'Набор (набор)' },
-    { value: 'pm', label: 'Погонный метр (пог. м)' },
-    { value: 'rulon', label: 'Рулон (рул)' },
-    { value: 'sm', label: 'Сантиметр (см)' },
-    { value: 'sec', label: 'Секунда (с)' },
-    { value: 'sut', label: 'Сутки (сут)' },
-    { value: 't', label: 'Тонна (т)' },
-    { value: 'upak', label: 'Упаковка (упак)' },
-    { value: 'usl_m', label: 'Условный метр (усл. м)' },
-    { value: 'c', label: 'Центнер (ц)' },
-    { value: 'hour', label: 'Час (ч)' },
-    { value: 'chast', label: 'Часть (часть)' },
-    { value: 'chel_dn', label: 'Человеко-день (чел.дн)' },
-    { value: 'chel_ch', label: 'Человеко-час (чел.ч)' },
-    { value: 'pcs', label: 'Штука (шт)' },
-    { value: 'elem', label: 'Элемент (элем)' },
-    { value: 'box', label: 'Ящик (ящ.)' }
-  ]
- 
 
   const currencyOptions = [
     { value: 'rub', label: 'RUB' },
@@ -330,8 +244,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
                 instanceId="create-single-unit-select"
                 options={apiOptions}
                 value={formData.unit}
-                onChange={val => handleFieldChange('unit', val)}
-                defaultValue={viewMode == 'product' ? productOptions[0] : serviceOptions[0]}
+                onChange={val => handleFieldChange('unit', val)} 
               />
             </div>
           </div>

@@ -377,7 +377,7 @@
 .status {
   display: inline-block;
   padding: 4px 8px;
-    border-radius: 10px;
+  border-radius: 10px;
   font-family: Inter, sans-serif;
   font-weight: 500;
   font-size: 10px;
@@ -385,24 +385,22 @@
   text-align: center;
 }
 
-.statusRed {
+.status_cancel {
   background-color: #FEF3F2;
   color: #F04438;
 }
 
-.statusGreen {
+.status_in_work {
   background-color: #E6F4EA;
-    color: #1E8E3E;
+  color: #1E8E3E;
   }
-  
-  .statusBlue {
-    background-color: #EEF4FF;
-    color: #4C82E8;
-  }
-  
-  .statusOrange {
-    background-color: #FFF3E0;
-    color: #D69711;
+.status_new {
+  background-color: #EEF4FF;
+  color: #4C82E8;
+}
+.status_waiting {
+  background-color: #FFF3E0;
+  color: #D69711;
 }
 
 .actions {

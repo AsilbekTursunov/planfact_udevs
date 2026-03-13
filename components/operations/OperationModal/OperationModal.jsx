@@ -262,8 +262,10 @@ const OperationModal = observer(({
 	const { data: dealsData } = useUcodeDefaultApiQuery({
 		queryKey: 'deals',
 		urlMethod: 'GET',
-		urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=20'
+		urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=100'
 	});
+
+
 	const formattedDeals = useMemo(() => {
 		const items = dealsData?.data?.data?.response || [];
 		return items.map(deal => ({

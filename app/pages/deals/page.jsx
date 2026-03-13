@@ -45,6 +45,8 @@ export default function DealsPage() {
     urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=20'
   });
 
+  
+
   const { mutate: deleteDeal, isPending: isDeletingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'delete-deal' });
 
   // Process API data into expected table format
@@ -64,6 +66,7 @@ export default function DealsPage() {
       pribyl: deal.counterparties_id_data?.profit || 0
     }));
   }, [dealsData]);
+
 
   const handleRowClick = (deal, e) => {
     // OperationCheckbox often wraps input in labels or custom divs
@@ -160,7 +163,7 @@ export default function DealsPage() {
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <h1 className={styles.title}>Сделки по продажам</h1>
-            <button className={styles.createButton} onClick={() => setIsCreateModalOpen(true)}>
+            <button className='primary-btn' onClick={() => setIsCreateModalOpen(true)}>
               Создать
             </button>
           </div>
@@ -225,8 +228,8 @@ export default function DealsPage() {
                   <td>{deal.nazvanie || '-'}</td>
                   <td>{deal.kontragent?.nazvanie || '-'}</td>
                   <td>
-                    <span className={`${styles.status} ${styles[`status${getStatusColor(deal.status)?.charAt(0).toUpperCase() + getStatusColor(deal.status)?.slice(1)}`]}`}>
-                      {deal.status || 'New'}
+                    <span className={`${styles.status} ${styles[`status_${deal.status}`]}`}>
+                      {deal?.status || '-'}
                     </span>
                   </td>
                   <td>{formatAmount(deal.summa_sdelki)}</td>
