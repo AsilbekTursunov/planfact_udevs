@@ -9,12 +9,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import Input from '../../../components/shared/Input';
 import { Search } from 'lucide-react';
 import { formatDateFormat } from '../../../utils/formatDate';
-import { formatAmount } from '../../../utils/helpers';
-import { MdOutlineModeEdit } from "react-icons/md";
-import { IoCloseOutline } from "react-icons/io5";
-import { IoCopyOutline } from "react-icons/io5";
+import { formatAmount } from '../../../utils/helpers'; 
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox';
 import { DeleteDealModal } from '../../../components/deals/DeleteDealModal/DeleteDealModal';
+import { MdOutlineModeEdit } from 'react-icons/md';
+import { IoCloseOutline, IoCopyOutline } from 'react-icons/io5';
 
 export default function DealsPage() {
   const router = useRouter();

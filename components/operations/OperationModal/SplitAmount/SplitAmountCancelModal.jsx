@@ -2,7 +2,7 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
 import styles from './SplitAmountCancelModal.module.scss'
-
+import { cn } from '@/app/lib/utils'
 export function SplitAmountCancelModal({ isOpen, onConfirm, onCancel }) {
   const [mounted, setMounted] = useState(false)
 
@@ -16,7 +16,7 @@ export function SplitAmountCancelModal({ isOpen, onConfirm, onCancel }) {
   return createPortal(
     <>
       <div 
-        className={styles.cancelModalOverlay}
+        className={cn(styles.cancelModalOverlay, ' p-0')}
         onClick={onCancel}
       />
       <div className={styles.cancelModal}>

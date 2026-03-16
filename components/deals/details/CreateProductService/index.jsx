@@ -7,28 +7,31 @@ import { queryClient } from '../../../../lib/queryClient'
 import { formatAmount } from '../../../../utils/helpers'
 import Select from '../../../common/Select'
 import Input from '../../../shared/Input'
+import { useUcodeRequestMutation } from '../../../../hooks/useDashboard'
+import Loader from '../../../shared/Loader'
 
 const CreateProductService = ({
   open,
   onClose,
   initialData = null,
-  isEditing = false
+  isEditing = false,
+  dealGuid = null
 }) => {
   const { mutateAsync: mutateProductService, isPending } = useUcodeDefaultApiMutation({
     mutationKey: 'ADD_PRODUCT_SERVICE_TO_DEAL'
   })
 
   const [formData, setFormData] = useState({
-    product_and_service_id: null,   // selected product/service option {value, label}
-    quantity: '',
-    units_of_measurement_id: null,  // selected unit option {value, label}
-    tsena_za_ed: '',
-    discount: '',
-    status: '',
-    nds: '',
-    artikul: '',
-    group_product_and_service_id: "",
-    naimenovanie: ""
+    product_and_service_id: initialData?.guid ? { value: initialData.guid, label: initialData.name || '' } : null,
+    quantity: initialData?.kolvo != null ? String(initialData.kolvo) : '',
+    units_of_measurement_id: initialData?.unit_of_measurement_id ? { value: initialData.unit_of_measurement_id, label: initialData.unit_name || '' } : null,
+    tsena_za_ed: initialData?.tsena_za_ed != null ? String(initialData.tsena_za_ed) : '',
+    discount: initialData?.discount != null ? String(initialData.discount) : '',
+    status: Array.isArray(initialData?.status) ? initialData.status[0] : (initialData?.status || ''),
+    nds: initialData?.nds != null ? String(initialData.nds) : '',
+    artikul: initialData?.artikul || initialData?.article || '',
+    group_product_and_service_id: initialData?.group_product_and_service_id || "",
+    naimenovanie: initialData?.name || ""
   })
   const [errors, setErrors] = useState({})
 
@@ -50,6 +53,7 @@ const CreateProductService = ({
     })) || []
   }, [productServices])
 
+
   // Fetch units of measurement
   const { data: units } = useUcodeDefaultApiQuery({
     queryKey: 'get_product_services_units',
@@ -60,6 +64,8 @@ const CreateProductService = ({
     }
   })
 
+  const { mutateAsync: mutateProductServiceCustom, isPending: isProductServiceCustomPending } = useUcodeRequestMutation()
+
 
   const apiUnitOptions = useMemo(() => {
     return units?.map(item => ({
@@ -68,7 +74,6 @@ const CreateProductService = ({
     })) || []
   }, [units])
 
-  console.log('apiUnitOptions', apiUnitOptions)
 
   // Auto-fill fields when a product/service is selected
   const handleProductServiceChange = (selectedOption) => {
@@ -147,30 +152,35 @@ const CreateProductService = ({
     })
   }
 
-  // Auto-fill from initialData for Edit / Copy
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevInitialData, setPrevInitialData] = useState(initialData)
+
+  if (open !== prevOpen || initialData !== prevInitialData) {
+    setPrevOpen(open)
+    setPrevInitialData(initialData)
+
     if (open) {
       if (initialData) {
         setFormData({
-          product_and_service_id: { value: initialData.guid, label: initialData.naimenovanie || '' },
-          quantity: initialData.quantity != null ? String(initialData.quantity) : '',
-          units_of_measurement_id: initialData.units_of_measurement_id ? {
-            value: initialData.units_of_measurement_id,
-            label: (initialData.units_of_measurement_id_data?.full_name || '') + ' ' + (initialData.units_of_measurement_id_data?.short_name || '')
+          product_and_service_id: initialData.guid ? { value: initialData.guid, label: initialData.name || '' } : null,
+          quantity: initialData.kolvo != null ? String(initialData.kolvo) : '',
+          units_of_measurement_id: initialData.unit_of_measurement_id ? {
+            value: initialData.unit_of_measurement_id,
+            label: initialData.unit_name || ''
           } : null,
           tsena_za_ed: initialData.tsena_za_ed != null ? String(initialData.tsena_za_ed) : '',
           discount: initialData.discount != null ? String(initialData.discount) : '',
-          status: initialData.status?.[0] || '',
+          status: Array.isArray(initialData.status) ? initialData.status[0] : (initialData.status || ''),
           nds: initialData.nds != null ? String(initialData.nds) : '',
           artikul: initialData.artikul || initialData.article || '',
           group_product_and_service_id: initialData.group_product_and_service_id || '',
-          naimenovanie: initialData.naimenovanie || ''
+          naimenovanie: initialData.name || ''
         })
       } else {
         resetForm()
       }
     }
-  }, [open, initialData])
+  }
 
   // Block body scroll
   useEffect(() => {
@@ -192,39 +202,65 @@ const CreateProductService = ({
   const handleCreate = async () => {
     if (!validate()) return
 
-    const payload = {
-      naimenovanie: formData?.naimenovanie,
-      tsena_za_ed: formData?.tsena_za_ed,
-      units_of_measurement_id: formData?.units_of_measurement_id?.value,
-      nds: formData?.nds,
-      commentary: formData?.comment,
-      status: [formData?.status],
-      group_product_and_service_id: formData?.group_product_and_service_id,
-      quantity: formData?.quantity,
-      discount: formData?.discount
-    }
+    const object_data = {
+      Naimenovanie: formData?.naimenovanie || '',
+      Kol_vo: Number(String(formData?.quantity || '0').replace(/\s/g, '')),
+      TSena_za_ed: Number(String(formData?.tsena_za_ed || '0').replace(/\s/g, '')),
+      Skidka: Number(String(formData?.discount || '0').replace(/\s/g, '')),
+      Summa: totalSum,
+    };
 
-    if (formData?.artikul) {
-      payload.article = formData?.artikul;
+    if (!isEditing && dealGuid) {
+      object_data.sales_transaction_id = dealGuid;
     }
 
     if (isEditing && initialData?.guid) {
-      payload.guid = initialData.guid;
+      object_data.guid = initialData.guid;
     }
 
+    if (formData?.units_of_measurement_id?.value) {
+      object_data.units_of_measurement_id = formData.units_of_measurement_id.value;
+    }
+
+    if (formData?.nds) {
+      object_data.Nds = Number(String(formData?.nds || '0').replace(/\s/g, ''));
+    }
+
+    if (formData?.artikul) {
+      object_data.article = formData.artikul;
+    }
+
+    if (formData?.group_product_and_service_id) {
+      object_data.group_product_and_service_id = formData.group_product_and_service_id;
+    }
+
+    if (formData?.comment) {
+      object_data.commentary = formData.comment;
+    }
+
+    if (formData?.status) {
+      object_data.status = [formData.status];
+    }
+
+
     try {
-      await mutateProductService({
-        urlMethod: isEditing ? "PUT" : "POST",
-        urlParams: "/items/product_and_service?from-ofs=true",
-        data: payload
+      // await mutateProductService({
+      //   urlMethod: isEditing ? "PUT" : "POST",
+      //   urlParams: "/items/product_and_service?from-ofs=true",
+      //   data: payload
+      // })
+      await mutateProductServiceCustom({
+        method: isEditing ? "update_product_and_service" : "create_product_and_service",
+        data: object_data
       })
       resetForm()
-      queryClient.invalidateQueries({ queryKey: ['product_services_list'] })
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
       onClose()
     } catch (error) {
       console.error('mutateProductService', error?.message)
     }
   }
+
 
   return (
     <>
@@ -339,8 +375,8 @@ const CreateProductService = ({
           <button className={styles.cancelBtn} onClick={onClose}>
             Отменить
           </button>
-          <button className="primary-btn" onClick={handleCreate} disabled={isPending}>
-            {isPending ? 'Сохранение...' : isEditing ? 'Сохранить' : 'Создать'}
+          <button className="primary-btn" onClick={handleCreate} disabled={isProductServiceCustomPending}>
+            {isProductServiceCustomPending ? <Loader /> : isEditing ? 'Сохранить' : 'Создать'}
           </button>
         </div>
       </div>

@@ -3,24 +3,30 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import styles from './deal-detail.module.scss';
-import { useUcodeRequestQuery, useUcodeDefaultApiQuery, useUcodeDefaultApiMutation } from '../../../../hooks/useDashboard';
-import { useQueryClient } from '@tanstack/react-query';
-import DealStatus from '../../../../components/deals/details/Status';
-import CreateShipment from '../../../../components/deals/details/CreatingShipment';
-import { CirclePlus, Ellipsis, Search, MoreVertical } from 'lucide-react';
+import { useUcodeRequestQuery } from '@/hooks/useDashboard';
+import { keepPreviousData, useQueryClient } from '@tanstack/react-query';
+import DealStatus from '@/components/deals/details/Status';
+import CreateShipment from '@/components/deals/details/CreatingShipment';
+import { ChevronDown, ChevronUp, CirclePlus, Ellipsis, Search } from 'lucide-react';
 import { HiOutlineDatabase } from "react-icons/hi";
 import { PiDatabaseFill } from "react-icons/pi";
-import { MdOutlineModeEdit } from "react-icons/md";
-import { GoTrash } from "react-icons/go";
-import { IoCopyOutline } from "react-icons/io5";
-import Input from '../../../../components/shared/Input';
-import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox';
-import OperationModal from '../../../../components/operations/OperationModal/OperationModal';
-import CreateProductService from '../../../../components/deals/details/CreateProductService';
-import CustomModal from '../../../../components/shared/CustomModal';
-import Loader from '../../../../components/shared/Loader';
-import { formatDateFormat } from '../../../../utils/formatDate';
-import { formatAmount } from '../../../../utils/helpers';
+import { ShipmentPlusIcon, BoxIcon, ReceiptsEmptyIcon, ExpensesEmptyIcon, ShipmentsEmptyIcon, AttachIcon, SendIcon } from '@/constants/icons';
+import Input from '@/components/shared/Input';
+import OperationModal from '@/components/operations/OperationModal/OperationModal';
+import CreateProductService from '@/components/deals/details/CreateProductService';
+import CustomModal from '@/components/shared/CustomModal';
+import Loader from '@/components/shared/Loader';
+import { formatDateFormat } from '@/utils/formatDate';
+import { formatAmount } from '@/utils/helpers';
+import operationsDto from '../../../../lib/dtos/operationsDto';
+import DealOperationsTable from '../../../../components/deals/details/DealOperationsTable';
+import ShipmenTable from '../../../../components/deals/details/ShipmenTable';
+import { shipmentsDto } from '../../../../lib/dtos/shipmentsDto';
+import ProductServiceTable from '../../../../components/deals/details/ProductServiceTable';
+import { productServiceDto } from '../../../../lib/dtos/productServiceDto';
+import { LiaShippingFastSolid } from "react-icons/lia";
+import CustomRadio from '../../../../components/shared/Radio';
+
 
 export default function DealDetailPage() {
   const params = useParams();
@@ -28,17 +34,19 @@ export default function DealDetailPage() {
   const dealId = params.id;
   const queryClient = useQueryClient();
 
-  const { data: dealData } = useUcodeRequestQuery({
+  const { data: dealData, isLoading } = useUcodeRequestQuery({
     method: "get_sales_transaction_by_guid",
     data: {
       guid: dealId
     },
     querySetting: {
-      select: (response) => response?.data?.data?.data
+      select: (response) => response?.data?.data?.data,
+      placeholderData: keepPreviousData,
     }
   })
 
-  console.log('dealData', dealData)
+  console.log(dealData)
+
 
   const deal = useMemo(() => {
     return {
@@ -55,7 +63,22 @@ export default function DealDetailPage() {
     }
   }, [dealData, dealId]);
 
-  const isLoading = false;
+  const dealOperations = useMemo(() => {
+    return operationsDto(dealData?.operations)
+  }, [dealData])
+
+  const shipmentsList = useMemo(() => {
+    return shipmentsDto(dealData?.shipments || [])
+  }, [dealData])
+
+  const productServicesList = useMemo(() => {
+    return productServiceDto(dealData?.products || [])
+  }, [dealData])
+
+  const summeryCards = useMemo(() => {
+    return dealData?.summary || null
+  }, [dealData])
+
 
   const [activeTab, setActiveTab] = useState('products');
   const [showShipmentModal, setShowShipmentModal] = useState(false);
@@ -64,78 +87,17 @@ export default function DealDetailPage() {
   const [isModalClosing, setIsModalClosing] = useState(false)
   const [isModalOpening, setIsModalOpening] = useState(false)
   const [showProductModal, setShowProductModal] = useState(false)
-  const [selectedRows, setSelectedRows] = useState([])
-
-  const toggleRowSelection = (guid) => {
-    setSelectedRows(prev =>
-      prev.includes(guid) ? prev.filter(id => id !== guid) : [...prev, guid]
-    )
-  }
-
+  const [accounting, setAccounting] = useState('accrual')
+  const [showAccounting, setShowAccounting] = useState(false)
 
 
   // Product/service row action menu state
-  const [openRowMenuId, setOpenRowMenuId] = useState(null)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [isDeletingItem, setIsDeletingItem] = useState(false)
   const [itemToEdit, setItemToEdit] = useState(null)
   const [isCopying, setIsCopying] = useState(false)
-  const rowMenuRef = useRef(null)
-
-  // Close row action menu on outside click
-  useEffect(() => {
-    const handleRowMenuClose = (event) => {
-      if (rowMenuRef.current && !rowMenuRef.current.contains(event.target)) {
-        setOpenRowMenuId(null)
-      }
-    }
-    document.addEventListener('mousedown', handleRowMenuClose)
-    return () => document.removeEventListener('mousedown', handleRowMenuClose)
-  }, [])
-
-  // Fetch product/service list
-  const { data: productServices, isLoading: isLoadingProducts } = useUcodeDefaultApiQuery({
-    queryKey: 'product_services_list',
-    urlMethod: 'GET',
-    urlParams: '/items/product_and_service?from-ofs=true&offset=0&limit=100',
-    querySetting: {
-      select: data => data?.data?.data?.response
-    }
-  })
-
-  const { mutateAsync: deleteProductService } = useUcodeDefaultApiMutation({ mutationKey: 'DELETE_PRODUCT_SERVICE' })
-
-  // Transform product services for table display
-  const productServicesList = useMemo(() => {
-    return productServices?.map(item => {
-      const price = Number(item?.tsena_za_ed) || 0;
-      const vatStr = item?.nds || '';
-      const vatNum = parseFloat(vatStr) || 0;
-      const qty = Number(item?.quantity) || 1;
-      const discountNum = parseFloat(item?.discount || 0);
-      const subtotal = qty * price;
-      const afterDiscount = subtotal * (1 - discountNum / 100);
-      const total = vatNum > 0 ? afterDiscount * (1 + vatNum / 100) : afterDiscount;
-      return {
-        guid: item?.guid,
-        name: item?.naimenovanie || '—',
-        quantity: qty,
-        unit: `${item?.units_of_measurement_id_data?.full_name} ${item?.units_of_measurement_id_data?.short_name}` || item?.units_of_measurement_id_data?.abbreviation || '—',
-        price,
-        discount: item?.discount != null ? `${item.discount}%` : '0%',
-        vat: vatStr ? `${vatStr}%` : '0%',
-        total: Math.round(total),
-        raw: item,
-      }
-    }) || []
-  }, [productServices])
 
 
-
-  const allSelected = productServicesList.length > 0 && selectedRows.length === productServicesList.length
-  const toggleSelectAll = () => {
-    setSelectedRows(allSelected ? [] : productServicesList.map(i => i.guid))
-  }
 
   const handleDeleteConfirm = async () => {
     if (!itemToDelete?.guid) return;
@@ -171,19 +133,26 @@ export default function DealDetailPage() {
 
   if (isLoading) {
     return (
-      <div className={styles.container}>
-        <div style={{ padding: '2rem', textAlign: 'center' }}>Загрузка...</div>
+      <div className="w-full h-dvh flex items-center justify-center">
+        <Loader />
       </div>
     );
   }
 
-  const dealAmount = Number(deal.summa_sdelki) || 0;
-  const received = Number(deal.postupilo_summa) || 0;
-  const shipped = Number(deal.otgruzheno_summa) || 0;
-  const profit = Number(deal.pribyl) || 0;
-  const receivedPercent = dealAmount > 0 ? Math.round((received / dealAmount) * 100) : 0;
-  const shippedPercent = dealAmount > 0 ? Math.round((shipped / dealAmount) * 100) : 0;
-  const profitPercent = dealAmount > 0 ? Math.round((profit / dealAmount) * 100) : 0;
+  const dealAmount = Number(summeryCards?.total_products_summa) || 0;
+  const received = Number(summeryCards?.total_receipts_summa) || 0;
+  const shipped = Number(summeryCards?.total_shipment_summa) || 0;
+
+  // Choose cash_profit / cash_profitability vs accrual_profit if needed, here applying cash values 
+  const profit = Number(summeryCards?.cash_profit) || 0;
+  const expenses = Number(summeryCards?.total_cash_expenses) || 0;
+
+  const receivedPercent = summeryCards?.receipts_progress != null ? Math.round(Number(summeryCards.receipts_progress) * 100) : 0;
+  const shippedPercent = summeryCards?.shipments_progress != null ? Math.round(Number(summeryCards.shipments_progress) * 100) : 0;
+  const profitPercent = summeryCards?.cash_profitability != null ? Math.round(Number(summeryCards.cash_profitability)) : 0;
+
+  const clientDebt = Number(summeryCards?.debitorka) || 0;
+  const ourDebt = Number(summeryCards?.kreditorka) || 0;
 
 
   const handleCreateOperation = () => {
@@ -194,6 +163,17 @@ export default function DealDetailPage() {
     setTimeout(() => {
       setIsModalOpening(false)
     }, 50)
+  }
+
+  const handleSelectProduct = (item, type) => {
+    setShowProductModal(true)
+    if (type === 'edit') {
+      setItemToEdit(item)
+      setIsCopying(false)
+    } else if (type === 'copy') {
+      setItemToEdit(item)
+      setIsCopying(true)
+    }
   }
 
   return (
@@ -290,7 +270,7 @@ export default function DealDetailPage() {
 
           <div className={styles.clientDebt}>
             <span className={styles.clientDebtLabel}>Клиент должен:</span>
-            <span className={styles.clientDebtAmount}>{formatAmount(shipped)} ₽</span>
+            <span className={styles.clientDebtAmount}>{formatAmount(clientDebt)} ₽</span>
           </div>
         </div>
 
@@ -299,17 +279,13 @@ export default function DealDetailPage() {
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Отгрузки клиенту</span>
             <button className={styles.addButton}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 8V16M8 12H16M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D0D5DD" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ShipmentPlusIcon />
             </button>
           </div>
 
           <div className={styles.cardContent}>
             <div className={styles.iconBox}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 8L12 13L4 8M20 8L12 3L4 8M20 8V16L12 21M12 13V21M12 21L4 16V8" stroke="#98A2B3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <BoxIcon />
             </div>
 
             <div className={styles.amountSection}>
@@ -325,7 +301,7 @@ export default function DealDetailPage() {
 
           <div className={styles.clientDebt}>
             <span className={styles.clientDebtLabel}>Мы должны:</span>
-            <span className={styles.clientDebtAmount}>{formatAmount(dealAmount - shipped)} ₽</span>
+            <span className={styles.clientDebtAmount}>{formatAmount(ourDebt)} ₽</span>
           </div>
         </div>
 
@@ -333,7 +309,22 @@ export default function DealDetailPage() {
         <div className={styles.infoCard}>
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Прибыль сделки</span>
-            <span className={styles.cardBadge}>Учет</span>
+            <div className="relative border bg-primary/10 group text-primary px-2 py-1 rounded-full text-xs">
+              <div className="flex items-center gap-2">
+                <p className="text-xs">Учет</p>
+                <ChevronUp size={12} className='group-hover:rotate-180 transition-all duration-300' />
+              </div>
+              <div className="absolute hidden group-hover:flex top-8 right-0 border border-neutral-100  rounded-md shadow-2xl  flex-col bg-white">
+                <label htmlFor="accrual" className="flex  p-2 items-center gap-2">
+                  <CustomRadio name="accounting" id="accrual" value="accrual" checked={accounting === 'accrual'} onChange={(e) => setAccounting(e.target.value)} />
+                  <span className=' whitespace-nowrap'>Методом начисления</span>
+                </label>
+                <label htmlFor="cash" className="flex p-2 items-center gap-2">
+                  <CustomRadio name="accounting" id="cash" value="cash" checked={accounting === 'cash'} onChange={(e) => setAccounting(e.target.value)} />
+                  <span className=' whitespace-nowrap'>Кассовым методом</span>
+                </label>
+              </div>
+            </div>
           </div>
 
           <div className={styles.cardAmount}>{formatAmount(profit)} ₽</div>
@@ -354,7 +345,7 @@ export default function DealDetailPage() {
             <div className={styles.profitBar}>
               <div className={styles.profitBarDot} style={{ backgroundColor: '#F79009' }}></div>
               <span className={styles.profitLabel}>Расходы</span>
-              <span className={styles.profitValue}>-{formatAmount(dealAmount - profit)} ₽</span>
+              <span className={styles.profitValue}>-{formatAmount(expenses)} ₽</span>
             </div>
           </div>
         </div>
@@ -425,151 +416,73 @@ export default function DealDetailPage() {
               </div>
             </div>
             <div className={styles.contentContainer}>
-              {activeTab === 'products' && (
-                <div className={styles.productsSection}>
-                  <div className={styles.tableContainer}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th className={styles.checkboxColumn}>
-                            <div className='flex items-center justify-center'><OperationCheckbox
-                              checked={allSelected}
-                              onChange={toggleSelectAll}
-                            /></div>
-                          </th>
-                          <th>Наименование</th>
-                          <th className={styles.rightAlign}>Кол-во</th>
-                          <th>Единица</th>
-                          <th className={styles.rightAlign}>Цена за ед.</th>
-                          <th className='text-center'>Скидка</th>
-                          <th className='text-center'>НДС</th>
-                          <th className={styles.rightAlign}>Сумма</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {isLoadingProducts ? (
-                          <tr>
-                            <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>Загрузка...</td>
-                          </tr>
-                        ) : productServicesList.length === 0 ? (
-                            <tr>
-                              <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>Нет данных</td>
-                            </tr>
-                          ) : (
-                            productServicesList.map((item) => (
-                              <tr key={item.guid}>
-                                <td className={styles.checkboxColumn}>
-                                  <div className='flex items-center justify-center'> <OperationCheckbox
-                                    checked={selectedRows.includes(item.guid)}
-                                    onChange={() => toggleRowSelection(item.guid)}
-                                  /></div>
-                                </td>
-                                <td>{item.name}</td>
-                                <td className={styles.rightAlign}>{item.quantity}</td>
-                                <td>{item.unit}</td>
-                                <td className={styles.rightAlign}>{item.price ? `${formatAmount(item.price)} ₽` : '—'}</td>
-                                <td className='text-center'>{item.discount}</td>
-                                <td className='text-center'>{item.vat}</td>
-                                <td className={styles.rightAlign}>{item.total ? `${formatAmount(item.total)} ₽` : '—'}</td>
-                                <td onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: 40 }}>
-                                  <div style={{ position: 'relative' }} ref={openRowMenuId === item.guid ? rowMenuRef : null}>
-                                    <button
-                                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: 4 }}
-                                      onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}
-                                    >
-                                      <MoreVertical size={16} />
-                                    </button>
-                                    {openRowMenuId === item.guid && (
-                                    <div className='absolute z-50 bg-white rounded-md flex flex-col gap-2 right-4 border border-neutral-100 shadow-lg'>
-                                      <button
-                                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#344054' }}
-                                        onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(false); setShowProductModal(true); }}
-                                      >
-                                        <MdOutlineModeEdit size={14} color='#686868' />
-                                        Редактировать
-                                      </button>
-                                      <button
-                                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#344054' }}
-                                        onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(true); setShowProductModal(true); }}
-                                      >
-                                        <IoCopyOutline size={14} color='#686868' />
-                                        Копировать
-                                      </button>
-                                      <button
-                                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '8px 14px', cursor: 'pointer', fontSize: 13, color: '#ef4444' }}
-                                        onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}
-                                      >
-                                        <GoTrash size={14} color='#ef4444' />
-                                        Удалить
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+              {activeTab === 'products' && <>
 
-                  <div className={styles.tableFooter}>
-                    <span className={styles.footerText}>{productServicesList.length} позиций на сумму:</span>
-                    <span className={styles.footerAmount}>{formatAmount(productServicesList.reduce((sum, i) => sum + (i.total || 0), 0))} ₽</span>
+                {productServicesList?.length === 0 ? <>
+                  <div className="flex items-center">
+                    <div className="flex items-center">
+                      <p className="text-neutral-600">Нет товаров и услуг</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                </> :
+                  <ProductServiceTable data={productServicesList} handleSelect={handleSelectProduct} />
+                }
+              </>}
 
               {activeTab === 'receipts' && (
-                <div className={styles.emptyState}>
-                  <div className={styles.emptyStateIcon}>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="48" height="48" rx="24" fill="#F9FAFB" />
-                      <path d="M24 18C20 18 18 19.3431 18 21C18 22.6569 20 24 24 24C28 24 30 22.6569 30 21C30 19.3431 28 18 24 18Z" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M18 21V25C18 26.6569 20 28 24 28C28 28 30 26.6569 30 25V21" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M18 25V29C18 30.6569 20 32 24 32C28 32 30 30.6569 30 29V25" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M30 25C30 24 29 23.5001 27 23.0001V28.0001C29 27.5001 30 27.0001 30 26.0001V25Z" fill="white" />
-                    </svg>
-                  </div>
-                  <div className={styles.emptyStateTitle}>Добавьте поступления по сделке</div>
-                  <div className={styles.emptyStateSubtext}>Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке</div>
-                  <button className="primary-btn" onClick={handleCreateOperation}>
-                    Добавить
-                  </button>
-                </div>
+                <>
+                  {dealOperations?.filter(op => op.tip === 'Поступление').length === 0 && <div className={styles.emptyState}>
+                    <div className={styles.emptyStateIcon}>
+                      <ReceiptsEmptyIcon />
+                    </div>
+                    <div className={styles.emptyStateTitle}>Добавьте поступления по сделке</div>
+                    <div className={styles.emptyStateSubtext}>Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке</div>
+                    <button className="primary-btn" onClick={handleCreateOperation}>
+                      Добавить
+                    </button>
+                  </div>}
+                  <DealOperationsTable
+                    data={dealOperations?.filter(op => op.tip === 'Поступление') || []}
+                    type='receipts'
+                  />
+                </>
               )}
 
+
               {activeTab === 'expenses' && (
-                <div className={styles.emptyState}>
-                  <div className={styles.emptyStateIcon}>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="48" height="48" rx="24" fill="#F9FAFB" />
-                      <path d="M24 18C20 18 18 19.3431 18 21C18 22.6569 20 24 24 24C28 24 30 22.6569 30 21C30 19.3431 28 18 24 18Z" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M18 21V25C18 26.6569 20 28 24 28C28 28 30 26.6569 30 25V21" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M18 25V29C18 30.6569 20 32 24 32C28 32 30 30.6569 30 29V25" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <div className={styles.emptyStateTitle}>Добавьте затраты по сделке</div>
-                  <div className={styles.emptyStateSubtext}>Учитывайте затраты по сделке, чтобы контролировать ее прибыльность</div>
-                  <button className="primary-btn" onClick={handleCreateOperation}>
-                    Добавить
-                  </button>
-                </div>
+                <>
+                  {dealOperations?.filter(op => op.tip === 'Выплата').length === 0 && <div className={styles.emptyState}>
+                    <div className={styles.emptyStateIcon}>
+                      <ExpensesEmptyIcon />
+                    </div>
+                    <div className={styles.emptyStateTitle}>Добавьте затраты по сделке</div>
+                    <div className={styles.emptyStateSubtext}>Учитывайте затраты по сделке, чтобы контролировать ее прибыльность</div>
+                    <button className="primary-btn" onClick={handleCreateOperation}>
+                      Добавить
+                    </button>
+                  </div>}
+                  <DealOperationsTable
+                    data={dealOperations?.filter(op => op.tip === 'Выплата') || []}
+                    type='expenses'
+                  />
+                </>
               )}
 
               {activeTab === 'shipments' && (
-                <div className={styles.emptyState}>
-                  <div className={styles.emptyStateIcon}>
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="48" height="48" rx="24" fill="#F2F4F7" />
-                      <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <div className={styles.emptyStateText}>Нет данных</div>
-                </div>
+                <>
+                  {shipmentsList?.length === 0 ? <div className="flex flex-col flex-1 gap-3  items-center justify-center h-full">
+                    <div className="flex items-center">
+                      <div className="bg-neutral-100 rounded-full p-4">
+                        <LiaShippingFastSolid size={40} className='text-neutral-600' />
+                      </div>
+                    </div>
+                    <div className="text-neutral-600 text-center space-y-2">
+                      <h1 className="text-neutral-600">Создайте отгрузку</h1>
+                      <p className="text-neutral-600">Отслеживайте товары и услуги, которые вы отгрузили своим клиентам</p>
+                    </div>
+                  </div> : <ShipmenTable data={shipmentsList || []} />}
+                </>
               )}
-
             </div>
           </div>
         </div>
@@ -584,7 +497,7 @@ export default function DealDetailPage() {
                 <span className={styles.commentAuthor}>hello</span>
               </div>
               <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар '26 в 22:24</div>
+              <div className={styles.commentDate}>08 мар 26 в 22:24</div>
             </div>
 
             <div className={styles.comment}>
@@ -592,7 +505,7 @@ export default function DealDetailPage() {
                 <span className={styles.commentAuthor}>wow 3eir</span>
               </div>
               <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар '26 в 22:24</div>
+              <div className={styles.commentDate}>08 мар 26 в 22:24</div>
               <div className={styles.commentBadge}>Отредактировано</div>
             </div>
 
@@ -601,7 +514,7 @@ export default function DealDetailPage() {
                 <span className={styles.commentAuthor}>wowo</span>
               </div>
               <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар '26 в 22:24</div>
+              <div className={styles.commentDate}>08 мар 26 в 22:24</div>
               <div className={styles.commentBadge}>Отредактировано</div>
 
               <div className={styles.attachment}>
@@ -621,14 +534,10 @@ export default function DealDetailPage() {
               className={styles.input}
             />
             <button className={styles.attachButton}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M17.5 10.833v2.5c0 1.4-.7 2.1-2.1 2.1h-10.8c-1.4 0-2.1-.7-2.1-2.1v-6.666c0-1.4.7-2.1 2.1-2.1h10.8c1.4 0 2.1.7 2.1 2.1v2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <AttachIcon />
             </button>
             <button className={styles.sendButton}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M18.333 1.667L9.167 10.833M18.333 1.667l-5.833 16.666-3.333-7.5-7.5-3.333 16.666-5.833z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <SendIcon />
             </button>
           </div>
         </div>
@@ -639,7 +548,7 @@ export default function DealDetailPage() {
         open={showShipmentModal}
         onClose={() => setShowShipmentModal(false)}
         dealName={deal.nazvanie}
-        dealGuid={deal.guid}
+        dealGuid={dealId}
         kontragentId={deal.kontragentId}
       />
 
@@ -649,7 +558,7 @@ export default function DealDetailPage() {
           operation={operation}
           isClosing={isModalClosing}
           isOpening={isModalOpening}
-          defaultDealGuid={deal.guid}
+          defaultDealGuid={dealId}
           onClose={() => {
             setIsModalClosing(true)
             setTimeout(() => {

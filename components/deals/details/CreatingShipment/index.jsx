@@ -10,8 +10,9 @@ import { formatAmount } from '../../../../utils/helpers'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../../hooks/useDashboard'
 import Loader from '../../../shared/Loader'
+import { queryClient } from '../../../../lib/queryClient'
 
-const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId }) => {
+const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false }) => {
   const today = new Date()
 
   const [shipmentDate, setShipmentDate] = useState(today.toISOString().split('T')[0])
@@ -25,6 +26,41 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId }) => 
   const [rows, setRows] = useState([
     { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
   ])
+
+  const [prevOpen, setPrevOpen] = useState(open)
+  const [prevInitialData, setPrevInitialData] = useState(initialData)
+
+  if (open !== prevOpen || initialData !== prevInitialData) {
+    setPrevOpen(open)
+    setPrevInitialData(initialData)
+    
+    if (open) {
+      if (initialData) {
+        setShipmentDate(initialData.data_operatsii?.split('T')[0] || today.toISOString().split('T')[0])
+        setIsPlanned(initialData.planned_shipment || false)
+        setLegalEntity(initialData.legal_entity_id || '')
+        setClient(initialData.partners_id || kontragentId || '')
+        
+        if (initialData.product_and_service_data) {
+          setRows(initialData.product_and_service_data.map((row, idx) => ({
+            id: idx + 1,
+            name: row.guid || row.product_and_service_id || '', 
+            quantity: row.Kol_vo || 0,
+            price: row.TSena_za_ed || 0,
+            discount: row.Skidka || '',
+            nds: row.NDS || '',
+            sum: row.Summa || 0
+          })))
+        }
+      } else {
+        setShipmentDate(today.toISOString().split('T')[0])
+        setIsPlanned(false)
+        setLegalEntity('')
+        setClient(kontragentId || '')
+        setRows([{ id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }])
+      }
+    }
+  }
 
   const [selectedProducts, setSelectedProducts] = useState(new Set())
 
@@ -178,31 +214,37 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId }) => 
     }
 
     try {
+      const payload = {
+        legal_entity_id: legalEntity,
+        sales_id: dealGuid,
+        partners_id: client,
+        planned_shipment: isFutureDate ? true : isPlanned,
+        data_nachislenie: shipmentDate,
+        currency_code: "RUB",
+        description: "Shipment",
+        product_and_service_data: rows.filter(row => row.name).map(row => {
+          const product = groupedProductServicesList.find(p => p.value === row.name)
+          return {
+            guid: product?.guid || undefined,
+            Naimenovanie: product ? product.label : "",
+            Artikul: product?.artikul || "",
+            Kol_vo: Number(row.quantity?.toString().replace(/\s/g, '')) || 0,
+            TSena_za_ed: Number(row.price?.toString().replace(/\s/g, '')) || 0,
+            Summa: Number(row.sum?.toString().replace(/\s/g, '')) || 0,
+            Skidka: Number(row.discount?.toString().replace(/\s/g, '')) || 0,
+            NDS: Number(row.nds?.toString().replace(/\s/g, '')) || 0,
+            unit_of_measurement_id: product?.raw?.units_of_measurement_id || undefined
+          }
+        })
+      }
+
+      if (isEditing && initialData?.guid) {
+        payload.guid = initialData.guid
+      }
+
       await createShipment({
-        method: "create_shipment_transaction",
-        data: {
-          legal_entity_id: legalEntity,
-          sales_id: dealGuid,
-          partners_id: client,
-          planned_shipment: isFutureDate ? true : isPlanned,
-          data_nachislenie: shipmentDate,
-          currency_code: "RUB",
-          description: "Shipment",
-          product_and_service_data: rows.filter(row => row.name).map(row => {
-            const product = groupedProductServicesList.find(p => p.value === row.name)
-            return {
-              guid: product?.guid || undefined,
-              Naimenovanie: product ? product.label : "",
-              Artikul: product?.artikul || "",
-              Kol_vo: Number(row.quantity?.toString().replace(/\s/g, '')) || 0,
-              TSena_za_ed: Number(row.price?.toString().replace(/\s/g, '')) || 0,
-              Summa: Number(row.sum?.toString().replace(/\s/g, '')) || 0,
-              Skidka: Number(row.discount?.toString().replace(/\s/g, '')) || 0,
-              NDS: Number(row.nds?.toString().replace(/\s/g, '')) || 0,
-              unit_of_measurement_id: product?.raw?.units_of_measurement_id || undefined
-            }
-          })
-        }
+        method: isEditing ? "update_shipment_transaction" : "create_shipment_transaction",
+        data: payload
       })
 
       // Clear fields on success
@@ -215,9 +257,15 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId }) => 
       setSelectedProducts(new Set())
       setErrors({})
 
-      onClose?.()
+      queryClient.invalidateQueries({
+        queryKey: ['get_sales_transaction_by_guid', dealGuid]
+      })
+
+      onClose()
     } catch (error) {
       console.error(error)
+    } finally {
+      onClose()
     }
   }
 
@@ -239,7 +287,9 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId }) => 
         {/* Header */}
         <div className={styles.header}>
           <div>
-            <h2 className={styles.title}>Создание отгрузки</h2>
+            <h2 className={styles.title}>
+              {isEditing ? 'Редактирование отгрузки' : isCopying ? 'Копирование отгрузки' : 'Создание отгрузки'}
+            </h2>
             <div className={styles.subtitle}>
               Сделка: <span className={styles.dealLink}>{dealName || dealGuid}</span>
             </div>

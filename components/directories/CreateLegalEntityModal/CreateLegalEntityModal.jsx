@@ -7,8 +7,10 @@ import { useCreateLegalEntity, useUpdateLegalEntity } from '@/hooks/useDashboard
 import styles from './CreateLegalEntityModal.module.scss'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
+import { observer } from 'mobx-react-lite'
+import { authStore } from '../../../store/auth.store'
 
-export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = null }) {
+export default observer(function CreateLegalEntityModal({ isOpen, onClose, legalEntity = null }) {
   const createMutation = useCreateLegalEntity()
   const updateMutation = useUpdateLegalEntity()
   const isEdit = !!legalEntity && !!legalEntity.guid
@@ -84,7 +86,6 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
 
   const handleSubmit = async () => {
     if (!validateForm()) return
-
     setIsSubmitting(true)
     try {
       const submitData = {
@@ -93,8 +94,7 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
         ...(formData.inn && { inn: formData.inn }),
         ...(formData.kpp && { kpp: formData.kpp }),
         ...(formData.komentariy && { komentariy: formData.komentariy.trim() }),
-        data_sozdaniya: '',
-        attributes: {}
+        legal_entity_id: authStore.userData?.legal_entity_id || null
       }
 
       let result = null
@@ -254,4 +254,4 @@ export default function CreateLegalEntityModal({ isOpen, onClose, legalEntity = 
   )
 
   return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null
-}
+})

@@ -1,0 +1,175 @@
+import { IoCloseOutline, IoCopyOutline } from 'react-icons/io5'
+import { MdOutlineModeEdit } from 'react-icons/md'
+import { formatAmount } from '../../../../utils/helpers'
+import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
+import { useState } from 'react'
+import { BsTrash } from 'react-icons/bs'
+import { useUcodeRequestMutation } from '../../../../hooks/useDashboard'
+import { useQueryClient } from '@tanstack/react-query'
+import CustomModal from '../../../shared/CustomModal'
+import Loader from '../../../shared/Loader'
+
+const ProductServiceTable = ({ data = [], handleSelect }) => {
+  const [selectedItems, setSelectedItems] = useState(new Set())
+  const [selectedItem, setSelectedItem] = useState([])
+  const [open, setOpen] = useState(false)
+
+  const { mutateAsync: mutateProductServiceCustom, isPending: isProductServiceCustomPending } = useUcodeRequestMutation()
+  const queryClient = useQueryClient()
+
+  const handleSelectAll = (event) => {
+    const checked = event.target.checked
+    if (checked) {
+      data.forEach(item => selectedItems.add(item.guid))
+    } else {
+      selectedItems.clear()
+    }
+    setSelectedItems(new Set(selectedItems))
+  }
+
+  const handleSelectItem = (event, guid) => {
+    const checked = event.target.checked
+    if (checked) {
+      selectedItems.add(guid)
+    } else {
+      selectedItems.delete(guid)
+    }
+    setSelectedItems(new Set(selectedItems))
+  }
+
+  const handleSelectCancel = () => {
+    selectedItems.clear()
+    setSelectedItems(new Set(selectedItems))
+  }
+
+
+  const handleDelete = async () => { 
+    try {
+      if (selectedItem.length === 0) return;
+
+      await mutateProductServiceCustom({
+        method: "delete_product_and_service",
+        data: {
+          guid: selectedItem?.length > 1 ? selectedItem : selectedItem?.[0]
+        }
+      })
+
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      setOpen(false)
+      setSelectedItems(new Set())
+    } catch (error) {
+      console.error('mutateProductService', error?.message)
+    }
+  }
+
+
+  if (data.length === 0) return null
+
+  return (
+    <>
+      <div className="h-[calc(100vh-200px)] overflow-y-auto min-w-[935px]">
+        <table className="w-full">
+          <thead className='sticky top-0 z-10'>
+            <tr className='bg-neutral-100  text-neutral-500 text-sm w-full border-b border-gray-200'>
+              <th className='w-14 py-2 text-center place-content-center'>
+                <div className='flex items-center justify-center'>
+                  <OperationCheckbox checked={selectedItems.size === data.length} onChange={handleSelectAll} />
+                </div>
+              </th>
+              {selectedItems.size > 0 && <th colSpan={7} className='text-lef'>
+                <div className="flex w-full items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-neutral-600">{selectedItems.size} выбрано</p>
+                    <button onClick={handleSelectCancel} className='text-red-400  hover:text-red-600 cursor-pointer flex items-center justify-center gap-2 px-2 py-1 '>
+                      <BsTrash size={16} className='' />
+                      <p className='text-sm '>Удалить</p>
+                    </button>
+                  </div>
+                  <button onClick={handleSelectCancel} className='text-neutral-600 size-6 mr-4 hover:bg-gray-200 cursor-pointer flex items-center justify-center rounded-full hover:text-neutral-900'>
+                    <IoCloseOutline size={16} className='text-gray-400' />
+                  </button>
+                </div>
+              </th>}
+              {selectedItems.size == 0 && <>
+                <th className='px-4 py-1 font-semibold text-left border-r border-neutral-200'>Наименование</th>
+                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>Кол-во</th>
+                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>Единица</th>
+                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>Цена за ед.</th>
+                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>Скидка</th>
+                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>НДС</th>
+                <th className='px-4 py-1 font-semibold text-right'>Сумма</th>
+              </>}
+            </tr>
+          </thead>
+          <tbody className='w-full'>
+            {data?.map((item) => {
+              return (
+                <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
+                  <td className="w-14 py-3 text-center">
+                    <div className='flex items-center justify-center'>
+                      <OperationCheckbox checked={selectedItems.has(item.guid)} onChange={(e) => handleSelectItem(e, item.guid)} />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-left border-r border-neutral-200">{item?.name}</td>
+                  <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.kolvo}</td>
+                  <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.unit_name}</td>
+                  <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.tsena_za_ed}</td>
+                  <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.discount}%</td>
+                  <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.nds}%</td>
+                  <td className={`px-4 py-3  w-72 text-right`}>
+                    <div className="flex items-center justify-end gap-4 h-6">
+                      <p className={`text-sm text-neutral-600`}>
+                        {formatAmount(item?.summa)} UZS
+                      </p>
+                      <div className=' items-center  hidden group-hover:flex '>
+                        <button onClick={(event) => {
+                          event.stopPropagation()
+                          handleSelect(item, 'edit')
+                        }} className='text-neutral-600 size-6 hover:bg-gray-200 cursor-pointer flex items-center justify-center rounded-full hover:text-neutral-900'>
+                          <MdOutlineModeEdit size={16} className='text-gray-400' />
+                        </button>
+                        <button onClick={(event) => {
+                          event.stopPropagation()
+                          handleSelect(item, 'copy')
+                        }} className='text-neutral-600 size-6 hover:bg-gray-200 cursor-pointer flex items-center justify-center rounded-full hover:text-neutral-900'>
+                          <IoCopyOutline size={16} className='text-gray-400' />
+                        </button>
+                        <button onClick={(event) => {
+                          event.stopPropagation()
+                          setSelectedItem([item.guid])
+                          setOpen(true)
+                        }} className='text-neutral-600 size-6 hover:bg-gray-200 cursor-pointer flex items-center justify-center rounded-full hover:text-neutral-900'>
+                          <IoCloseOutline size={16} className='text-gray-400' />
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      {/* <div className='flex justify-end'>
+        <div className="p-4 text-right text-neutral-700 font-semibold">Итого:</div>
+        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(data?.reduce((acc, item) => acc + item.summa, 0))} UZS</div>
+      </div> */}
+      <CustomModal isOpen={open} onClose={() => setOpen(false)}>
+        <div className='p-4'>
+          <h1 className='text-lg font-semibold text-neutral-900'>Удалить позиции из сделки</h1>
+          <p className='text-sm text-neutral-600'>Вы действительно хотите удалить {selectedItems.size} {selectedItems.size === 1 ? 'позицию' : 'позиции'} из сделки?</p>
+          <div className='flex justify-end gap-2 mt-4'>
+            <button onClick={() => setOpen(false)} className='secondary-btn'>
+              Отмена
+            </button>
+            <button onClick={handleDelete} className='delete-btn'>
+              {isProductServiceCustomPending ? <Loader /> : 'Удалить'}
+            </button>
+          </div>
+        </div>
+      </CustomModal>
+    </>
+  )
+}
+
+export default ProductServiceTable

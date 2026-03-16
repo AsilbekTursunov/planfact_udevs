@@ -1,4 +1,6 @@
-
+export { MdOutlineModeEdit } from "react-icons/md";
+export { IoCloseOutline } from "react-icons/io5";
+export { IoCopyOutline } from "react-icons/io5";
 
 export const UsersIcon = ({ size = 22, strokeWidth = 1.5, ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 18" fill="none" {...props}>
@@ -192,5 +194,55 @@ export const TypeExpenseIcon = () => (
 export const TypeTransferIcon = () => (
   <svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>
     <path d='M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667' stroke='#64748b' strokeWidth='1.33333' strokeLinecap='round' strokeLinejoin='round' />
+  </svg>
+)
+
+export const ShipmentPlusIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M12 8V16M8 12H16M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D0D5DD" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const BoxIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M20 8L12 13L4 8M20 8L12 3L4 8M20 8V16L12 21M12 13V21M12 21L4 16V8" stroke="#98A2B3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const ReceiptsEmptyIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <rect width="48" height="48" rx="24" fill="#F9FAFB" />
+    <path d="M24 18C20 18 18 19.3431 18 21C18 22.6569 20 24 24 24C28 24 30 22.6569 30 21C30 19.3431 28 18 24 18Z" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 21V25C18 26.6569 20 28 24 28C28 28 30 26.6569 30 25V21" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 25V29C18 30.6569 20 32 24 32C28 32 30 30.6569 30 29V25" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M30 25C30 24 29 23.5001 27 23.0001V28.0001C29 27.5001 30 27.0001 30 26.0001V25Z" fill="white" />
+  </svg>
+)
+
+export const ExpensesEmptyIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <rect width="48" height="48" rx="24" fill="#F9FAFB" />
+    <path d="M24 18C20 18 18 19.3431 18 21C18 22.6569 20 24 24 24C28 24 30 22.6569 30 21C30 19.3431 28 18 24 18Z" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 21V25C18 26.6569 20 28 24 28C28 28 30 26.6569 30 25V21" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 25V29C18 30.6569 20 32 24 32C28 32 30 30.6569 30 29V25" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const ShipmentsEmptyIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <rect width="48" height="48" rx="24" fill="#F2F4F7" />
+    <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const AttachIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+    <path d="M17.5 10.833v2.5c0 1.4-.7 2.1-2.1 2.1h-10.8c-1.4 0-2.1-.7-2.1-2.1v-6.666c0-1.4.7-2.1 2.1-2.1h10.8c1.4 0 2.1.7 2.1 2.1v2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const SendIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+    <path d="M18.333 1.667L9.167 10.833M18.333 1.667l-5.833 16.666-3.333-7.5-7.5-3.333 16.666-5.833z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
