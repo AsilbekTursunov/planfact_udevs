@@ -23,3 +23,36 @@
   "menuAccent": "subtle",
   "registries": {}
 }
+
+
+Here is the mapping for the metrics in the `get_sales_transaction_by_guid` response, comparing the **JSON field name**, the **English version**, and the **Russian version** used in the PlanFact UI:
+
+### Graph & Progress Bar Metrics (Graphic Data)
+
+| JSON Field | English Version | Russian Version (UI) | Description |
+| :--- | :--- | :--- | :--- |
+| **`receipts_percentage`** | Received (%) | **Поступило (%)** | Percentage of money received vs. total deal value. |
+| **`shipments_percentage`** | Shipped (%) | **Отгружено (%)** | Percentage of products shipped vs. total deal value. |
+| **`client_debt`** | Client Debt | **Клиент должен** | Total deal value minus money received. |
+| **`remaining_shipment`** | Remaining to Ship | **Осталось отгрузить** | Total deal value minus products already shipped. |
+
+---
+
+### Profitability & Financial Header Metrics
+
+| JSON Field | English Version | Russian Version (UI) | Description |
+| :--- | :--- | :--- | :--- |
+| **`profitability`** | Profitability (%) | **Рентабельность** | Profit margin expressed as a percentage. |
+| **`total_expenses_summa`** | Total Expenses | **Расходы** | Total money spent/allocated as expenses to the deal. |
+
+---
+
+### Total Reference Values
+
+| JSON Field | English Version | Russian Version (UI) | Description |
+| :--- | :--- | :--- | :--- |
+| **`total_products_summa`** | Total Deal Value | **Сумма сделки** | Total sum of all products/services in the deal. |
+| **`total_receipts_summa`** | Total Received | **Всего поступило** | Absolute sum of money received. |
+| **`total_shipment_summa`** | Total Shipped | **Всего отгружено** | Absolute sum of products delivered. |
+
+ 

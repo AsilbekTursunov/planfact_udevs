@@ -74,6 +74,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId }) => {
       })
 
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] })
       setOpen(false)
       setSelectedItems(new Set())
     } catch (error) {

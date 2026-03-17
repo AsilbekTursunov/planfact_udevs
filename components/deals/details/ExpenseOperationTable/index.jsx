@@ -5,7 +5,8 @@ import { MdOutlineModeEdit } from 'react-icons/md'
 import { useMemo, useState } from 'react'
 import OperationModal from '@/components/operations/OperationModal/OperationModal'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
-import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import { useUcodeRequestQuery, useDeleteOperation } from '../../../../hooks/useDashboard'
+import CustomModal from '../../../shared/CustomModal'
 import operationsDto from '../../../../lib/dtos/operationsDto'
 import { ReceiptsEmptyIcon } from '../../../../constants/icons'
 import { Loader2 } from 'lucide-react'
@@ -17,6 +18,9 @@ const ExpenseOperationsTable = ({ sellingDealId }) => {
   const [modalType, setModalType] = useState('income')
   const [isModalClosing, setIsModalClosing] = useState(false)
   const [isModalOpening, setIsModalOpening] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [operationToDelete, setOperationToDelete] = useState(null)
+  const deleteOperationMutation = useDeleteOperation()
   const queryClient = useQueryClient()
 
   const { data: operations, isLoading } = useUcodeRequestQuery({
@@ -70,7 +74,23 @@ const ExpenseOperationsTable = ({ sellingDealId }) => {
   }
 
   const handleDeleteOperation = (operation) => {
-    console.log('handleDeleteOperation', operation)
+    setOperationToDelete(operation)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!operationToDelete) return
+    const guid = operationToDelete.rawData?.guid || operationToDelete.guid
+    if (!guid) return
+
+    try {
+      await deleteOperationMutation.mutateAsync([guid])
+      setIsDeleteModalOpen(false)
+      setOperationToDelete(null)
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+    } catch (error) {
+      console.error('Error deleting operation:', error)
+    }
   }
 
   if (isLoading) {
@@ -161,6 +181,37 @@ const ExpenseOperationsTable = ({ sellingDealId }) => {
           }}
           initialTab={modalType}
         />
+      )}
+
+      {isDeleteModalOpen && (
+        <CustomModal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}>
+          <div className='p-6 flex flex-col'>
+            <div className='flex justify-between items-center border-b border-gray-100 pb-4'>
+              <h2 className='text-xl font-bold text-neutral-800'>Удалить операцию</h2>
+            </div>
+            
+            <div className='py-6 text-base text-neutral-700'>
+              Вы действительно хотите удалить операцию на сумму <span className='font-bold'>{formatAmount(operationToDelete?.summa)} UZS</span>? <br />
+              Восстановить её будет невозможно.
+            </div>
+
+            <div className='flex justify-end gap-4'>
+              <button 
+                onClick={() => setIsDeleteModalOpen(false)} 
+                className='px-4 py-2 text-sm text-primary hover:bg-gray-50 rounded-md font-semibold'
+              >
+                Отменить
+              </button>
+              <button 
+                onClick={handleDeleteConfirm} 
+                disabled={deleteOperationMutation.isPending}
+                className='px-6 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-md flex items-center justify-center min-w-[100px]'
+              >
+                {deleteOperationMutation.isPending ? <Loader2 className='animate-spin h-4 w-4' /> : 'Удалить'}
+              </button>
+            </div>
+          </div>
+        </CustomModal>
       )}
     </>
   )

@@ -161,12 +161,10 @@ const PaymentForm = ({
 
       {/* Дата начисления */}
       {!showDate && (
-        <div className={styles.formRow} style={{ opacity: formData.salesDeal ? '0.5' : '1' }}>
+        <div className={styles.formRow}>
           <label className={styles.label}>Дата начисления</label>
           <DatePicker
-            value={formData.salesDeal ? null : formData.accrualDate}
-            disabled={!!formData.salesDeal}
-            checkboxDisabled={!!formData.salesDeal}
+            value={formData.accrualDate}
             onChange={value => {
               const pickDate = Number(value?.slice(-2))
               const isFuture = pickDate > todayDate
@@ -177,7 +175,7 @@ const PaymentForm = ({
             showCheckbox
             dateFormat='YYYY-MM-DD'
             checkboxLabel='Подтвердить начисление'
-            checkboxValue={formData.salesDeal ? false : formData.confirmAccrual}
+            checkboxValue={formData.confirmAccrual}
             onCheckboxChange={checked => {
               const pickDate = Number(formData.accrualDate?.slice(-2))
               const isFuture = pickDate > todayDate

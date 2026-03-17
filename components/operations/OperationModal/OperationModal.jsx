@@ -291,7 +291,7 @@ const OperationModal = observer(({
 		if (isNew) {
 			return operation
 		}
-		if (fullOperationData?.data?.data?.data) { 
+		if (fullOperationData?.data?.data?.data) {
 			return {
 				...operation,
 				rawData: fullOperationData.data.data.data
@@ -836,10 +836,10 @@ const OperationModal = observer(({
 			}
 
 			// Validate dates
-			if (isNaN(paymentDate.getTime())) { 
+			if (isNaN(paymentDate.getTime())) {
 				paymentDate = now
 			}
-			if (isNaN(accrualDate.getTime())) { 
+			if (isNaN(accrualDate.getTime())) {
 				accrualDate = paymentDate
 			}
 
@@ -897,7 +897,7 @@ const OperationModal = observer(({
 				// Add fields, use null for empty values
 				requestData.my_accounts_id = formData.accountAndLegalEntity || null
 				requestData.counterparties_id = formData.counterparty || null
-				requestData.chart_of_accounts_id = formData.chartOfAccount || null 
+				requestData.chart_of_accounts_id = formData.chartOfAccount || null
 			}
 
 			if (activeTab === 'income' || activeTab === 'payment') {
@@ -961,6 +961,7 @@ const OperationModal = observer(({
 			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
 			queryClient.invalidateQueries({ queryKey: ['operations'] })
+			queryClient.invalidateQueries({ queryKey: ['find_operations'] })
 			queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
 			queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
 

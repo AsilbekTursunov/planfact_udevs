@@ -19,7 +19,6 @@ import { formatDateFormat } from '@/utils/formatDate';
 import { formatAmount } from '@/utils/helpers';
 import ShipmenTable from '../../../../components/deals/details/ShipmenTable';
 import ProductServiceTable from '../../../../components/deals/details/ProductServiceTable';
-import { productServiceDto } from '../../../../lib/dtos/productServiceDto';
 import CustomRadio from '../../../../components/shared/Radio';
 import {
   Popover,
@@ -112,15 +111,15 @@ export default observer(function DealDetailPage() {
   const received = Number(summeryCards?.total_receipts_summa) || 0;
   const shipped = Number(summeryCards?.total_shipment_summa) || 0;
 
-  // Choose cash_profit / cash_profitability vs accrual_profit if needed, here applying cash values 
-  const profit = Number(summeryCards?.cash_profit) || 0;
-  const expenses = Number(summeryCards?.total_cash_expenses) || 0;
+  const profit = Number(summeryCards?.profit) || 0;
+  const expenses = Number(summeryCards?.total_expenses_summa) || 0;
 
-  const receivedPercent = summeryCards?.receipts_progress != null ? Math.round(Number(summeryCards.receipts_progress) * 100) : 0;
-  const profitPercent = summeryCards?.cash_profitability != null ? Math.round(Number(summeryCards.cash_profitability)) : 0;
+  const receivedPercent = summeryCards?.receipts_percentage != null ? Math.round(Number(summeryCards.receipts_percentage) * 100) : 0;
+  const shippedPercent = summeryCards?.shipments_percentage != null ? Math.round(Number(summeryCards.shipments_percentage)) : 0;
+  const profitPercent = summeryCards?.profitability != null ? Math.round(Number(summeryCards.profitability)) : 0;
 
-  const clientDebt = Number(summeryCards?.planned_shipments_count) || 0;
-  const ourDebt = Number(summeryCards?.kreditorka) || 0;
+  const clientDebt = Number(summeryCards?.client_debt) || 0;
+  const remainingShipment = Number(summeryCards?.remaining_shipment) || 0;
 
 
   const handleCreateOperation = () => {
@@ -262,13 +261,13 @@ export default observer(function DealDetailPage() {
           </div>
 
           <div className={styles.progressBar}>
-            <CustomProgress value={summeryCards?.total_shipment_summa} max={summeryCards?.total_products_summa} fillColor="#48C206" />
+            <CustomProgress value={shippedPercent} fillColor="#48C206" />
           </div>
-          <div className={styles.cardProgress}>Отгружено: {summeryCards?.shipments_progress_text}</div>
+          <div className={styles.cardProgress}>Отгружено: {shippedPercent}%</div>
 
           <div className={styles.clientDebt}>
-            <span className={styles.clientDebtLabel}>Мы должны:</span>
-            <span className={styles.clientDebtAmount}>{formatAmount(ourDebt)} ₽</span>
+            <span className={styles.clientDebtLabel}>Осталось отгрузить:</span>
+            <span className={styles.clientDebtAmount}>{formatAmount(remainingShipment)} ₽</span>
           </div>
         </div>
 
