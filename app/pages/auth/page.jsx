@@ -1,9 +1,8 @@
 "use client"
 import React, { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { cn } from '@/app/lib/utils'
-import { useLogin, useRegister } from '@/hooks/useAuth'
-import { Eye, EyeOff, ChevronDown, X, Loader2 } from 'lucide-react'
+import { useLogin } from '@/hooks/useAuth'
+import { Eye, EyeOff } from 'lucide-react'
 import { AuthLogo } from '@/constants/icons'
 import styles from './styles.module.scss'
 import Input from '@/components/shared/Input'
@@ -13,7 +12,6 @@ import { authStore } from '@/store/auth.store'
 import Loader from '../../../components/shared/Loader'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [fromType, setFromType] = useState('login')
   const [formData, setFormData] = useState({
     email: '',
