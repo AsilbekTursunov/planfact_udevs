@@ -1,16 +1,49 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { IoCloseOutline, IoCopyOutline } from 'react-icons/io5'
 import { MdOutlineModeEdit } from 'react-icons/md'
 import { formatAmount } from '../../../../utils/helpers'
 import CreateShipment from '../CreatingShipment'
+import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import { keepPreviousData } from '@tanstack/react-query'
+import { shipmentsDto } from '../../../../lib/dtos/shipmentsDto'
+import { Loader2 } from 'lucide-react'
+import CustomModal from '../../../shared/CustomModal'
+import { useQueryClient } from '@tanstack/react-query'
 
-const ShipmenTable = ({ data = [], dealName = '', dealGuid = '' }) => {
+const ShipmenTable = ({ dealName = '', dealGuid = '' }) => {
   const [showModal, setShowModal] = useState(false)
   const [selectedShipment, setSelectedShipment] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isCopying, setIsCopying] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [shipmentToDelete, setShipmentToDelete] = useState(null)
+  const queryClient = useQueryClient()
 
-  if (data.length === 0) return null
+  console.log('shipmentToDelete', shipmentToDelete)
+
+  const { data: shipments, isLoading } = useUcodeRequestQuery({
+    method: "list_sales_operations",
+    data: {
+      object_data: {
+        sales_transaction_id: dealGuid,
+        tab: 'shipment',
+        search: "",
+        page: 1,
+        limit: 20
+      }
+    },
+    skip: !dealGuid,
+    querySetting: {
+      select: (response) => response?.data?.data?.data?.items,
+      placeholderData: keepPreviousData,
+    }
+  })
+
+  const { mutateAsync: deleteShipment, isPending: isDeleting } = useUcodeRequestMutation()
+
+  const shipmentsList = useMemo(() => {
+    return shipmentsDto(shipments)
+  }, [shipments])
 
   const handleEditShipment = (shipment) => {
     setSelectedShipment(shipment)
@@ -26,9 +59,35 @@ const ShipmenTable = ({ data = [], dealName = '', dealGuid = '' }) => {
     setShowModal(true)
   }
 
-  const handleDeleteShipment = (shipment) => {
-    console.log('handleDeleteShipment', shipment)
+  const handleDeleteShipment = (shipment) => { 
+    setShipmentToDelete(shipment)
+    setShowDeleteModal(true)
   }
+
+  const handleConfirmDelete = async () => {
+    if (!shipmentToDelete) return;
+    try {
+      await deleteShipment({
+        "method": "delete_shipment_transaction",
+        "data": {
+          "guid": shipmentToDelete.guid
+        }
+      })
+      queryClient.invalidateQueries({ queryKey: ["list_sales_operations"] })
+      queryClient.invalidateQueries({ queryKey: ["get_sales_transaction"] })
+      setShowDeleteModal(false)
+      setShipmentToDelete(null)
+    } catch (error) {
+      console.error("Delete error:", error)
+    }
+  }
+
+  if (isLoading) {
+    return <div className='flex items-center justify-center flex-1'>
+      <Loader2 className='animate-spin text-primary' size={24} />
+    </div>
+  }
+
 
   return (
     <>
@@ -45,7 +104,7 @@ const ShipmenTable = ({ data = [], dealName = '', dealGuid = '' }) => {
             </tr>
           </thead>
           <tbody className='w-full'>
-            {data?.map((item) => {
+            {shipmentsList?.map((item) => {
               return (
                 <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
                   <td className="px-4 py-3 text-left">{item.operationDate}</td>
@@ -79,7 +138,7 @@ const ShipmenTable = ({ data = [], dealName = '', dealGuid = '' }) => {
       </div>
       <div className='flex justify-end'>
         <div className="p-4 text-right text-neutral-700 font-semibold">Итого:</div>
-        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(data?.reduce((acc, item) => acc + item.summa, 0))} UZS</div>
+        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(shipmentsList?.reduce((acc, item) => acc + item.summa, 0))} UZS</div>
       </div>
 
       {showModal && (
@@ -89,10 +148,41 @@ const ShipmenTable = ({ data = [], dealName = '', dealGuid = '' }) => {
           initialData={selectedShipment}
           isEditing={isEditing}
           isCopying={isCopying}
-          dealName={dealName || selectedShipment?.sales_id || data?.[0]?.sales_id}
-          dealGuid={dealGuid || selectedShipment?.sales_id || data?.[0]?.sales_id}
-          kontragentId={selectedShipment?.partners_id || data?.[0]?.partners_id}
+          dealName={dealName}
+          dealGuid={dealGuid}
+          kontragentId={selectedShipment?.counterparties_id}
         />
+      )}
+
+      {showDeleteModal && (
+        <CustomModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
+          <div className='p-2 flex flex-col'>
+            <div className='flex justify-between items-center border-b border-gray-100 pb-2'>
+              <h2 className='text-xl font-bold text-neutral-800'>Удалить отгрузку</h2>
+            </div>
+
+            <div className='py-6 text-base text-neutral-700'>
+              Вы действительно хотите удалить отгрузку на сумму <span className='font-bold'>{formatAmount(shipmentToDelete?.summa)} UZS</span>? <br />
+              Восстановить её будет невозможно.
+            </div>
+
+            <div className='flex justify-end gap-4'>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className='px-4 py-2 text-sm text-primary hover:bg-gray-50 rounded-md font-semibold'
+              >
+                Отменить
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className='px-6 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-md flex items-center justify-center min-w-[100px]'
+              >
+                {isDeleting ? <Loader2 className='animate-spin h-4 w-4' /> : 'Удалить'}
+              </button>
+            </div>
+          </div>
+        </CustomModal>
       )}
     </>
   )

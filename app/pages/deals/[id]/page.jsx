@@ -1,38 +1,42 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import styles from './deal-detail.module.scss';
 import { useUcodeRequestQuery } from '@/hooks/useDashboard';
-import { keepPreviousData, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData } from '@tanstack/react-query';
 import DealStatus from '@/components/deals/details/Status';
 import CreateShipment from '@/components/deals/details/CreatingShipment';
-import { ChevronDown, ChevronUp, CirclePlus, Ellipsis, Search } from 'lucide-react';
+import { ChevronUp, CirclePlus, Ellipsis, Search } from 'lucide-react';
 import { HiOutlineDatabase } from "react-icons/hi";
 import { PiDatabaseFill } from "react-icons/pi";
-import { ShipmentPlusIcon, BoxIcon, ReceiptsEmptyIcon, ExpensesEmptyIcon, ShipmentsEmptyIcon, AttachIcon, SendIcon } from '@/constants/icons';
+import { ShipmentPlusIcon, BoxIcon, AttachIcon, SendIcon } from '@/constants/icons';
 import Input from '@/components/shared/Input';
 import OperationModal from '@/components/operations/OperationModal/OperationModal';
 import CreateProductService from '@/components/deals/details/CreateProductService';
-import CustomModal from '@/components/shared/CustomModal';
 import Loader from '@/components/shared/Loader';
 import { formatDateFormat } from '@/utils/formatDate';
 import { formatAmount } from '@/utils/helpers';
-import operationsDto from '../../../../lib/dtos/operationsDto';
-import DealOperationsTable from '../../../../components/deals/details/DealOperationsTable';
 import ShipmenTable from '../../../../components/deals/details/ShipmenTable';
-import { shipmentsDto } from '../../../../lib/dtos/shipmentsDto';
 import ProductServiceTable from '../../../../components/deals/details/ProductServiceTable';
 import { productServiceDto } from '../../../../lib/dtos/productServiceDto';
-import { LiaShippingFastSolid } from "react-icons/lia";
 import CustomRadio from '../../../../components/shared/Radio';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import CustomProgress from '../../../../components/shared/Progress';
+import { observer } from 'mobx-react-lite';
+import { sealDeal } from '../../../../store/saleDeal.store';
+import ExpenseOperationsTable from '../../../../components/deals/details/ExpenseOperationTable';
+import IncomeOperationsTable from '../../../../components/deals/details/IncomeOperationsTable';
 
 
-export default function DealDetailPage() {
+export default observer(function DealDetailPage() {
   const params = useParams();
   const router = useRouter();
   const dealId = params.id;
-  const queryClient = useQueryClient();
 
   const { data: dealData, isLoading } = useUcodeRequestQuery({
     method: "get_sales_transaction_by_guid",
@@ -44,9 +48,6 @@ export default function DealDetailPage() {
       placeholderData: keepPreviousData,
     }
   })
-
-  console.log(dealData)
-
 
   const deal = useMemo(() => {
     return {
@@ -63,20 +64,8 @@ export default function DealDetailPage() {
     }
   }, [dealData, dealId]);
 
-  const dealOperations = useMemo(() => {
-    return operationsDto(dealData?.operations)
-  }, [dealData])
-
-  const shipmentsList = useMemo(() => {
-    return shipmentsDto(dealData?.shipments || [])
-  }, [dealData])
-
-  const productServicesList = useMemo(() => {
-    return productServiceDto(dealData?.products || [])
-  }, [dealData])
-
   const summeryCards = useMemo(() => {
-    return dealData?.summary || null
+    return dealData || null
   }, [dealData])
 
 
@@ -87,35 +76,15 @@ export default function DealDetailPage() {
   const [isModalClosing, setIsModalClosing] = useState(false)
   const [isModalOpening, setIsModalOpening] = useState(false)
   const [showProductModal, setShowProductModal] = useState(false)
-  const [accounting, setAccounting] = useState('accrual')
+  const accounting = sealDeal.accounting
   const [showAccounting, setShowAccounting] = useState(false)
 
 
-  // Product/service row action menu state
-  const [itemToDelete, setItemToDelete] = useState(null)
-  const [isDeletingItem, setIsDeletingItem] = useState(false)
+  // Product/service row action menu state 
   const [itemToEdit, setItemToEdit] = useState(null)
   const [isCopying, setIsCopying] = useState(false)
 
 
-
-  const handleDeleteConfirm = async () => {
-    if (!itemToDelete?.guid) return;
-    setIsDeletingItem(true);
-    try {
-      await deleteProductService({
-        urlMethod: 'DELETE',
-        urlParams: `/items/product_and_service/${itemToDelete.guid}?from-ofs=true`,
-        data: { guid: itemToDelete.guid }
-      });
-      queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] });
-      setItemToDelete(null);
-    } catch (e) {
-      console.error('delete error', e);
-    } finally {
-      setIsDeletingItem(false);
-    }
-  }
 
   // Deal statuses
   const [dealStatuses, setDealStatuses] = useState([
@@ -148,10 +117,9 @@ export default function DealDetailPage() {
   const expenses = Number(summeryCards?.total_cash_expenses) || 0;
 
   const receivedPercent = summeryCards?.receipts_progress != null ? Math.round(Number(summeryCards.receipts_progress) * 100) : 0;
-  const shippedPercent = summeryCards?.shipments_progress != null ? Math.round(Number(summeryCards.shipments_progress) * 100) : 0;
   const profitPercent = summeryCards?.cash_profitability != null ? Math.round(Number(summeryCards.cash_profitability)) : 0;
 
-  const clientDebt = Number(summeryCards?.debitorka) || 0;
+  const clientDebt = Number(summeryCards?.planned_shipments_count) || 0;
   const ourDebt = Number(summeryCards?.kreditorka) || 0;
 
 
@@ -247,8 +215,7 @@ export default function DealDetailPage() {
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Поступления</span>
             <button className={styles.addButton}>
-
-              <CirclePlus />
+              <CirclePlus size={20} strokeWidth={1.5} className='text-neutral-300' />
             </button>
           </div>
 
@@ -264,7 +231,7 @@ export default function DealDetailPage() {
           </div>
 
           <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${receivedPercent}%` }}></div>
+            <CustomProgress value={receivedPercent} fillColor="#12B76A" />
           </div>
           <div className={styles.cardProgress}>Поступило: {receivedPercent}%</div>
 
@@ -295,9 +262,9 @@ export default function DealDetailPage() {
           </div>
 
           <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${shippedPercent}%` }}></div>
+            <CustomProgress value={summeryCards?.total_shipment_summa} max={summeryCards?.total_products_summa} fillColor="#48C206" />
           </div>
-          <div className={styles.cardProgress}>Отгружено: {shippedPercent}%</div>
+          <div className={styles.cardProgress}>Отгружено: {summeryCards?.shipments_progress_text}</div>
 
           <div className={styles.clientDebt}>
             <span className={styles.clientDebtLabel}>Мы должны:</span>
@@ -309,22 +276,26 @@ export default function DealDetailPage() {
         <div className={styles.infoCard}>
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Прибыль сделки</span>
-            <div className="relative border bg-primary/10 group text-primary px-2 py-1 rounded-full text-xs">
-              <div className="flex items-center gap-2">
-                <p className="text-xs">Учет</p>
-                <ChevronUp size={12} className='group-hover:rotate-180 transition-all duration-300' />
-              </div>
-              <div className="absolute hidden group-hover:flex top-8 right-0 border border-neutral-100  rounded-md shadow-2xl  flex-col bg-white">
-                <label htmlFor="accrual" className="flex  p-2 items-center gap-2">
-                  <CustomRadio name="accounting" id="accrual" value="accrual" checked={accounting === 'accrual'} onChange={(e) => setAccounting(e.target.value)} />
-                  <span className=' whitespace-nowrap'>Методом начисления</span>
-                </label>
-                <label htmlFor="cash" className="flex p-2 items-center gap-2">
-                  <CustomRadio name="accounting" id="cash" value="cash" checked={accounting === 'cash'} onChange={(e) => setAccounting(e.target.value)} />
-                  <span className=' whitespace-nowrap'>Кассовым методом</span>
-                </label>
-              </div>
-            </div>
+            <Popover open={showAccounting} onOpenChange={setShowAccounting}>
+              <PopoverTrigger className="relative bg-primary/10 cursor-pointer text-primary px-2 py-1 rounded-full text-xs border-none outline-none">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs">Учет</p>
+                  <ChevronUp size={12} className={`transition-all duration-300 ${showAccounting ? 'rotate-180' : ''}`} />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto rounded-md overflow-hidden p-0 border-none" align="end">
+                <div className="flex flex-col bg-white">
+                  <label htmlFor="accrual" className="flex p-3 items-center gap-2 cursor-pointer hover:bg-neutral-50">
+                    <CustomRadio name="accounting" id="accrual" value="accrual" checked={accounting === 'accrual'} onChange={(e) => { sealDeal.setState('accounting', e.target.value); setShowAccounting(false); }} />
+                    <span className="whitespace-nowrap text-sm text-neutral-800">Методом начисления</span>
+                  </label>
+                  <label htmlFor="cash" className="flex p-3 items-center gap-2 cursor-pointer hover:bg-neutral-50">
+                    <CustomRadio name="accounting" id="cash" value="cash" checked={accounting === 'cash'} onChange={(e) => { sealDeal.setState('accounting', e.target.value); setShowAccounting(false); }} />
+                    <span className="whitespace-nowrap text-sm text-neutral-800">Кассовым методом</span>
+                  </label>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className={styles.cardAmount}>{formatAmount(profit)} ₽</div>
@@ -336,13 +307,13 @@ export default function DealDetailPage() {
             </div>
           </div>
 
-          <div className={styles.profitBars}>
-            <div className={styles.profitBar}>
+          <div className="flex  gap-2">
+            <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#12B76A' }}></div>
               <span className={styles.profitLabel}>Доходы</span>
               <span className={styles.profitValue}>+{formatAmount(received)} ₽</span>
             </div>
-            <div className={styles.profitBar}>
+            <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#F79009' }}></div>
               <span className={styles.profitLabel}>Расходы</span>
               <span className={styles.profitValue}>-{formatAmount(expenses)} ₽</span>
@@ -361,7 +332,7 @@ export default function DealDetailPage() {
               className={`${styles.tab} ${activeTab === 'products' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('products')}
             >
-              Товары и услуги
+              Товары и услуги ({summeryCards?.products_count})
             </button>
             <button
               className={`${styles.tab} ${activeTab === 'receipts' ? styles.tabActive : ''}`}
@@ -416,73 +387,13 @@ export default function DealDetailPage() {
               </div>
             </div>
             <div className={styles.contentContainer}>
-              {activeTab === 'products' && <>
+              {activeTab === 'products' && <ProductServiceTable handleSelect={handleSelectProduct} sellingDealId={dealId} />}
 
-                {productServicesList?.length === 0 ? <>
-                  <div className="flex items-center">
-                    <div className="flex items-center">
-                      <p className="text-neutral-600">Нет товаров и услуг</p>
-                    </div>
-                  </div>
-                </> :
-                  <ProductServiceTable data={productServicesList} handleSelect={handleSelectProduct} />
-                }
-              </>}
+              {activeTab === 'receipts' && <IncomeOperationsTable type='Поступление' sellingDealId={dealId} />}
 
-              {activeTab === 'receipts' && (
-                <>
-                  {dealOperations?.filter(op => op.tip === 'Поступление').length === 0 && <div className={styles.emptyState}>
-                    <div className={styles.emptyStateIcon}>
-                      <ReceiptsEmptyIcon />
-                    </div>
-                    <div className={styles.emptyStateTitle}>Добавьте поступления по сделке</div>
-                    <div className={styles.emptyStateSubtext}>Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке</div>
-                    <button className="primary-btn" onClick={handleCreateOperation}>
-                      Добавить
-                    </button>
-                  </div>}
-                  <DealOperationsTable
-                    data={dealOperations?.filter(op => op.tip === 'Поступление') || []}
-                    type='receipts'
-                  />
-                </>
-              )}
+              {activeTab === 'expenses' && <ExpenseOperationsTable type='Выплата' sellingDealId={dealId} />}
 
-
-              {activeTab === 'expenses' && (
-                <>
-                  {dealOperations?.filter(op => op.tip === 'Выплата').length === 0 && <div className={styles.emptyState}>
-                    <div className={styles.emptyStateIcon}>
-                      <ExpensesEmptyIcon />
-                    </div>
-                    <div className={styles.emptyStateTitle}>Добавьте затраты по сделке</div>
-                    <div className={styles.emptyStateSubtext}>Учитывайте затраты по сделке, чтобы контролировать ее прибыльность</div>
-                    <button className="primary-btn" onClick={handleCreateOperation}>
-                      Добавить
-                    </button>
-                  </div>}
-                  <DealOperationsTable
-                    data={dealOperations?.filter(op => op.tip === 'Выплата') || []}
-                    type='expenses'
-                  />
-                </>
-              )}
-
-              {activeTab === 'shipments' && (
-                <>
-                  {shipmentsList?.length === 0 ? <div className="flex flex-col flex-1 gap-3  items-center justify-center h-full">
-                    <div className="flex items-center">
-                      <div className="bg-neutral-100 rounded-full p-4">
-                        <LiaShippingFastSolid size={40} className='text-neutral-600' />
-                      </div>
-                    </div>
-                    <div className="text-neutral-600 text-center space-y-2">
-                      <h1 className="text-neutral-600">Создайте отгрузку</h1>
-                      <p className="text-neutral-600">Отслеживайте товары и услуги, которые вы отгрузили своим клиентам</p>
-                    </div>
-                  </div> : <ShipmenTable data={shipmentsList || []} />}
-                </>
-              )}
+              {activeTab === 'shipments' && <ShipmenTable dealGuid={dealId} dealName={deal.nazvanie} />}
             </div>
           </div>
         </div>
@@ -587,7 +498,7 @@ export default function DealDetailPage() {
 
 
       {/* Delete Confirm Modal */}
-      <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
+      {/* <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
         <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: '#101828', fontFamily: 'Inter, sans-serif' }}>
           Удалить товар
         </h2>
@@ -609,7 +520,7 @@ export default function DealDetailPage() {
             {isDeletingItem ? <Loader /> : 'Удалить'}
           </button>
         </div>
-      </CustomModal>
+      </CustomModal> */}
     </div>
   );
-}
+})

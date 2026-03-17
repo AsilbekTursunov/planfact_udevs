@@ -10,6 +10,7 @@ import { DebitIcon, CreditIcon } from '../../../../../constants/icons'
 import { appStore } from '../../../../../store/app.store'
 import { cn } from '@/app/lib/utils'
 import styles from '../../OperationModal.module.scss'
+import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
 
 const PaymentForm = ({
   // form state
@@ -217,6 +218,13 @@ const PaymentForm = ({
             loading={loadingChartOfAccounts}
             className='flex-1'
           />
+          {/* <SinglSelectStatiya
+             value={formData.chartOfAccount}
+            onChange={value => setFormData({ ...formData, chartOfAccount: value })}
+            placeholder='Выберите статью...'
+            className='flex-1 bg-white'
+            type={"Доходы"}
+          /> */}
         </div>
       )}
 

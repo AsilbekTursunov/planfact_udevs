@@ -244,17 +244,13 @@ const CreateProductService = ({
 
 
     try {
-      // await mutateProductService({
-      //   urlMethod: isEditing ? "PUT" : "POST",
-      //   urlParams: "/items/product_and_service?from-ofs=true",
-      //   data: payload
-      // })
       await mutateProductServiceCustom({
         method: isEditing ? "update_product_and_service" : "create_product_and_service",
         data: object_data
       })
       resetForm()
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] })
       onClose()
     } catch (error) {
       console.error('mutateProductService', error?.message)

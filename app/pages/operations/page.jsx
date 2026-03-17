@@ -126,6 +126,8 @@ export default function OperationsPage() {
 		}))
 	}, [chartOfAccountsData])
 
+	console.log('chartOfAccountsOptions', chartOfAccountsOptions)
+
 	// Pagination state
 	const [page, setPage] = useState(1)
 	const [hasMore, setHasMore] = useState(true)

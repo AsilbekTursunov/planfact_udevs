@@ -2,14 +2,16 @@ import { IoCloseOutline, IoCopyOutline } from 'react-icons/io5'
 import { MdOutlineModeEdit } from 'react-icons/md'
 import { formatAmount } from '../../../../utils/helpers'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { BsTrash } from 'react-icons/bs'
-import { useUcodeRequestMutation } from '../../../../hooks/useDashboard'
+import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import { useQueryClient } from '@tanstack/react-query'
 import CustomModal from '../../../shared/CustomModal'
 import Loader from '../../../shared/Loader'
+import { productServiceDto } from '../../../../lib/dtos/productServiceDto'
+import { Loader2 } from 'lucide-react'
 
-const ProductServiceTable = ({ data = [], handleSelect }) => {
+const ProductServiceTable = ({ handleSelect, sellingDealId }) => {
   const [selectedItems, setSelectedItems] = useState(new Set())
   const [selectedItem, setSelectedItem] = useState([])
   const [open, setOpen] = useState(false)
@@ -17,10 +19,28 @@ const ProductServiceTable = ({ data = [], handleSelect }) => {
   const { mutateAsync: mutateProductServiceCustom, isPending: isProductServiceCustomPending } = useUcodeRequestMutation()
   const queryClient = useQueryClient()
 
+  const { data: productServices, isLoading } = useUcodeRequestQuery({
+    method: "list_products_and_services",
+    data: {
+      sales_transaction_id: sellingDealId,
+    },
+    querySetting: {
+      select: data => data?.data?.data?.data
+    }
+  })
+
+
+
+
+  const productServicesList = useMemo(() => {
+    return productServiceDto(productServices)
+  }, [productServices])
+
+
   const handleSelectAll = (event) => {
     const checked = event.target.checked
     if (checked) {
-      data.forEach(item => selectedItems.add(item.guid))
+      productServicesList.forEach(item => selectedItems.add(item.guid))
     } else {
       selectedItems.clear()
     }
@@ -42,8 +62,7 @@ const ProductServiceTable = ({ data = [], handleSelect }) => {
     setSelectedItems(new Set(selectedItems))
   }
 
-
-  const handleDelete = async () => { 
+  const handleDelete = async () => {
     try {
       if (selectedItem.length === 0) return;
 
@@ -63,17 +82,24 @@ const ProductServiceTable = ({ data = [], handleSelect }) => {
   }
 
 
-  if (data.length === 0) return null
+  if (productServicesList.length === 0) return null
+
+
+  if (isLoading) {
+    return <div className='flex items-center justify-center flex-1'>
+      <Loader2 className='animate-spin text-primary' size={24} />
+    </div>
+  }
 
   return (
     <>
-      <div className="h-[calc(100vh-200px)] overflow-y-auto min-w-[935px]">
+      <div className="h-[calc(100vh-200px)] overflow-y-auto min-w-[935px] pb-10">
         <table className="w-full">
           <thead className='sticky top-0 z-10'>
             <tr className='bg-neutral-100  text-neutral-500 text-sm w-full border-b border-gray-200'>
               <th className='w-14 py-2 text-center place-content-center'>
                 <div className='flex items-center justify-center'>
-                  <OperationCheckbox checked={selectedItems.size === data.length} onChange={handleSelectAll} />
+                  <OperationCheckbox checked={selectedItems.size === productServicesList.length} onChange={handleSelectAll} />
                 </div>
               </th>
               {selectedItems.size > 0 && <th colSpan={7} className='text-lef'>
@@ -102,7 +128,7 @@ const ProductServiceTable = ({ data = [], handleSelect }) => {
             </tr>
           </thead>
           <tbody className='w-full'>
-            {data?.map((item) => {
+            {productServicesList?.map((item) => {
               return (
                 <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
                   <td className="w-14 py-3 text-center">
@@ -150,10 +176,10 @@ const ProductServiceTable = ({ data = [], handleSelect }) => {
           </tbody>
         </table>
       </div>
-      {/* <div className='flex justify-end'>
+      <div className='flex justify-end'>
         <div className="p-4 text-right text-neutral-700 font-semibold">Итого:</div>
-        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(data?.reduce((acc, item) => acc + item.summa, 0))} UZS</div>
-      </div> */}
+        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(productServicesList?.reduce((acc, item) => acc + item.summa, 0))} UZS</div>
+      </div>
       <CustomModal isOpen={open} onClose={() => setOpen(false)}>
         <div className='p-4'>
           <h1 className='text-lg font-semibold text-neutral-900'>Удалить позиции из сделки</h1>

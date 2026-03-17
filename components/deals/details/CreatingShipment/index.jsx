@@ -8,9 +8,10 @@ import { useLegalEntitiesPlanFact, useCounterpartiesGroupsPlanFact, useChartOfAc
 import { MultiSelect } from '../../../common/MultiSelect/MultiSelect'
 import { formatAmount } from '../../../../utils/helpers'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
-import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../../hooks/useDashboard'
+import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import Loader from '../../../shared/Loader'
 import { queryClient } from '../../../../lib/queryClient'
+import { productServiceDto } from '../../../../lib/dtos/productServiceDto'
 
 const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false }) => {
   const today = new Date()
@@ -27,24 +28,19 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
   ])
 
-  const [prevOpen, setPrevOpen] = useState(open)
-  const [prevInitialData, setPrevInitialData] = useState(initialData)
 
-  if (open !== prevOpen || initialData !== prevInitialData) {
-    setPrevOpen(open)
-    setPrevInitialData(initialData)
-    
+  useEffect(() => {
     if (open) {
       if (initialData) {
         setShipmentDate(initialData.data_operatsii?.split('T')[0] || today.toISOString().split('T')[0])
         setIsPlanned(initialData.planned_shipment || false)
         setLegalEntity(initialData.legal_entity_id || '')
         setClient(initialData.partners_id || kontragentId || '')
-        
+
         if (initialData.product_and_service_data) {
-          setRows(initialData.product_and_service_data.map((row, idx) => ({
+          setRows(initialData?.product_and_service_data?.map((row, idx) => ({
             id: idx + 1,
-            name: row.guid || row.product_and_service_id || '', 
+            name: row.guid || row.product_and_service_id || '',
             quantity: row.Kol_vo || 0,
             price: row.TSena_za_ed || 0,
             discount: row.Skidka || '',
@@ -60,7 +56,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
         setRows([{ id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }])
       }
     }
-  }
+  }, [open, initialData])
 
   const [selectedProducts, setSelectedProducts] = useState(new Set())
 
@@ -89,25 +85,28 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     page: 1, limit: 100
   })
 
-  const { data: productServicesList } = useUcodeDefaultApiQuery({
-    queryKey: "get_group_product_services_list",
-    urlMethod: "GET",
-    urlParams: "/items/product_and_service?from-ofs=true&offset=0&limit=10",
+
+  const { data: productServices } = useUcodeRequestQuery({
+    method: "list_products_and_services",
     querySetting: {
-      select: data => data?.data?.data?.response
+      select: data => data?.data?.data?.data
     }
   })
+
+  const productServicesList = useMemo(() => {
+    return productServiceDto(productServices)
+  }, [productServices])
 
   const groupedProductServicesList = useMemo(() => {
     if (!productServicesList) return []
     return productServicesList.map(item => {
-      const groupData = item.group_product_and_service_id_data
+      const groupData = item?.group_product_and_service_id_data
       const groupName = groupData ? (groupData.name || groupData.nazvanie || 'Без группы') : 'Без группы'
 
       return {
         ...item,
         value: item.guid,
-        label: item.naimenovanie || 'Без названия',
+        label: item.name || 'Без названия',
         group: groupName
       }
     })
@@ -170,6 +169,13 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     }
   }, [open])
 
+  // Log initialData when modal opens or initialData changes
+  useEffect(() => {
+    if (open) {
+      console.log('initialData:', initialData)
+    }
+  }, [open, initialData])
+
   const addRow = () => {
     setRows(prev => [...prev, {
       id: Date.now(),
@@ -219,15 +225,19 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
         sales_id: dealGuid,
         partners_id: client,
         planned_shipment: isFutureDate ? true : isPlanned,
+        status_nachislenie: ["confirmed"],
+        type: ["Отгрузка"],
+        summa: totalSum,
         data_nachislenie: shipmentDate,
+        data_oplaty: shipmentDate,
         currency_code: "RUB",
         description: "Shipment",
         product_and_service_data: rows.filter(row => row.name).map(row => {
-          const product = groupedProductServicesList.find(p => p.value === row.name)
+          const product = productServicesList.find(p => p.guid === row.name)
           return {
             guid: product?.guid || undefined,
-            Naimenovanie: product ? product.label : "",
-            Artikul: product?.artikul || "",
+            Naimenovanie: product ? product.name : "",
+            Artikul: product?.article || "",
             Kol_vo: Number(row.quantity?.toString().replace(/\s/g, '')) || 0,
             TSena_za_ed: Number(row.price?.toString().replace(/\s/g, '')) || 0,
             Summa: Number(row.sum?.toString().replace(/\s/g, '')) || 0,
@@ -239,7 +249,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
       }
 
       if (isEditing && initialData?.guid) {
-        payload.guid = initialData.guid
+        payload.transaction_guid = initialData.guid
       }
 
       await createShipment({
@@ -257,10 +267,8 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
       setSelectedProducts(new Set())
       setErrors({})
 
-      queryClient.invalidateQueries({
-        queryKey: ['get_sales_transaction_by_guid', dealGuid]
-      })
-
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['list_sales_operations'] })
       onClose()
     } catch (error) {
       console.error(error)
@@ -273,6 +281,27 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     const newRow = rows.filter(item => !selectedProducts.has(item.id))
     setRows(newRow)
     setSelectedProducts(new Set())
+  }
+
+  const handleSelectProductSerice = (rowId, value) => {
+
+    const product = productServicesList?.find(p => p.guid === value)
+    if (!product) return;
+
+    setRows(prev => prev.map(row => {
+      if (row.id !== rowId) return row;
+      const q = Number(product.kolvo) || 0;
+      const p = Number(product.tsena_za_ed) || 0;
+      return {
+        ...row,
+        name: value,
+        price: p,
+        quantity: q,
+        discount: product.discount || '',
+        nds: product.nds || '',
+        sum: q * p
+      }
+    }))
   }
 
   if (!open) return null
@@ -291,7 +320,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
               {isEditing ? 'Редактирование отгрузки' : isCopying ? 'Копирование отгрузки' : 'Создание отгрузки'}
             </h2>
             <div className={styles.subtitle}>
-              Сделка: <span className={styles.dealLink}>{dealName || dealGuid}</span>
+              Сделка: <span className={styles.dealLink}>{dealName}</span>
             </div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>
@@ -487,7 +516,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                             <GroupedSelect
                               data={groupedProductServicesList}
                               value={row.name}
-                              onChange={(value) => updateRow(row.id, 'name', value)}
+                              onChange={(value) => handleSelectProductSerice(row?.id, value)}
                               placeholder="Выберите позицию"
                               groupBy={true}
                               labelKey="label"

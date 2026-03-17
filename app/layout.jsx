@@ -1,6 +1,6 @@
 "use client"
 
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Roboto } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar/Sidebar";
 import { Header } from "@/components/Header/Header";
@@ -18,6 +18,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const roboto = Roboto({
+  weight: ['300', '400', '500', '700'],
+  subsets: ["latin"],
+  variable: "--font-roboto",
+});
+
 export default function RootLayout({ children }) {
   const pathname = usePathname()
   const isLoginPage = pathname === '/pages/auth'
@@ -26,7 +32,7 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-[family-name:var(--font-geist-sans)] bg-slate-50 text-slate-900`}
+        className={` ${roboto.className} antialiased bg-slate-50 text-slate-900`}
       >
         <QueryClientProvider client={queryClient}>
           {!isLoginPage && <Sidebar />}

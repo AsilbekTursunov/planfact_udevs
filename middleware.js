@@ -10,7 +10,7 @@ export function middleware(request) {
   
   // Check authentication for all other pages
   const isAuthenticated = request.cookies.get('isAuthenticated')?.value === 'true'
-  
+
   if (!isAuthenticated && pathname !== '/pages/auth') {
     return NextResponse.redirect(new URL('/pages/auth', request.url))
   }

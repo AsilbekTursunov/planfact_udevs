@@ -9,6 +9,7 @@ import SplitAmount from '../../SplitAmount'
 import { DebitIcon, CreditIcon } from '../../../../../constants/icons'
 import { appStore } from '../../../../../store/app.store'
 import styles from '../../OperationModal.module.scss'
+import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
 
 const IncomeForm = ({
   // form state
@@ -215,6 +216,12 @@ const IncomeForm = ({
             loading={loadingChartOfAccounts}
             className='flex-1'
           />
+          {/* <SinglSelectStatiya
+            selectedValue={formData.chartOfAccount}
+            setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}
+            placeholder='Выберите статью...'
+            className='flex-1 bg-white'
+          /> */}
         </div>
       )}
 

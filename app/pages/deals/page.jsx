@@ -9,11 +9,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import Input from '../../../components/shared/Input';
 import { Search } from 'lucide-react';
 import { formatDateFormat } from '../../../utils/formatDate';
-import { formatAmount } from '../../../utils/helpers'; 
+import { formatAmount } from '../../../utils/helpers';
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox';
 import { DeleteDealModal } from '../../../components/deals/DeleteDealModal/DeleteDealModal';
 import { MdOutlineModeEdit } from 'react-icons/md';
 import { IoCloseOutline, IoCopyOutline } from 'react-icons/io5';
+import FilterSidebar from '../../../components/deals/FilterSidebar';
 
 export default function DealsPage() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function DealsPage() {
     urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=20'
   });
 
-  
+
 
   const { mutate: deleteDeal, isPending: isDeletingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'delete-deal' });
 
@@ -147,7 +148,7 @@ export default function DealsPage() {
       'Новая': 'orange',
       'New': 'orange',
       'В_работе': 'blue',
-      'in_work': 'blue', 
+      'in_work': 'blue',
       'InProgress': 'blue',
       'Завершена': 'green',
       'Completed': 'green',
@@ -157,7 +158,8 @@ export default function DealsPage() {
   }
 
   return (
-    <div className={styles.container}>
+    <div className="flex min-h-dvh">
+      <FilterSidebar />
       <main className={styles.mainContent}>
         <header className={styles.header}>
           <div className={styles.headerLeft}>
@@ -254,7 +256,7 @@ export default function DealsPage() {
           </table>
         </div>
 
-        <footer className={styles.footer}>
+        {/* <footer className={styles.footer}>
           <div className={styles.footerContent}>
             <span className={styles.footerItem}>
               <span className={styles.footerLabel}>{formattedDeals.length} продажа на сумму:</span>
@@ -265,7 +267,7 @@ export default function DealsPage() {
               <span className={styles.footerProfit}>{formatAmount(formattedDeals.reduce((sum, d) => sum + (Number(d.pribyl) || 0), 0))}</span>
             </span>
           </div>
-        </footer>
+        </footer> */}
       </main>
       <CreateDealModal
         isOpen={isCreateModalOpen}
