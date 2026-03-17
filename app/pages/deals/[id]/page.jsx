@@ -153,6 +153,7 @@ export default observer(function DealDetailPage() {
         <span className={styles.breadcrumbSeparator}>/</span>
         <span className={styles.breadcrumbCurrent}>{deal.nazvanie || 'Без названия'}</span>
       </div>
+
       {/* Header */}
       <div className='flex items-center justify-between '>
         <div className={styles.header}>

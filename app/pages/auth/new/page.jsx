@@ -1,23 +1,20 @@
 "use client"
-import React, { useState, useRef } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/app/lib/utils'
-import { useLogin, useRegister } from '@/hooks/useAuth'
 import { Eye, EyeOff } from 'lucide-react'
 import { AuthLogo } from '@/constants/icons'
-import styles from './styles.module.scss'
+import styles from '../styles.module.scss'
 import Input from '@/components/shared/Input'
-import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
-import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
-import { authStore } from '@/store/auth.store'
-import Loader from '../../../components/shared/Loader'
+import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
+import Loader from '@/components/shared/Loader'
 
 export default function LoginPage() {
   const router = useRouter()
   const [fromType, setFromType] = useState('login')
-  
 
-  
+
+
   return (
     <div className={styles.loginPage}>
       <div className={styles.logoContainer}>
@@ -40,16 +37,16 @@ export default function LoginPage() {
           <form className={styles.form}>
             {fromType === 'register' && (
               <>
-                
+
               </>
             )}
 
             {/* Email (Only on login) */}
             {fromType === 'login' && (
               <>
-                
+
               </>
-            )} 
+            )}
 
             {/* Branch Selector (Only on login) */}
             {/* {fromType === 'login' && (
