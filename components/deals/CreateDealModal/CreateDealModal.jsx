@@ -1,105 +1,226 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import styles from './CreateDealModal.module.scss';
+import CustomDatePicker from '@/components/shared/DatePicker';
+import Input from '@/components/shared/Input';
+import { useRouter } from 'next/navigation';
+import TextArea from '../../shared/TextArea';
+import Select from '@/components/common/Select';
+import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect';
+import { useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard';
+import { X } from 'lucide-react';
+import { useUcodeDefaultApiMutation } from '../../../hooks/useDashboard';
+import { useQueryClient } from '@tanstack/react-query';
+import Loader from '../../shared/Loader';
+import { formatDate } from '../../../utils/formatDate';
 
-export function CreateDealModal({ isOpen, onClose }) {
+const ndsOptions = [
+  { value: 'true', label: 'С учетом НДС' },
+  { value: 'false', label: 'Без учета НДС' }
+];
+
+export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
   const [dealName, setDealName] = useState('');
-  const [dealDate, setDealDate] = useState('');
+  const [dealDate, setDealDate] = useState();
   const [client, setClient] = useState('');
   const [nds, setNds] = useState('');
   const [comment, setComment] = useState('');
+  const [errors, setErrors] = useState({});
+  const router = useRouter();
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (isOpen && initialData) {
+      // eslint-disable-next-line
+      setDealName(initialData.name || '');
+      setDealDate(initialData.sale_date ? formatDate(initialData.sale_date) : '');
+      setClient(initialData.counterparties_id || '');
+      setNds(initialData.nds ? 'true' : 'false');
+      setComment(initialData.commentary || '');
+    } else if (isOpen && !initialData) {
+      setDealName('');
+      setDealDate('');
+      setClient('');
+      setNds('');
+      setComment('');
+    }
+  }, [isOpen, initialData]);
+
+  const { mutateAsync: createDeal, isPending: isCreatingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'create-deal' })
+
+  const { data: counterpartiesGroupsData, isLoading: isLoadingGroups } = useCounterpartiesGroupsPlanFact({
+    page: 1,
+    limit: 100,
+  });
+
+  const counterAgentsTree = useMemo(() => {
+    const groups = counterpartiesGroupsData?.data?.data?.data || [];
+
+    if (groups.length === 0) return [];
+
+    const buildTree = item => {
+      if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+        return {
+          value: item.guid,
+          title: item.nazvanie_gruppy || 'Без названия',
+          selectable: false,
+          children: item.children.map(child => ({
+            value: child.guid,
+            title: child.nazvanie || 'Без названия',
+            selectable: true,
+          }))
+        };
+      }
+
+      return {
+        value: item.guid,
+        title: item.nazvanie_gruppy || item.nazvanie || 'Без названия',
+        selectable: true,
+      };
+    };
+
+    return groups.map(buildTree);
+  }, [counterpartiesGroupsData]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log({ dealName, dealDate, client, nds, comment });
-    onClose();
+
+    const newErrors = {};
+    if (!dealName.trim()) {
+      newErrors.dealName = 'Название сделки обязательно';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
+
+    const today = new Date()
+    let formattedDate = dealDate || formatDate(today);
+
+    const payload = {
+      sale_date: formattedDate,
+      name: dealName,
+      counterparties_id: client,
+      nds: nds === 'true',
+      commentary: comment,
+      status: ["new"]
+    };
+
+    if (isEditing && initialData?.guid) {
+      payload.guid = initialData.guid;
+    }
+
+    try {
+      await createDeal({
+        urlMethod: isEditing ? 'PUT' : 'POST',
+        urlParams: '/items/sales_transactions?from-ofs=true',
+        data: payload
+      });
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] });
+      onClose();
+
+      // Navigate to the Deal detail page
+      // if (response?.data?.data?.guid) {
+      //   router.push(`/pages/deals/${response.data.data.guid}`);
+      // } else if (isEditing && initialData?.guid) {
+      //   // Fallback for edit if response lacks guid
+      //   router.push(`/pages/deals/${initialData.guid}`);
+      // }
+    } catch (error) {
+      console.error('Error creating/updating deal:', error);
+    }
   };
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Новая продажа</h2>
+          <h2 className={styles.title}>{isEditing ? 'Редактирование продажи' : 'Новая продажа'}</h2>
           <button className={styles.closeButton} onClick={onClose}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <X />
           </button>
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Название сделки</label>
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="Например, разработка сайта"
-              value={dealName}
-              onChange={(e) => setDealName(e.target.value)}
-            />
+        <form id="create-deal-form" className="space-y-3 p-5" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center">Название сделки</label>
+            <div className=" col-span-5">
+              <Input
+                type="text"
+                placeholder="Например, разработка сайта"
+                value={dealName}
+                onChange={(e) => {
+                  setDealName(e.target.value);
+                  if (errors.dealName) setErrors(prev => ({ ...prev, dealName: '' }));
+                }}
+                error={!!errors.dealName}
+              />
+              {errors.dealName && (
+                <p className="text-red-500 text-xs mt-1">{errors.dealName}</p>
+              )}
+            </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Дата сделки</label>
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="11.02.2024"
-              value={dealDate}
-              onChange={(e) => setDealDate(e.target.value)}
-            />
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center">Дата сделки</label>
+            <div className=" col-span-5">
+              <CustomDatePicker
+                value={dealDate}
+                onChange={(val) => setDealDate(val)}
+                placeholder="Выберите дату"
+                format="YYYY-MM-DD"
+                className={styles.datePicker}
+              />
+            </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Клиент</label>
-            <select
-              className={styles.select}
-              value={client}
-              onChange={(e) => setClient(e.target.value)}
-            >
-              <option value="">Укажите кому падаете товар или услугу</option>
-            </select>
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center">Клиент</label>
+            <div className=" col-span-5">
+              <TreeSelect
+                data={counterAgentsTree}
+                value={client}
+                onChange={value => setClient(value)}
+                placeholder="Укажите кому падаете товар или услугу"
+                loading={isLoadingGroups}
+              />
+            </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>
-              НДС
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.helpIcon}>
-                <circle cx="8" cy="8" r="7" stroke="#98A2B3" strokeWidth="1.5"/>
-                <path d="M8 11.5V8M8 5.5H8.005" stroke="#98A2B3" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </label>
-            <select
-              className={styles.select}
-              value={nds}
-              onChange={(e) => setNds(e.target.value)}
-            >
-              <option value="">С учетом НДС</option>
-            </select>
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center"> НДС </label>
+            <div className=" col-span-5">
+              <Select
+                instanceId="create-deal-nds-select"
+                options={ndsOptions}
+                value={ndsOptions.find(opt => opt.value === nds) || ''}
+                onChange={(selected) => setNds(selected ? selected.value : '')}
+                placeholder="Выберите опцию"
+              />
+            </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Комментарий</label>
-            <textarea
-              className={styles.textarea}
-              placeholder="Ваш комментарий или пояснение к этой сделке"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={4}
-            />
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center"> Комментарий </label>
+            <div className=" col-span-5">
+              <TextArea value={comment} onChange={(e) => setComment(e.target.value)} />
+            </div>
           </div>
         </form>
 
         <div className={styles.footer}>
-          <button type="button" className={styles.cancelButton} onClick={onClose}>
+          <button type="button" className="secondary-btn" onClick={onClose}>
             Отменить
           </button>
-          <button type="submit" className={styles.submitButton} onClick={handleSubmit}>
-            Создать
+          <button type="submit" form="create-deal-form" className="primary-btn">
+            {isCreatingDeal ? <Loader /> : (isEditing ? 'Сохранить' : 'Создать')}
           </button>
         </div>
       </div>

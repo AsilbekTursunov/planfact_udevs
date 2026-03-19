@@ -1,16 +1,13 @@
 "use client"
 
 import { useState, useRef, useEffect } from 'react'
-import { createPortal } from 'react-dom'
 import 'react-datepicker/dist/react-datepicker.css'
 import '@/styles/datepicker.css'
 import styles from './DatePicker.module.scss'
-import { cn } from '@/app/lib/utils'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
-import CustomCalendar from '../../shared/Calendar'
 import CustomDatePicker from '../../shared/DatePicker'
 
-export function DatePicker({ value, onChange, placeholder = 'Выберите дату', showCheckbox = false, checkboxLabel = '', checkboxValue = false, onCheckboxChange, className, dateFormat = 'DD.MM.YYYY' }) {
+export function DatePicker({ value, onChange, placeholder = 'Выберите дату', showCheckbox = false, checkboxLabel = '', checkboxValue = false, onCheckboxChange, disabled = false, checkboxDisabled = false, className, dateFormat = 'DD.MM.YYYY' }) {
   const [isOpen, setIsOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0, width: 0, ready: false })
@@ -19,7 +16,7 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
   const pickerRef = useRef(null)
 
   // Convert string date to Date object
-  const dateValue = value ? (typeof value === 'string' ? new Date(value) : value) : null
+  const dateValue = value ? (typeof value === 'string' ? new Date(value) : value) : ''
 
   // Format date for display (DD.MM.YYYY)
 
@@ -61,7 +58,7 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
-  const handleDateChange = (date) => { 
+  const handleDateChange = (date) => {
     if (date) {
       onChange(date)
       setInputValue(date)
@@ -74,17 +71,21 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
 
   return (
     <div className={styles.container} ref={containerRef}>
-      <CustomDatePicker
-        ref={datePickerRef}
-        value={dateValue}
-        format={dateFormat}
-        onChange={handleDateChange}
-      />
+      <div className='w-44'>
+        <CustomDatePicker
+          ref={datePickerRef}
+          value={dateValue}
+          format={dateFormat}
+          onChange={handleDateChange}
+          disabled={disabled}
+        />
+      </div>
       {showCheckbox && (
         <OperationCheckbox
           checked={checkboxValue}
           onChange={(e) => onCheckboxChange?.(e.target.checked)}
           label={checkboxLabel}
+          disabled={disabled || checkboxDisabled}
         />
       )}
     </div>

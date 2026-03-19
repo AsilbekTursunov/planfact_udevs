@@ -11,6 +11,7 @@ import Input from '../../shared/Input'
 import { GroupedSelect } from '../../common/GroupedSelect/GroupedSelect'
 import { appStore } from '../../../store/app.store'
 import { observer } from 'mobx-react-lite'
+import SinglSelectStatiya from '../../ReadyComponents/SingleSelectStatiya'
 
 export const OperationsFiltersSidebar = observer(({
   isOpen,
@@ -425,6 +426,8 @@ export const OperationsFiltersSidebar = observer(({
                       placeholder="Статьи учета"
                       valueKey="value"
                     />
+
+                    
 
                     {/* Price */}
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

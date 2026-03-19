@@ -1,18 +1,17 @@
 "use client"
 import React, { useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { cn } from '@/app/lib/utils'
-import { useLogin, useRegister } from '@/hooks/useAuth'
-import { Eye, EyeOff, ChevronDown, X } from 'lucide-react'
+import { useLogin } from '@/hooks/useAuth'
+import { Eye, EyeOff } from 'lucide-react'
 import { AuthLogo } from '@/constants/icons'
 import styles from './styles.module.scss'
 import Input from '@/components/shared/Input'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
 import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
 import { authStore } from '@/store/auth.store'
+import Loader from '../../../components/shared/Loader'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [fromType, setFromType] = useState('login')
   const [formData, setFormData] = useState({
     email: '',
@@ -214,16 +213,16 @@ export default function LoginPage() {
     }
 
     try {
-      if (fromType === 'login') { 
+      if (fromType === 'login') {
 
         await loginMutation.mutateAsync({
           email: formData.email,
           password: formData.password,
         })
 
-      } else { 
-        const cleanPhone = getCleanPhoneNumber(formData.phone) 
-        
+      } else {
+        const cleanPhone = getCleanPhoneNumber(formData.phone)
+
         const response = await registerAsync({
           method: 'auth_register_legal_entity',
           data: {
@@ -234,7 +233,18 @@ export default function LoginPage() {
             legal_entity_name: formData.name,
             branch_name: formData.branchName,
           }
-        }) 
+        }).catch((error) => {
+          // Handle specific "already exists" error
+          if (error.message && (
+            error.message.includes('already exists') || 
+            error.message.includes('уже существует') ||
+            error.message.includes('already registered') ||
+            error.message.includes('уже зарегистрирован')
+          )) {
+            throw new Error('Пользователь с таким email уже существует')
+          }
+          throw error
+        })
 
         // Сохраняем токен после успешной регистрации
         // Структура может быть: response.data.data.data.token или response.data.data.token
@@ -246,16 +256,16 @@ export default function LoginPage() {
           phone: cleanPhone
         }
 
-        
+
         if (tokenData) {
           console.log('✅ Token found!')
-          
+
           // Используем authStore для сохранения 
-          
+
           authStore.setAuthentication({
             token: tokenData,
             user_data: userData
-          }) 
+          })
 
           setTimeout(() => {
             window.location.href = '/pages/operations'
@@ -266,7 +276,7 @@ export default function LoginPage() {
           throw new Error('Токен не получен от сервера')
         }
       }
-    } catch (error) { 
+    } catch (error) {
       const errorMessage = error.message || (fromType === 'login' ? 'Ошибка при входе' : 'Ошибка при регистрации')
       setError(errorMessage)
     }
@@ -425,9 +435,9 @@ export default function LoginPage() {
                     placeholder="Email"
                   />
                 </div>
-                {fieldErrors.email && (
+                {/* {fieldErrors.email && (
                   <div className={styles.fieldError}>{fieldErrors.email}</div>
-                )}
+                )} */}
               </div>
             )}
 
@@ -609,8 +619,8 @@ export default function LoginPage() {
                 )}
               >
                 {fromType === 'login'
-                  ? (loginMutation.isPending ? 'Вход...' : 'Войти')
-                  : (isRegistering ? 'Регистрация...' : 'Зарегистрироваться')}
+                  ? (loginMutation.isPending ? (<Loader />) : 'Войти')
+                  : (isRegistering ? (<Loader />) : 'Зарегистрироваться')}
               </button>
             </div>
 

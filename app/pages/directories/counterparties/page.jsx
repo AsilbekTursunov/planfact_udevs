@@ -30,7 +30,10 @@ const calculationOptions = [
   { value: "Calculation", label: 'Учет методом начисления' },
 ]
 
-export default function CounterpartiesPage() {
+import counterpartiesStore from '@/store/counterparties.store'
+import { observer } from 'mobx-react-lite'
+
+const CounterpartiesPage = observer(() => {
 
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -52,17 +55,14 @@ export default function CounterpartiesPage() {
   const isLoadingRef = useRef(false) // Prevent duplicate requests
   const lastPageRef = useRef(1) // Track last loaded page
 
-  const [filters, setFilters] = useState({
-    debitPaymentTypes: [],
-    creditPaymentTypes: [],
-    selectedGroups: [],
-    selectedCounterparties: [],
-    selectedChartOfAccounts: [],
-    operationDateStart: "",
-    operationDateEnd: "",
-    calculationMethod: "Cashflow",
-    dateRange: null
-  })
+  const filters = counterpartiesStore.filters
+  const setFilters = (updater) => {
+    if (typeof updater === 'function') {
+      counterpartiesStore.setFilters(updater(counterpartiesStore.filters))
+    } else {
+      counterpartiesStore.setFilters(updater)
+    }
+  }
 
   // Debounce search query
   useEffect(() => {
@@ -291,6 +291,7 @@ export default function CounterpartiesPage() {
   }, [counterpartiesGroupsData])
 
 
+
   // Fetch chart of accounts for filter
   const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })
   // Flatten hierarchical structure to array
@@ -408,12 +409,14 @@ export default function CounterpartiesPage() {
           payables: item.payables || 0,
           debitorka: item.debitorka || 0,
           kreditorka: item.kreditorka || 0,
-          profit: item.profit || 0,
+          profit: item.profit,
           income: item?.income,
           expenses: item?.expense,
           difference: item?.difference,
+          profitDifference: filters.calculationMethod !== 'Cashflow' ? item.difference : item.profit,
           rawData: item
         }))
+
 
         return {
           id: `group-${group.guid}`,
@@ -421,7 +424,16 @@ export default function CounterpartiesPage() {
           nazvanie: group.nazvanie_gruppy || 'Без названия группы',
           data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
           isGroup: true,
-          items: children
+          items: children,
+          operationsCount: children.reduce((s, c) => s + (c.operationsCount || 0), 0),
+          receivables: children.reduce((s, c) => s + (c.receivables || 0), 0),
+          payables: children.reduce((s, c) => s + (c.payables || 0), 0),
+          debitorka: children.reduce((s, c) => s + (c.debitorka || 0), 0),
+          kreditorka: children.reduce((s, c) => s + (c.kreditorka || 0), 0),
+          profit: children.reduce((s, c) => s + (c.profit || 0), 0),
+          income: children.reduce((s, c) => s + (c.income || 0), 0),
+          expenses: children.reduce((s, c) => s + (c.expenses || 0), 0),
+          difference: children.reduce((s, c) => s + (c.difference || 0), 0),
         }
       })
 
@@ -488,7 +500,12 @@ export default function CounterpartiesPage() {
 
   return (
     <div className={styles.container}>
-      <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+      <FilterSidebar
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        clearCount={counterpartiesStore.activeFilterCount}
+        onClear={counterpartiesStore.resetFilters}
+      >
         <FilterSection title="Параметры">
           <div className="space-y-2.5">
             <MultiSelect
@@ -691,7 +708,7 @@ export default function CounterpartiesPage() {
                     </button>
                   </th>
                   <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
+                    <button className={`${styles.tableHeaderButton} ${styles.groupColumn} ${styles.column}`}>
                       Группа
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -700,7 +717,7 @@ export default function CounterpartiesPage() {
                   </th>
                   {filters.calculationMethod !== 'Cashflow' && (
                     <th className={styles.tableHeaderCell}>
-                      <button className={styles.tableHeaderButton}>
+                      <button className={`${styles.tableHeaderButton} ${styles.innColumn} ${styles.column}`}>
                         ИНН
                         <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -709,7 +726,7 @@ export default function CounterpartiesPage() {
                     </th>
                   )}
                   <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
+                    <button className={`${styles.tableHeaderButton} ${styles.operationsColumn} ${styles.column}`}>
                       Операций
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -717,7 +734,7 @@ export default function CounterpartiesPage() {
                     </button>
                   </th>
                   <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
+                    <button className={`${styles.tableHeaderButton} ${styles.debitColumn} ${styles.column}`}>
                       Дебиторка ₽
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -725,7 +742,7 @@ export default function CounterpartiesPage() {
                     </button>
                   </th>
                   <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
+                    <button className={`${styles.tableHeaderButton} ${styles.creditColumn} ${styles.column}`}>
                       Кредиторка ₽
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -735,7 +752,7 @@ export default function CounterpartiesPage() {
                   {filters.calculationMethod === 'Cashflow' ? (
                     <>
                       <th className={styles.tableHeaderCell}>
-                        <button className={styles.tableHeaderButton}>
+                        <button className={`${styles.tableHeaderButton} ${styles.incomeColumn} ${styles.column}`}>
                           Поступления ₽
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -743,7 +760,7 @@ export default function CounterpartiesPage() {
                         </button>
                       </th>
                       <th className={styles.tableHeaderCell}>
-                        <button className={styles.tableHeaderButton}>
+                        <button className={`${styles.tableHeaderButton} ${styles.expensesColumn} ${styles.column}`}>
                           Выплаты ₽
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -751,7 +768,7 @@ export default function CounterpartiesPage() {
                         </button>
                       </th>
                       <th className={styles.tableHeaderCell}>
-                        <button className={styles.tableHeaderButton}>
+                        <button className={`${styles.tableHeaderButton} ${styles.profitColumn} ${styles.column}`}>
                           Разница ₽
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -762,7 +779,7 @@ export default function CounterpartiesPage() {
                   ) : (
                     <>
                       <th className={styles.tableHeaderCell}>
-                        <button className={styles.tableHeaderButton}>
+                          <button className={`${styles.tableHeaderButton} ${styles.incomeColumn} ${styles.column}`}>
                           Доходы ₽
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -770,7 +787,7 @@ export default function CounterpartiesPage() {
                         </button>
                       </th>
                       <th className={styles.tableHeaderCell}>
-                        <button className={styles.tableHeaderButton}>
+                          <button className={`${styles.tableHeaderButton} ${styles.expensesColumn} ${styles.column}`}>
                           Расходы ₽
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -778,7 +795,7 @@ export default function CounterpartiesPage() {
                         </button>
                       </th>
                       <th className={styles.tableHeaderCell}>
-                        <button className={styles.tableHeaderButton}>
+                          <button className={`${styles.tableHeaderButton} ${styles.profitColumn} ${styles.column}`}>
                           Прибыль ₽
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -810,9 +827,8 @@ export default function CounterpartiesPage() {
                       (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item, itemIndex) => {
                     if (item.isGroup) {
                       const isExpanded = expandedGroups.has(item.guid)
-                      // const isLastChild = (index) => index === item.items.length - 1
-                      console.log('item', item)
-                      console.log('viewMode', viewMode)
+                      const styleDifference = item.difference > 0 ? 'textGreen' : item.difference < 0 ? 'textRed' : 'textMuted'
+                      const styleProfit = item.profit > 0 ? 'textGreen' : item.profit < 0 ? 'textRed' : 'textMuted'
                       return (
                         <React.Fragment key={item.id}>
                           <tr className={cn(styles.tableRow, styles.groupRow)} onClick={() => toggleGroup(item.guid)}>
@@ -839,16 +855,28 @@ export default function CounterpartiesPage() {
                                 </span>
                               </div>
                             </td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
+                            <td className={cn(styles.tableCell, styles.textMuted)}></td>
                             {filters.calculationMethod !== 'Cashflow' && (
-                              <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
+                              <td className={cn(styles.tableCell, styles.textMuted)}>-</td>
                             )}
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
+                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.operationsCount > 0 ? item.operationsCount.toLocaleString('ru-RU') : '–'}</td>
+                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.debitorka > 0 ? item.debitorka.toLocaleString('ru-RU') : '0'}</td> {/* Дебиторка */}
+                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.kreditorka > 0 ? item.kreditorka.toLocaleString('ru-RU') : '0'}</td> {/* Кредиторка */}
+                            <td className={cn(styles.tableCell, styles.textMuted)}>
+                              {filters.calculationMethod === 'Cashflow' ? (item?.income > 0 ? item?.income.toLocaleString('ru-RU') : '0') : (item?.income?.toLocaleString('ru-RU') || '0')}
+                            </td> {/* Поступления  || Доходы */}
+                            <td className={cn(styles.tableCell, styles.textMuted)}>
+                              {filters.calculationMethod === 'Cashflow' ? (item.expenses > 0 ? item.expenses.toLocaleString('ru-RU') : '0') : (item?.expenses?.toLocaleString('ru-RU') || '0')}
+                            </td> {/* Выплаты || Расходы  */}
+                            {filters.calculationMethod === 'Cashflow' ? (
+                              <td className={cn(styles.tableCell, styles[styleDifference], styles.groupFinal)}>
+                                {item.difference === 0 ? '0' : `${item.difference > 0 ? '+' : ''}${item.difference.toLocaleString('ru-RU') || '0'}`}
+                              </td>
+                            ) : (
+                              <td className={cn(styles.tableCell, styles[styleProfit], styles.groupFinal)}>
+                                {item.profit === 0 ? '0' : `${item.profit > 0 ? '+' : ''}${item.profit.toLocaleString('ru-RU') || '0'}`}
+                              </td>
+                            )} {/* Разница || Прибыль*/}
                             <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                               <GroupMenu
                                 group={item}
@@ -868,51 +896,55 @@ export default function CounterpartiesPage() {
                               </td>
                             </tr>
                           )}
-                          {isExpanded && item.items.map((counterparty, childIndex) => (
-                            <tr
-                              key={counterparty.id}
-                              className={cn(
-                                styles.tableRow,
-                                styles.childRow,
-                                isRowSelected(counterparty.id) && styles.selected
-                              )}
-                              onClick={() => router.push(`/pages/directories/counterparties/${counterparty.guid}`)}
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <td className={cn(styles.tableCell, styles.tableCellIndex)} onClick={(e) => e.stopPropagation()}>
+                          {isExpanded && item.items.map((counterparty, childIndex) => {
+                            const styleDifference = counterparty.difference > 0 ? 'textGreen' : counterparty.difference < 0 ? 'textRed' : 'textMuted'
+                            const styleProfit = counterparty.profit > 0 ? 'textGreen' : counterparty.profit < 0 ? 'textRed' : 'textMuted'
+                            return (
+                              <tr
+                                key={counterparty.id}
+                                className={cn(
+                                  styles.tableRow,
+                                  styles.childRow,
+                                  isRowSelected(counterparty.id) && styles.selected
+                                )}
+                                onClick={() => router.push(`/pages/directories/counterparties/${counterparty.guid}`)}
+                                style={{ cursor: 'pointer' }}
+                              >
+                                <td className={cn(styles.tableCell, styles.tableCellIndex)} onClick={(e) => e.stopPropagation()}>
 
-                              </td>
-                              <td className={cn(styles.tableCell, styles.text)}>{counterparty.nazvanie}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.gruppa || '–'}</td>
-                              {filters.calculationMethod !== 'Cashflow' && (
-                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.inn || '–'}</td>
-                              )}
-                              <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.receivables?.toLocaleString('ru-RU') || '0'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.payables?.toLocaleString('ru-RU') || '0'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.debitorka?.toLocaleString('ru-RU') || '0'}</td>
-                              <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
-                              {filters.calculationMethod === 'Cashflow' ? (
-                                <td className={cn(styles.tableCell, styles.textMuted)}>
-                                  {((counterparty.debitorka || 0) - (counterparty.kreditorka || 0)).toLocaleString('ru-RU')}
                                 </td>
-                              ) : (
-                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.profit?.toLocaleString('ru-RU') || '0'}</td>
-                              )}
-                              <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
-                                <CounterpartyMenu
-                                  counterparty={counterparty}
-                                  onEdit={(cp) => setEditingCounterparty(cp)}
-                                  onDelete={(cp) => setDeletingCounterparty(cp)}
-                                />
-                              </td>
-                            </tr>
-                          ))}
+                                <td className={cn(styles.tableCell, styles.text)}>{counterparty.nazvanie}</td>
+                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.gruppa || '–'}</td>
+                                {filters.calculationMethod !== 'Cashflow' && (
+                                  <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.inn || '–'}</td>
+                                )}
+                                <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
+                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.debitorka?.toLocaleString('ru-RU') || '0'}</td>
+                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
+                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.income?.toLocaleString('ru-RU') || '0'}</td>
+                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.expenses?.toLocaleString('ru-RU') || '0'}</td>
+                                {filters.calculationMethod !== 'Cashflow' ? (
+                                  <td className={cn(styles.tableCell, styles[styleDifference])}>
+                                    {counterparty.difference === 0 ? '0' : `${counterparty.difference > 0 ? '+' : ''}${counterparty.difference.toLocaleString('ru-RU') || '0'}`}
+                                  </td>
+                                ) : (
+                                  <td className={cn(styles.tableCell, styles[styleProfit])}>
+                                    {counterparty.profit === 0 ? '0' : `${counterparty.profit > 0 ? '+' : ''}${counterparty.profit.toLocaleString('ru-RU') || '0'}`}
+                                  </td>
+                                )}
+                                <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
+                                  <CounterpartyMenu
+                                    counterparty={counterparty}
+                                    onEdit={(cp) => setEditingCounterparty(cp)}
+                                    onDelete={(cp) => setDeletingCounterparty(cp)}
+                                  />
+                                </td>
+                              </tr>
+                            )
+                          })}
                         </React.Fragment>
                       )
                     } else {
-                      console.log('item', item)
-                      console.log('viewMode', viewMode)
                       return (
                         <tr
                           key={item.id}
@@ -944,12 +976,14 @@ export default function CounterpartiesPage() {
 
                           <td className={cn(styles.tableCell, styles.textMuted)}>{item.expenses?.toLocaleString('ru-RU') || '0'}</td>
 
-                          {filters.calculationMethod === 'Cashflow' ? (
-                            <td className={cn(styles.tableCell, item.difference > 0 ? styles.textGreen : styles.textRed)}>
-                              {item.difference?.toLocaleString('ru-RU')}
+                          {filters.calculationMethod !== 'Cashflow' ? (
+                            <td className={cn(styles.tableCell, item.difference > 0 ? styles.textGreen : item.difference < 0 ? styles.textRed : styles.textMuted)}>
+                              {item.difference === 0 ? '0' : `${item.difference > 0 ? '+' : ''}${item.difference?.toLocaleString('ru-RU')}`}
                             </td>
                           ) : (
-                              <td className={cn(styles.tableCell, item.profit > 0 ? styles.textGreen : styles.textRed)}>{item.profit?.toLocaleString('ru-RU') || '0'}</td>
+                              <td className={cn(styles.tableCell, item.profit > 0 ? styles.textGreen : item.profit < 0 ? styles.textRed : styles.textMuted)}>
+                                {item.profit === 0 ? '0' : `${item.profit > 0 ? '+' : ''}${item.profit?.toLocaleString('ru-RU') || '0'}`}
+                              </td>
                           )}
                           <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
                             <CounterpartyMenu
@@ -1060,7 +1094,7 @@ export default function CounterpartiesPage() {
             <span className={styles.footerLabel}>Разница</span>
             <div className={styles.footerValueContainer}>
               <span className={cn(styles.footerValue, difference > 0 ? styles.positive : difference < 0 ? styles.negative : '')}>
-                {difference > 0 ? '+' : ''}{difference.toLocaleString('ru-RU')}
+                {difference === 0 ? '0' : `${difference > 0 ? '+' : ''}${difference.toLocaleString('ru-RU')}`}
               </span>
               <TbCurrencyRubel className={cn(styles.footerCurrencyIcon, difference > 0 ? styles.positive : difference < 0 ? styles.negative : '')} />
             </div>
@@ -1160,4 +1194,6 @@ export default function CounterpartiesPage() {
       />
     </div>
   )
-}
+})
+
+export default CounterpartiesPage

@@ -1,48 +1,106 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { observer } from 'mobx-react-lite'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import styles from './ReportFilterSidebar.module.scss'
 import '@/styles/report-filters.css'
 import NewDateRangeComponent from '../../directories/NewDateRangeComponent'
 import { GroupedSelect } from '../../common/GroupedSelect/GroupedSelect'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
+import { useUcodeRequestQuery } from '@/hooks/useDashboard'
+import { reportsStore } from '@/store/reports.store'
 
-export function ReportFilterSidebar({
+export const ReportFilterSidebar = observer(({
   isOpen,
   onClose,
-  // Period filter
-  periodOptions,
-  selectedPeriod,
-  onPeriodChange,
-  // Legal entity filter
-  entityOptions,
-  selectedEntity,
-  onEntityChange,
   // Account filter
-  accountOptions,
-  selectedAccounts,
+  accountOptions: propsAccountOptions,
+  selectedAccounts: propsSelectedAccounts,
   onAccountsChange,
   // Counterparty filter
-  counterpartyOptions,
-  selectedCounterparties,
+  counterpartyOptions: propsCounterpartyOptions,
+  selectedCounterparties: propsSelectedCounterparties,
   onCounterpartiesChange,
   // Date range filter
-  dateRange,
+  dateRange: propsDateRange,
   onDateRangeChange,
   // Grouping filter (optional)
   groupingOptions,
-  selectedGrouping,
+  selectedGrouping: propsSelectedGrouping,
   onGroupingChange,
   // Profit types filter (optional)
-  profitTypes,
+  profitTypes: propsProfitTypes,
   onProfitTypesChange
-}) {
+}) => {
   const [activeTab, setActiveTab] = useState('general')
 
-  if (!isOpen) return null
+  const { data: counterpartiesGroupData } = useUcodeRequestQuery({
+    method: 'get_counterparties_group',
+    data: { limit: 1000, page: 1 },
+    skip: !!propsCounterpartyOptions
+  })
 
-  console.log('counterpartyOptions', counterpartyOptions) 
+  const { data: myAccountsData } = useUcodeRequestQuery({
+    method: 'get_my_accounts',
+    data: { limit: 1000, page: 1 },
+    skip: !!propsAccountOptions
+  })
+
+  const accountOptions = propsAccountOptions || useMemo(() => {
+    if (!myAccountsData) return []
+    const chartOfAccountsRaw = myAccountsData?.data?.data?.data || []
+    const flatten = (items) => {
+      let result = []
+      items.forEach(item => {
+        result.push(item)
+        if (item.children && item.children.length > 0) {
+          result = result.concat(flatten(item.children))
+        }
+      })
+      return result
+    }
+    const myAccounts = Array.isArray(chartOfAccountsRaw) ? flatten(chartOfAccountsRaw) : []
+    return myAccounts.map(item => ({
+      value: item.guid,
+      label: item.nazvanie || 'Без названия',
+      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
+    }))
+  }, [myAccountsData])
+
+  const counterpartyOptions = propsCounterpartyOptions || useMemo(() => {
+    if (!counterpartiesGroupData) return []
+    const groups = counterpartiesGroupData?.data?.data?.data || []
+    const hasChildren = groups.filter(item => item.children && item.children.length > 0)
+    return hasChildren.map(item => [
+      { value: '', label: item.nazvanie_gruppy, group: item.nazvanie_gruppy },
+      ...(item.children || []).map(child => ({
+        value: child.guid,
+        label: child.nazvanie || '',
+        group: item.nazvanie_gruppy
+      }))
+    ]).flat()
+  }, [counterpartiesGroupData])
+
+  const currentDateRange = propsDateRange !== undefined ? propsDateRange : reportsStore.dateRange
+  const handleDateRangeChange = (val) => onDateRangeChange ? onDateRangeChange(val) : reportsStore.setFilter('dateRange', val)
+
+  const currentAccounts = propsSelectedAccounts !== undefined ? propsSelectedAccounts : reportsStore.selectedAccounts
+  const handleAccountsChange = (val) => onAccountsChange ? onAccountsChange(val) : reportsStore.setFilter('selectedAccounts', val)
+
+  const currentCounterparties = propsSelectedCounterparties !== undefined ? propsSelectedCounterparties : reportsStore.selectedCounterparties
+  const handleCounterpartiesChange = (val) => onCounterpartiesChange ? onCounterpartiesChange(val) : reportsStore.setFilter('selectedCounterparties', val)
+
+  const currentGrouping = propsSelectedGrouping !== undefined ? propsSelectedGrouping : reportsStore.selectedGrouping
+  const handleGroupingChange = (val) => onGroupingChange ? onGroupingChange(val) : reportsStore.setFilter('selectedGrouping', val)
+
+  const currentProfitTypes = propsProfitTypes !== undefined ? propsProfitTypes : reportsStore.profitTypes
+  const handleProfitTypesChange = (val) => onProfitTypesChange ? onProfitTypesChange(val) : reportsStore.toggleProfitType(val)
+
+  // Show profit types if we are not getting explicit props (i.e. used dynamically via mobx for P&L)
+  const showProfitTypes = !propsCounterpartyOptions
+
+  if (!isOpen) return null
 
   return (
     <div className={`${styles.sidebar} report-filter-sidebar`}>
@@ -90,20 +148,18 @@ export function ReportFilterSidebar({
                 </svg> */}
               </h3>
               <NewDateRangeComponent
-                value={dateRange}
-                onChange={onDateRangeChange}
+                value={currentDateRange}
+                onChange={handleDateRangeChange}
               />
             </div>
 
             {/* Счет - всегда показываем */}
-            <div className={styles.filterSection}> 
+            <div className={styles.filterSection}>
               {accountOptions && accountOptions.length > 0 ? (
                 <MultiSelect
                   data={accountOptions}
-                  value={selectedAccounts}
-                  onChange={(value) => {
-                    onAccountsChange(value)
-                  }}
+                  value={currentAccounts}
+                  onChange={handleAccountsChange}
                   placeholder="Юрлица и счета"
                   hideSelectAll={true}
                   valueKey="value"
@@ -121,12 +177,12 @@ export function ReportFilterSidebar({
             </div>
 
             {/* Контрагент - всегда показываем */}
-            <div className={styles.filterSection}> 
+            <div className={styles.filterSection}>
               {counterpartyOptions && counterpartyOptions.length > 0 ? (
                 <MultiSelect
                   data={counterpartyOptions}
-                  value={selectedCounterparties}
-                  onChange={onCounterpartiesChange}
+                  value={currentCounterparties}
+                  onChange={handleCounterpartiesChange}
                   hideSelectAll={true}
                   placeholder="Все контрагенты"
                   valueKey="value"
@@ -156,15 +212,17 @@ export function ReportFilterSidebar({
                 </h3>
                 <GroupedSelect
                   data={groupingOptions}
-                  value={selectedGrouping}
-                  onChange={onGroupingChange}
+                  value={currentGrouping}
+                  onChange={handleGroupingChange}
                   placeholder="Способ построения"
                 />
               </div>
             )}
 
             {/* Виды прибыли (опционально) */}
-            {profitTypes && onProfitTypesChange && (
+
+
+            {showProfitTypes && (
               <div className={styles.filterSection}>
                 <h3 className={styles.filterSectionTitle}>
                   Виды прибыли
@@ -172,41 +230,43 @@ export function ReportFilterSidebar({
                 <div className={styles.checkboxGroup}>
                   <label className={styles.checkboxLabel}>
                     <OperationCheckbox
-                      checked={profitTypes.operational}
-                      onChange={() => onProfitTypesChange('operational')}
+                      checked={currentProfitTypes?.operational}
+                      onChange={() => handleProfitTypesChange('operational')}
                       label="Операционная"
-                    /> 
+                    />
                   </label>
 
                   <label className={styles.checkboxLabel}>
                     <OperationCheckbox
-                      checked={profitTypes.ebitda}
-                      onChange={() => onProfitTypesChange('ebitda')}
+                      checked={currentProfitTypes?.ebitda}
+                      onChange={() => handleProfitTypesChange('ebitda')}
                       label="EBITDA"
-                    /> 
+                    />
                   </label>
 
                   <label className={styles.checkboxLabel}>
                     <OperationCheckbox
-                      checked={profitTypes.ebit}
-                      onChange={() => onProfitTypesChange('ebit')}
+                      checked={currentProfitTypes?.ebit}
+                      onChange={() => handleProfitTypesChange('ebit')}
                       label="EBIT"
-                    /> 
+                    />
                   </label>
 
                   <label className={styles.checkboxLabel}>
                     <OperationCheckbox
-                      checked={profitTypes.ebt}
-                      onChange={() => onProfitTypesChange('ebt')}
+                      checked={currentProfitTypes?.ebt}
+                      onChange={() => handleProfitTypesChange('ebt')}
                       label="EBT"
-                    /> 
+                    />
                   </label>
                 </div>
               </div>
             )}
+
+
           </div>
         )}
       </div>
     </div>
   )
-}
+})

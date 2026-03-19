@@ -143,7 +143,11 @@ export default function CashFlowReportPage() {
   }, [dateParams, selectedGrouping, selectedEntity, selectedBankAccounts, selectedCounterparties])
 
   // Fetch report data
-  const { data: rawReportData, isLoading, isFetching } = useCashFlowReport(reportQueryParams)
+  const { data: rawReportData, isLoading, isFetching, refetch } = useCashFlowReport(reportQueryParams)
+
+  useEffect(() => {
+    refetch()
+  }, [refetch])
 
   const reportData = rawReportData?.data?.data?.data || null
   const loading = isLoading || isFetching

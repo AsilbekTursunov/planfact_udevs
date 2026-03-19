@@ -21,6 +21,8 @@ import { useUcodeRequestQuery } from '../../../../../hooks/useDashboard'
 import { formatDate } from '../../../../../utils/formatDate'
 import { formatDateRu } from '../../../../../utils/helpers'
 import OperationTableRow from '../../../../../components/operations/TableRow'
+import { observer } from 'mobx-react-lite'
+import counterpartiesStore from '@/store/counterparties.store'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -28,17 +30,19 @@ const calculationOptions = [
   { value: "Calculation", label: 'Учет методом начисления' },
 ]
 
-export default function KontragentDetailPage() {
+const KontragentDetailPage = observer(() => {
   const params = useParams()
   const router = useRouter()
   const counterpartyGuid = params?.id
   const ucodeRequestMutation = useUcodeRequestMutation()
 
-  const [filters, setFilters] = useState({
-    operationDateStart: "",
-    operationDateEnd: "",
-    calculationMethod: "Cashflow",
-  })
+  const filters = counterpartiesStore.filtersingleCounterparty
+  const setFilters = (update) => {
+    counterpartiesStore.setSingleCounterpartyFilters(
+      typeof update === 'function' ? update(counterpartiesStore.filtersingleCounterparty) : update
+    )
+  }
+
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -73,8 +77,7 @@ export default function KontragentDetailPage() {
   const [isEditModalClosing, setIsEditModalClosing] = useState(false)
   const [isEditModalOpening, setIsEditModalOpening] = useState(false)
   const [deletingOperation, setDeletingOperation] = useState(null)
-  const [isEditCounterpartyModalOpen, setIsEditCounterpartyModalOpen] = useState(false)
-  const [expandedRows, setExpandedRows] = useState({})
+  const [isEditCounterpartyModalOpen, setIsEditCounterpartyModalOpen] = useState(false) 
   const deleteOperationMutation = useDeleteOperation()
   const queryClient = useQueryClient()
 
@@ -85,7 +88,7 @@ export default function KontragentDetailPage() {
       operationDateEnd: filters.operationDateEnd,
       calculationMethod: filters.calculationMethod,
     }
-  }, [counterpartyGuid, filters])
+  }, [counterpartyGuid, filters.operationDateStart, filters.operationDateEnd, filters.calculationMethod])
 
   // Fetch counterparty data by GUID using get_counterparty_by_id
   const { data: counterpartyData, isPending: isLoadingCounterparty } = useUcodeRequestQuery({
@@ -965,10 +968,7 @@ export default function KontragentDetailPage() {
                   <div className={styles.emptyStateTitle}>Создайте операции с контрагентом</div>
                   <div className={styles.emptyStateSubtitle}>
                     Добавляйте платежи и учитывайте предоплаты или отсрочки.
-                  </div>
-                  <a href="#" className={styles.emptyStateLink} onClick={(e) => { e.preventDefault(); setIsCreateOperationModalOpen(true) }}>
-                    Как это работает — читайте в статье.
-                  </a>
+                    </div> 
                 </div>
               </div>
               ) : filteredOperations.length === 0 ? (
@@ -1191,4 +1191,6 @@ export default function KontragentDetailPage() {
       />
     </div>
   )
-}
+})
+
+export default KontragentDetailPage

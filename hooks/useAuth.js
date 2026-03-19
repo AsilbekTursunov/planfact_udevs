@@ -51,35 +51,27 @@ export function useLogin() {
         throw new Error('Invalid response from server')
       }
 
-      if (!response.ok || data.status === 'ERROR' || data.status === 'BAD_REQUEST') {
-        throw new Error(data.description || data.message || 'Ошибка при входе')
+      if (!response.ok || data.status === 'ERROR' || data.status === 'BAD_REQUEST' || data.status === 'INVALID_ARGUMENT') {
+        const errorMessage = typeof data.data === 'string' ? data.data : (data.description || data.message || 'Ошибка при входе')
+        throw new Error(errorMessage)
       }
 
       return data
     },
-    onSuccess: (data) => {
-      console.log('=== LOGIN SUCCESS ===')
-      console.log('Full response:', data)
-      
+    onSuccess: (data) => { 
       // Response structure: { status: "CREATED", data: { status: "success", data: { data: {...} } } }
-      const responseData = data.data
-      console.log('Response data:', responseData)
+      const responseData = data.data 
       
       // Токен находится глубже в структуре
-      const innerData = responseData?.data?.data
-      console.log('Inner data:', innerData)
+      const innerData = responseData?.data?.data 
       
       const tokenData = innerData?.token?.access_token
       const refreshToken = innerData?.token?.refresh_token
       const userData = innerData?.user_data || innerData?.userData || innerData?.user
-      
-      console.log('Token data:', tokenData)
-      console.log('Refresh token:', refreshToken)
-      console.log('User data:', userData)
+
 
       // Set authentication state through MobX store
-      if (tokenData && userData) {
-        console.log('Setting authentication in authStore...')
+      if (tokenData && userData) { 
         authStore.setAuthentication({ 
           token: tokenData,
           refresh_token: refreshToken,
@@ -130,12 +122,7 @@ export function useRegister() {
           client_type_id: clientTypeId,
           role_id: roleId
         }
-      }
-
-      console.log('=== REGISTER REQUEST (NEW API) ===')
-      console.log('URL:', url)
-      console.log('Request Body:', JSON.stringify(requestBody, null, 2))
-      console.log('===================================')
+      } 
 
       const response = await fetch(url, {
         method: 'POST',
@@ -156,8 +143,8 @@ export function useRegister() {
         throw new Error('Invalid JSON response from server')
       }
 
-      if (!response.ok) {
-        const errorMessage = data.message || data.description || 'Ошибка при регистрации'
+      if (!response.ok || data.status === 'ERROR' || data.status === 'BAD_REQUEST' || data.status === 'INVALID_ARGUMENT') {
+        const errorMessage = typeof data.data === 'string' ? data.data : (data.message || data.description || 'Ошибка при регистрации')
         throw new Error(errorMessage)
       }
 

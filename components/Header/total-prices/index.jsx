@@ -103,7 +103,7 @@ const TotalPrice = () => {
 
 
     return (
-        <div ref={balanceRef} style={{ position: 'relative' }}>
+        <div ref={balanceRef} style={{ position: 'relative', zIndex: 10000 }}>
             <div className={styles.balanceSection}>
                 <div
                     onClick={() => {

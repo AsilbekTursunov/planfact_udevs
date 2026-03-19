@@ -3,34 +3,52 @@
 import { useState } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './FilterSidebar.module.scss'
+import { Trash } from 'lucide-react'
 
-export function FilterSidebar({ isOpen, onClose, children }) {
+export function FilterSidebar({ isOpen, onClose, children, clearCount, onClear }) {
   const [activeTab, setActiveTab] = useState('general')
 
   return (
     <div className={cn(styles.sidebar, isOpen ? styles.open : styles.closed)}>
       <div className={styles.content}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Фильтры</h2>
-          <button 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 className={styles.title}>Фильтры</h2>
+
+            {clearCount > 0 && onClear && (
+              <button
+                onClick={onClear}
+                className={styles.clearButton}
+                title="Очистить фильтры"
+              >
+                {clearCount > 0 && (
+                  <span className={styles.clearCount}>
+                    {clearCount}
+                  </span>
+                )}
+                <Trash size={16} color='gray' className={styles.deleteIcon} />
+              </button>
+            )}
+          </div>
+          <button
             onClick={onClose}
             className={styles.closeButton}
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
 
         {/* Табы фильтров */}
         <div className={styles.filterTabs}>
-          <button 
+          <button
             className={cn(styles.filterTab, activeTab === 'general' ? styles.active : styles.inactive)}
             onClick={() => setActiveTab('general')}
           >
             Общие
           </button>
-          <button 
+          <button
             className={cn(styles.filterTab, activeTab === 'quick' ? styles.inactive : styles.inactive)}
             onClick={() => setActiveTab('quick')}
             disabled

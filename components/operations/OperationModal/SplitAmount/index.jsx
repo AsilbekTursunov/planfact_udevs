@@ -10,11 +10,13 @@ import { GroupedSelect } from '../../../common/GroupedSelect/GroupedSelect'
 import { TreeSelect } from '../../../common/TreeSelect/TreeSelect'
 
 
+
 import { SplitAmountCancelModal } from './SplitAmountCancelModal'
+import CustomModal from '../../../shared/CustomModal'
 
 const today = new Date().getDate()
 
-const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx }) => {
+const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx, disabled }) => {
   const cellRef = useRef(null)
   const isOpened = openCalendarIdx === i
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
@@ -32,11 +34,12 @@ const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx }) => 
   return (
     <div className="date-cell-wrapper" ref={cellRef}>
       <div className="date-cell" onClick={(e) => {
+        if (disabled) return
         e.stopPropagation()
         setOpenCalendarIdx(isOpened ? null : i)
       }}>
         <CalendarCellIcon />
-        <span className="date-value">{formatDateRu(row.calculationDate)}</span>
+        <span className={`date-value ${disabled ? ' cursor-not-allowed' : ''}`}>{formatDateRu(row.calculationDate)}</span>
       </div>
       {isOpened && typeof window !== 'undefined' && createPortal(
         <div
@@ -63,7 +66,7 @@ const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx }) => 
 // ── Main component ──────────────────────────────────────────
 const SplitAmount = ({ amount, counterAgents,
   chartOfAccountsOptions, onChange, rows,
-  dispatch, selectedSplits, setSelectedSplits, confirmPayment, initiallyOpen = false, modalType }) => {
+  dispatch, selectedSplits, setSelectedSplits, confirmPayment, initiallyOpen = false, modalType, salesDeal }) => {
   const [open, setOpen] = useState(initiallyOpen)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
 
@@ -124,21 +127,16 @@ const SplitAmount = ({ amount, counterAgents,
 
 
   const handleCheckRow = (isFutureDate, index, check) => {
-    if (isFutureDate) {
+    if (isFutureDate || salesDeal) {
       return
     }
     dispatch({ type: 'UPDATE', index, field: 'isCalculationCommitted', value: check })
   }
  
 
+
   return (
     <div className="split-wrapper">
-      <SplitAmountCancelModal
-        isOpen={isCancelModalOpen}
-        onCancel={() => setIsCancelModalOpen(false)}
-        onConfirm={handleConfirmCancel}
-      />
-
       <button
         type="button"
         className="split-title"
@@ -196,25 +194,32 @@ const SplitAmount = ({ amount, counterAgents,
                     const rowDate = row.calculationDate ? Number(row.calculationDate?.slice(-2)) : today;
                     const isFutureDate = rowDate ? rowDate > today : false;
 
+                    const isDebit = ((modalType === 'income' && !confirmPayment && row.isCalculationCommitted) || (modalType === 'payment' && confirmPayment && !row.isCalculationCommitted)) && (showDate && !isFutureDate && !salesDeal)
+
+                    const isCredit = ((modalType === 'income' && confirmPayment && !row.isCalculationCommitted) || (modalType === 'payment' && !confirmPayment && row.isCalculationCommitted)) && (showDate && !isFutureDate && !salesDeal)
+
 
                     return (
                       <tr key={i} className="split-tr">
                         {showDate && (
                           <>
                             {/* Date cell */}
-                            <td className="split-td col-date">
+                            <td className={`split-td col-date ${salesDeal ? ' cursor-not-allowed opacity-30' : ''}`}>
                               <DateCell
                                 row={row}
                                 i={i}
                                 dispatch={dispatch}
+                                disabled={salesDeal}
                                 openCalendarIdx={openCalendarIdx}
                                 setOpenCalendarIdx={setOpenCalendarIdx}
-                              />                            </td>
+                              />
+                            </td>
                             {/* Confirm checkbox */}
-                            <td className="split-td col-confirm">
+                            <td className={`split-td col-confirm ${salesDeal ? ' cursor-not-allowed opacity-30' : ''}`}>
                               <OperationCheckbox
-                                checked={isFutureDate ? false : row.isCalculationCommitted}
+                                checked={isFutureDate || salesDeal ? false : row.isCalculationCommitted}
                                 onChange={e => handleCheckRow(isFutureDate, i, e.target.checked)}
+                                disabled={salesDeal}
                               />
                             </td>
                           </>
@@ -261,10 +266,8 @@ const SplitAmount = ({ amount, counterAgents,
                         {/* Сумма */}
                         <td className="split-td col-value">
                           <div className="value-cell-wrapper">
-                            {modalType === 'income' && showDate && !isFutureDate && row.isCalculationCommitted && !confirmPayment && <DebitIcon />}
-                            {modalType === 'income' && showDate && !isFutureDate && !row.isCalculationCommitted && confirmPayment && <CreditIcon />}
-                            {modalType === 'payment' && showDate && !isFutureDate && !row.isCalculationCommitted && confirmPayment && <DebitIcon />}
-                            {modalType === 'payment' && showDate && !isFutureDate && row.isCalculationCommitted && !confirmPayment && <CreditIcon />}
+                            {isDebit && <DebitIcon />}
+                            {isCredit && <CreditIcon />}
 
                             <input
                               type="text"
@@ -286,7 +289,7 @@ const SplitAmount = ({ amount, counterAgents,
                               type="text"
                               className="percent-input"
                               placeholder="0"
-                              maxLength={5} 
+                              maxLength={5}
                               value={row.percent}
                               onChange={e => {
                                 const perc = e.target.value.replace(/[^\d.]/g, '');
@@ -339,6 +342,26 @@ const SplitAmount = ({ amount, counterAgents,
           </div>}
         </>
       )}
+
+      <CustomModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} >
+        <div className='flex items-center justify-between px-4 py-5'>
+          <h3 className='text-base font-medium text-gray-900 '>Подтвердите, что вы хотите отменить разбиение суммы операции. Это приведет к удалению ранее введенных данных.</h3>
+        </div>
+        <div className='flex items-center justify-end gap-4'>
+          <button
+            className={'secondary-btn'}
+            onClick={() => setIsCancelModalOpen(false)}
+          >
+            Вернуться
+          </button>
+          <button
+            className={'primary-btn'}
+            onClick={handleConfirmCancel}
+          >
+            Подтвердить
+          </button>
+        </div>
+      </CustomModal>
     </div>
   )
 }

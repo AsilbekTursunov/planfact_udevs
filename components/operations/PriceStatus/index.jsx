@@ -11,9 +11,9 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency }) => {
     <div
       className={cn(
         styles.container,
-        type === 'in' && styles.positive,
-        type === 'out' && styles.negative,
-        type === 'transfer' && styles.neutral
+        tab === 'Поступление' && styles.positive,
+        tab === 'Выплата' && styles.negative,
+        tab === 'Перемещение' && styles.neutral
       )}
     >
       {/* Debit icon (Д) - показываем когда НЕ confirmed И accrual = true */}
@@ -31,13 +31,13 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency }) => {
         <CreditIcon />
       )}
       <span className={styles.amountText}>{tab == "Перемещение" ? <>
-        <div className={`${styles.doubleAccount}`}>
-          <span className=''>-{amount} <span className={styles.currency}>{
+        <div className={`${styles.doubleAccount} flex flex-col gap-1`}>
+          <span className='flex items-center gap-1'>-{amount} <span className={styles.currency}>{
             currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
-          <span className=''>+{amount} <span className={styles.currency}>{
+          <span className='flex items-center gap-1'>+{amount} <span className={styles.currency}>{
             currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
         </div>
-      </> : `${type == 'in' ? '+' : '-'}${amount}`}</span>
+      </> : `${type == 'Поступление' ? '+' : '-'}${amount}`}</span>
       {tab != "Перемещение" && <span className={styles.currency}>{
         currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span>}
     </div>

@@ -1,0 +1,140 @@
+import { ChevronUp, Check, Search } from 'lucide-react'
+import React, { useState, useMemo } from 'react'
+import { cn } from '@/lib/utils' // Assuming cn utility is available there
+
+const GroupSelect = ({ 
+  data = [], 
+  value = [], 
+  onChange = () => {}, 
+  placeholder = "Выберите" 
+}) => {
+  const [open, setOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Group and filter data
+  const groupedData = useMemo(() => {
+    const groups = {}
+    
+    // Filter by search query first
+    const filtered = data.filter(item => 
+      (item.label || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.groupName || '').toLowerCase().includes(searchQuery.toLowerCase())
+    )
+
+    filtered.forEach(item => {
+      const gname = item.groupName || 'Без группы'
+      if (!groups[gname]) {
+        groups[gname] = []
+      }
+      groups[gname].push(item)
+    })
+    return groups
+  }, [data, searchQuery])
+
+  // Helper to check if a group is fully selected
+  const isGroupSelected = (groupItems) => {
+    return groupItems.every(item => value.includes(item.value))
+  }
+
+  // Handle group header click
+  const toggleGroup = (groupItems) => {
+    const groupValues = groupItems.map(item => item.value)
+    const currentlySelectedAll = isGroupSelected(groupItems)
+
+    let newValue
+    if (currentlySelectedAll) {
+      // Deselect all items in this group
+      newValue = value.filter(val => !groupValues.includes(val))
+    } else {
+      // Select all items in this group (avoid duplicates)
+      newValue = [...new Set([...value, ...groupValues])]
+    }
+    onChange(newValue)
+  }
+
+  // Handle single item click
+  const toggleItem = (itemValue) => {
+    let newValue
+    if (value.includes(itemValue)) {
+      newValue = value.filter(val => val !== itemValue)
+    } else {
+      newValue = [...value, itemValue]
+    }
+    onChange(newValue)
+  }
+
+  return (
+    <div className='relative w-full'>
+      {/* Trigger Button */}
+      <button 
+        type="button"
+        className='flex items-center cursor-pointer bg-white font-medium transition-all duration-200 justify-between w-full rounded-md border border-neutral-200 px-3 py-2 outline-none focus:border-teal-500' 
+        onClick={() => setOpen(!open)}
+      >
+        <span className='text-neutral-600 text-sm'>
+          {value.length > 0 ? `Выбрано: ${value.length}` : placeholder}
+        </span>
+        <ChevronUp size={18} className={cn('text-neutral-400 transition-transform duration-200', open ? 'rotate-0' : 'rotate-180')} />
+      </button>
+
+      {/* Dropdown Menu */}
+      {open && (
+        <div className='absolute top-full left-0 right-0 z-50 bg-white border border-neutral-200 rounded-lg mt-1 shadow-lg max-h-64 overflow-hidden flex flex-col'>
+          {/* Search Input */}
+          <div className='p-2 border-b border-gray-100 flex items-center gap-2 relative'>
+            <Search size={16} className='absolute left-4 text-neutral-400' />
+            <input 
+              type='text' 
+              className='w-full h-9 border border-primary/40 rounded-md pl-8 pr-2 py-1.5 text-sm outline-none placeholder:text-neutral-400' 
+              placeholder='Поиск по списку' 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* List Items */}
+          <div className='overflow-y-auto flex-1 py-1'>
+            {Object.keys(groupedData).length === 0 ? (
+              <div className='p-3 text-sm text-neutral-400 text-center'>Не найдено</div>
+            ) : (
+              Object.entries(groupedData).map(([groupName, items]) => {
+                const isGroupFullySelected = isGroupSelected(items);
+                return (
+                  <div key={groupName} className='flex flex-col'>
+                    {/* Group Header */}
+                    <div 
+                      className='px-4 py-2 text-sm font-bold text-neutral-900 bg-neutral-50/50 hover:bg-neutral-50 cursor-pointer flex items-center justify-between group'
+                      onClick={() => toggleGroup(items)}
+                    >
+                      <span>{groupName}</span>
+                      {isGroupFullySelected && <Check size={16} className="text-primary" />}
+                    </div>
+
+                    {/* Group Items */}
+                    <div className='flex flex-col'>
+                      {items.map((item) => {
+                        const isItemSelected = value.includes(item.value);
+                        return (
+                          <div 
+                            key={item.value} 
+                            className='pl-8 pr-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 cursor-pointer flex items-center justify-between'
+                            onClick={() => toggleItem(item.value)}
+                          >
+                            <span>{item.label}</span>
+                            {isItemSelected && <Check size={16} className="text-primary" />}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default GroupSelect

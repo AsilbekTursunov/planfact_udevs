@@ -19,6 +19,11 @@ $gray-800: #1D2939; // ucode_finance color
 $gray-900: #111827;
 
 
+$border: #e5e7eb;
+$text-muted: #999;
+$text-dark: #0f172a;
+$primary-light: #e3eeff;
+$row-hover: #f9fafb;
 // Slate scale (used in headers, text)
 $slate-50:  #f8fafc;
 $slate-100: #f1f5f9;
@@ -130,3 +135,17 @@ $z-dropdown: 100;
 $z-overlay:  1000;
 $z-modal:    1001;
 $z-popover:  9999;
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loader {
+  animation: spin 1s linear infinite;
+}

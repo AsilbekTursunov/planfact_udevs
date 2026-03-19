@@ -1,4 +1,16 @@
+export { MdOutlineModeEdit } from "react-icons/md";
+export { IoCloseOutline } from "react-icons/io5";
+export { IoCopyOutline } from "react-icons/io5";
 
+
+export const AppLogo = ({ size = 22, strokeWidth = 1.5, ...props }) => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 34 29" fill="none" {...props}>
+      <path d="M16.0869 24C16.2118 24 16.3135 24.1017 16.3135 24.2266V27.9277C16.3135 28.0526 16.2118 28.1543 16.0869 28.1543H0.226563C0.101678 28.1543 1.38713e-05 28.0526 0 27.9277L0 24.2266C0 24.1017 0.101669 24 0.226563 24H16.0869ZM4.01758 6C4.14247 6 4.24414 6.10167 4.24414 6.22656V14.6758C4.24419 15.8174 4.64228 16.7512 5.51758 17.4258C6.36618 18.152 7.45306 18.4637 8.11621 18.4639C8.5141 18.4639 8.99242 18.3598 9.44336 18.2041C9.94711 17.9966 10.451 17.7375 10.8223 17.4004C11.1936 17.0631 11.5389 16.6739 11.7246 16.2588C11.9633 15.7918 12.043 15.2983 12.043 14.7275V6.22656C12.043 6.10169 12.1437 6.00004 12.2686 6L16.0869 6C16.2118 6 16.3134 6.10173 16.3135 6.22656V14.7275C16.3134 19.7093 11.8298 22.6152 8.11621 22.6152C4.721 22.615 0.000120103 19.9426 0 14.6758L0 6.22656C0.00011711 6.10189 0.100938 6.0002 0.225586 6H4.01758Z" strokeWidth={strokeWidth} fill="#0E73F6" />
+      <path d="M23.592 13.76H31.656V16.88H23.592V13.76ZM23.88 23H19.992V6.2H32.688V9.32H23.88V23Z" strokeWidth={strokeWidth} fill="white" />
+    </svg>
+  )
+}
 
 export const UsersIcon = ({ size = 22, strokeWidth = 1.5, ...props }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 18" fill="none" {...props}>
@@ -194,3 +206,58 @@ export const TypeTransferIcon = () => (
     <path d='M16.6666 14.1667H3.33325M3.33325 14.1667L6.66659 10.8333M3.33325 14.1667L6.66658 17.5M3.33325 5.83333H16.6666M16.6666 5.83333L13.3333 2.5M16.6666 5.83333L13.3333 9.16667' stroke='#64748b' strokeWidth='1.33333' strokeLinecap='round' strokeLinejoin='round' />
   </svg>
 )
+
+export const ShipmentPlusIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M12 8V16M8 12H16M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D0D5DD" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const BoxIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path d="M20 8L12 13L4 8M20 8L12 3L4 8M20 8V16L12 21M12 13V21M12 21L4 16V8" stroke="#98A2B3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const ReceiptsEmptyIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <rect width="48" height="48" rx="24" fill="#F9FAFB" />
+    <path d="M24 18C20 18 18 19.3431 18 21C18 22.6569 20 24 24 24C28 24 30 22.6569 30 21C30 19.3431 28 18 24 18Z" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 21V25C18 26.6569 20 28 24 28C28 28 30 26.6569 30 25V21" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 25V29C18 30.6569 20 32 24 32C28 32 30 30.6569 30 29V25" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M30 25C30 24 29 23.5001 27 23.0001V28.0001C29 27.5001 30 27.0001 30 26.0001V25Z" fill="white" />
+  </svg>
+)
+
+export const ExpensesEmptyIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <rect width="48" height="48" rx="24" fill="#F9FAFB" />
+    <path d="M24 18C20 18 18 19.3431 18 21C18 22.6569 20 24 24 24C28 24 30 22.6569 30 21C30 19.3431 28 18 24 18Z" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 21V25C18 26.6569 20 28 24 28C28 28 30 26.6569 30 25V21" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 25V29C18 30.6569 20 32 24 32C28 32 30 30.6569 30 29V25" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const ShipmentsEmptyIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <rect width="48" height="48" rx="24" fill="#F2F4F7" />
+    <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const AttachIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+    <path d="M17.5 10.833v2.5c0 1.4-.7 2.1-2.1 2.1h-10.8c-1.4 0-2.1-.7-2.1-2.1v-6.666c0-1.4.7-2.1 2.1-2.1h10.8c1.4 0 2.1.7 2.1 2.1v2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const SendIcon = ({ className = '', ...props }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 20 20" fill="none" {...props}>
+    <path d="M18.333 1.667L9.167 10.833M18.333 1.667l-5.833 16.666-3.333-7.5-7.5-3.333 16.666-5.833z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+
+export const ShipmentIcon = ({ size = 24, className = '', ...props }) => {
+  return (<svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}><path d="M18.1354 8.68817V15.0857C18.1352 15.3305 18.0723 15.5709 17.953 15.7828C17.8338 15.9947 17.6624 16.1706 17.4561 16.293L12.6579 19.1195C12.4513 19.242 12.217 19.3065 11.9785 19.3065C11.7401 19.3065 11.5058 19.242 11.2992 19.1195L6.54392 16.3281C6.33758 16.2057 6.1662 16.0297 6.04697 15.8178C5.92773 15.6059 5.86484 15.3655 5.86459 15.1208V9.53799C5.86484 9.29323 5.92773 9.05285 6.04697 8.84095C6.1662 8.62905 6.33758 8.45308 6.54392 8.33071L11.2992 5.53931M6.0707 8.82313L12.1558 12.3345L18.1274 8.69573M12.1645 19.2607V12.3267" stroke="#8C8CA6" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17.1734 4.00105C17.3426 3.99298 17.5079 4.05683 17.6275 4.17683C17.7471 4.29697 17.8101 4.46261 17.8013 4.63191L17.6431 7.67488L16.4449 7.61238L16.5328 5.91023L11.8863 8.74128C11.603 8.9135 11.2342 8.82304 11.063 8.54011C10.892 8.25704 10.983 7.88752 11.2661 7.71492L15.2398 5.29402L14.0357 5.35163L13.437 5.38093L13.3804 4.18171L17.1734 4.00105Z" fill="#6094E3"></path></svg>)
+}

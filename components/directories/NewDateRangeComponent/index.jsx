@@ -71,7 +71,7 @@ const PRESETS = {
   { key: 'year', label: 'Текущий год' },]
 }
 
-export default function NewDateRangeComponent({ value, onChange }) {
+export default function NewDateRangeComponent({ value, onChange, singleDateMode = false }) {
   const [startDate, setStartDate] = useState(value?.start || null)
   const [endDate, setEndDate] = useState(value?.end || null)
   const [activePreset, setActivePreset] = useState(null)
@@ -110,7 +110,11 @@ export default function NewDateRangeComponent({ value, onChange }) {
   }
 
   const handleApply = () => {
-    onChange?.({ start: startDate, end: endDate })
+    if (singleDateMode) {
+      onChange?.({ start: startDate, end: startDate })
+    } else {
+      onChange?.({ start: startDate, end: endDate })
+    }
     setOpen(false)
     setFocused(false)
   }
@@ -127,10 +131,13 @@ export default function NewDateRangeComponent({ value, onChange }) {
         <DesignCalenderIcon />
         <input
           type="text"
-          value={`${startDate ? formatDate(startDate) + ' ~' : 'Укажите '} ${endDate ? formatDate(endDate) : 'период'}`}
+          value={singleDateMode 
+            ? (startDate ? formatDate(startDate) : 'Выберите дату')
+            : `${startDate ? formatDate(startDate) + ' ~' : 'Укажите '} ${endDate ? formatDate(endDate) : 'период'}`
+          }
           onClick={() => setFocused(true)}
           className={styles.input}
-          placeholder="Укажите период"
+          placeholder={singleDateMode ? "Выберите дату" : "Укажите период"}
           readOnly
           onFocus={() => setOpen(true)}
         />
@@ -159,12 +166,28 @@ export default function NewDateRangeComponent({ value, onChange }) {
         <div className={styles.pickers}>
           <div className={styles.inputWrapper}>
             <DesignCalenderIcon />
-            <input type="text" value={startDate ? formatDate(startDate) : 'Начало периода'} onClick={() => handleDateType('startDate')} readOnly className={styles.input} placeholder="Выберите период" />
+            <input 
+              type="text" 
+              value={startDate ? formatDate(startDate) : (singleDateMode ? 'Выберите дату' : 'Начало периода')} 
+              onClick={() => handleDateType('startDate')} 
+              readOnly 
+              className={styles.input} 
+              placeholder={singleDateMode ? "Выберите дату" : "Выберите период"} 
+            />
           </div>
-          <div className={styles.inputWrapper}>
-            <DesignCalenderIcon />
-            <input type="text" value={endDate ? formatDate(endDate) : 'Конец периода'} onClick={() => handleDateType('endDate')} readOnly className={styles.input} placeholder="Выберите период" />
-          </div>
+          {!singleDateMode && (
+            <div className={styles.inputWrapper}>
+              <DesignCalenderIcon />
+              <input 
+                type="text" 
+                value={endDate ? formatDate(endDate) : 'Конец периода'} 
+                onClick={() => handleDateType('endDate')} 
+                readOnly 
+                className={styles.input} 
+                placeholder="Выберите период" 
+              />
+            </div>
+          )}
         </div>
 
         {/* Actions */}

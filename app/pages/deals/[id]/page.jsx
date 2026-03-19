@@ -1,74 +1,189 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
-// import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import styles from './deal-detail.module.scss';
-// import { getSalesTransactionByGuid } from '@/lib/api/ucode/sales';
+import { useUcodeRequestQuery } from '@/hooks/useDashboard';
+import { keepPreviousData } from '@tanstack/react-query';
+import DealStatus from '@/components/deals/details/Status';
+import CreateShipment from '@/components/deals/details/CreatingShipment';
+import { ChevronUp, CirclePlus, Ellipsis, Search } from 'lucide-react';
+import { HiOutlineDatabase } from "react-icons/hi";
+import { HiOutlineCreditCard } from "react-icons/hi2";
+import { PiDatabaseFill } from "react-icons/pi";
+import { ShipmentPlusIcon, BoxIcon, AttachIcon, SendIcon } from '@/constants/icons';
+import Input from '@/components/shared/Input';
+import OperationModal from '@/components/operations/OperationModal/OperationModal';
+import CreateProductService from '@/components/deals/details/CreateProductService';
+import Loader from '@/components/shared/Loader';
+import { formatDateFormat } from '@/utils/formatDate';
+import { formatAmount } from '@/utils/helpers';
+import ShipmenTable from '../../../../components/deals/details/ShipmenTable';
+import ProductServiceTable from '../../../../components/deals/details/ProductServiceTable';
+import CustomRadio from '../../../../components/shared/Radio';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import CustomProgress from '../../../../components/shared/Progress';
+import { observer } from 'mobx-react-lite';
+import CommentChat from '../../../../components/deals/details/CommentChat';
+import { sealDeal } from '../../../../store/saleDeal.store';
+import ExpenseOperationsTable from '../../../../components/deals/details/ExpenseOperationTable';
+import IncomeOperationsTable from '../../../../components/deals/details/IncomeOperationsTable';
+import { calculatePercent } from '../../../../utils/helpers';
+import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
+import { DeleteDealModal } from '@/components/deals/DeleteDealModal/DeleteDealModal';
+import { useUcodeDefaultApiMutation } from '@/hooks/useDashboard';
+import { useQueryClient } from '@tanstack/react-query';
+import { Pencil, Trash } from 'lucide-react';
 
-export default function DealDetailPage() {
+
+export default observer(function DealDetailPage() {
   const params = useParams();
   const router = useRouter();
   const dealId = params.id;
 
-  // Fetch deal data - COMMENTED OUT until API is ready
-  // const { data: dealData, isLoading } = useQuery({
-  //   queryKey: ['deal', dealId],
-  //   queryFn: () => getSalesTransactionByGuid(dealId),
-  //   enabled: !!dealId,
-  //   retry: 0,
-  //   onError: (error) => {
-  //     console.error('Error fetching deal:', error);
-  //   }
-  // });
+  const { data: dealData, isLoading } = useUcodeRequestQuery({
+    method: "get_sales_transaction_by_guid",
+    data: {
+      guid: dealId
+    },
+    querySetting: {
+      select: (response) => response?.data?.data?.data,
+      placeholderData: keepPreviousData,
+    }
+  })
 
-  // const apiDeal = dealData?.data?.data?.data || null;
-  
-  // Mock data
+  const summeryCards = useMemo(() => {
+    return dealData || null
+  }, [dealData])
+
   const deal = {
     guid: dealId,
-    nazvanie: 'test',
-    kontragent: { nazvanie: 'test' },
-    data_nachala: '2026-05-26',
-    summa_sdelki: 63000000,
-    postupilo_summa: 3000000,
-    otgruzheno_summa: 17000000,
-    pribyl: 16000000,
-    status: 'Завершена'
-  };
-  
-  const isLoading = false;
+    name: summeryCards?.Nazvanie,
+    sale_date: summeryCards?.Data_sdelki,
+    counterparties_id: summeryCards?.counterparty_id,
+    nds: summeryCards?.nds,
+    commentary: summeryCards?.Kommentariy
+  }
+
 
   const [activeTab, setActiveTab] = useState('products');
+  const [showShipmentModal, setShowShipmentModal] = useState(false);
+  const [showOperationModal, setShowOperationModal] = useState(false);
+  const [operation, setOperation] = useState(null)
+  const [isModalClosing, setIsModalClosing] = useState(false)
+  const [isModalOpening, setIsModalOpening] = useState(false)
+  const [showProductModal, setShowProductModal] = useState(false)
+  const accounting = sealDeal.accounting
+  const [showAccounting, setShowAccounting] = useState(false)
 
-  const formatAmount = (amount) => {
-    if (!amount && amount !== 0) return '0';
-    return Number(amount).toLocaleString('ru-RU');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [dealToDelete, setDealToDelete] = useState(null);
+  const [dealToEdit, setDealToEdit] = useState(null);
+
+  const queryClient = useQueryClient();
+  const { mutate: deleteDeal, isPending: isDeletingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'delete-deal' });
+
+  const confirmDelete = () => {
+    if (!dealToDelete) return;
+
+    deleteDeal(
+      {
+        urlMethod: 'DELETE',
+        urlParams: `/items/sales_transactions/${dealToDelete.guid}?from-ofs=true`
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['deals'] });
+          router.push('/pages/deals');
+        }
+      }
+    );
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
-    return `${String(date.getDate()).padStart(2, '0')} ${months[date.getMonth()]} '${String(date.getFullYear()).slice(2)}`;
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setDealToEdit(null);
   };
+
+
+  // Product/service row action menu state 
+  const [itemToEdit, setItemToEdit] = useState(null)
+  const [isCopying, setIsCopying] = useState(false)
+
+
+
+  // Deal statuses
+  const [dealStatuses, setDealStatuses] = useState([
+    { guid: 'new', name: 'new', color: '#F79009' },
+    { guid: 'in_progress', name: 'in_progress', color: '#2E90FA' },
+    { guid: 'completed', name: 'completed', color: '#12B76A' },
+  ]);
+  const [selectedStatus, setSelectedStatus] = useState(dealStatuses[0]);
+
+  // Set initial status from deal data
+  const currentDealStatus = selectedStatus
+
 
   if (isLoading) {
     return (
-      <div className={styles.container}>
-        <div style={{ padding: '2rem', textAlign: 'center' }}>Загрузка...</div>
+      <div className="w-full h-dvh flex items-center justify-center">
+        <Loader />
       </div>
     );
   }
 
-  const dealAmount = Number(deal.summa_sdelki) || 0;
-  const received = Number(deal.postupilo_summa) || 0;
-  const shipped = Number(deal.otgruzheno_summa) || 0;
-  const profit = Number(deal.pribyl) || 0;
-  const receivedPercent = dealAmount > 0 ? Math.round((received / dealAmount) * 100) : 0;
-  const shippedPercent = dealAmount > 0 ? Math.round((shipped / dealAmount) * 100) : 0;
-  const profitPercent = dealAmount > 0 ? Math.round((profit / dealAmount) * 100) : 0;
-  const clientOwes = dealAmount - received;
+  const dealAmount = Number(summeryCards?.total_products_summa) || 0;
+  const received = Number(summeryCards?.total_receipts_summa) || 0;
+  const shipped = Number(summeryCards?.total_shipment_summa) || 0;
+
+  const profit = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.profit : summeryCards?.cash_method?.profit);
+  const expenses = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.expenses : summeryCards?.cash_method?.expenses) || 0;
+  const income = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.income : summeryCards?.cash_method?.income) || 0;
+
+  const receivedPercent = summeryCards?.receipts_percentage != null ? Math.round(Number(summeryCards.receipts_percentage) * 100) : 0;
+  const shippedPercent = summeryCards?.shipments_percentage != null ? Math.round(Number(summeryCards.shipments_percentage)) : 0;
+
+
+  const profitPercent = Math.round(Number(accounting === 'accrual' ? summeryCards?.accrual_method?.profitability : summeryCards?.cash_method?.profitability)) || 0;
+
+  const clientDebt = Number(summeryCards?.client_debt) || 0;
+  const remainingShipment = Number(summeryCards?.remaining_shipment) || 0;
+
+  console.log('profit', profit)
+  console.log('income', income)
+  console.log('expenses', expenses)
+  console.log('profitability', profitPercent)
+
+  console.log('dealAmount', dealAmount)
+  console.log('received', received)
+  console.log('shipped', shipped)
+
+
+  const handleCreateOperation = () => {
+    setOperation({ isNew: true })
+    setShowOperationModal(true)
+    setIsModalClosing(false)
+    setIsModalOpening(true)
+    setTimeout(() => {
+      setIsModalOpening(false)
+    }, 50)
+  }
+
+  const handleSelectProduct = (item, type) => {
+    setShowProductModal(true)
+    if (type === 'edit') {
+      setItemToEdit(item)
+      setIsCopying(false)
+    } else if (type === 'copy') {
+      setItemToEdit(item)
+      setIsCopying(true)
+    }
+  }
+
 
   return (
     <div className={styles.container}>
@@ -78,12 +193,42 @@ export default function DealDetailPage() {
           Сделки по продажам
         </button>
         <span className={styles.breadcrumbSeparator}>/</span>
-        <span className={styles.breadcrumbCurrent}>{deal.nazvanie || 'Без названия'}</span>
+        <span className={styles.breadcrumbCurrent}>{summeryCards?.Nazvanie || 'Без названия'}</span>
       </div>
 
       {/* Header */}
-      <div className={styles.header}>
-        <h1 className={styles.title}>{deal.nazvanie || 'Без названия'}</h1>
+      <div className='flex items-center justify-between '>
+        <div className={styles.header}>
+          <h1 className={styles.title}>{summeryCards?.Nazvanie || 'Без названия'}</h1>
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className={styles.detailsDots}>
+              <Ellipsis size={18} className='text-neutral-800' />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 rounded-md overflow-hidden p-0 border border-gray-100 bg-white shadow-md mt-1" align="end">
+            <div className="flex flex-col">
+              <button
+                className="flex items-center gap-2 p-2.5 text-sm text-neutral-800 hover:bg-neutral-50 cursor-pointer w-full text-left border-none outline-none bg-transparent"
+                onClick={() => {
+                  setDealToEdit(deal);
+                  setIsCreateModalOpen(true);
+                }}
+              >
+                <Pencil size={16} className="text-neutral-600" />
+                <span>Редактировать</span>
+              </button>
+              <button
+                className="flex items-center gap-2 p-2.5 text-sm text-red-500 hover:bg-red-50 cursor-pointer w-full text-left border-none outline-none bg-transparent"
+                onClick={() => setDealToDelete(dealData)}
+              >
+                <Trash size={16} className="text-red-500" />
+                <span>Удалить</span>
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Info Cards */}
@@ -92,113 +237,121 @@ export default function DealDetailPage() {
         <div className={styles.infoCard}>
           <div className={styles.cardHeader}>
             <span className={styles.cardLabel}>
-              Сделка на сумму
-              <svg className={styles.cardLabelIcon} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8.00001 10.6666V7.99998M8.00001 5.33331H8.00668M14.6667 7.99998C14.6667 11.6819 11.6819 14.6666 8.00001 14.6666C4.31811 14.6666 1.33334 11.6819 1.33334 7.99998C1.33334 4.31808 4.31811 1.33331 8.00001 1.33331C11.6819 1.33331 14.6667 4.31808 14.6667 7.99998Z" stroke="#D0D5DD" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              Сделка на сумму /
             </span>
-            <span className={styles.cardStatus}>
-              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="4" cy="4" r="3" fill="#12B76A"/>
-              </svg>
-              Завершена
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </span>
+            <DealStatus
+              statuses={dealStatuses}
+              currentStatus={currentDealStatus}
+              onStatusChange={(status) => setSelectedStatus(status)}
+              onStatusEdit={(updated) => {
+                setDealStatuses(prev => prev.map(s => s.guid === updated.guid ? updated : s))
+              }}
+              onStatusDelete={(status) => {
+                setDealStatuses(prev => prev.filter(s => s.guid !== status.guid))
+              }}
+              onStatusCreate={(newStatus) => {
+                setDealStatuses(prev => [...prev, { ...newStatus, guid: Date.now().toString() }])
+              }}
+            />
           </div>
           <div className={styles.cardAmount}>{formatAmount(dealAmount)} ₽</div>
-          
+
           <div className={styles.cardDivider}></div>
-          
-          <div className={styles.dealInfoInCard}>
-            <div className={styles.infoRowInCard}>
-              <span className={styles.infoLabelInCard}>Тип</span>
-              <span className={styles.infoValueInCard}>
-                <svg className={styles.infoIcon} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8.66668 3.33333C8.66668 4.06971 7.02505 4.66667 5.00001 4.66667C2.97497 4.66667 1.33334 4.06971 1.33334 3.33333M8.66668 3.33333C8.66668 2.59695 7.02505 2 5.00001 2C2.97497 2 1.33334 2.59695 1.33334 3.33333M8.66668 3.33333V4.33333M1.33334 3.33333V11.3333C1.33334 12.0697 2.97497 12.6667 5.00001 12.6667M5.00001 7.33333C4.88765 7.33333 4.77646 7.3315 4.66668 7.3279C2.79784 7.26666 1.33334 6.69552 1.33334 6M5.00001 10C2.97497 10 1.33334 9.40305 1.33334 8.66667M14.6667 7.66667C14.6667 8.40305 13.0251 9 11 9C8.97497 9 7.33334 8.40305 7.33334 7.66667M14.6667 7.66667C14.6667 6.93029 13.0251 6.33333 11 6.33333C8.97497 6.33333 7.33334 6.93029 7.33334 7.66667M14.6667 7.66667V12.6667C14.6667 13.403 13.0251 14 11 14C8.97497 14 7.33334 13.403 7.33334 12.6667V7.66667M14.6667 10.1667C14.6667 10.903 13.0251 11.5 11 11.5C8.97497 11.5 7.33334 10.903 7.33334 10.1667" stroke="#98A2B3" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+
+          <div className="flex flex-col gap-0 mt-4">
+            <div
+              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
+            >
+              <span className="text-sm font-normal text-gray-500">Тип</span>
+              <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5 font-sans">
+                <PiDatabaseFill size={16} className='text-neutral-400' />
                 Продажа
               </span>
             </div>
-            <div className={styles.infoRowInCard}>
-              <span className={styles.infoLabelInCard}>Клиент</span>
-              <span className={styles.infoValueLinkInCard}>{deal.kontragent?.nazvanie || 'test'}</span>
+
+            <div
+              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
+              onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
+            >
+              <span className="text-sm font-normal text-gray-500">Клиент</span>
+              <span className="text-sm font-medium text-primary flex items-center gap-1.5 hover:underline underline-offset-2 decoration-dotted">
+                {summeryCards?.counterparty_name || 'test'}
+                <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+              </span>
             </div>
-            <div className={styles.infoRowInCard}>
-              <span className={styles.infoLabelInCard}>Создана</span>
-              <span className={styles.infoValueInCard}>{formatDate(deal.data_nachala)}</span>
+
+            <div
+              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
+              onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
+            >
+              <span className="text-sm font-normal text-gray-500">Создана</span>
+              <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
+                {formatDateFormat(summeryCards?.Data_sdelki)}
+                <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+              </span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Receipts */}
-        <div className={styles.infoCard}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Поступления</span>
-            <button className={styles.addButton}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 8V16M8 12H16M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D0D5DD" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+        <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
+          <div className="flex items-center justify-between mb-[22.5px]">
+            <span className="font-semibold text-base text-gray-ucode-800">Поступления</span>
+            <button onClick={handleCreateOperation} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
+              <CirclePlus size={20} strokeWidth={1.5} className='text-neutral-300' />
             </button>
           </div>
-          
-          <div className={styles.cardContent}>
-            <div className={styles.iconBox}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 17C12 19.7614 14.2386 22 17 22C19.7614 22 22 19.7614 22 17C22 14.2386 19.7614 12 17 12C14.2386 12 12 14.2386 12 17ZM12 17C12 15.8742 12.3721 14.8353 13 13.9995V5M12 17C12 17.8254 12.2 18.604 12.5541 19.2901C11.7117 20.0018 9.76584 20.5 7.5 20.5C4.46243 20.5 2 19.6046 2 18.5V5M13 5C13 6.10457 10.5376 7 7.5 7C4.46243 7 2 6.10457 2 5M13 5C13 3.89543 10.5376 3 7.5 3C4.46243 3 2 3.89543 2 5M2 14C2 15.1046 4.46243 16 7.5 16C9.689 16 11.5793 15.535 12.4646 14.8618M13 9.5C13 10.6046 10.5376 11.5 7.5 11.5C4.46243 11.5 2 10.6046 2 9.5" stroke="#98A2B3" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+
+          <div className="flex items-start gap-3 mb-[22.5px]">
+            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
+              <HiOutlineDatabase size={20} className='text-neutral-400' />
             </div>
-            
-            <div className={styles.amountSection}>
-              <div className={styles.cardAmount}>{formatAmount(received)} ₽</div>
-              <div className={styles.cardSubtext}>из {formatAmount(dealAmount)} ₽</div>
+
+            <div className="flex flex-col gap-0">
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(received)} ₽</div>
+              <div className="font-normal text-base text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
             </div>
           </div>
-          
-          <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${receivedPercent}%` }}></div>
+
+          <div className="w-full h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-2">
+            <CustomProgress min={0} value={received} max={dealAmount} fillColor="#12B76A" />
           </div>
-          <div className={styles.cardProgress}>Поступило: {receivedPercent}%</div>
-          
-          <div className={styles.clientDebt}>
-            <span className={styles.clientDebtLabel}>Клиент должен:</span>
-            <span className={styles.clientDebtAmount}>{formatAmount(clientOwes)} ₽</span>
+          <div className="font-normal text-sm text-gray-ucode-500 mt-2 mb-5">Поступило: {calculatePercent(dealAmount, received)}</div>
+
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-normal text-sm text-gray-ucode-500">Клиент должен:</span>
+            <span className="font-medium text-base text-[#344054]">{formatAmount(clientDebt)} ₽</span>
           </div>
         </div>
 
         {/* Card 3: Shipments */}
-        <div className={styles.infoCard}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Отгрузки клиенту</span>
-            <button className={styles.addButton}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 8V16M8 12H16M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#D0D5DD" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+        <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
+          <div className="flex items-center justify-between mb-[22.5px]">
+            <span className="font-semibold text-base text-gray-ucode-800">Отгрузки клиенту</span>
+            <button onClick={() => setShowShipmentModal(true)} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
+              <ShipmentPlusIcon />
             </button>
           </div>
-          
-          <div className={styles.cardContent}>
-            <div className={styles.iconBox}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 8L12 13L4 8M20 8L12 3L4 8M20 8V16L12 21M12 13V21M12 21L4 16V8" stroke="#98A2B3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+
+          <div className="flex items-start gap-3 mb-[22.5px]">
+            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
+              <BoxIcon />
             </div>
-            
-            <div className={styles.amountSection}>
-              <div className={styles.cardAmount}>{formatAmount(shipped)} ₽</div>
-              <div className={styles.cardSubtext}>из {formatAmount(dealAmount)} ₽</div>
+
+            <div className="flex flex-col gap-0">
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(shipped)} ₽</div>
+              <div className="font-normal text-base text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
             </div>
           </div>
-          
-          <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${shippedPercent}%` }}></div>
+
+          <div className="w-full h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-2">
+            <CustomProgress min={0} value={shipped} max={dealAmount} fillColor="#48C206" />
           </div>
-          <div className={styles.cardProgress}>Отгружено: {shippedPercent}%</div>
-          
-          <div className={styles.clientDebt}>
-            <span className={styles.clientDebtLabel}>Мы должны:</span>
-            <span className={styles.clientDebtAmount}>{formatAmount(dealAmount - shipped)} ₽</span>
+          <div className="font-normal text-sm text-gray-ucode-500 mt-2 mb-5">Отгружено: {calculatePercent(dealAmount, shipped)}</div>
+
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-normal text-sm text-gray-ucode-500">Осталось отгрузить:</span>
+            <span className="font-medium text-base text-[#344054]">{formatAmount(remainingShipment)} ₽</span>
           </div>
         </div>
 
@@ -206,28 +359,54 @@ export default function DealDetailPage() {
         <div className={styles.infoCard}>
           <div className={styles.cardHeader}>
             <span className={styles.cardTitle}>Прибыль сделки</span>
-            <span className={styles.cardBadge}>Учет</span>
+            <Popover open={showAccounting} onOpenChange={setShowAccounting}>
+              <PopoverTrigger className="relative bg-primary/10 cursor-pointer text-primary px-2 py-1 rounded-full text-xs border-none outline-none">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs">Учет</p>
+                  <ChevronUp size={12} className={`transition-all duration-300 ${showAccounting ? 'rotate-180' : ''}`} />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto rounded-md overflow-hidden p-0 border-none" align="end">
+                <div className="flex flex-col bg-white">
+                  <label htmlFor="accrual" className="flex p-3 items-center gap-2 cursor-pointer hover:bg-neutral-50">
+                    <CustomRadio name="accounting" id="accrual" value="accrual" checked={accounting === 'accrual'} onChange={(e) => { sealDeal.setState('accounting', e.target.value); setShowAccounting(false); }} />
+                    <span className="whitespace-nowrap text-sm text-neutral-800">Методом начисления</span>
+                  </label>
+                  <label htmlFor="cash" className="flex p-3 items-center gap-2 cursor-pointer hover:bg-neutral-50">
+                    <CustomRadio name="accounting" id="cash" value="cash" checked={accounting === 'cash'} onChange={(e) => { sealDeal.setState('accounting', e.target.value); setShowAccounting(false); }} />
+                    <span className="whitespace-nowrap text-sm text-neutral-800">Кассовым методом</span>
+                  </label>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-          
-          <div className={styles.cardAmount}>{formatAmount(profit)} ₽</div>
-          <div className={styles.cardSubtext}>Рентабельность {profitPercent}%</div>
-          
-          <div className={styles.profitChart}>
-            <div className={styles.profitChartBar}>
-              <div className={styles.profitChartIncome} style={{ width: `${receivedPercent}%` }}></div>
+
+          <div className="flex items-start gap-3 mb-[22.5px] mt-4">
+            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
+              <HiOutlineCreditCard size={20} className='text-neutral-400' />
+            </div>
+
+            <div className="flex flex-col gap-0">
+              <div className={styles.cardAmount}>{formatAmount(profit)} ₽</div>
+              <div className={styles.cardSubtext}>Рентабельность {profitPercent}%</div>
             </div>
           </div>
-          
-          <div className={styles.profitBars}>
-            <div className={styles.profitBar}>
+
+          <div className="flex flex-col gap-2 my-2">
+            <CustomProgress value={received} fillColor="#12B76A" min={0} max={received} />
+            <CustomProgress value={expenses} fillColor="#FFC609" min={0} max={received} />
+          </div>
+
+          <div className="flex  gap-2">
+            <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#12B76A' }}></div>
               <span className={styles.profitLabel}>Доходы</span>
-              <span className={styles.profitValue}>+{formatAmount(received)} ₽</span>
+              <span className={styles.profitValue}>+{formatAmount(income)} ₽</span>
             </div>
-            <div className={styles.profitBar}>
-              <div className={styles.profitBarDot} style={{ backgroundColor: '#F79009' }}></div>
+            <div className="flex flex-col flex-1">
+              <div className={styles.profitBarDot} style={{ backgroundColor: '#FFC609' }}></div>
               <span className={styles.profitLabel}>Расходы</span>
-              <span className={styles.profitValue}>-{formatAmount(dealAmount - profit)} ₽</span>
+              <span className={styles.profitValue}>-{formatAmount(expenses)} ₽</span>
             </div>
           </div>
         </div>
@@ -238,219 +417,174 @@ export default function DealDetailPage() {
         {/* Left side - Tabs and content */}
         <div className={styles.leftSection}>
           {/* Tabs */}
-          <div className={styles.tabs}>
-            <button 
-              className={`${styles.tab} ${activeTab === 'products' ? styles.tabActive : ''}`}
+          <div className="flex bg-white border-b border-neutral-200 rounded-t-xl overflow-hidden mb-0">
+            <button
+              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'products' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                }`}
               onClick={() => setActiveTab('products')}
             >
-              Товары и услуги
+              Товары и услуги ({summeryCards?.products_count ?? 0})
             </button>
-            <button 
-              className={`${styles.tab} ${activeTab === 'receipts' ? styles.tabActive : ''}`}
+            <button
+              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'receipts' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                }`}
               onClick={() => setActiveTab('receipts')}
             >
               Поступления
             </button>
-            <button 
-              className={`${styles.tab} ${activeTab === 'expenses' ? styles.tabActive : ''}`}
+            <button
+              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'expenses' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                }`}
               onClick={() => setActiveTab('expenses')}
             >
               Расходы
             </button>
-            <button 
-              className={`${styles.tab} ${activeTab === 'shipments' ? styles.tabActive : ''}`}
+            <button
+              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'shipments' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                }`}
               onClick={() => setActiveTab('shipments')}
             >
               Отгрузки
-            </button>
-            <button 
-              className={`${styles.tab} ${activeTab === 'invoices' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('invoices')}
-            >
-              Счета
             </button>
           </div>
 
           {/* Tab Content */}
           <div className={styles.tabContent}>
-            {activeTab === 'products' && (
-              <div className={styles.productsSection}>
-                <div className={styles.sectionHeader}>
-                  <div className={styles.sectionTitle}>Выберите товары или услуги для продажи</div>
-                  <div className={styles.searchContainer}>
-                    <svg className={styles.searchIcon} width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.5 17.5L13.875 13.875M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z" stroke="#667085" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <input 
-                      type="text" 
-                      placeholder="Поиск по названию"
-                      className={styles.searchInput}
-                    />
-                  </div>
-                </div>
-                
-                <div className={styles.tableContainer}>
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th className={styles.checkboxColumn}>
-                          <input type="checkbox" className={styles.checkbox} />
-                        </th>
-                        <th>Наименование</th>
-                        <th className={styles.rightAlign}>Кол-во</th>
-                        <th>Единица</th>
-                        <th className={styles.rightAlign}>Цена за ед.</th>
-                        <th>Скидка</th>
-                        <th>НДС</th>
-                        <th className={styles.rightAlign}>Сумма</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className={styles.checkboxColumn}>
-                          <input type="checkbox" className={styles.checkbox} />
-                        </td>
-                        <td className={styles.nameColumn}>Hodim farzandi</td>
-                        <td className={styles.rightAlign}>10</td>
-                        <td>мес.</td>
-                        <td className={styles.rightAlign}>2 800 000 ₽</td>
-                        <td>0 %</td>
-                        <td>0 %</td>
-                        <td className={`${styles.amountColumn} ${styles.rightAlign}`}>28 000 000 ₽</td>
-                      </tr>
-                      <tr>
-                        <td className={styles.checkboxColumn}>
-                          <input type="checkbox" className={styles.checkbox} />
-                        </td>
-                        <td className={styles.nameColumn}>standart</td>
-                        <td className={styles.rightAlign}>10</td>
-                        <td>мес.</td>
-                        <td className={styles.rightAlign}>3 500 000 ₽</td>
-                        <td>0 %</td>
-                        <td>0 %</td>
-                        <td className={`${styles.amountColumn} ${styles.rightAlign}`}>35 000 000 ₽</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                
-                <div className={styles.tableFooter}>
-                  <span className={styles.footerText}>2 позиции на сумму:</span>
-                  <span className={styles.footerAmount}>63 000 000 ₽</span>
-                </div>
+            <div className={styles.sectionHeader}>
+              <div className={styles.sectionTitle}>
+                {activeTab === 'products' && 'Выберите товары или услуги для продажи'}
+                {activeTab === 'receipts' && 'Платежи от клиентов за проданные товары или оказанные услуги '}
+                {activeTab === 'expenses' && 'Понесенные затраты по сделке'}
+                {activeTab === 'shipments' && 'Товары и услуги, которые вы отгрузили клиенту '}
               </div>
-            )}
+              <div className={styles.searchContainer}>
+                <Input
+                  leftIcon={<Search size={18} />}
+                  type="text"
+                  placeholder="Поиск по названию"
+                  className={styles.searchInput}
+                />
+                <button
+                  className='primary-btn'
+                  onClick={() => {
+                    if (activeTab === 'shipments') {
+                      setShowShipmentModal(true);
+                    } else if (activeTab === 'receipts' || activeTab === 'expenses') {
+                      handleCreateOperation()
+                    } else if (activeTab === 'products') {
+                      setShowProductModal(true)
+                    }
+                  }}
+                >
+                  Добавить
+                </button>
+              </div>
+            </div>
+            <div className={styles.contentContainer}>
+              {activeTab === 'products' && <ProductServiceTable handleSelect={handleSelectProduct} sellingDealId={dealId} onAdd={() => setShowProductModal(true)} />}
 
-            {activeTab === 'receipts' && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="48" height="48" rx="24" fill="#F2F4F7"/>
-                    <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className={styles.emptyStateText}>Нет данных</div>
-              </div>
-            )}
+              {activeTab === 'receipts' && <IncomeOperationsTable type='Поступление' sellingDealId={dealId} onAdd={handleCreateOperation} />}
 
-            {activeTab === 'expenses' && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="48" height="48" rx="24" fill="#F2F4F7"/>
-                    <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className={styles.emptyStateText}>Нет данных</div>
-              </div>
-            )}
+              {activeTab === 'expenses' && <ExpenseOperationsTable type='Выплата' sellingDealId={dealId} onAdd={handleCreateOperation} />}
 
-            {activeTab === 'shipments' && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="48" height="48" rx="24" fill="#F2F4F7"/>
-                    <path d="M24 28V24M24 20H24.01M32 24C32 28.4183 28.4183 32 24 32C19.5817 32 16 28.4183 16 24C16 19.5817 19.5817 16 24 16C28.4183 16 32 19.5817 32 24Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className={styles.emptyStateText}>Нет данных</div>
-              </div>
-            )}
-
-            {activeTab === 'invoices' && (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="48" height="48" rx="24" fill="#F2F4F7"/>
-                    <path d="M20 18H28M20 22H28M20 26H24M16 30H32C33.1046 30 34 29.1046 34 28V20C34 18.8954 33.1046 18 32 18H16C14.8954 18 14 18.8954 14 20V28C14 29.1046 14.8954 30 16 30Z" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className={styles.emptyStateTitle}>Выставляйте счета своим клиентам</div>
-                <div className={styles.emptyStateSubtext}>Отправляйте счета на оплату своим контрагентам прямо из ПланФакта</div>
-              </div>
-            )}
+              {activeTab === 'shipments' && <ShipmenTable dealGuid={dealId} dealName={summeryCards?.Nazvanie} onAdd={() => setShowShipmentModal(true)} />}
+            </div>
           </div>
         </div>
 
         {/* Right side - Comments (always visible) */}
-        <div className={styles.commentsSection}>
-          <h3 className={styles.commentsSectionTitle}>ФАЙЛЫ И КОММЕНТАРИИ</h3>
-          
-          <div className={styles.commentsList}>
-            <div className={styles.comment}>
-              <div className={styles.commentHeader}>
-                <span className={styles.commentAuthor}>hello</span>
-              </div>
-              <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар '26 в 22:24</div>
-            </div>
 
-            <div className={styles.comment}>
-              <div className={styles.commentHeader}>
-                <span className={styles.commentAuthor}>wow 3eir</span>
-              </div>
-              <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар '26 в 22:24</div>
-              <div className={styles.commentBadge}>Отредактировано</div>
-            </div>
+        <CommentChat dealGuid={dealId} />
 
-            <div className={styles.comment}>
-              <div className={styles.commentHeader}>
-                <span className={styles.commentAuthor}>wowo</span>
-              </div>
-              <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар '26 в 22:24</div>
-              <div className={styles.commentBadge}>Отредактировано</div>
-              
-              <div className={styles.attachment}>
-                <div className={styles.attachmentIcon}>XLSX</div>
-                <div className={styles.attachmentInfo}>
-                  <div className={styles.attachmentName}>8dbb489f-3952-40cb-a1ee-e87bb09...</div>
-                  <div className={styles.attachmentSize}>.xlsx</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.commentInput}>
-            <input 
-              type="text" 
-              placeholder="Написать комментарий..."
-              className={styles.input}
-            />
-            <button className={styles.attachButton}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M17.5 10.833v2.5c0 1.4-.7 2.1-2.1 2.1h-10.8c-1.4 0-2.1-.7-2.1-2.1v-6.666c0-1.4.7-2.1 2.1-2.1h10.8c1.4 0 2.1.7 2.1 2.1v2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <button className={styles.sendButton}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M18.333 1.667L9.167 10.833M18.333 1.667l-5.833 16.666-3.333-7.5-7.5-3.333 16.666-5.833z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
       </div>
+
+      {/* Shipment Creation Modal */}
+      <CreateShipment
+        open={showShipmentModal}
+        onClose={() => setShowShipmentModal(false)}
+        dealName={summeryCards?.Nazvanie}
+        dealGuid={dealId}
+        kontragentId={summeryCards?.counterparty_id}
+      />
+
+      {/* Operation Modal */}
+      {showOperationModal && (
+        <OperationModal
+          operation={operation}
+          isClosing={isModalClosing}
+          isOpening={isModalOpening}
+          defaultDealGuid={dealId}
+          onClose={() => {
+            setIsModalClosing(true)
+            setTimeout(() => {
+              setShowOperationModal(false)
+              setIsModalClosing(false)
+            }, 300)
+          }}
+          preselectedCounterparty={summeryCards?.counterparty_id}
+          onSuccess={() => setShowOperationModal(false)}
+          initialTab={activeTab === 'expenses' ? 'payment' : 'income'}
+        />
+      )}
+
+      {/* Create Product/Service Modal */}
+      <CreateProductService
+        open={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setItemToEdit(null);
+          setIsCopying(false);
+        }}
+        dealGuid={dealId}
+        initialData={itemToEdit}
+        isEditing={!!itemToEdit && !isCopying}
+      />
+
+      <CreateDealModal
+        isOpen={isCreateModalOpen}
+        onClose={closeCreateModal}
+        initialData={dealToEdit}
+        isEditing={true}
+      />
+
+      <DeleteDealModal
+        isOpen={!!dealToDelete}
+        onClose={() => setDealToDelete(null)}
+        onConfirm={confirmDelete}
+        isDeleting={isDeletingDeal}
+        deal={dealToDelete ? {
+          name: summeryCards?.Nazvanie,
+          client: summeryCards?.counterparty_name,
+          amount: formatAmount(summeryCards?.total_products_summa)
+        } : null}
+      />
+
+
+
+      {/* Delete Confirm Modal */}
+      {/* <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
+        <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 700, color: '#101828', fontFamily: 'Inter, sans-serif' }}>
+          Удалить товар
+        </h2>
+        <p style={{ margin: '0 0 28px', fontSize: 14, color: '#344054', lineHeight: '20px', fontFamily: 'Inter, sans-serif' }}>
+          Вы действительно хотите удалить «<strong>{itemToDelete?.name}</strong>»?<br />Восстановить его будет невозможно.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+          <button
+            onClick={() => setItemToDelete(null)}
+            style={{ background: 'transparent', border: 'none', fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, color: '#0c8c9a', padding: '8px 16px', cursor: 'pointer' }}
+          >
+            Отменить
+          </button>
+          <button
+            disabled={isDeletingItem}
+            onClick={handleDeleteConfirm}
+            style={{ background: isDeletingItem ? '#f98080' : '#F04438', color: '#fff', border: 'none', borderRadius: 8, fontFamily: 'Inter, sans-serif', fontWeight: 600, fontSize: 14, padding: '8px 20px', cursor: 'pointer' }}
+          >
+            {isDeletingItem ? <Loader /> : 'Удалить'}
+          </button>
+        </div>
+      </CustomModal> */}
     </div>
   );
-}
+})

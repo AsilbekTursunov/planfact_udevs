@@ -20,12 +20,16 @@ import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import styles from './OperationModal.module.scss'
 import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
-import { CreditIcon, DebitIcon, FilesClipIcon } from '../../../constants/icons'
-import SplitAmount from './SplitAmount'
+import { FilesClipIcon } from '../../../constants/icons'
 import SentMessages from './SentMessages'
-import { appStore } from '../../../store/app.store'
+import IncomeForm from './Forms/Income'
+import PaymentForm from './Forms/Payment'
 import { observer } from 'mobx-react-lite'
-import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
+import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard'
+import Loader from '../../shared/Loader'
+import CustomModal from '../../shared/CustomModal'
+import { authStore } from '../../../store/auth.store'
+import { formatDateRu } from '../../../utils/helpers'
 
 const today = new Date().toISOString().split('T')[0]
 const todayDate = new Date().getDate()
@@ -233,23 +237,22 @@ function rowsReducer(state, action) {
 
 const OperationModal = observer(({
 	operation,
-	modalType,
 	isClosing,
 	isOpening,
 	onClose,
 	onSuccess,
 	preselectedCounterparty = null,
 	disableCounterpartySelect = false,
+	defaultDealGuid = null,
+	initialTab = 'income',
 }) => {
 	const queryClient = useQueryClient()
 	const isNew = operation?.isNew || false
 
 
-	// Extract guid from operation - check multiple possible locations
 	const operationGuid = useMemo(() => {
 		if (isNew) return null
-		// Try to get guid from various possible locations
-		return operation?.rawData?.guid || operation?.guid || null
+		return operation?.guid || operation?.guid || null
 	}, [isNew, operation])
 
 
@@ -257,6 +260,23 @@ const OperationModal = observer(({
 	const { data: fullOperationData, isLoading: isLoadingOperation, refetch } = useOperation(operationGuid, {
 		enabled: !isNew && !!operationGuid
 	})
+
+	const { data: dealsData } = useUcodeDefaultApiQuery({
+		queryKey: 'deals',
+		urlMethod: 'GET',
+		urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=100'
+	});
+
+
+	const formattedDeals = useMemo(() => {
+		const items = dealsData?.data?.data?.response || [];
+		return items.map(deal => ({
+			guid: deal.guid,
+			label: deal.name,
+		}));
+	}, [dealsData]);
+
+
 
 	// Refetch operation data when modal opens (when isOpening becomes true)
 	useEffect(() => {
@@ -272,7 +292,6 @@ const OperationModal = observer(({
 			return operation
 		}
 		if (fullOperationData?.data?.data?.data) {
-			console.log('Using full operation data from API:', fullOperationData.data.data.data)
 			return {
 				...operation,
 				rawData: fullOperationData.data.data.data
@@ -287,7 +306,7 @@ const OperationModal = observer(({
 	// console.log('operationData', operationData)
 
 	// Current active tab
-	const type = operationData?.typeLabel == 'Начисление' ? 'accrual' : operationData?.typeLabel == 'Поступление' ? 'income' : operationData?.typeLabel == 'Перемещение' ? 'transfer' : operationData?.typeLabel == 'Выплата' ? 'payment' : 'income'
+	const type = operationData?.typeLabel == 'Начисление' ? 'accrual' : operationData?.typeLabel == 'Поступление' ? 'income' : operationData?.typeLabel == 'Перемещение' ? 'transfer' : operationData?.typeLabel == 'Выплата' ? 'payment' : (initialTab || 'income')
 	const [activeTab, setActiveTab] = useState(type)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
@@ -296,6 +315,8 @@ const OperationModal = observer(({
 	const [divivedAmounts, setdivivedAmounts] = useState([])
 	const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(disableCounterpartySelect && preselectedCounterparty), emptyRow()])
 	const [selectedSplits, setSelectedSplits] = useState([])
+	const [isDateModalOpen, setIsDateModalOpen] = useState(false)
+	const [tempSalesDeal, setTempSalesDeal] = useState(null)
 
 	const has = (label) => selectedSplits.some(s => s.value === label)
 	const showDate = has('Начисление')
@@ -363,9 +384,9 @@ const OperationModal = observer(({
 
 	// Initialize form data from operation or defaults
 	const getInitialFormData = () => {
-		if (operationData && (!isNew || operation?.isCopy) && operationData.rawData) {
-			// Editing existing operation or copying - use rawData
-			const raw = operationData.rawData
+		if (operationData && (!isNew || operation?.isCopy)) {
+			console.log('operationData', operationData)
+			const raw = operationData
 			const paymentDate = raw.data_operatsii
 				? new Date(raw.data_operatsii).toISOString().split('T')[0]
 				: new Date().toISOString().split('T')[0]
@@ -382,7 +403,7 @@ const OperationModal = observer(({
 				chartOfAccount: raw.chart_of_accounts_id || null,
 				project: null,
 				purchaseDeal: null,
-				salesDeal: null,
+				salesDeal: raw.selling_deal_id || null,
 				purpose: raw.opisanie || '',
 				// For transfer
 				fromDate: paymentDate,
@@ -399,7 +420,7 @@ const OperationModal = observer(({
 				cashMethod: true,
 				creditItem: null,
 				currenies_id: raw.currenies_id || null,
-				paymentType: ''
+				paymentType: '',
 			}
 		}
 
@@ -430,6 +451,7 @@ const OperationModal = observer(({
 			cashMethod: true,
 			creditItem: null,
 			currenies_id: null,
+			salesDeal: defaultDealGuid || null,
 		}
 	}
 
@@ -526,8 +548,6 @@ const OperationModal = observer(({
 	const { mutateAsync: createUcodeOperation, isPending: isLoadingUcodeOperation } = useUcodeRequestMutation()
 
 
-	// Build tree structure for counterparties (groups and their children)
-	// Use data directly from API - groups already contain children
 	const counterAgentsTree = useMemo(() => {
 		const groups = counterpartiesGroupsData?.data?.data?.data || []
 
@@ -593,6 +613,7 @@ const OperationModal = observer(({
 	}, [legalEntitiesData])
 
 	// Transform chart of accounts data - show only children of relevant root based on tab
+
 	const chartOfAccountsTree = useMemo(() => {
 		const rootItems = chartOfAccountsData?.data?.data?.data || []
 		if (rootItems.length === 0) return []
@@ -605,55 +626,14 @@ const OperationModal = observer(({
 			return {
 				value: item.guid || item.nazvanie,
 				title: item.nazvanie || 'Без названия',
-				selectable: true,
+				selectable: transformedChildren.length > 0 ? false : true,
 				children: transformedChildren.length > 0 ? transformedChildren : undefined,
 			}
 		}
 
-		// For income tab - show only children of "Доходы"
-		if (activeTab === 'income') {
-			const incomeRoot = rootItems.find(item => item.nazvanie === 'Доходы')
-			if (incomeRoot && incomeRoot.children) {
-				return incomeRoot.children.map(child => convertToTreeNode(child))
-			}
-			return []
-		}
-
-		// For payment tab - show only children of "Расходы"
-		if (activeTab === 'payment') {
-			const expenseRoot = rootItems.find(item => item.nazvanie === 'Расходы')
-			if (expenseRoot && expenseRoot.children) {
-				return expenseRoot.children.map(child => convertToTreeNode(child))
-			}
-			return []
-		}
-
-		// For accrual tab - show children of Актив, Обязательства, Капитал
-		if (activeTab === 'accrual') {
-			const result = []
-			const allowedRoots = ['Актив', 'Обязательства', 'Капитал']
-
-			allowedRoots.forEach(rootName => {
-				const root = rootItems.find(item => item.nazvanie === rootName)
-				if (root && root.children) {
-					// Add children of this root
-					root.children.forEach(child => {
-						result.push(convertToTreeNode(child))
-					})
-				}
-			})
-
-			return result
-		}
-
-		// For transfer tab - no chart of accounts needed
-		if (activeTab === 'transfer') {
-			return []
-		}
-
 		// Default - show all
 		return rootItems.map(item => convertToTreeNode(item))
-	}, [chartOfAccountsData, activeTab])
+	}, [chartOfAccountsData])
 
 
 	const bankAccounts = useMemo(() => {
@@ -857,11 +837,9 @@ const OperationModal = observer(({
 
 			// Validate dates
 			if (isNaN(paymentDate.getTime())) {
-				console.error('Invalid payment date:', formData.paymentDate)
 				paymentDate = now
 			}
 			if (isNaN(accrualDate.getTime())) {
-				console.error('Invalid accrual date:', formData.accrualDate)
 				accrualDate = paymentDate
 			}
 
@@ -880,17 +858,25 @@ const OperationModal = observer(({
 			const requestData = {
 				tip: [tipMap[activeTab] || 'Поступление'],
 				data_operatsii: activeTab === 'accrual' ? null : formData?.paymentDate,
-				data_nachisleniya: formData?.accrualDate,
+				data_nachisleniya: formData?.salesDeal ? null : formData?.accrualDate,
 				opisanie: formData.purpose || '',
 				summa: Number(activeTab === 'transfer' ? Number(formData.fromAmount || formData.toAmount || 0) : Number(activeTab === 'accrual' ? formData.amount || 0 : formData.amount || 0).toFixed(2)),
 				oplata_podtverzhdena: formData.confirmPayment || false,
 				payment_confirmed: formData.confirmPayment || false,
-				payment_accrual: activeTab === 'transfer' || activeTab === 'accrual' ? false : formData.confirmAccrual,
-				items: []
+				payment_accrual: activeTab === 'transfer' || activeTab === 'accrual' ? false : (formData.salesDeal ? false : formData.confirmAccrual),
+				operationType: activeTab,
+				legal_entity_id: authStore.userData?.legal_entity_id || null
 			}
 
 			if (divivedAmounts.length > 0) {
-				requestData.items = divivedAmounts.map(item => ({ ...item, value: Number(item?.value), percent: Number(item?.percent), isCalculationCommitted: showDate ? item?.isCalculationCommitted : false, contrAgentId: showAgent ? item?.contrAgentId : '' }))
+				requestData.items = divivedAmounts.map(item => ({
+					summa: Number(item?.value),
+					percent: Number(item?.percent),
+					data_nachisleniya: showDate && !formData.salesDeal ? (item?.calculationDate || null) : null,
+					payment_accrual: showDate && !formData.salesDeal ? (item?.isCalculationCommitted ?? false) : false,
+					counterparties_id: showAgent ? (item?.contrAgentId || null) : null,
+					chart_of_accounts_id: showStatya ? (item?.operationCategoryId || null) : null,
+				}))
 			}
 
 			// Special handling for transfer operations
@@ -912,8 +898,12 @@ const OperationModal = observer(({
 				requestData.my_accounts_id = formData.accountAndLegalEntity || null
 				requestData.counterparties_id = formData.counterparty || null
 				requestData.chart_of_accounts_id = formData.chartOfAccount || null
-				requestData.legal_entity_id = formData.legalEntity || null
-				requestData.currenies_id = currencyId || null
+			}
+
+			if (activeTab === 'income' || activeTab === 'payment') {
+				requestData.sales_transactions = formData.salesDeal || null
+				requestData.selling_deal_id = formData.salesDeal || null
+				requestData.deal_id = formData.salesDeal || null
 			}
 
 			// Convert empty strings to null
@@ -971,7 +961,10 @@ const OperationModal = observer(({
 			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
 			queryClient.invalidateQueries({ queryKey: ['operations'] })
+			queryClient.invalidateQueries({ queryKey: ['find_operations'] })
 			queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
+			queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+
 
 			onClose()
 		} catch (error) {
@@ -1006,6 +999,10 @@ const OperationModal = observer(({
 	}
 
 	if (!operationData && !isNew) return null
+
+	const isDebit = (!showDate && activeTab === 'income' && !formData.confirmPayment && formData.confirmAccrual && !formData.salesDeal) || (!showDate && activeTab === 'payment' && formData.confirmPayment && !formData.confirmAccrual && !formData.salesDeal)
+
+	const isCredit = (!showDate && activeTab === 'income' && formData.confirmPayment && !formData.confirmAccrual && !formData.salesDeal) || (!showDate && activeTab === 'payment' && !formData.confirmPayment && formData.confirmAccrual && !formData.salesDeal)
 
 	return (
 		<>
@@ -1044,7 +1041,7 @@ const OperationModal = observer(({
 											d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
 										/>
 									</svg>
-									<span>Создана {operationData?.createdAt || '—'}</span>
+									<span>Создана {formatDateRu(operationData?.createdAt) || '—'}</span>
 								</div>}
 							</div>
 							<button onClick={onClose} className={styles.closeButton}>
@@ -1099,433 +1096,77 @@ const OperationModal = observer(({
 						<div className={styles.form}>
 							{/* Поступление */}
 							{activeTab === 'income' && (
-								<>
-									{/* Дата оплаты */}
-									<div className={styles.formRow}>
-										<label className={styles.label}>
-											Дата оплаты
-										</label>
-										<div className={styles.fieldWrapper}>
-											<DatePicker
-												value={formData.paymentDate}
-												onChange={value => {
-													const pickDate = Number(value?.slice(-2))
-													const isFuture = pickDate > todayDate
-													setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : true })
-													if (errors.paymentDate) {
-														setErrors({ ...errors, paymentDate: null })
-													}
-												}}
-												dateFormat='YYYY-MM-DD'
-												className={styles.datePicker}
-												placeholder='Выберите дату'
-												showCheckbox={true}
-												checkboxLabel='Подтвердить оплату'
-												checkboxValue={formData.confirmPayment}
-												onCheckboxChange={checked => {
-													const pickDate = Number(formData.paymentDate?.slice(-2))
-													const isFuture = pickDate > todayDate
-													if (isFuture) return
-													setFormData({ ...formData, confirmPayment: checked })
-												}}
-											/>
-											{errors.paymentDate && (
-												<span className={styles.errorText}>{errors.paymentDate}</span>
-											)}
-										</div>
-									</div>
+								<IncomeForm
+									formData={formData}
+									setFormData={setFormData}
+									errors={errors}
+									setErrors={setErrors}
+									isDebit={isDebit}
+									isCredit={isCredit}
+									showDate={showDate}
+									showAgent={showAgent}
+									showStatya={showStatya}
+									bankAccounts={bankAccounts}
+									counterAgentsTree={counterAgentsTree}
+									chartOfAccountsTree={chartOfAccountsTree}
+									formattedDeals={formattedDeals}
+									counterAgents={counterAgents}
+									loadingBankAccounts={loadingBankAccounts}
+									isLoadingGroups={isLoadingGroups}
+									loadingChartOfAccounts={loadingChartOfAccounts}
+									rows={rows}
+									dispatch={dispatch}
+									selectedSplits={selectedSplits}
+									handleUpdateSplit={handleUpdateSplit}
+									setdivivedAmounts={setdivivedAmounts}
+									operationData={operationData}
+									preselectedCounterparty={preselectedCounterparty}
+									disableCounterpartySelect={disableCounterpartySelect}
+									formatAmount={formatAmount}
+									parseAmount={parseAmount}
+									getAccountCurrency={getAccountCurrency}
+									todayDate={todayDate}
+									setTempSalesDeal={setTempSalesDeal}
+									setIsDateModalOpen={setIsDateModalOpen}
 
-									{/* Счет и юрлицо currenies_id currencyID */}
-									<div className={styles.formRow}>
-										<label className={styles.label}>
-											Счет и юрлицо <span className={styles.required}>*</span>
-										</label>
-										<div className={styles.fieldWrapper}>
-											<GroupedSelect
-												data={bankAccounts}
-												value={formData.accountAndLegalEntity}
-												onChange={value => {
-													setFormData({ ...formData, accountAndLegalEntity: value })
-													if (errors.accountAndLegalEntity) {
-														setErrors({ ...errors, accountAndLegalEntity: null })
-													}
-												}}
-												placeholder='Выберите счет...'
-												groupBy={false}
-												labelKey='label'
-												valueKey='guid'
-												loading={loadingBankAccounts}
-												hasError={!!errors.accountAndLegalEntity}
-											/>
-											{errors.accountAndLegalEntity && (
-												<span className={styles.errorText}>{errors.accountAndLegalEntity}</span>
-											)}
-										</div>
-									</div>
-
-									{/* Сумма new form value summa */}
-									<div className={styles.amountWrapper}>
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Сумма
-											</label>
-											<div className={styles.fieldWrapper}>
-												<div className={styles.inputGroup}>
-													<Input
-														value={formatAmount(formData.amount)}
-														onChange={e => {
-															setFormData({ ...formData, amount: parseAmount(e.target.value) })
-															if (errors.amount) {
-																setErrors({ ...errors, amount: null })
-															}
-														}}
-														placeholder='0'
-														className={styles.input}
-													/>
-													{!showDate
-														&& <div>
-															{!formData.confirmPayment && formData.confirmAccrual && <DebitIcon />}
-															{formData.confirmPayment && !formData.confirmAccrual && <CreditIcon />}
-														</div>}
-													{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
-														{getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
-													</div>}
-												</div>
-											</div>
-										</div>
-
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												&nbsp;
-											</label>
-											<div className={styles.fieldWrapper}>
-												<SplitAmount
-													amount={formData?.amount}
-													counterAgents={counterAgents}
-													chartOfAccountsOptions={chartOfAccountsTree}
-													onChange={setdivivedAmounts}
-													rows={rows}
-													modalType={activeTab}
-													dispatch={dispatch}
-													emptyRow={emptyRow}
-													confirmAccural={formData.confirmAccrual}
-													confirmPayment={formData.confirmPayment}
-													selectedSplits={selectedSplits}
-													preselectedCounterparty={preselectedCounterparty}
-													setSelectedSplits={handleUpdateSplit}
-													initiallyOpen={operationData?.operationParts && operationData.operationParts.length > 0}
-												/>
-											</div>
-										</div>
-									</div>
-
-									{/* Дата начисления new value data_nachisleniya if confirmAccrual is true */}
-									{!showDate && <div className={styles.formRow}>
-										<label className={styles.label}>Дата начисления</label>
-										<DatePicker
-											value={formData.accrualDate}
-											onChange={value => {
-												const pickDate = Number(value?.slice(-2))
-												const isFuture = pickDate > todayDate
-												setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : true })
-												if (errors.accrualDate) {
-													setErrors({ ...errors, accrualDate: null })
-												}
-											}}
-											dateFormat='YYYY-MM-DD'
-
-											placeholder='Выберите дату'
-											showCheckbox
-											className={styles.datePicker}
-											checkboxLabel='Подтвердить начисление'
-											checkboxValue={formData.confirmAccrual}
-											onCheckboxChange={checked => {
-												const pickDate = Number(formData.accrualDate?.slice(-2))
-												const isFuture = pickDate > todayDate
-												if (isFuture) return
-												setFormData({ ...formData, confirmAccrual: checked })
-											}}
-										/>
-									</div>}
-
-									{/* Контрагент */}
-									{!showAgent && <div className={styles.formRow}>
-										<label className={styles.label}>Контрагент</label>
-										<TreeSelect
-											data={counterAgentsTree}
-											value={formData.counterparty}
-											onChange={value => setFormData({ ...formData, counterparty: value })}
-											placeholder='Выберите контрагента...'
-											className='flex-1'
-											loading={isLoadingGroups}
-											disabled={disableCounterpartySelect}
-										/>
-									</div>}
-
-									{/* Статья */}
-									{!showStatya && <div className={styles.formRow}>
-										<label className={styles.label}>Статья</label>
-										<TreeSelect
-											data={chartOfAccountsTree}
-											alwaysExpanded={true}
-											value={formData.chartOfAccount}
-											onChange={value => setFormData({ ...formData, chartOfAccount: value })}
-											placeholder='Выберите статью...'
-											loading={loadingChartOfAccounts}
-											className='flex-1'
-										/>
-									</div>}
-									{appStore.isPayment && <div className={styles.formRow}>
-										<label className={styles.label}>Тип платежа</label>
-										<GroupedSelect
-											data={[{ label: 'Наличный', value: 'cash' }, { label: 'Карта', value: 'card' }, { value: 'transfer', label: 'Перечисление' }]}
-											value={formData.paymentType}
-											onChange={value => setFormData(prev => ({ ...prev, paymentType: value }))}
-											placeholder='Выберите тип платежа...'
-											groupBy={false}
-											labelKey='label'
-											valueKey='value'
-											className={'flex-1'}
-										/>
-									</div>}
-
-									{/* Назначение платежа */}
-									<div className={styles.formRowStart}>
-										<label className={styles.label} style={{ paddingTop: '0.5rem' }}>
-											Назначение платежа <span className={styles.required}>*</span>
-										</label>
-										<div className={styles.fieldWrapper}>
-											<TextArea
-												value={formData.purpose}
-												onChange={e => {
-													setFormData({ ...formData, purpose: e.target.value })
-													if (errors.purpose) {
-														setErrors({ ...errors, purpose: null })
-													}
-												}}
-												placeholder='Назначение платежа'
-												rows={3}
-												error={errors.purpose}
-											/>
-											{errors.purpose && <span className={styles.errorText}>{errors.purpose}</span>}
-										</div>
-									</div>
-								</>
+								/>
 							)}
 
 							{/* Выплата */}
 							{activeTab === 'payment' && (
-								<>
-									{/* Дата оплаты */}
-									<div className={styles.formRow}>
-										<label className={styles.label}>
-											Дата оплаты
-										</label>
-										<div className={styles.fieldWrapper}>
-											<DatePicker
-												value={formData.paymentDate}
-												onChange={value => {
-													const pickDate = Number(value?.slice(-2))
-													const isFuture = pickDate > todayDate
-													setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : true })
-													if (errors.paymentDate) {
-														setErrors({ ...errors, paymentDate: null })
-													}
-												}}
-												placeholder='Выберите дату'
-												showCheckbox={true}
-												dateFormat='YYYY-MM-DD'
-												checkboxLabel='Подтвердить оплату'
-												checkboxValue={formData.confirmPayment}
-												onCheckboxChange={checked => {
-													const pickDate = Number(formData.paymentDate?.slice(-2))
-													const isFuture = pickDate > todayDate
-													if (isFuture) return
-													setFormData({ ...formData, confirmPayment: checked })
-												}}
-												className={[styles.datePicker, errors.paymentDate ? styles.error : ''].join(' ')}
-											/>
-										</div>
-									</div>
-
-									{/* Счет и юрлицо */}
-									<div className={styles.formRow}>
-										<label className={styles.label}>
-											Счет и юрлицо <span className={styles.required}>*</span>
-										</label>
-										<div className={styles.fieldWrapper}>
-											<GroupedSelect
-												data={bankAccounts}
-												value={formData.accountAndLegalEntity}
-												onChange={value => {
-													setFormData({ ...formData, accountAndLegalEntity: value })
-													if (errors.accountAndLegalEntity) {
-														setErrors({ ...errors, accountAndLegalEntity: null })
-													}
-												}}
-												placeholder='Выберите счет...'
-												groupBy={false}
-												labelKey='label'
-												valueKey='guid'
-												groupKey='group'
-												loading={loadingBankAccounts}
-												hasError={!!errors.accountAndLegalEntity}
-											/>
-											{errors.accountAndLegalEntity && (
-												<span className={styles.errorText}>{errors.accountAndLegalEntity}</span>
-											)}
-										</div>
-									</div>
-
-									{/* Сумма */}
-									<div className={styles.amountWrapper}>
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Сумма
-											</label>
-											<div className={styles.fieldWrapper}>
-												<div className={styles.inputGroup}>
-													<Input
-														type='text'
-														value={formatAmount(formData.amount)}
-														onChange={e => {
-															setFormData({ ...formData, amount: parseAmount(e.target.value) })
-															if (errors.amount) {
-																setErrors({ ...errors, amount: null })
-															}
-														}}
-														placeholder='0'
-														className={cn(styles.input, errors.amount && styles.error)}
-													/>
-													{!showDate
-														&& <div>
-															{formData.confirmPayment && !formData.confirmAccrual && <DebitIcon />}
-															{!formData.confirmPayment && formData.confirmAccrual && <CreditIcon />}
-														</div>}
-													{getAccountCurrency(formData.accountAndLegalEntity) && <div className={styles.currencyDisplay}>
-														{getAccountCurrency(formData.accountAndLegalEntity)}
-													</div>}
-												</div>
-											</div>
-										</div>
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												&nbsp;
-											</label>
-											<div className={styles.fieldWrapper}>
-												<SplitAmount
-													amount={formData?.amount}
-													counterAgents={counterAgents}
-													chartOfAccountsOptions={chartOfAccountsTree}
-													onChange={setdivivedAmounts}
-													rows={rows}
-													modalType={activeTab}
-													dispatch={dispatch}
-													emptyRow={emptyRow}
-													confirmAccural={formData.confirmAccrual}
-													confirmPayment={formData.confirmPayment}
-													selectedSplits={selectedSplits}
-													preselectedCounterparty={preselectedCounterparty}
-													setSelectedSplits={handleUpdateSplit}
-													initiallyOpen={operationData?.operationParts && operationData.operationParts.length > 0}
-												/>
-											</div>
-										</div>
-									</div>
-
-									{/* Дата начисления */}
-									{!showDate && <div className={styles.formRow}>
-										<label className={styles.label}>Дата начисления</label>
-										<DatePicker
-											value={formData.accrualDate}
-											// onChange={value => setFormData({ ...formData, accrualDate: value })}
-											onChange={value => {
-												const pickDate = Number(value?.slice(-2))
-												const isFuture = pickDate > todayDate
-												setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : true })
-												if (errors.accrualDate) {
-													setErrors({ ...errors, accrualDate: null })
-												}
-											}}
-											placeholder='Выберите дату'
-											showCheckbox
-											dateFormat='YYYY-MM-DD'
-											checkboxLabel='Подтвердить начисление'
-											checkboxValue={formData.confirmAccrual}
-											onCheckboxChange={checked => {
-												const pickDate = Number(formData.accrualDate?.slice(-2))
-												const isFuture = pickDate > todayDate
-												if (isFuture) return
-												setFormData({ ...formData, confirmAccrual: checked })
-											}}
-											className={cn(styles.datePicker, errors.accrualDate ? styles.error : '')}
-										/>
-									</div>}
-
-									{/* Контрагент */}
-									{!showAgent && <div className={styles.formRow}>
-										<label className={styles.label}>Контрагент</label>
-										<TreeSelect
-											data={counterAgentsTree}
-											value={formData.counterparty}
-											onChange={value => setFormData({ ...formData, counterparty: value })}
-											placeholder='Выберите контрагента...'
-											className='flex-1'
-											loading={isLoadingGroups}
-											disabled={disableCounterpartySelect}
-										/>
-									</div>}
-
-									{/* Статья */}
-									{!showStatya && <div className={styles.formRow}>
-										<label className={styles.label}>Статья</label>
-										<TreeSelect
-											data={chartOfAccountsTree}
-											alwaysExpanded={true}
-											value={formData.chartOfAccount}
-											onChange={value => setFormData({ ...formData, chartOfAccount: value })}
-											placeholder='Выберите статью...'
-											loading={loadingChartOfAccounts}
-											className='flex-1'
-										/>
-									</div>}
-
-									{appStore.isPayment && <div className={styles.formRow}>
-										<label className={styles.label}>Тип платежа</label>
-										<GroupedSelect
-											data={[{ label: 'Наличный', value: 'cash' }, { label: 'Карта', value: 'card' }, { value: 'transfer', label: 'Перечисление' }]}
-											value={formData.paymentType}
-											onChange={value => setFormData(prev => ({ ...prev, paymentType: value }))}
-											placeholder='Выберите тип платежа...'
-											groupBy={false}
-											labelKey='label'
-											valueKey='value'
-											className={'flex-1'}
-										/>
-									</div>}
-
-									{/* Назначение платежа */}
-									<div className={styles.formRowStart}>
-										<label className={styles.label} style={{ paddingTop: '0.5rem' }}>
-											Назначение платежа <span className={styles.required}>*</span>
-										</label>
-										<div className={styles.fieldWrapper}>
-											<TextArea
-												value={formData.purpose}
-												onChange={e => {
-													setFormData({ ...formData, purpose: e.target.value })
-													if (errors.purpose) {
-														setErrors({ ...errors, purpose: null })
-													}
-												}}
-												placeholder='Назначение платежа'
-												rows={3}
-												error={errors.purpose}
-											/>
-											{errors.purpose && <span className={styles.errorText}>{errors.purpose}</span>}
-										</div>
-									</div>
-								</>
+								<PaymentForm
+									formData={formData}
+									setFormData={setFormData}
+									errors={errors}
+									setErrors={setErrors}
+									isDebit={isDebit}
+									isCredit={isCredit}
+									showDate={showDate}
+									showAgent={showAgent}
+									showStatya={showStatya}
+									bankAccounts={bankAccounts}
+									counterAgentsTree={counterAgentsTree}
+									chartOfAccountsTree={chartOfAccountsTree}
+									formattedDeals={formattedDeals}
+									counterAgents={counterAgents}
+									loadingBankAccounts={loadingBankAccounts}
+									isLoadingGroups={isLoadingGroups}
+									loadingChartOfAccounts={loadingChartOfAccounts}
+									rows={rows}
+									dispatch={dispatch}
+									selectedSplits={selectedSplits}
+									handleUpdateSplit={handleUpdateSplit}
+									setdivivedAmounts={setdivivedAmounts}
+									operationData={operationData}
+									preselectedCounterparty={preselectedCounterparty}
+									disableCounterpartySelect={disableCounterpartySelect}
+									formatAmount={formatAmount}
+									parseAmount={parseAmount}
+									getAccountCurrency={getAccountCurrency}
+									todayDate={todayDate}
+									setTempSalesDeal={setTempSalesDeal}
+									setIsDateModalOpen={setIsDateModalOpen}
+								/>
 							)}
 
 							{/* Перемещение */}
@@ -1572,7 +1213,7 @@ const OperationModal = observer(({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<GroupedSelect
-													data={bankAccounts}
+													data={bankAccounts.filter(acc => acc.guid !== formData.toAccount)}
 													value={formData.fromAccount}
 													onChange={value => {
 														setFormData({ ...formData, fromAccount: value })
@@ -1655,7 +1296,7 @@ const OperationModal = observer(({
 											</label>
 											<div className={styles.fieldWrapper}>
 												<GroupedSelect
-													data={bankAccounts}
+													data={bankAccounts.filter(acc => acc.guid !== formData.fromAccount)}
 													value={formData.toAccount}
 													onChange={value => {
 														setFormData({ ...formData, toAccount: value })
@@ -1931,11 +1572,11 @@ const OperationModal = observer(({
 
 					{/* Footer */}
 					<div className={styles.footer}>
-						<button className={styles.cancelButton} onClick={onClose}>
+						<button className='secondary-btn' onClick={onClose}>
 							Отмена
 						</button>
-						<button className={styles.saveButton} onClick={handleSubmit} disabled={isSubmitting}>
-							{isSubmitting ? 'Создание...' : isNew ? 'Создать' : 'Сохранить'}
+						<button className='primary-btn' onClick={handleSubmit} disabled={isSubmitting}>
+							{isSubmitting ? <Loader /> : isNew ? 'Создать' : 'Сохранить'}
 						</button>
 					</div>
 				</div>
@@ -1974,6 +1615,35 @@ const OperationModal = observer(({
 					</button>
 				)}
 			</div>
+			<CustomModal
+				isOpen={isDateModalOpen}
+				onClose={() => {
+					setIsDateModalOpen(false)
+					setTempSalesDeal(null)
+				}}
+			>
+				<div className='p-4'>
+					<h3 className='text-lg font-bold text-neutral-900'>Дата начисления станет равна дате оплаты</h3>
+					<p className='text-neutral-600 text-sm py-3'>У оплаты, которую вы собираетесь прикрепить к сделке, дата начисления имеет статус «Подтверждена» или отличается от даты оплаты.</p>
+					<p className='text-neutral-600 text-sm pb-6'>После прикреплении такого платежа дата начисления будет равна дате оплаты и получит статус «Не подтверждена».</p>
+					<div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
+						<button className='secondary-btn' onClick={() => {
+							setIsDateModalOpen(false)
+							setTempSalesDeal(null)
+						}}>
+							Отменить
+						</button>
+						<button className='primary-btn' onClick={() => {
+							setFormData({ ...formData, salesDeal: tempSalesDeal, accrualDate: formData.paymentDate || formData.accrualDate, confirmAccrual: false })
+							setIsDateModalOpen(false)
+							setSelectedSplits((prev) => prev.filter(item => item.value !== 'Начисление'))
+							setTempSalesDeal(null)
+						}}>
+							Продолжить
+						</button>
+					</div>
+				</div>
+			</CustomModal>
 		</>
 	)
 })

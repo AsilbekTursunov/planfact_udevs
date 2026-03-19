@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
-  left: 90px;
-  top: 57px;
+  left: 80px;
+  top: 50px;
   right: 0;
   bottom: 0;
   z-index: 1000;
@@ -9,7 +9,6 @@
   transition: opacity 0.3s;
   background-color: lab(34.66 -0.95 -5.29 / 0.78);
   pointer-events: auto;
-
   &.closing {
     opacity: 0;
   }
@@ -21,8 +20,8 @@
 
 .modal {
   position: fixed;
-  left: 90px;
-  top: 57px;
+  left: 80px;
+  top: 50px;
   bottom: 0;
   min-width: 568px !important;
   max-width: 1000px !important;

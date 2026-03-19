@@ -21,6 +21,7 @@ import { formatDate } from '../../../utils/formatDate'
 import { useBankAccountsPlanFact } from '../../../hooks/useDashboard'
 import { formatDateRu } from '../../../utils/helpers'
 import { useQueryClient } from '@tanstack/react-query'
+import operationsDto from '../../../lib/dtos/operationsDto'
 
 export default function OperationsPage() {
 	// Block body scroll for this page only
@@ -81,6 +82,7 @@ export default function OperationsPage() {
 
 
 	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact()
+
 	const { data: legalEntitiesData } = useLegalEntitiesPlanFact({
 		page: 1,
 		limit: 100,
@@ -124,6 +126,8 @@ export default function OperationsPage() {
 		}))
 	}, [chartOfAccountsData])
 
+	console.log('chartOfAccountsOptions', chartOfAccountsOptions)
+
 	// Pagination state
 	const [page, setPage] = useState(1)
 	const [hasMore, setHasMore] = useState(true)
@@ -131,33 +135,6 @@ export default function OperationsPage() {
 	const [isLoadingMore, setIsLoadingMore] = useState(false)
 	const limit = 50
 	const tableWrapperRef = useRef(null)
-
-	const dateParams = useMemo(() => {
-		const formatDate = (date, endOfDay = false) => {
-			if (!date) return null
-			const d = new Date(date)
-			const year = d.getFullYear()
-			const month = String(d.getMonth() + 1).padStart(2, '0')
-			const day = String(d.getDate()).padStart(2, '0')
-			return `${year}-${month}-${day}${endOfDay ? 'T23:59:59Z' : 'T00:00:00Z'}`
-		}
-
-		let startDate = '2025-01-01T00:00:00Z'
-		let endDate = '2026-12-31T23:59:59Z'
-
-		if (selectedDatePaymentRange) {
-			const start = selectedDatePaymentRange.start || selectedDatePaymentRange.startDate
-			const end = selectedDatePaymentRange.end || selectedDatePaymentRange.endDate || start
-
-			if (start) startDate = formatDate(start, false)
-			if (end) endDate = formatDate(end, true)
-		}
-
-		return {
-			startDate,
-			endDate,
-		}
-	}, [selectedDatePaymentRange])
 
 
 	const requestOperationFilters = useMemo(() => {
@@ -200,9 +177,6 @@ export default function OperationsPage() {
 	}, [page, limit, debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters, paymentType])
 
 	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList(requestOperationFilters)
-
-
-
 
 
 	// Reset pagination when filters change
@@ -283,6 +257,8 @@ export default function OperationsPage() {
 			}))
 		]).flat()
 	}, [counterpartiesGroupsData])
+
+
 
 	// Transform operations data for display
 	const operations = useMemo(() => {
@@ -410,6 +386,13 @@ export default function OperationsPage() {
 		})
 	}, [allOperations])
 
+	const operationsList = useMemo(() => {
+		return {
+			today: operationsDto(operationsListData?.data?.data?.data || [], 'today'),
+			before: operationsDto(operationsListData?.data?.data?.data || [], 'before'),
+		}
+	}, [operationsListData])
+
 	const [isDatePaymentModalOpen, setIsDatePaymentModalOpen] = useState(false)
 	const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)
 	const [activeInput, setActiveInput] = useState(null) // 'start' or 'end'
@@ -506,9 +489,6 @@ export default function OperationsPage() {
 		setOpenModal(operation)
 		setIsModalClosing(false)
 		setIsModalOpening(true)
-		// Блокируем скролл страницы
-		// document.body.style.overflow = 'hidden'
-		// Определяем тип модалки по типу операции
 		if (operation.typeCategory === 'transfer') {
 			setModalType('transfer')
 		} else if (operation.typeCategory === 'out') {
@@ -569,7 +549,7 @@ export default function OperationsPage() {
 
 
 		setOpenModal({
-			...copiedOperation, 
+			...copiedOperation,
 			id: 'new',
 			isNew: true,
 			isCopy: true
@@ -846,6 +826,7 @@ export default function OperationsPage() {
 									<th className={styles.tableHeaderCell}>Контрагент</th>
 									<th className={styles.tableHeaderCell}>Статья</th>
 									<th className={styles.tableHeaderCell}>Проект</th>
+									<th className={styles.tableHeaderCell}>Сделка</th>
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
 								</tr>
@@ -878,7 +859,7 @@ export default function OperationsPage() {
 										)}
 
 										{/* Today Operations */}
-										{operations
+												{/* {operations
 											.filter(op => op.section === 'today')
 													.map(op => (
 												<OperationTableRow
@@ -891,8 +872,20 @@ export default function OperationsPage() {
 													handleDeleteOperation={handleDeleteOperation}
 													handleCopyOperation={handleCopyOperation}
 												/>
-											))}
+											))} */}
 
+												{operationsList?.today?.map(op => (
+													<OperationTableRow
+														key={op.guid}
+														op={op}
+														selectedOperations={selectedOperations}
+														toggleOperation={toggleOperation}
+														openOperationModal={openOperationModal}
+														handleEditOperation={handleEditOperation}
+														handleDeleteOperation={handleDeleteOperation}
+														handleCopyOperation={handleCopyOperation}
+													/>
+												))}
 										{/* Вчера и ранее - Section Header */}
 										{operations.filter(op => op.section === 'yesterday').length > 0 && (
 											<tr className={styles.sectionHeader}>
@@ -901,9 +894,21 @@ export default function OperationsPage() {
 												</td>
 											</tr>
 										)}
+												{operationsList?.before?.map(op => (
+													<OperationTableRow
+														key={op.guid}
+														op={op}
+														selectedOperations={selectedOperations}
+														toggleOperation={toggleOperation}
+														openOperationModal={openOperationModal}
+														handleEditOperation={handleEditOperation}
+														handleDeleteOperation={handleDeleteOperation}
+														handleCopyOperation={handleCopyOperation}
+													/>
+												))}
 
 										{/* Yesterday Operations */}
-										{operations
+												{/* {operations
 											.filter(op => op.section === 'yesterday')
 													.map(op => (
 														<OperationTableRow
@@ -916,7 +921,7 @@ export default function OperationsPage() {
 													handleDeleteOperation={handleDeleteOperation}
 													handleCopyOperation={handleCopyOperation}
 												/>
-											))}
+											))} */}
 									</>
 								)}
 							</tbody>
@@ -944,14 +949,10 @@ export default function OperationsPage() {
 			{openModal && (
 				<OperationModal
 					operation={openModal}
-					modalType={modalType}
 					isClosing={isModalClosing}
 					isOpening={isModalOpening}
 					onClose={closeOperationModal}
 					onSuccess={(operationData, isUpdate) => {
-						console.log('=== onSuccess callback ===')
-						console.log('operationData:', operationData)
-						console.log('isUpdate:', isUpdate)
 
 						if (isUpdate) {
 							// Обновляем существующую операцию в списке

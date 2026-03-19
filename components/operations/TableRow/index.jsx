@@ -4,7 +4,7 @@ import styles from './style.module.scss'
 import PriceStatus from '@/components/operations/PriceStatus'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
-import { ExpendClose, ExpendOpen, TypeIncomeIcon, TypeExpenseIcon, TypeTransferIcon } from '../../../constants/icons'
+import { ExpendClose, ExpendOpen, TypeIncomeIcon, TypeExpenseIcon, TypeTransferIcon, ShipmentIcon } from '../../../constants/icons'
 
 const OperationTableRow = ({
   op,
@@ -66,22 +66,24 @@ const OperationTableRow = ({
           </> : op?.operationDate}
         </td>
         <td className={cn(styles.tableCell, styles.accountCell)}>
-          {op?.type == "Перемещение" ? <>
+          {op?.tip == "Перемещение" ? <>
             <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
-              <span>{op.bankAccount}</span>
-              <span>{op.bankAccount2}</span>
+              <span>{op.my_account_name}</span>
+              <span>{op.my_account_name_2}</span>
             </div>
-          </> : op.bankAccount || ''}
+          </> : op.my_account_name || ''}
         </td>
         <td className={styles.tableCell}>
-          {op.typeLabel ? (
+          {op.tip ? (
             <div className={styles.typeIcon}>
-              {op.typeLabel === 'Поступление' ? (
+              {op.selling_deal_id ? (
+                <ShipmentIcon />
+              ) : op.tip === 'Поступление' ? (
                 <TypeIncomeIcon />
-              ) : op.typeLabel === 'Выплата' ? (
-                  <TypeExpenseIcon />
-                ) : op.typeLabel === 'Перемещение' ||
-                  op.typeLabel === 'Начисление' ? (
+              ) : op.tip === 'Выплата' ? (
+                <TypeExpenseIcon />
+                  ) : op.tip === 'Перемещение' ||
+                    op.tip === 'Начисление' ? (
                 <TypeTransferIcon />
               ) : null}
             </div>
@@ -91,17 +93,18 @@ const OperationTableRow = ({
           {titleContragent}
         </td>
         <td className={cn(styles.tableCell, styles.statusCell)}>
-          {op?.type == "Перемещение" ? <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
+          {op?.tip == "Перемещение" ? <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
             <span>[Перемещение - списание]</span>
             <span>[Перемещение - зачисление]</span>
           </div> : op.chartOfAccounts || ''}
         </td>
-        <td className={styles.tableCell}></td>
+        <td className={styles.tableCell}>{op?.project_name || '-'}</td>
+        <td className={styles.tableCell}>{op?.selling_deal_name || '-'}</td>
         <td className={styles.tableCell} onClick={e => e.stopPropagation()}>
           <PriceStatus
-            amount={op.amount}
-            tab={op.type}
-            type={op.typeCategory}
+            amount={op.summa}
+            tab={op.tip}
+            type={op?.tip}
             confirmed={op.payment_confirmed}
             accrual={op.payment_accrual}
             currency={op.currency}
@@ -124,8 +127,8 @@ const OperationTableRow = ({
           return (
             <tr
               key={part.id}
-              className={`${styles.tableRow} ${styles.child} ${counterpartyGuid !== part?.counterpartyId ? styles.disabled : ''}`}
-              aria-disabled={counterpartyGuid === part?.counterpartyId}
+              className={`${styles.tableRow} ${styles.child} ${counterpartyGuid && counterpartyGuid !== part?.counterpartyId ? styles.disabled : ''}`}
+              aria-disabled={counterpartyGuid && counterpartyGuid === part?.counterpartyId}
               onClick={e => {
                 if (!e.target.closest('input') && !e.target.closest('button') && counterpartyGuid === part?.counterpartyId) {
                   openOperationModal(part)
@@ -139,14 +142,14 @@ const OperationTableRow = ({
                 {part?.accrualDate}
               </td>
               <td className={styles.tableCell}>
-                {op.typeLabel ? (
+                {part.tip ? (
                   <div className={styles.typeIcon}>
-                    {op.typeLabel === 'Поступление' ? (
+                    {part.tip === 'Поступление' ? (
                       <TypeIncomeIcon />
-                    ) : op.typeLabel === 'Выплата' ? (
+                    ) : part.tip === 'Выплата' ? (
                       <TypeExpenseIcon />
-                    ) : op.typeLabel === 'Перемещение' ||
-                      op.typeLabel === 'Начисление' ? (
+                      ) : part.tip === 'Перемещение' ||
+                        part.tip === 'Начисление' ? (
                       <TypeTransferIcon />
                     ) : null}
                   </div>
@@ -168,21 +171,18 @@ const OperationTableRow = ({
                   part.chartOfAccounts || ''
                 )}
               </td>
-              <td className={styles.tableCell}></td>
+              <td className={styles.tableCell}>{part?.project_name || '-'}</td>
+              <td className={styles.tableCell}>{part?.selling_deal_name || '-'}</td>
               <td colSpan={2} className={styles.tableCell} onClick={e => e.stopPropagation()}>
                 <PriceStatus
-                  amount={part.amount}
+                  amount={part.summa}
                   tab={part?.tip}
-                  type={part.typeCategory}
+                  type={part?.tip}
                   confirmed={part.payment_confirmed}
                   accrual={part.payment_accrual}
                   currency={part.currency}
                 />
-              </td>
-              {/* <td
-              className={cn(styles.tableCell, styles.tableCellActions)}
-              onClick={e => e.stopPropagation()}
-            ></td> */}
+              </td> 
             </tr>
           )
         })}

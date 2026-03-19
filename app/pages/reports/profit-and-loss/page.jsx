@@ -1,14 +1,17 @@
 "use client"
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { observer } from 'mobx-react-lite'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar'
 import styles from './profit-and-loss.module.scss'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import { reportsStore } from '../../../../store/reports.store'
+import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 
-export default function ProfitAndLossPage() {
+const ProfitAndLossPage = observer(() => {
   const [expandedRows, setExpandedRows] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [reportData, setReportData] = useState(null)
@@ -18,81 +21,6 @@ export default function ProfitAndLossPage() {
   const [selectedColumn, setSelectedColumn] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(null)
 
-
-  // Calculate default date range (last 6 months)
-  const getDefaultDateRange = () => {
-    const end = new Date()
-    const start = new Date()
-    start.setMonth(start.getMonth() - 6)
-
-    return {
-      start: start,
-      end: end
-    }
-  }
-
-  // Filter states
-  const [selectedPeriod, setSelectedPeriod] = useState('all')
-  const [selectedEntity, setSelectedEntity] = useState('all')
-  const [selectedAccounts, setSelectedAccounts] = useState([]) // Multiple selection
-  const [selectedCounterparties, setSelectedCounterparties] = useState([]) // Multiple selection
-  const [dateRange, setDateRange] = useState(getDefaultDateRange()) // Default to last 6 months
-  const [selectedGrouping, setSelectedGrouping] = useState('monthly')
-
-  // Accounting method: true = Accrual (начисление), false = Cash (кассовый)
-  const [isCalculation, setIsCalculation] = useState(true)
-
-  // Profit types filter - default to all disabled, load from localStorage after mount
-  const [profitTypes, setProfitTypes] = useState({
-    operational: true,  // isOperatingProfit
-    ebitda: true,       // isEbitda
-    ebit: true,         // isEbit
-    ebt: true           // isEbt
-  })
-
-
-  const { data: counterpartiesGroupData } = useUcodeRequestQuery({
-    method: 'get_counterparties_group',
-    data: {
-      limit: 1000,
-      page: 1
-    }
-  })
-
-  const { data: myAccountsData } = useUcodeRequestQuery({
-    method: 'get_my_accounts',
-    data: {
-      limit: 1000,
-      page: 1
-    }
-  })
-
-
-
-
-  // Load profit types from localStorage after component mounts (client-side only)
-  useEffect(() => {
-    const saved = localStorage.getItem('profitAndLoss_profitTypes')
-    if (saved) {
-      try {
-        setProfitTypes(JSON.parse(saved))
-      } catch (e) {
-        console.error('Error parsing saved profit types:', e)
-      }
-    }
-  }, [])
-
-  // Save profit types to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('profitAndLoss_profitTypes', JSON.stringify(profitTypes))
-  }, [profitTypes])
-
-  const toggleProfitType = (type) => {
-    setProfitTypes(prev => ({
-      ...prev,
-      [type]: !prev[type]
-    }))
-  }
 
   // Mock data for selects
   const accountingMethodOptions = [
@@ -120,53 +48,15 @@ export default function ProfitAndLossPage() {
     { guid: 'entity3', label: 'ИП Иванов И.И.' }
   ]
 
-  const myAccounts = useMemo(() => {
-    const chartOfAccountsRaw = myAccountsData?.data?.data?.data || []
-    const flatten = (items) => {
-      let result = []
-      items.forEach(item => {
-        result.push(item)
-        if (item.children && item.children.length > 0) {
-          result = result.concat(flatten(item.children))
-        }
-      })
-      return result
-    }
-    return Array.isArray(chartOfAccountsRaw) ? flatten(chartOfAccountsRaw) : []
-  }, [myAccountsData])
 
-
-  const myAccountsOptions = useMemo(() => {
-    if (!myAccounts || myAccounts.length === 0) return []
-    return myAccounts.map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия',
-      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
-    }))
-  }, [myAccounts])
-
-  const counterparties = useMemo(() => {
-    const groups = counterpartiesGroupData?.data?.data?.data || []
-
-    const hasChildren = groups.filter(item => item.children && item.children.length > 0)
-
-    return hasChildren.map(item => [
-      { value: '', label: item.nazvanie_gruppy, group: item.nazvanie_gruppy },
-      ...(item.children || []).map(child => ({
-        value: child.guid,
-        label: child.nazvanie || '',
-        group: item.nazvanie_gruppy
-      }))
-    ]).flat()
-  }, [counterpartiesGroupData])
-
+  const { dateRange, selectedPeriod, selectedGrouping, isCalculation, profitTypes, selectedAccounts, selectedCounterparties } = reportsStore
 
   // Prepare API parameters dynamically
   const apiParams = useMemo(() => {
     if (!dateRange || !dateRange.start || !dateRange.end) return null
 
     // Format dates for API (expects YYYY-MM-DD strings)
-    const formatDate = (date, isEndDate = false) => {
+    const formatDate = (date) => {
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')
@@ -310,18 +200,7 @@ export default function ProfitAndLossPage() {
             >
               {hasChildren && (
                 <button className={styles.expandButton}>
-                  {isExpanded ? (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round" />
-                      <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round" />
-                        <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M8 5.33337L8 10.6667" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
+                  {isExpanded ? <ExpendClose /> : <ExpendOpen />}
                 </button>
               )}
               <span className={item.level === 0 || isResultRow || isTotalRow ? styles.boldText : ''}>
@@ -370,29 +249,14 @@ export default function ProfitAndLossPage() {
     return (
       <div className={styles.container}>
         <div className={styles.contentWrapper}>
-          {/* Filter Sidebar */}
           <ReportFilterSidebar
             isOpen={isFilterOpen}
             onClose={() => setIsFilterOpen(false)}
             periodOptions={periodOptions}
-            selectedPeriod={selectedPeriod}
-            onPeriodChange={setSelectedPeriod}
             entityOptions={entityOptions}
-            selectedEntity={selectedEntity}
-            onEntityChange={setSelectedEntity}
-            accountOptions={myAccountsOptions}
-            selectedAccounts={selectedAccounts}
-            onAccountsChange={setSelectedAccounts}
-            counterpartyOptions={counterparties}
-            selectedCounterparties={selectedCounterparties}
-            onCounterpartiesChange={setSelectedCounterparties}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-            profitTypes={profitTypes}
-            onProfitTypesChange={toggleProfitType}
+            groupingOptions={groupingOptions}
           />
 
-          {/* Filter Toggle Bar */}
           {!isFilterOpen && (
             <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
               <button className={styles.filterToggleBarButton}>
@@ -454,24 +318,9 @@ export default function ProfitAndLossPage() {
             isOpen={isFilterOpen}
             onClose={() => setIsFilterOpen(false)}
             periodOptions={periodOptions}
-            selectedPeriod={selectedPeriod}
-            onPeriodChange={setSelectedPeriod}
             entityOptions={entityOptions}
-            selectedEntity={selectedEntity}
-            onEntityChange={setSelectedEntity}
-            accountOptions={myAccountsOptions}
-            selectedAccounts={selectedAccounts}
-            onAccountsChange={setSelectedAccounts}
-            counterpartyOptions={counterparties}
-            selectedCounterparties={selectedCounterparties}
-            onCounterpartiesChange={setSelectedCounterparties}
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-            profitTypes={profitTypes}
-            onProfitTypesChange={toggleProfitType}
           />
 
-          {/* Filter Toggle Bar */}
           {!isFilterOpen && (
             <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
               <button className={styles.filterToggleBarButton}>
@@ -538,21 +387,8 @@ export default function ProfitAndLossPage() {
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
           periodOptions={periodOptions}
-          selectedPeriod={selectedPeriod}
-          onPeriodChange={setSelectedPeriod}
           entityOptions={entityOptions}
-          selectedEntity={selectedEntity}
-          onEntityChange={setSelectedEntity}
-          accountOptions={myAccountsOptions}
-          selectedAccounts={selectedAccounts}
-          onAccountsChange={setSelectedAccounts}
-          counterpartyOptions={counterparties}
-          selectedCounterparties={selectedCounterparties}
-          onCounterpartiesChange={setSelectedCounterparties}
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-          profitTypes={profitTypes}
-          onProfitTypesChange={toggleProfitType}
+          groupingOptions={groupingOptions}
         />
 
         {/* Filter Toggle Bar */}
@@ -577,14 +413,14 @@ export default function ProfitAndLossPage() {
                 <GroupedSelect
                   data={groupingOptions}
                   value={selectedGrouping}
-                  onChange={(value) => setSelectedGrouping(value)}
+                  onChange={(value) => reportsStore.setFilter('selectedGrouping', value)}
                   placeholder="Способ построения"
                   className={styles.groupingSelect}
                 />
                 <GroupedSelect
                   data={accountingMethodOptions}
                   value={isCalculation ? 'accrual' : 'cash'}
-                  onChange={(value) => setIsCalculation(value === 'accrual')}
+                  onChange={(value) => reportsStore.setFilter('isCalculation', value === 'accrual')}
                   placeholder="Метод учета"
                   className={styles.accountingMethodSelect}
                   autoHeight={true}
@@ -624,4 +460,6 @@ export default function ProfitAndLossPage() {
       <OperationCashFlowModal data={selectedColumn} selectedMonth={selectedMonth} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   )
-}
+})
+
+export default ProfitAndLossPage
