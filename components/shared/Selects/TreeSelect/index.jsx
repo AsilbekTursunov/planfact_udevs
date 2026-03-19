@@ -53,6 +53,7 @@ const TreeSelect = ({
   const buttonRef = useRef(null)
   const containerRef = useRef(null)
 
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
@@ -71,7 +72,7 @@ const TreeSelect = ({
     }
   }, [open])
 
-  // Single label resolver for triggers
+
   const getSelectedLabel = () => {
     if (!value) return placeholder;
     if (multi && Array.isArray(value)) {
@@ -93,7 +94,7 @@ const TreeSelect = ({
     return findLabel(data) || placeholder;
   }
 
-  // Filter logic
+
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
     const filterNodes = (nodes) => {
@@ -108,7 +109,8 @@ const TreeSelect = ({
       }, []);
     }
     return filterNodes(data);
-  }, [data, searchQuery]);
+  }, [data, searchQuery])
+
 
   const handleSelect = (node) => {
     if (multi) {
@@ -141,9 +143,9 @@ const TreeSelect = ({
     }
   }
 
+
   return (
     <div ref={containerRef} className='relative w-full'>
-      {/* Trigger Button */}
       <button
         ref={buttonRef}
         type="button"
@@ -158,7 +160,7 @@ const TreeSelect = ({
           setOpen(!open)
         }}
       >
-        <span className='text-neutral-600 font-normal text-xs'>{getSelectedLabel()}</span>
+        <span className={cn('text-gray-ucode-400 font-normal text-xs', (multi && value?.length > 0) || (!multi && value) && 'text-gray-ucode-800')}>{getSelectedLabel()}</span>
         <ChevronUp size={16} className={cn('text-neutral-400 transition-transform duration-200', open ? 'rotate-0' : 'rotate-180')} />
       </button>
 

@@ -9,10 +9,10 @@ import NewDateRangeComponent from '@/components/directories/NewDateRangeComponen
 import styles from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar.module.scss'
 import '@/styles/report-filters.css'
 import { useUcodeRequestQuery } from '@/hooks/useDashboard'
+import SalesTransactions from '@/components/ReadyComponents/SalesTransactions'
 
 const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
-  // ── Load reference data via React Query (cached) ─────────────────────────
-  const { data: myAccountsData, isLoading: loadingAccounts } = useUcodeRequestQuery({
+  const accountQuery = useUcodeRequestQuery({
     method: 'get_my_accounts',
     data: { limit: 1000, page: 1 }
   })
@@ -24,8 +24,9 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
 
   // ── Build options ─────────────────────────────────────────────────────────
   const accountOptions = useMemo(() => {
-    if (!myAccountsData) return []
-    const raw = myAccountsData?.data?.data?.data || []
+    const data = accountQuery.data
+    if (!data) return []
+    const raw = data?.data?.data?.data || []
     const flatten = (items) => {
       let result = []
       items.forEach(item => {
@@ -39,7 +40,7 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
       label: item.nazvanie || 'Без названия',
       group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
     }))
-  }, [myAccountsData])
+  }, [accountQuery.data])
 
   const counterpartyOptions = useMemo(() => {
     if (!counterpartiesGroupData) return []
@@ -130,7 +131,7 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
                 value={[]}
                 onChange={() => {}}
                 placeholder="Загрузка..."
-                loading={loadingAccounts}
+                loading={accountQuery.isLoading}
               />
             )}
           </div>
@@ -140,7 +141,7 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
             {counterpartyOptions.length > 0 ? (
               <MultiSelect
                 data={counterpartyOptions}
-                value={filters.counterparties}
+                value={filters.contrAgentId}
                 onChange={(val) => cashFlowStore.setCounterparties(val)}
                 hideSelectAll={true}
                 placeholder="Все контрагенты"
@@ -156,6 +157,16 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
               />
             )}
           </div>
+          {/* Sales transtions */}
+          <div className={styles.filterSection}>
+            <SalesTransactions
+              value={filters.sellingDealId}
+              onChange={(val) => cashFlowStore.setDeals(val)}
+              placeholder="Все сделки"
+              dropdownClassName="w-56"
+            />
+          </div>
+          
         </div>
       </div>
     </div>

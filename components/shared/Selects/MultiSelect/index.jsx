@@ -74,7 +74,7 @@ const MultiSelect = ({
           setOpen(!open)
         }}
       >
-        <span className='text-neutral-600 font-normal text-xs'>{getSelectedLabel()}</span>
+        <span className={cn('text-gray-ucode-400 font-normal text-xs', value.length > 0 && 'text-gray-ucode-800')}>{getSelectedLabel()}</span>
         <ChevronUp size={16} className={cn('text-neutral-400 transition-transform duration-200', open ? 'rotate-0' : 'rotate-180')} />
       </button>
 

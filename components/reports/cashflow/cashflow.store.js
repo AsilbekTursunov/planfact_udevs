@@ -12,16 +12,15 @@ const formatDate = (date) => {
   return `${year}-${month}-${day}`
 }
 
-class CashFlowStore {
+class CashFlowStore { 
   // ── Filter state ────────────────────────────────────────────────────────────
   filters = {
     periodStartDate: '',
     periodEndDate: '',
     periodType: 'monthly',
     currencyCode: 'RUB', // Defaulting to RUB as seen in page
-    counterparty_id: '',
-    deals: [],
-    counterparties: []
+    sellingDealId: [],
+    contrAgentId: []
   }
 
   // ── Report state ────────────────────────────────────────────────────────────
@@ -89,16 +88,12 @@ class CashFlowStore {
     this.filters.currencyCode = value
   }
 
-  setCounterpartyId(value) {
-    this.filters.counterparty_id = value
-  }
-
   setDeals(value) {
-    this.filters.deals = value
+    this.filters.sellingDealId = value
   }
 
   setCounterparties(value) {
-    this.filters.counterparties = value
+    this.filters.contrAgentId = value
   }
 
   resetFilters() {
@@ -106,10 +101,9 @@ class CashFlowStore {
       periodStartDate: '',
       periodEndDate: '',
       periodType: 'monthly',
-      currencyCode: '',
-      counterparty_id: '',
-      deals: [],
-      counterparties: []
+      currencyCode: '', 
+      sellingDealId: [],
+      contrAgentId: []
     }
   }
 
