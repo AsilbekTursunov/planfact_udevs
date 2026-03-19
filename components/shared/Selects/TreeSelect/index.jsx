@@ -18,7 +18,7 @@ const TreeNode = ({ node, level = 0, selectedValue, onSelect, multi }) => {
         style={{ paddingLeft: `${16 + level * 16}px` }}
         onClick={(e) => {
           e.stopPropagation();
-          if (isSelectable) onSelect(node.value);
+          if (isSelectable) onSelect(node);
         }}
       >
         <span>{node.label}</span>
@@ -45,7 +45,7 @@ const TreeSelect = ({
   onChange = () => { },
   placeholder = "Выберите",
   multi = false,
-  className
+  className, dropdownClassName
 }) => {
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -110,19 +110,34 @@ const TreeSelect = ({
     return filterNodes(data);
   }, [data, searchQuery]);
 
-  const handleSelect = (nodeValue) => {
+  const handleSelect = (node) => {
     if (multi) {
       const currentValues = Array.isArray(value) ? value : [];
+      
+      const getSelectableValues = (n) => {
+        let vals = [];
+        if (n.isSelectable !== false) vals.push(n.value);
+        if (n.children) {
+          n.children.forEach(c => {
+            vals = [...vals, ...getSelectableValues(c)];
+          });
+        }
+        return vals;
+      };
+
+      const nodeValues = getSelectableValues(node);
+      const allSelected = nodeValues.every(v => currentValues.includes(v));
       let newValue;
-      if (currentValues.includes(nodeValue)) {
-        newValue = currentValues.filter(val => val !== nodeValue);
+
+      if (allSelected) {
+        newValue = currentValues.filter(v => !nodeValues.includes(v));
       } else {
-        newValue = [...currentValues, nodeValue];
+        newValue = [...new Set([...currentValues, ...nodeValues])];
       }
       onChange(newValue);
     } else {
-      onChange(nodeValue);
-      setOpen(false); // close for single select
+      onChange(node.value);
+      setOpen(false);
     }
   }
 
@@ -150,7 +165,7 @@ const TreeSelect = ({
       {/* Dropdown Menu */}
       {open && (
         <div className={cn(
-          'absolute left-0 right-0 z-50 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-64 overflow-hidden flex flex-col',
+          'absolute left-0 right-0 z-50 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-64 overflow-hidden flex flex-col', dropdownClassName,
           openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
         )}>
           {/* Search Input */}

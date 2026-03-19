@@ -1,99 +1,19 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import React, { useState, useEffect } from 'react'
+import { observer } from 'mobx-react-lite'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
-import { ReportFilterSidebar } from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar'
-import { getBalanceReport } from '@/lib/api/ucode/balance'
-import { legalEntitiesAPI } from '@/lib/api/ucode/legalEntities'
+import BalanceFilterSidebar from '@/components/reports/balance/FilterSidebar'
+import { balanceStore } from '@/components/reports/balance/balance.store'
 import styles from './balance.module.scss'
-import '@/styles/report-filters.css'
+import { ExpendOpen, ExpendClose } from '@/constants/icons'
 
-export default function BalancePage() {
-  // Balance page component - updated
+export default observer(function BalancePage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
-  const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
+  const [isFilterOpen, setIsFilterOpen] = useState(true)
 
-  // Calculate default date
-  const getDefaultDate = () => {
-    return new Date().toISOString().split('T')[0] // Format: YYYY-MM-DD
-  }
-
-  // Filter states
-  const [selectedDate, setSelectedDate] = useState(getDefaultDate())
-  const [selectedEntity, setSelectedEntity] = useState('')
-  const [selectedCurrency, setSelectedCurrency] = useState('RUB')
-
-  // Fetch legal entities for dropdown
-  const { data: legalEntitiesResponse } = useQuery({
-    queryKey: ['legal-entities'],
-    queryFn: () => legalEntitiesAPI.getLegalEntitiesInvokeFunction({ page: 1, limit: 100 }),
-    retry: 1,
-    refetchOnMount: 'always',
-    staleTime: 0,
-    onError: (error) => {
-      console.error('Error fetching legal entities:', error)
-    }
-  })
-
-  // Fetch balance report data
-  const { data: balanceResponse, isLoading, error, refetch } = useQuery({
-    queryKey: ['balance-report', selectedDate, selectedEntity, selectedCurrency],
-    queryFn: () => getBalanceReport({
-      as_of: selectedDate,
-      account_ids: [],
-      legal_entity_id: selectedEntity === '' ? '' : selectedEntity,
-      user_currency_code: selectedCurrency,
-      contr_agent_ids: []
-    }),
-    retry: 1,
-    refetchOnMount: 'always',
-    staleTime: 0,
-    onError: (error) => {
-      console.error('Error fetching balance report:', error)
-    }
-  })
-
-  // Extract balance data from API response
-  const balanceData = useMemo(() => {
-    if (!balanceResponse?.data?.data) {
-      return {
-        assets: [],
-        liabilities: [],
-        equity: []
-      }
-    }
-
-    // Transform API data to component format
-    const apiData = balanceResponse.data.data
-    
-    // Helper function to transform API items to component format
-    const transformItems = (items, level = 0) => {
-      if (!items || !Array.isArray(items)) return []
-      
-      return items.map(item => {
-        // Ensure value is always a number
-        const value = typeof item.value === 'number' ? item.value : 0
-        
-        return {
-          id: item.id || `item-${Math.random()}`,
-          name: item.name || 'Неизвестно',
-          level,
-          value,
-          totalValue: value,
-          isSubtotal: Boolean(item.isSubtotal),
-          details: item.children ? transformItems(item.children, level + 1) : []
-        }
-      })
-    }
-    
-    return {
-      assets: transformItems(apiData.assets || []),
-      liabilities: transformItems(apiData.liabilities || []),
-      equity: transformItems(apiData.equity || [])
-    }
-  }, [balanceResponse])
+  const { balanceData, isLoading, error } = balanceStore
 
   // Currency options
   const currencyOptions = [
@@ -102,31 +22,15 @@ export default function BalancePage() {
     { guid: 'EUR', label: 'EUR' }
   ]
 
-  // Entity options from API
-  const entityOptions = useMemo(() => {
-    const baseOptions = [{ guid: '', label: 'Все счета' }]
-    
-    // Обрабатываем ответ от get_legal_entities
-    if (legalEntitiesResponse?.data?.data?.data && Array.isArray(legalEntitiesResponse.data.data.data)) {
-      const entitiesArray = legalEntitiesResponse.data.data.data
-      
-      const apiEntities = entitiesArray.map(entity => ({
-        guid: entity.guid,
-        label: entity.nazvanie || entity.polnoe_nazvanie || 'Неизвестный счет'
-      }))
-      return [...baseOptions, ...apiEntities]
-    }
-    
-    // Логируем структуру ответа для отладки
-    if (legalEntitiesResponse) {
-      console.log('Legal entities API response structure:', legalEntitiesResponse)
-    }
-    
-    return baseOptions
-  }, [legalEntitiesResponse])
-
+  // Auto-expand first two levels on initial data load
   useEffect(() => {
     if (!isInitialLoad) return
+    const hasData =
+      balanceData.assets.length > 0 ||
+      balanceData.liabilities.length > 0 ||
+      balanceData.equity.length > 0
+
+    if (!hasData) return
 
     const firstLevelIds = new Set()
     const addFirstLevel = (items) => {
@@ -152,13 +56,9 @@ export default function BalancePage() {
 
   const toggleRow = (id) => {
     setExpandedRows(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(id)) {
-        newSet.delete(id)
-      } else {
-        newSet.add(id)
-      }
-      return newSet
+      const next = new Set(prev)
+      if (next.has(id)) { next.delete(id) } else { next.add(id) }
+      return next
     })
   }
 
@@ -180,18 +80,7 @@ export default function BalancePage() {
             >
               {hasChildren && (
                 <button className={styles.expandButton}>
-                  {isExpanded ? (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round" />
-                      <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M1.6665 7.99996C1.6665 5.0144 1.6665 3.52162 2.594 2.59412C3.52149 1.66663 5.01428 1.66663 7.99984 1.66663C10.9854 1.66663 12.4782 1.66663 13.4057 2.59412C14.3332 3.52162 14.3332 5.0144 14.3332 7.99996C14.3332 10.9855 14.3332 12.4783 13.4057 13.4058C12.4782 14.3333 10.9854 14.3333 7.99984 14.3333C5.01428 14.3333 3.52149 14.3333 2.594 13.4058C1.6665 12.4783 1.6665 10.9855 1.6665 7.99996Z" stroke="#667085" strokeLinejoin="round" />
-                      <path d="M10.6668 8L5.3335 8" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M8 5.33337L8 10.6667" stroke="#667085" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
+                  {isExpanded ? <ExpendClose /> : <ExpendOpen />}
                 </button>
               )}
               <span className={isTotalRow ? styles.boldText : ''}>{item.name}</span>
@@ -199,7 +88,9 @@ export default function BalancePage() {
           </td>
           <td className={styles.td}>
             <span className={isTotalRow ? styles.boldNumber : ''}>
-              {(item.totalValue === 0 || item.totalValue == null) ? '–' : Number(item.totalValue).toLocaleString('ru-RU')}
+              {(item.totalValue === 0 || item.totalValue == null)
+                ? '–'
+                : Number(item.totalValue).toLocaleString('ru-RU')}
             </span>
           </td>
         </tr>
@@ -208,46 +99,16 @@ export default function BalancePage() {
     )
   }
 
-  if (error) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.contentWrapper}>
-          <div className={styles.mainContent}>
-            <div className={styles.error}>
-              <p>Ошибка загрузки данных: {error.message}</p>
-              <button onClick={() => refetch()} className={styles.retryButton}>
-                Повторить
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.contentWrapper}>
-        {/* Filter Sidebar */}
-        <ReportFilterSidebar
+        {/* Balance-specific Filter Sidebar */}
+        <BalanceFilterSidebar
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          entityOptions={entityOptions}
-          selectedEntity={selectedEntity}
-          onEntityChange={setSelectedEntity}
-          dateRange={{ start: selectedDate, end: selectedDate }}
-          onDateRangeChange={(range) => {
-            if (range?.start) {
-              const dateStr = range.start instanceof Date 
-                ? range.start.toISOString().split('T')[0]
-                : range.start
-              setSelectedDate(dateStr)
-            }
-          }}
-          singleDateMode={true}
         />
 
-        {/* Filter Toggle Bar */}
+        {/* Filter Toggle Bar (shown when sidebar is closed) */}
         {!isFilterOpen && (
           <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
             <button className={styles.filterToggleBarButton}>
@@ -268,8 +129,11 @@ export default function BalancePage() {
               <div className={styles.headerRight}>
                 <GroupedSelect
                   data={currencyOptions}
-                  value={selectedCurrency}
-                  onChange={(value) => setSelectedCurrency(value)}
+                  value={balanceStore.selectedCurrency}
+                  onChange={(value) => {
+                    balanceStore.setSelectedCurrency(value)
+                    balanceStore.fetchBalance()
+                  }}
                   placeholder="Валюта"
                   className={styles.currencySelect}
                 />
@@ -288,16 +152,19 @@ export default function BalancePage() {
             Активы = Обязательства + Капитал
           </div>
 
-          <div className={styles.tableContainer}>
-            {isLoading ? (
-              <div className={styles.tableLoading}>
-                <div className={styles.spinner}></div>
-                <p>Загрузка данных...</p>
+          {/* Table with loading overlay */}
+          <div className={styles.tableContainer} style={{ position: 'relative' }}>
+            {/* Spinner overlay on filter change (data already present) */}
+            {isLoading && (
+              <div className={styles.tableOverlay}>
+                <div className={styles.spinner} />
               </div>
-            ) : error ? (
+            )}
+
+            {error && !isLoading ? (
               <div className={styles.tableError}>
                 <p>Ошибка загрузки данных: {error.message}</p>
-                <button onClick={() => refetch()} className={styles.retryButton}>
+                <button onClick={() => balanceStore.fetchBalance()} className={styles.retryButton}>
                   Повторить
                 </button>
               </div>
@@ -321,4 +188,4 @@ export default function BalancePage() {
       </div>
     </div>
   )
-}
+})

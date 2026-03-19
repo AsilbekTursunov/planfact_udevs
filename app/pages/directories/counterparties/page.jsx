@@ -3,9 +3,10 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
-import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
+import SelectCounterParties from '@/components/ReadyComponents/SelectCounterParties'
+import MultiSelectStatiya from '@/components/ReadyComponents/MultiSelectStatiya'
 import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
-import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useChartOfAccountsPlanFact, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
+import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
 import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
 import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
 import EditCounterpartyGroupModal from '@/components/directories/EditCounterpartyGroupModal/EditCounterpartyGroupModal'
@@ -272,10 +273,7 @@ const CounterpartiesPage = observer(() => {
   }, [allCounterparties])
 
   // Fetch counterparties specifically for filter dropdowns (unfiltered)
-  const { data: counterpartiesFilterData } = useCounterpartiesPlanFact({
-    page: 1,
-    limit: 1000,
-  })
+
 
   // Fetch counterparties groups using new invoke_function API
   const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
@@ -293,42 +291,7 @@ const CounterpartiesPage = observer(() => {
 
 
   // Fetch chart of accounts for filter
-  const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({ page: 1, limit: 100 })
-  // Flatten hierarchical structure to array
-  const chartOfAccounts = useMemo(() => {
-    const chartOfAccountsRaw = chartOfAccountsData?.data?.data?.data || []
-    const flatten = (items) => {
-      let result = []
-      items.forEach(item => {
-        result.push(item)
-        if (item.children && item.children.length > 0) {
-          result = result.concat(flatten(item.children))
-        }
-      })
-      return result
-    }
-    return Array.isArray(chartOfAccountsRaw) ? flatten(chartOfAccountsRaw) : []
-  }, [chartOfAccountsData])
 
-
-  // Prepare options for filters using unfiltered counterparties
-  const counterpartiesOptions = useMemo(() => {
-    const items = counterpartiesFilterData?.data?.data?.data || []
-    if (!items || items.length === 0) return []
-    return items.map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия'
-    }))
-  }, [counterpartiesFilterData])
-
-  const chartOfAccountsOptions = useMemo(() => {
-    if (!chartOfAccounts || chartOfAccounts.length === 0) return []
-    return chartOfAccounts.map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия',
-      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
-    }))
-  }, [chartOfAccounts])
 
   const toggleRowSelection = (id) => {
     setSelectedRows(prev => {
@@ -508,21 +471,16 @@ const CounterpartiesPage = observer(() => {
       >
         <FilterSection title="Параметры">
           <div className="space-y-2.5">
-            <MultiSelect
-              data={counterpartiesOptions}
+            <SelectCounterParties
               value={filters.selectedCounterparties}
               onChange={(values) => setFilters(prev => ({ ...prev, selectedCounterparties: values }))}
-              placeholder="Выберите контрагентов"
-              valueKey="value"
-              hideSelectAll={true}
+              dropdownClassName="w-56"
             />
-            <MultiSelect
-              data={chartOfAccountsOptions}
+            <MultiSelectStatiya
               value={filters.selectedChartOfAccounts}
               onChange={(values) => setFilters(prev => ({ ...prev, selectedChartOfAccounts: values }))}
               placeholder="Выберите статьи учета"
-              valueKey="value"
-              hideSelectAll={true}
+              dropdownClassName="w-64"
             />
           </div>
         </FilterSection>

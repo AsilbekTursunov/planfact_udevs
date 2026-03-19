@@ -104,12 +104,12 @@ export const ExpenseArrow = () => (
 )
 
 
-export const DesignCalenderIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+export const DesignCalenderIcon = ({size = 16, strokeWidth = 1.5, ...props}) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 16 16" fill="none">
     <g clipPath="url(#clip0_1_53706)">
-      <path d="M12 1.33325V2.66659M4 1.33325V2.66659" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M1.6665 8.16216C1.6665 5.25729 1.6665 3.80486 2.50125 2.90243C3.336 2 4.6795 2 7.3665 2H8.63317C11.3202 2 12.6637 2 13.4984 2.90243C14.3332 3.80486 14.3332 5.25729 14.3332 8.16216V8.5045C14.3332 11.4094 14.3332 12.8618 13.4984 13.7642C12.6637 14.6667 11.3202 14.6667 8.63317 14.6667H7.3665C4.6795 14.6667 3.336 14.6667 2.50125 13.7642C1.6665 12.8618 1.6665 11.4094 1.6665 8.5045V8.16216Z" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M2 5.33325H14" stroke="#667085" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 1.33325V2.66659M4 1.33325V2.66659" stroke="#667085" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M1.6665 8.16216C1.6665 5.25729 1.6665 3.80486 2.50125 2.90243C3.336 2 4.6795 2 7.3665 2H8.63317C11.3202 2 12.6637 2 13.4984 2.90243C14.3332 3.80486 14.3332 5.25729 14.3332 8.16216V8.5045C14.3332 11.4094 14.3332 12.8618 13.4984 13.7642C12.6637 14.6667 11.3202 14.6667 8.63317 14.6667H7.3665C4.6795 14.6667 3.336 14.6667 2.50125 13.7642C1.6665 12.8618 1.6665 11.4094 1.6665 8.5045V8.16216Z" stroke="#667085" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2 5.33325H14" stroke="#667085" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
     </g>
     <defs>
       <clipPath id="clip0_1_53706">

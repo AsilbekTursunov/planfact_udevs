@@ -259,125 +259,141 @@ const CreateProductService = ({
 
 
   return (
-    <>
-      {/* Overlay */}
-      <div className={styles.overlay} onClick={onClose} />
+		<>
+			{/* Overlay */}
+			<div className={styles.overlay} onClick={onClose} />
 
-      {/* Panel */}
-      <div className={styles.panel}>
-        {/* Header */}
-        <div className={styles.header}>
-          <div>
-            <h2 className={styles.title}>
-              {isEditing ? 'Редактировать позицию' : 'Добавить товар/услугу'}
-            </h2>
-            <p className={styles.subtitle}>Заполните данные позиции сделки</p>
-          </div>
-          <button className={styles.closeBtn} onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
+			{/* Panel */}
+			<div className={styles.panel}>
+				{/* Header */}
+				<div className={styles.header}>
+					<div>
+						<h2 className={styles.title}>
+							{isEditing ? 'Редактировать позицию' : 'Добавить товар/услугу'}
+						</h2>
+						<p className={styles.subtitle}>Заполните данные позиции сделки</p>
+					</div>
+					<button className={styles.closeBtn} onClick={onClose}>
+						<X size={20} />
+					</button>
+				</div>
 
-        {/* Body */}
-        <div className={styles.body}>
-          {/* Наименование */}
-          <div className={styles.formRow}>
-            <label className={styles.label}>Наименование <span className={styles.required}>*</span></label>
-            <Select
-              options={productServicesList}
-              value={formData.product_and_service_id}
-              onChange={handleProductServiceChange}
-              placeholder="Наименование"
-            />
-            {errors.product_and_service_id && <span className={styles.errorText}>{errors.product_and_service_id}</span>}
-          </div>
+				{/* Body */}
+				<div className={styles.body}>
+					{/* Наименование */}
+					<div className={styles.formRow}>
+						<label className={styles.label}>
+							Наименование <span className={styles.required}>*</span>
+						</label>
+						<Select
+							options={productServicesList}
+							value={formData.product_and_service_id}
+							onChange={handleProductServiceChange}
+							placeholder='Наименование'
+						/>
+						{errors.product_and_service_id && (
+							<span className={styles.errorText}>{errors.product_and_service_id}</span>
+						)}
+					</div>
 
-          {/* Кол-во / Единица */}
-          <div className={styles.twoCol}>
-            <div className={styles.colItem}>
-              <label className={styles.label}>Кол-во <span className={styles.required}>*</span></label>
-              <Input
-                type="text"
-                value={formData.quantity}
-                onChange={setRaw('quantity')}
-                className={`${styles.input} ${errors.quantity ? styles.inputError : ''}`}
-                placeholder="0"
-              />
-              {errors.quantity && <span className={styles.errorText}>{errors.quantity}</span>}
-            </div>
-            <div className={styles.colItem}>
-              <label className={styles.label}>Единица</label>
-              <Select
-                options={apiUnitOptions}
-                value={formData.units_of_measurement_id}
-                onChange={set('units_of_measurement_id')}
-                placeholder="Единица"
-              />
-            </div>
-          </div>
+					{/* Кол-во / Единица */}
+					<div className={styles.twoCol}>
+						<div className={styles.colItem}>
+							<label className={styles.label}>
+								Кол-во <span className={styles.required}>*</span>
+							</label>
+							<Input
+								type='text'
+								value={formData.quantity}
+								onChange={setRaw('quantity')}
+								className={`${styles.input} ${errors.quantity ? styles.inputError : ''}`}
+								placeholder='0'
+							/>
+							{errors.quantity && <span className={styles.errorText}>{errors.quantity}</span>}
+						</div>
+						<div className={styles.colItem}>
+							<label className={styles.label}>Единица</label>
+							<Input
+								type='text'
+								value={formData.units_of_measurement_id?.label || ''}
+								className={styles.input}
+								placeholder='Единица'
+								readOnly
+							/>
+						</div>
+					</div>
 
-          {/* Цена за ед. */}
-          <div className={styles.formRow}>
-            <label className={styles.label}>Цена за ед. <span className={styles.required}>*</span></label>
-            <input
-              type="text"
-              value={formData.tsena_za_ed ? formatAmount(formData.tsena_za_ed) : ''}
-              onChange={setRaw('tsena_za_ed')}
-              className={`${styles.input} ${styles.textRight} ${errors.tsena_za_ed ? styles.inputError : ''}`}
-              placeholder="Цена за ед."
-            />
-            {errors.tsena_za_ed && <span className={styles.errorText}>{errors.tsena_za_ed}</span>}
-          </div>
+					{/* Цена за ед. */}
+					<div className={styles.formRow}>
+						<label className={styles.label}>
+							Цена за ед. <span className={styles.required}>*</span>
+						</label>
+						<input
+							type='text'
+							value={formData.tsena_za_ed ? formatAmount(formData.tsena_za_ed) : ''}
+							onChange={setRaw('tsena_za_ed')}
+							className={`${styles.input} ${styles.textRight} ${errors.tsena_za_ed ? styles.inputError : ''}`}
+							placeholder='Цена за ед.'
+						/>
+						{errors.tsena_za_ed && <span className={styles.errorText}>{errors.tsena_za_ed}</span>}
+					</div>
 
-          {/* Скидка / НДС */}
-          <div className={styles.twoCol}>
-            <div className={styles.colItem}>
-              <label className={styles.label}>Скидка</label>
-              <input
-                type="text"
-                maxLength={3}
-                value={formData.discount ? `${formData.discount}%` : ''}
-                onChange={setPercent('discount')}
-                onKeyDown={handlePercentKeyDown('discount')}
-                className={`${styles.input} ${styles.textRight}`}
-                placeholder="0%"
-              />
-            </div>
-            <div className={styles.colItem}>
-              <label className={styles.label}>НДС</label>
-              <input
-                type="text"
-                maxLength={3}
-                value={formData.nds ? `${formData.nds}%` : ''}
-                onChange={setPercent('nds')}
-                onKeyDown={handlePercentKeyDown('nds')}
-                className={`${styles.input} ${styles.textRight}`}
-                placeholder="0%"
-              />
-            </div>
-          </div>
+					{/* Скидка / НДС */}
+					<div className={styles.twoCol}>
+						<div className={styles.colItem}>
+							<label className={styles.label}>Скидка</label>
+							<input
+								type='text'
+								maxLength={3}
+								value={formData.discount ? `${formData.discount}%` : ''}
+								onChange={setPercent('discount')}
+								onKeyDown={handlePercentKeyDown('discount')}
+								className={`${styles.input} ${styles.textRight}`}
+								placeholder='0%'
+							/>
+						</div>
+						<div className={styles.colItem}>
+							<label className={styles.label}>НДС</label>
+							<input
+								type='text'
+								maxLength={3}
+								value={formData.nds ? `${formData.nds}%` : ''}
+								onChange={setPercent('nds')}
+								onKeyDown={handlePercentKeyDown('nds')}
+								className={`${styles.input} ${styles.textRight}`}
+								placeholder='0%'
+							/>
+						</div>
+					</div>
 
-          {/* Сумма */}
-          <div className={styles.formRow}>
-            <label className={styles.label}>Сумма</label>
-            <div className={`${styles.input} ${styles.sumDisplay}`}>
-              {totalSum.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-            </div>
-          </div>
-        </div>
+					{/* Сумма */}
+					<div className={styles.formRow}>
+						<label className={styles.label}>Сумма</label>
+						<div className={`${styles.input} ${styles.sumDisplay}`}>
+							{totalSum.toLocaleString('ru-RU', {
+								minimumFractionDigits: 0,
+								maximumFractionDigits: 2,
+							})}
+						</div>
+					</div>
+				</div>
 
-        {/* Footer */}
-        <div className={styles.footer}>
-          <button className={styles.cancelBtn} onClick={onClose}>
-            Отменить
-          </button>
-          <button className="primary-btn" onClick={handleCreate} disabled={isProductServiceCustomPending}>
-            {isProductServiceCustomPending ? <Loader /> : isEditing ? 'Сохранить' : 'Создать'}
-          </button>
-        </div>
-      </div>
-    </>
-  )
+				{/* Footer */}
+				<div className={styles.footer}>
+					<button className={styles.cancelBtn} onClick={onClose}>
+						Отменить
+					</button>
+					<button
+						className='primary-btn'
+						onClick={handleCreate}
+						disabled={isProductServiceCustomPending}
+					>
+						{isProductServiceCustomPending ? <Loader /> : isEditing ? 'Сохранить' : 'Создать'}
+					</button>
+				</div>
+			</div>
+		</>
+	)
 }
 
 export default CreateProductService

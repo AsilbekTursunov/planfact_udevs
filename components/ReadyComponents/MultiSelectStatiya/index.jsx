@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
+import { useUcodeRequestQuery } from '@/hooks/useDashboard'
 import TreeSelect from '../../shared/Selects/TreeSelect'
 
 const NOT_SELECTABLE = new Set([
@@ -20,7 +20,6 @@ const NOT_SELECTABLE = new Set([
   'Другие статьи капитала'
 ])
 
-
 const mapNode = (item, type) => {
   const isDisabled = NOT_SELECTABLE.has(item.nazvanie)
 
@@ -28,18 +27,18 @@ const mapNode = (item, type) => {
     value: item.guid || item.chart_of_accounts_id_2,
     label: item.nazvanie,
     bold: isDisabled,
-    isSelectable: !isDisabled,
-    children: item.children?.map(mapNode) || []
+    children: item.children?.map(child => mapNode(child, type)) || []
   }
 }
 
 const mapTree = (data, type) => {
+  if (!data) return []
   return data
-    ?.filter(item => item.nazvanie !== type) // 👈 filter root
+    ?.filter(item => !type || item.nazvanie !== type)
     .map(item => mapNode(item, type))
 }
 
-const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'Выберите статью', className, type = "Расходы", dropdownClassName }) => {
+const MultiSelectStatiya = ({ value = [], onChange, placeholder = 'Выберите статьи', className, type = "", dropdownClassName }) => {
 
   const { data: chartOfAccountsData } = useUcodeRequestQuery({
     method: "get_chart_of_accounts",
@@ -56,17 +55,17 @@ const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'В
     return mapTree(chartOfAccountsData, type)
   }, [chartOfAccountsData, type])
 
-
-
-  return <TreeSelect
-    data={result}
-    multi={false}
-    placeholder={placeholder}
-    value={selectedValue}
-    onChange={setSelectedValue}
-    className={className}
-    dropdownClassName={dropdownClassName}
-  />
+  return (
+    <TreeSelect
+      data={result}
+      multi={true}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      className={className}
+      dropdownClassName={dropdownClassName}
+    />
+  )
 }
 
-export default SinglSelectStatiya
+export default MultiSelectStatiya;

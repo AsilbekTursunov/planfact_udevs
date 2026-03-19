@@ -2,9 +2,9 @@ import { ChevronUp, Check, Search } from 'lucide-react'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
-const SingleSelect = ({
+const MultiSelect = ({
   data = [],
-  value,
+  value = [], // Array of values
   onChange = () => { },
   placeholder = "Выберите",
   withSearch = true,
@@ -23,22 +23,22 @@ const SingleSelect = ({
         setOpen(false)
       }
     }
-
     if (open) {
       document.addEventListener('mousedown', handleClickOutside)
     } else {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [open])
 
   const getSelectedLabel = () => {
-    if (!value) return placeholder;
-    const selectedItem = data.find(item => item.value === value);
-    return selectedItem ? selectedItem.label : placeholder;
+    if (!value || value.length === 0) return placeholder;
+    const selectedItems = data.filter(item => value.includes(item.value));
+    if (selectedItems.length === 1) return selectedItems[0].label;
+    if (selectedItems.length > 1) return `Выбрано: ${selectedItems.length}`;
+    return placeholder;
   }
 
   const filteredData = useMemo(() => {
@@ -48,9 +48,15 @@ const SingleSelect = ({
     );
   }, [data, searchQuery]);
 
+  const handleSelect = (val) => {
+    const newValue = value.includes(val)
+      ? value.filter(v => v !== val)
+      : [...value, val];
+    onChange(newValue);
+  };
+
   return (
     <div ref={containerRef} className='relative w-full'>
-      {/* Trigger Button */}
       <button
         ref={buttonRef}
         type="button"
@@ -72,31 +78,30 @@ const SingleSelect = ({
         <ChevronUp size={16} className={cn('text-neutral-400 transition-transform duration-200', open ? 'rotate-0' : 'rotate-180')} />
       </button>
 
-      {/* Dropdown Menu */}
       {open && (
         <div className={cn(
           'absolute left-0 right-0 z-50 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-64 overflow-hidden flex flex-col', dropdownClassName,
           openUpwards ? 'bottom-full mb-1' : 'top-full mt-1'
         )}>
-          {/* Search Input */}
-          {withSearch && <div className='p-2 border-b border-gray-100 flex items-center gap-2 relative'>
-            <Search size={16} className='absolute left-4 text-neutral-400' />
-            <input
-              type='text'
-              className='w-full h-9 border border-primary/40 rounded-md pl-8 pr-2 py-1.5 text-sm outline-none placeholder:text-neutral-400'
-              placeholder='Поиск по списку'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>}
+          {withSearch && (
+            <div className='p-2 border-b border-gray-100 flex items-center gap-2 relative'>
+              <Search size={16} className='absolute left-4 text-neutral-400' />
+              <input
+                type='text'
+                className='w-full h-9 border border-primary/40 rounded-md pl-8 pr-2 py-1.5 text-sm outline-none placeholder:text-neutral-400'
+                placeholder='Поиск по списку'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          )}
 
-          {/* List Items */}
           <div className='overflow-y-auto flex-1 py-1 flex flex-col'>
             {filteredData.length === 0 ? (
               <div className='p-3 text-sm text-neutral-400 text-center'>Не найдено</div>
             ) : (
               filteredData.map(node => {
-                const isSelected = value === node.value;
+                const isSelected = value.includes(node.value);
 
                 return (
                   <div
@@ -107,12 +112,11 @@ const SingleSelect = ({
                     )}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onChange(node.value);
-                      setOpen(false);
+                      handleSelect(node.value);
                     }}
                   >
                     <span>{node.label}</span>
-                    {isSelected && <Check size={16} className="text-primary" />}
+                    {isSelected && <Check size={16} className={cn('text-primary transition-transform duration-200')} />}
                   </div>
                 )
               })
@@ -124,20 +128,4 @@ const SingleSelect = ({
   )
 }
 
-export default SingleSelect;
-
-
-//  template how to use
-/*
-  <SingleSelect
-    data={[
-      { value: '1', label: 'Опция 1' },
-      { value: '2', label: 'Опция 2' }
-    ]}
-    value={selectedValue}
-    onChange={(val) => setSelectedValue(val)}
-    placeholder="Выберите статью..."
-    className="flex-1"
-  />
-*/
-
+export default MultiSelect;

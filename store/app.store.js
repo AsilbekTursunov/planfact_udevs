@@ -14,6 +14,7 @@ class AppStore {
         storage: window.localStorage,
         debugMode: true,
       });
+      
     }
   }
 

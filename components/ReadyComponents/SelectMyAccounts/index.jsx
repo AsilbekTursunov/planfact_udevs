@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 
-const SelectMyAccounts = ({ value, onSelect, placeholder = "Выберите счет", className }) => {
+const SelectMyAccounts = ({ value, onSelect, placeholder = "Выберите счет", className, dropdownClassName }) => {
 
   const { data: accountsData, isLoading } = useUcodeRequestQuery({
     method: "get_my_accounts",
@@ -29,6 +29,7 @@ const SelectMyAccounts = ({ value, onSelect, placeholder = "Выберите с�
       onChange={onSelect}
       placeholder={placeholder}
       className={className}
+      dropdownClassName={dropdownClassName}
     />
   )
 }

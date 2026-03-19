@@ -1,10 +1,10 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
-import styles from './style.module.scss'
+import { useState, useRef } from 'react'
 import { DesignCalenderIcon } from '../../../constants/icons'
 import CustomCalendar from '../../shared/Calendar'
 import { formatDate } from '../../../utils/formatDate'
 import { CgClose } from 'react-icons/cg'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu'
 
 const getPresetRange = (key) => {
 
@@ -72,26 +72,14 @@ const PRESETS = {
 }
 
 export default function NewDateRangeComponent({ value, onChange, singleDateMode = false }) {
-  const [startDate, setStartDate] = useState(value?.start || null)
-  const [endDate, setEndDate] = useState(value?.end || null)
-  const [activePreset, setActivePreset] = useState(null)
-  const [focused, setFocused] = useState(null)
+  const [startDate, setStartDate] = useState(value?.start || getPresetRange('year')[0])
+  const [endDate, setEndDate] = useState(value?.end || getPresetRange('year')[1])
+  const [activePreset, setActivePreset] = useState(value?.start ? null : 'year')
   const [dateType, setDateType] = useState()
   const wrapperRef = useRef(null)
   const [open, setOpen] = useState(false)
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-        setFocused(false)
-        setOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [wrapperRef])
+
 
   const handlePreset = (key) => {
     const [s, e] = getPresetRange(key)
@@ -104,7 +92,6 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
     setStartDate(null)
     setEndDate(null)
     setDateType(null)
-    setFocused(false)
     setActivePreset(null)
     onChange?.({ start: null, end: null })
   }
@@ -116,101 +103,123 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
       onChange?.({ start: startDate, end: endDate })
     }
     setOpen(false)
-    setFocused(false)
   }
 
   const handleDateType = (type) => {
     setDateType(type)
-    setFocused(!!type)
   }
 
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
-      <div className={styles.inputWrapper}>
-        <DesignCalenderIcon />
-        <input
-          type="text"
-          value={singleDateMode 
-            ? (startDate ? formatDate(startDate) : 'Выберите дату')
-            : `${startDate ? formatDate(startDate) + ' ~' : 'Укажите '} ${endDate ? formatDate(endDate) : 'период'}`
-          }
-          onClick={() => setFocused(true)}
-          className={styles.input}
-          placeholder={singleDateMode ? "Выберите дату" : "Укажите период"}
-          readOnly
-          onFocus={() => setOpen(true)}
-        />
-        {(startDate || endDate) && <CgClose onClick={() => handleReset()} className={styles.closeIcon} />}
-      </div>
-      {/* Quick presets */}
-      <div style={{ display: open ? 'block' : 'none' }} className={`${styles.modalContent} ${focused ? styles.focused : ''}`}>
-        <div className={styles.presets}>
-          {Object.entries(PRESETS).map(([key, label]) => (
-            <div key={key} className={styles.presetGroup}>
-              {label.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  className={`${styles.presetBtn} ${activePreset === item.key ? styles.presetActive : ''}`}
-                  onClick={() => handlePreset(item.key)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        {/* Date pickers row */}
-        <div className={styles.pickers}>
-          <div className={styles.inputWrapper}>
-            <DesignCalenderIcon />
-            <input 
-              type="text" 
-              value={startDate ? formatDate(startDate) : (singleDateMode ? 'Выберите дату' : 'Начало периода')} 
-              onClick={() => handleDateType('startDate')} 
-              readOnly 
-              className={styles.input} 
-              placeholder={singleDateMode ? "Выберите дату" : "Выберите период"} 
+    <div className="flex flex-col gap-3 w-full relative" ref={wrapperRef}>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger asChild>
+          <div className="flex items-center gap-2 font-normal p-2 border border-gray-ucode-200 rounded-md bg-gray-ucode-25 relative cursor-pointer">
+            <DesignCalenderIcon strokeWidth={1} />
+            <input
+              type="text"
+              value={singleDateMode
+                ? (startDate ? formatDate(startDate) : 'Выберите дату')
+                : `${startDate ? formatDate(startDate) + ' ~' : 'Укажите '} ${endDate ? formatDate(endDate) : 'период'}`
+              }
+              className="border-none outline-none bg-transparent text-gray-ucode-400 text-xs font-normal w-full"
+              placeholder={singleDateMode ? "Выберите дату" : "Укажите период"}
+              readOnly
             />
+            {(startDate || endDate) && <CgClose onClick={(e) => { e.stopPropagation(); handleReset(); }} className="cursor-pointer absolute right-3 text-gray-400 hover:text-gray-600" />}
           </div>
-          {!singleDateMode && (
-            <div className={styles.inputWrapper}>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent className="w-[340px] p-3 overflow-visible! border-none! bg-white  rounded-lg">
+          <div className="flex flex-col gap-1">
+            {Object.entries(PRESETS).map(([key, label]) => (
+              <div key={key} className="flex gap-2 w-full">
+                {label.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={`flex-1 py-1.5  text-xs font-normal rounded cursor-pointer transition-all text-gray-700 bg-gray-100 hover:bg-gray-200 ${activePreset === item.key ? 'bg-primary! text-white!' : ''
+                      }`}
+                    onClick={() => handlePreset(item.key)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Date pickers row */}
+          <div className="flex items-center gap-2 my-2 border-t border-gray-100 pt-2">
+            <div className="flex items-center gap-2 p-1.5 border border-gray-200 rounded-md bg-gray-50/50 w-full">
               <DesignCalenderIcon />
-              <input 
+              <input
                 type="text" 
-                value={endDate ? formatDate(endDate) : 'Конец периода'} 
-                onClick={() => handleDateType('endDate')} 
+                value={startDate ? formatDate(startDate) : (singleDateMode ? 'Выберите дату' : 'Начало')}
+                onClick={() => handleDateType('startDate')}
                 readOnly 
-                className={styles.input} 
-                placeholder="Выберите период" 
+                className="border-none outline-none bg-transparent text-gray-600 text-[11px] w-full"
               />
             </div>
-          )}
-        </div>
+            {!singleDateMode && (
+              <div className="flex items-center gap-2 p-1.5 border border-gray-200 rounded-md bg-gray-50/50 w-full">
+                <DesignCalenderIcon />
+                <input
+                  type="text" 
+                  value={endDate ? formatDate(endDate) : 'Конец'}
+                  onClick={() => handleDateType('endDate')}
+                  readOnly 
+                  className="border-none outline-none bg-transparent text-gray-600 text-[11px] w-full"
+                />
+              </div>
+            )}
+          </div>
 
-        {/* Actions */}
-        <div className={styles.actions}>
-          <button type="button" className={styles.resetBtn} onClick={handleReset}>
-            Сбросить
-          </button>
-          <button type="button" className={styles.applyBtn} onClick={handleApply}>
-            Применить
-          </button>
-        </div>
-        <div className={styles.calendarWrapper} style={{ display: dateType ? 'block' : 'none' }}>
-          {dateType === 'startDate' && <CustomCalendar maxDate={endDate} format="DD MMM, YYYY" value={startDate} onChange={(value) => {
-            setStartDate(value)
-            setDateType('endDate')
-          }} />}
-          {dateType === 'endDate' && <CustomCalendar minDate={startDate} format="DD MMM, YYYY" value={endDate} onChange={(value) => {
-            setEndDate(value)
-            setDateType('')
-          }} />}
-        </div>
-      </div>
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-2">
+            <button
+              type="button"
+              className="px-3! py-1.5! text-sm shadow-2xl cursor-pointer rounded-md border! border-gray-ucode-300!"
+              onClick={handleReset}
+            >
+              Сбросить
+            </button>
+            <button
+              type="button"
+              className="px-3! py-1.5! border border-primary! text-sm shadow-2xl bg-primary rounded-md  cursor-pointer  text-white!"
+              onClick={handleApply}
+            >
+              Применить
+            </button>
+          </div>
 
+          {/* Calendar popup inside popover or side dropdown */}
+          <div className="absolute top-0 left-full ml-1 z-50 bg-white border border-gray-200 rounded-lg shadow-md" style={{ display: dateType ? 'block' : 'none' }}>
+            {dateType === 'startDate' && (
+              <CustomCalendar
+                maxDate={endDate}
+                format="DD MMM, YYYY"
+                value={startDate}
+                onChange={(value) => {
+                  setStartDate(value)
+                  setDateType('endDate')
+                }}
+              />
+            )}
+            {dateType === 'endDate' && (
+              <CustomCalendar
+                minDate={startDate}
+                format="DD MMM, YYYY"
+                value={endDate}
+                onChange={(value) => {
+                  setEndDate(value)
+                  setDateType('')
+                }}
+              />
+            )}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

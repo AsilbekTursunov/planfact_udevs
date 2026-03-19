@@ -213,7 +213,9 @@
 
   /*  custom colors for project  ucode colors for project */ 
   --color-gray-ucode-25: #fcfcfd;   
+  --color-gray-ucode-200: #EAECF0;  
   --color-gray-ucode-300: #d0d5dd;  
+  --color-gray-ucode-400: #98A2B3; 
   --color-gray-ucode-500: #667085; 
   --color-gray-ucode-600: #475467;  
   --color-gray-ucode-800: #1D2939;  
@@ -249,8 +251,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * 0.6); 
+  --radius-md: calc(var(--radius) * 0.8); 
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);

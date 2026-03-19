@@ -239,6 +239,17 @@
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
+.tableOverlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  backdrop-filter: blur(1px);
+}
+
 .table {
   width: max-content;
   min-width: 100%;

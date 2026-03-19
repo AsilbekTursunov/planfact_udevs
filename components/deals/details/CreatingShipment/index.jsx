@@ -41,11 +41,11 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
           setRows(initialData?.product_and_service_data?.map((row, idx) => ({
             id: idx + 1,
             name: row.guid || row.product_and_service_id || '',
-            quantity: row.Kol_vo || 0,
-            price: row.TSena_za_ed || 0,
-            discount: row.Skidka || '',
-            nds: row.NDS || '',
-            sum: row.Summa || 0
+            quantity: row.Kol_vo ?? row?.quantity ?? 0,
+            price: row.TSena_za_ed ?? row?.tsena_za_ed ?? 0,
+            discount: String(row.Skidka ?? row?.discount ?? ''),
+            nds: String(row.NDS ?? row?.nds ?? ''),
+            sum: row.Summa ?? row?.summa ?? 0
           })))
         }
       } else {
@@ -192,17 +192,32 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     setRows(prev => prev.map(row => {
       if (row.id !== id) return row
       const updated = { ...row, [field]: value }
+
       if (['quantity', 'price', 'discount', 'nds'].includes(field)) {
+        // sum = qty * price * (1 - discount/100) * (1 + nds/100)
         const q = Number(updated.quantity?.toString().replace(/\s/g, '')) || 0
         const p = Number(updated.price?.toString().replace(/\s/g, '')) || 0
         const d = Number(updated.discount?.toString().replace(/\s/g, '')) || 0
         const n = Number(updated.nds?.toString().replace(/\s/g, '')) || 0
-
         const subtotal = q * p
-        const discountAmount = subtotal * (d / 100)
-        const afterDiscount = subtotal - discountAmount
+        const afterDiscount = subtotal * (1 - d / 100)
         updated.sum = afterDiscount * (1 + n / 100)
       }
+
+      if (field === 'sum') {
+        // Back-calculate price from sum: price = sum / qty / (1 - d/100) / (1 + n/100)
+        const rawSum = Number(value?.toString().replace(/\s/g, '')) || 0
+        const q = Number(updated.quantity?.toString().replace(/\s/g, '')) || 0
+        const d = Number(updated.discount?.toString().replace(/\s/g, '')) || 0
+        const n = Number(updated.nds?.toString().replace(/\s/g, '')) || 0
+        if (q > 0) {
+          const discountFactor = 1 - d / 100
+          const ndsFactor = 1 + n / 100
+          const divisor = q * (discountFactor > 0 ? discountFactor : 1) * (ndsFactor || 1)
+          updated.price = divisor ? rawSum / divisor : 0
+        }
+      }
+
       return updated
     }))
   }
@@ -555,9 +570,9 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                           value={row.discount}
                           maxLength={2}
                           onChange={(e) => updateRow(row.id, 'discount', e.target.value)}
-                          className={`w-[80px] outline-none text-right pr-2 mr-2`}
+                          className={`w-[80px] outline-none text-xs text-right pr-2 mr-2`}
                         />
-                        <span className='absolute top-1/2 -translate-y-1/2 right-1'>%</span>
+                        <span className='absolute top-1/2 text-xs  -translate-y-1/2 right-1'>%</span>
                       </td>
                       <td className="w-[80px] border-l relative">
                         <input
@@ -565,9 +580,9 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                           maxLength={2}
                           value={row.nds}
                           onChange={(e) => updateRow(row.id, 'nds', e.target.value)}
-                          className={`w-[80px] outline-none text-right pr-2 mr-2`}
+                          className={`w-[80px] outline-none text-xs text-right pr-2 mr-2`}
                         />
-                        <span className='absolute top-1/2 -translate-y-1/2 right-1'>%</span>
+                        <span className='absolute top-1/2 text-xs  -translate-y-1/2 right-1'>%</span>
                       </td>
                       <td className="w-[120px] border-l relative">
                         <input
