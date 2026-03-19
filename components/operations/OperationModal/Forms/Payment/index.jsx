@@ -207,7 +207,7 @@ const PaymentForm = ({
       {!showStatya && (
         <div className={styles.formRow}>
           <label className={styles.label}>Статья</label>
-          <TreeSelect
+          {/* <TreeSelect
             data={chartOfAccountsTree}
             alwaysExpanded={true}
             value={formData.chartOfAccount}
@@ -215,14 +215,14 @@ const PaymentForm = ({
             placeholder='Выберите статью...'
             loading={loadingChartOfAccounts}
             className='flex-1'
-          />
-          {/* <SinglSelectStatiya
-             value={formData.chartOfAccount}
-            onChange={value => setFormData({ ...formData, chartOfAccount: value })}
+          /> */}
+          <SinglSelectStatiya
+            selectedValue={formData.chartOfAccount}
+            setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}
             placeholder='Выберите статью...'
             className='flex-1 bg-white'
             type={"Доходы"}
-          /> */}
+          />
         </div>
       )}
 

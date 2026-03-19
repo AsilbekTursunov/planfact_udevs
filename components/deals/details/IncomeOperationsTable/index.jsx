@@ -12,8 +12,10 @@ import { ReceiptsEmptyIcon } from '../../../../constants/icons'
 import { Loader2 } from 'lucide-react'
 
 
+import EmptyState from '../EmptyState'
+
 /* ─── Main table component ────────────────────────────────── */
-const IncomeOperationsTable = ({ sellingDealId }) => {
+const IncomeOperationsTable = ({ sellingDealId, onAdd }) => {
   const [showModal, setShowModal] = useState(false)
   const [selectedOperation, setSelectedOperation] = useState(null)
   const [modalType, setModalType] = useState('income')
@@ -41,7 +43,15 @@ const IncomeOperationsTable = ({ sellingDealId }) => {
   }, [operations])
 
 
-  if (dealOperations?.length === 0) return null
+  if (dealOperations?.length === 0) {
+    return (
+      <EmptyState 
+        title="Добавьте поступления по сделке" 
+        subtitle="Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке" 
+        onAdd={onAdd}
+      />
+    )
+  }
 
   const handleEditOperation = (operation) => {
     setSelectedOperation(operation)
@@ -103,14 +113,7 @@ const IncomeOperationsTable = ({ sellingDealId }) => {
 
   return (
     <>
-      {dealOperations?.length === 0 && <div className={styles.emptyState}>
-        <div className={styles.emptyStateIcon}>
-          <ReceiptsEmptyIcon />
-        </div>
-        <div className={styles.emptyStateTitle}>Добавьте поступления по сделке</div>
-        <div className={styles.emptyStateSubtext}>Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке</div>
-      </div>
-      }
+      {/* emptyState div is moved to top EmptyState component */}
       {dealOperations?.length > 0 && <>
         <div className="h-96 overflow-y-auto">
           <table className="w-full">
@@ -166,7 +169,7 @@ const IncomeOperationsTable = ({ sellingDealId }) => {
           operation={selectedOperation}
           isClosing={isModalClosing}
           isOpening={isModalOpening}
-          defaultDealGuid={data?.[0]?.selling_deal_id}
+          defaultDealGuid={sellingDealId}
           onClose={() => {
             setIsModalClosing(true)
             setTimeout(() => {

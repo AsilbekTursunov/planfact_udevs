@@ -6,7 +6,16 @@ class SealDeal {
   accounting = 'accrual' // accrual || cash
 
   // deals page filters
-  
+  filters = {
+    selectedCounterparties: [],
+    dateRange: { start: null, end: null },
+    operationDateStart: '',
+    operationDateEnd: '',
+    amountFrom: '',
+    amountTo: '',
+    profitFrom: '',
+    profitTo: '',
+  }
 
   constructor() {
     makeAutoObservable(this)
@@ -16,6 +25,7 @@ class SealDeal {
         name: "sale_deal",
         properties: [
           "accounting", 
+          "filters",
         ],
         storage: window.localStorage,
         debugMode: true,
@@ -29,6 +39,16 @@ class SealDeal {
 
   resetFilters = () => {
     this.accounting = 'accrual'
+    this.filters = {
+      selectedCounterparties: [],
+      dateRange: { start: null, end: null },
+      operationDateStart: '',
+      operationDateEnd: '',
+      amountFrom: '',
+      amountTo: '',
+      profitFrom: '',
+      profitTo: '',
+    }
   }
 }
 

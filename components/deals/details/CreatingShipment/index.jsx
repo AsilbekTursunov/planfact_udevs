@@ -192,10 +192,16 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     setRows(prev => prev.map(row => {
       if (row.id !== id) return row
       const updated = { ...row, [field]: value }
-      if (field === 'quantity' || field === 'price') {
+      if (['quantity', 'price', 'discount', 'nds'].includes(field)) {
         const q = Number(updated.quantity?.toString().replace(/\s/g, '')) || 0
         const p = Number(updated.price?.toString().replace(/\s/g, '')) || 0
-        updated.sum = q * p
+        const d = Number(updated.discount?.toString().replace(/\s/g, '')) || 0
+        const n = Number(updated.nds?.toString().replace(/\s/g, '')) || 0
+
+        const subtotal = q * p
+        const discountAmount = subtotal * (d / 100)
+        const afterDiscount = subtotal - discountAmount
+        updated.sum = afterDiscount * (1 + n / 100)
       }
       return updated
     }))
@@ -443,10 +449,10 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
             </div>
 
             <div className={styles.tableContainer}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.checkCol}>
+              <table className="w-full">
+                <thead className='sticky top-0 z-10 bg-neutral-100'>
+                  <tr className='bg-neutral-100  text-neutral-800 font-light h-10 text-sm w-full border-b border-gray-200'>
+                    <th className="w-[10px]">
                       <div className='flex items-center justify-center'>
                         <OperationCheckbox type="checkbox" checked={selectedProducts?.size > 0 && selectedProducts?.size === rows?.length} onChange={(e) => {
                           if (e.target.checked) {
@@ -471,7 +477,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                           </button>
                         </div>
                         <button
-                          className='outline-none border-none bg-transparent cursor-pointer'
+                          className='outline-none border-none bg-transparent cursor-pointer mr-2'
                           onClick={() => setSelectedProducts(new Set())}
                         >
                           <X size={16} />
@@ -479,12 +485,12 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                       </div>
                     </th>}
                     {selectedProducts?.size === 0 && <>
-                      <th>Наименование</th>
-                      <th className={styles.numColHeader}>Кол-во</th>
-                      <th className={styles.numColHeader}>Цена за ед.</th>
-                      <th className={styles.numColHeader}>Скидка</th>
-                      <th className={styles.numColHeader}>НДС</th>
-                      <th className={styles.numColHeader}>Сумма</th>
+                      <th className='w-[150px]  text-left'>Наименование</th>
+                      <th className="w-[80px] border-l text-right px-1">Кол-во</th>
+                      <th className="w-[120px] border-l text-right px-1">Цена за ед.</th>
+                      <th className="w-[80px] border-l text-right px-2">Скидка</th>
+                      <th className="w-[80px] border-l text-right px-2">НДС</th>
+                      <th className=" border-l text-right px-2">Сумма</th>
                     </>}
                   </tr>
                 </thead>
@@ -510,24 +516,22 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                           }} />
                         </div>
                       </td>
-                      <td>
-                        <div className={styles.selectWrapper}>
-                          <div>
-                            <GroupedSelect
-                              data={groupedProductServicesList}
-                              value={row.name}
-                              onChange={(value) => handleSelectProductSerice(row?.id, value)}
-                              placeholder="Выберите позицию"
-                              groupBy={true}
-                              labelKey="label"
-                              valueKey="value"
-                              className="shipment-grouped-select"
-                              dropdownClassName='grouped-select-dropdown'
-                            />
-                          </div>
+                      <td className='w-[200px]'>
+                        <div className="pr-2 pt-2 pb-2">
+                          <GroupedSelect
+                            data={groupedProductServicesList}
+                            value={row.name}
+                            onChange={(value) => handleSelectProductSerice(row?.id, value)}
+                            placeholder="Выберите позицию"
+                            groupBy={true}
+                            labelKey="label"
+                            valueKey="value"
+                            className="shipment-grouped-select"
+                            dropdownClassName='grouped-select-dropdown'
+                          />
                         </div>
                       </td>
-                      <td className={styles.numCol}>
+                      <td className="w-[80px] border-l">
                         <input
                           type="text"
                           min={0}
@@ -536,40 +540,40 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                           className={styles.numInput}
                         />
                       </td>
-                      <td className={styles.numCol}>
+                      <td className="w-[120px] border-l">
                         <input
                           type="text"
                           min={0}
-                          value={row.price}
+                          value={formatAmount(row.price)}
                           onChange={(e) => updateRow(row.id, 'price', formatAmount(e.target.value))}
                           className={styles.numInput}
                         />
                       </td>
-                      <td className={styles.numCol}>
+                      <td className="w-[80px] border-l relative">
                         <input
                           type="text"
                           value={row.discount}
                           maxLength={2}
                           onChange={(e) => updateRow(row.id, 'discount', e.target.value)}
-                          className={`${styles.numInput} pr-2`}
+                          className={`w-[80px] outline-none text-right pr-2 mr-2`}
                         />
                         <span className='absolute top-1/2 -translate-y-1/2 right-1'>%</span>
                       </td>
-                      <td className={styles.numCol}>
+                      <td className="w-[80px] border-l relative">
                         <input
                           type="text"
                           maxLength={2}
                           value={row.nds}
                           onChange={(e) => updateRow(row.id, 'nds', e.target.value)}
-                          className={`${styles.numInput} pr-2`}
+                          className={`w-[80px] outline-none text-right pr-2 mr-2`}
                         />
                         <span className='absolute top-1/2 -translate-y-1/2 right-1'>%</span>
                       </td>
-                      <td className={styles.numCol}>
+                      <td className="w-[120px] border-l relative">
                         <input
                           type="text"
                           min={0}
-                          value={row.sum}
+                          value={formatAmount(row.sum)}
                           onChange={(e) => updateRow(row.id, 'sum', formatAmount(e.target.value))}
                           className={styles.numInput}
                         />
@@ -582,7 +586,9 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
 
             <div className={styles.tableFooter}>
               <button className={styles.addRowBtn} onClick={addRow}>Добавить...</button>
-              <span className={styles.totalSum}>Сумма отгрузки: <strong>{totalSum.toLocaleString('ru-RU')}</strong></span>
+              <p className={styles.totalSum}>Сумма отгрузки: <strong>{totalSum.toLocaleString('ru-RU')}</strong>
+                <span className='text-neutral-600 ml-1'>UZS</span>
+              </p>
             </div>
           </div>
         </div>

@@ -11,7 +11,7 @@ const Input = forwardRef(({
   ...props
 }, ref) => {
   return (
-    <>
+    <div className="relative">
       <span className={styles.leftIcon}>{leftIcon}</span>
       <input
         ref={ref}
@@ -25,7 +25,7 @@ const Input = forwardRef(({
         )} 
         {...props}
       />
-    </>
+    </div>
   )
 })
 

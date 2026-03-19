@@ -1,10 +1,11 @@
 import DatePicker from "react-multi-date-picker"
 import './style.scss'
 import { Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export default function CustomDatePicker({ value, onChange, format = "DD MMM, YYYY", ...props }) {
+export default function CustomDatePicker({ value, onChange, format = "DD MMM, YYYY", className, ...props }) {
   return (
-    <div className="date_picker_wrapper">
+    <div className={cn("date_picker_wrapper w-full", className)}>
       <DatePicker
         value={value || new Date()}
         format={format}

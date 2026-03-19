@@ -1,5 +1,6 @@
 'use client';
 
+import Loader from '../../shared/Loader';
 import styles from './DeleteDealModal.module.scss';
 
 export function DeleteDealModal({ isOpen, onClose, onConfirm, deal, isDeleting = false }) {
@@ -58,7 +59,7 @@ export function DeleteDealModal({ isOpen, onClose, onConfirm, deal, isDeleting =
             onClick={handleConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? 'Удаление...' : 'Удалить'}
+            {isDeleting ? <Loader /> : 'Удалить'}
           </button>
         </div>
       </div>

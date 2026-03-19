@@ -26,11 +26,10 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
   const [client, setClient] = useState('');
   const [nds, setNds] = useState('');
   const [comment, setComment] = useState('');
+  const [errors, setErrors] = useState({});
   const router = useRouter();
 
   const queryClient = useQueryClient();
-
-  console.log(initialData)
 
   useEffect(() => {
     if (isOpen && initialData) {
@@ -90,6 +89,17 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const newErrors = {};
+    if (!dealName.trim()) {
+      newErrors.dealName = 'Название сделки обязательно';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
+
     const today = new Date()
     let formattedDate = dealDate || formatDate(today);
 
@@ -107,21 +117,22 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
     }
 
     try {
-      const response = await createDeal({
+      await createDeal({
         urlMethod: isEditing ? 'PUT' : 'POST',
         urlParams: '/items/sales_transactions?from-ofs=true',
         data: payload
       });
       queryClient.invalidateQueries({ queryKey: ['deals'] });
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] });
       onClose();
 
       // Navigate to the Deal detail page
-      if (response?.data?.data?.guid) {
-        router.push(`/pages/deals/${response.data.data.guid}`);
-      } else if (isEditing && initialData?.guid) {
-        // Fallback for edit if response lacks guid
-        router.push(`/pages/deals/${initialData.guid}`);
-      }
+      // if (response?.data?.data?.guid) {
+      //   router.push(`/pages/deals/${response.data.data.guid}`);
+      // } else if (isEditing && initialData?.guid) {
+      //   // Fallback for edit if response lacks guid
+      //   router.push(`/pages/deals/${initialData.guid}`);
+      // }
     } catch (error) {
       console.error('Error creating/updating deal:', error);
     }
@@ -137,23 +148,29 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
           </button>
         </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Название сделки</label>
-            <div className={styles.formElement}>
+        <form id="create-deal-form" className="space-y-3 p-5" onSubmit={handleSubmit}>
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center">Название сделки</label>
+            <div className=" col-span-5">
               <Input
                 type="text"
-                className={styles.input}
                 placeholder="Например, разработка сайта"
                 value={dealName}
-                onChange={(e) => setDealName(e.target.value)}
+                onChange={(e) => {
+                  setDealName(e.target.value);
+                  if (errors.dealName) setErrors(prev => ({ ...prev, dealName: '' }));
+                }}
+                error={!!errors.dealName}
               />
+              {errors.dealName && (
+                <p className="text-red-500 text-xs mt-1">{errors.dealName}</p>
+              )}
             </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Дата сделки</label>
-            <div className={styles.formElement}>
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center">Дата сделки</label>
+            <div className=" col-span-5">
               <CustomDatePicker
                 value={dealDate}
                 onChange={(val) => setDealDate(val)}
@@ -164,9 +181,9 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
             </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Клиент</label>
-            <div className={styles.formElement}>
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center">Клиент</label>
+            <div className=" col-span-5">
               <TreeSelect
                 data={counterAgentsTree}
                 value={client}
@@ -177,11 +194,9 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
             </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>
-              НДС
-            </label>
-            <div className="w-full">
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center"> НДС </label>
+            <div className=" col-span-5">
               <Select
                 instanceId="create-deal-nds-select"
                 options={ndsOptions}
@@ -192,11 +207,11 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
             </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>
-              Комментарий
-            </label>
-            <TextArea className={styles.label} value={comment} onChange={(e) => setComment(e.target.value)} />
+          <div className="grid grid-cols-7">
+            <label className=" col-span-2 flex items-center"> Комментарий </label>
+            <div className=" col-span-5">
+              <TextArea value={comment} onChange={(e) => setComment(e.target.value)} />
+            </div>
           </div>
         </form>
 
@@ -204,7 +219,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
           <button type="button" className="secondary-btn" onClick={onClose}>
             Отменить
           </button>
-          <button type="submit" className="primary-btn" onClick={handleSubmit}>
+          <button type="submit" form="create-deal-form" className="primary-btn">
             {isCreatingDeal ? <Loader /> : (isEditing ? 'Сохранить' : 'Создать')}
           </button>
         </div>

@@ -4,7 +4,7 @@ import styles from './style.module.scss'
 import PriceStatus from '@/components/operations/PriceStatus'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
-import { ExpendClose, ExpendOpen, TypeIncomeIcon, TypeExpenseIcon, TypeTransferIcon } from '../../../constants/icons'
+import { ExpendClose, ExpendOpen, TypeIncomeIcon, TypeExpenseIcon, TypeTransferIcon, ShipmentIcon } from '../../../constants/icons'
 
 const OperationTableRow = ({
   op,
@@ -76,12 +76,14 @@ const OperationTableRow = ({
         <td className={styles.tableCell}>
           {op.tip ? (
             <div className={styles.typeIcon}>
-              {op.tip === 'Поступление' ? (
+              {op.selling_deal_id ? (
+                <ShipmentIcon />
+              ) : op.tip === 'Поступление' ? (
                 <TypeIncomeIcon />
               ) : op.tip === 'Выплата' ? (
                 <TypeExpenseIcon />
-                ) : op.tip === 'Перемещение' ||
-                  op.tip === 'Начисление' ? (
+                  ) : op.tip === 'Перемещение' ||
+                    op.tip === 'Начисление' ? (
                 <TypeTransferIcon />
               ) : null}
             </div>

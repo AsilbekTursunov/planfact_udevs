@@ -9,6 +9,7 @@ import DealStatus from '@/components/deals/details/Status';
 import CreateShipment from '@/components/deals/details/CreatingShipment';
 import { ChevronUp, CirclePlus, Ellipsis, Search } from 'lucide-react';
 import { HiOutlineDatabase } from "react-icons/hi";
+import { HiOutlineCreditCard } from "react-icons/hi2";
 import { PiDatabaseFill } from "react-icons/pi";
 import { ShipmentPlusIcon, BoxIcon, AttachIcon, SendIcon } from '@/constants/icons';
 import Input from '@/components/shared/Input';
@@ -27,9 +28,16 @@ import {
 } from "@/components/ui/popover"
 import CustomProgress from '../../../../components/shared/Progress';
 import { observer } from 'mobx-react-lite';
+import CommentChat from '../../../../components/deals/details/CommentChat';
 import { sealDeal } from '../../../../store/saleDeal.store';
 import ExpenseOperationsTable from '../../../../components/deals/details/ExpenseOperationTable';
 import IncomeOperationsTable from '../../../../components/deals/details/IncomeOperationsTable';
+import { calculatePercent } from '../../../../utils/helpers';
+import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
+import { DeleteDealModal } from '@/components/deals/DeleteDealModal/DeleteDealModal';
+import { useUcodeDefaultApiMutation } from '@/hooks/useDashboard';
+import { useQueryClient } from '@tanstack/react-query';
+import { Pencil, Trash } from 'lucide-react';
 
 
 export default observer(function DealDetailPage() {
@@ -48,24 +56,18 @@ export default observer(function DealDetailPage() {
     }
   })
 
-  const deal = useMemo(() => {
-    return {
-      guid: dealId,
-      nazvanie: dealData?.Nazvanie,
-      kontragentId: dealData?.counterparties_id || dealData?.partners_id,
-      kontragent: { nazvanie: dealData?.counterparties_id_data?.nazvanie || 'test' },
-      data_nachala: dealData?.sale_date || dealData?.data_nachala || '2026-05-26',
-      summa_sdelki: dealData?.total_products_summa,
-      postupilo_summa: dealData?.total_receipts_summa,
-      otgruzheno_summa: dealData?.total_shipments_summa,
-      pribyl: dealData?.accural_profit,
-      status: dealData?.status?.[0]
-    }
-  }, [dealData, dealId]);
-
   const summeryCards = useMemo(() => {
     return dealData || null
   }, [dealData])
+
+  const deal = {
+    guid: dealId,
+    name: summeryCards?.Nazvanie,
+    sale_date: summeryCards?.Data_sdelki,
+    counterparties_id: summeryCards?.counterparty_id,
+    nds: summeryCards?.nds,
+    commentary: summeryCards?.Kommentariy
+  }
 
 
   const [activeTab, setActiveTab] = useState('products');
@@ -77,6 +79,35 @@ export default observer(function DealDetailPage() {
   const [showProductModal, setShowProductModal] = useState(false)
   const accounting = sealDeal.accounting
   const [showAccounting, setShowAccounting] = useState(false)
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [dealToDelete, setDealToDelete] = useState(null);
+  const [dealToEdit, setDealToEdit] = useState(null);
+
+  const queryClient = useQueryClient();
+  const { mutate: deleteDeal, isPending: isDeletingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'delete-deal' });
+
+  const confirmDelete = () => {
+    if (!dealToDelete) return;
+
+    deleteDeal(
+      {
+        urlMethod: 'DELETE',
+        urlParams: `/items/sales_transactions/${dealToDelete.guid}?from-ofs=true`
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['deals'] });
+          router.push('/pages/deals');
+        }
+      }
+    );
+  };
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setDealToEdit(null);
+  };
 
 
   // Product/service row action menu state 
@@ -91,12 +122,10 @@ export default observer(function DealDetailPage() {
     { guid: 'in_progress', name: 'in_progress', color: '#2E90FA' },
     { guid: 'completed', name: 'completed', color: '#12B76A' },
   ]);
-  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(dealStatuses[0]);
 
   // Set initial status from deal data
-  const currentDealStatus = selectedStatus || (
-    deal.status ? { guid: deal.status.guid, name: deal.status.name, color: deal.status.color || '#F79009' } : dealStatuses[0]
-  );
+  const currentDealStatus = selectedStatus
 
 
   if (isLoading) {
@@ -111,15 +140,27 @@ export default observer(function DealDetailPage() {
   const received = Number(summeryCards?.total_receipts_summa) || 0;
   const shipped = Number(summeryCards?.total_shipment_summa) || 0;
 
-  const profit = Number(summeryCards?.profit) || 0;
-  const expenses = Number(summeryCards?.total_expenses_summa) || 0;
+  const profit = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.profit : summeryCards?.cash_method?.profit);
+  const expenses = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.expenses : summeryCards?.cash_method?.expenses) || 0;
+  const income = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.income : summeryCards?.cash_method?.income) || 0;
 
   const receivedPercent = summeryCards?.receipts_percentage != null ? Math.round(Number(summeryCards.receipts_percentage) * 100) : 0;
   const shippedPercent = summeryCards?.shipments_percentage != null ? Math.round(Number(summeryCards.shipments_percentage)) : 0;
-  const profitPercent = summeryCards?.profitability != null ? Math.round(Number(summeryCards.profitability)) : 0;
+
+
+  const profitPercent = Math.round(Number(accounting === 'accrual' ? summeryCards?.accrual_method?.profitability : summeryCards?.cash_method?.profitability)) || 0;
 
   const clientDebt = Number(summeryCards?.client_debt) || 0;
   const remainingShipment = Number(summeryCards?.remaining_shipment) || 0;
+
+  console.log('profit', profit)
+  console.log('income', income)
+  console.log('expenses', expenses)
+  console.log('profitability', profitPercent)
+
+  console.log('dealAmount', dealAmount)
+  console.log('received', received)
+  console.log('shipped', shipped)
 
 
   const handleCreateOperation = () => {
@@ -143,6 +184,7 @@ export default observer(function DealDetailPage() {
     }
   }
 
+
   return (
     <div className={styles.container}>
       {/* Breadcrumbs */}
@@ -151,17 +193,42 @@ export default observer(function DealDetailPage() {
           Сделки по продажам
         </button>
         <span className={styles.breadcrumbSeparator}>/</span>
-        <span className={styles.breadcrumbCurrent}>{deal.nazvanie || 'Без названия'}</span>
+        <span className={styles.breadcrumbCurrent}>{summeryCards?.Nazvanie || 'Без названия'}</span>
       </div>
 
       {/* Header */}
       <div className='flex items-center justify-between '>
         <div className={styles.header}>
-          <h1 className={styles.title}>{deal.nazvanie || 'Без названия'}</h1>
+          <h1 className={styles.title}>{summeryCards?.Nazvanie || 'Без названия'}</h1>
         </div>
-        <button className={styles.detailsDots}>
-          <Ellipsis size={18} className='text-neutral-800' />
-        </button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className={styles.detailsDots}>
+              <Ellipsis size={18} className='text-neutral-800' />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-40 rounded-md overflow-hidden p-0 border border-gray-100 bg-white shadow-md mt-1" align="end">
+            <div className="flex flex-col">
+              <button
+                className="flex items-center gap-2 p-2.5 text-sm text-neutral-800 hover:bg-neutral-50 cursor-pointer w-full text-left border-none outline-none bg-transparent"
+                onClick={() => {
+                  setDealToEdit(deal);
+                  setIsCreateModalOpen(true);
+                }}
+              >
+                <Pencil size={16} className="text-neutral-600" />
+                <span>Редактировать</span>
+              </button>
+              <button
+                className="flex items-center gap-2 p-2.5 text-sm text-red-500 hover:bg-red-50 cursor-pointer w-full text-left border-none outline-none bg-transparent"
+                onClick={() => setDealToDelete(dealData)}
+              >
+                <Trash size={16} className="text-red-500" />
+                <span>Удалить</span>
+              </button>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Info Cards */}
@@ -191,84 +258,100 @@ export default observer(function DealDetailPage() {
 
           <div className={styles.cardDivider}></div>
 
-          <div className={styles.dealInfoInCard}>
-            <div className={styles.infoRowInCard}>
-              <span className={styles.infoLabelInCard}>Тип</span>
-              <span className={styles.infoValueInCard}>
+          <div className="flex flex-col gap-0 mt-4">
+            <div
+              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
+            >
+              <span className="text-sm font-normal text-gray-500">Тип</span>
+              <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5 font-sans">
                 <PiDatabaseFill size={16} className='text-neutral-400' />
                 Продажа
               </span>
             </div>
-            <div className={styles.infoRowInCard}>
-              <span className={styles.infoLabelInCard}>Клиент</span>
-              <span className={styles.infoValueLinkInCard}>{deal.kontragent?.nazvanie || 'test'}</span>
+
+            <div
+              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
+              onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
+            >
+              <span className="text-sm font-normal text-gray-500">Клиент</span>
+              <span className="text-sm font-medium text-primary flex items-center gap-1.5 hover:underline underline-offset-2 decoration-dotted">
+                {summeryCards?.counterparty_name || 'test'}
+                <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+              </span>
             </div>
-            <div className={styles.infoRowInCard}>
-              <span className={styles.infoLabelInCard}>Создана</span>
-              <span className={styles.infoValueInCard}>{formatDateFormat(deal.data_nachala)}</span>
+
+            <div
+              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
+              onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
+            >
+              <span className="text-sm font-normal text-gray-500">Создана</span>
+              <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
+                {formatDateFormat(summeryCards?.Data_sdelki)}
+                <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+              </span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Receipts */}
-        <div className={styles.infoCard}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Поступления</span>
-            <button className={styles.addButton}>
+        <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
+          <div className="flex items-center justify-between mb-[22.5px]">
+            <span className="font-semibold text-base text-gray-ucode-800">Поступления</span>
+            <button onClick={handleCreateOperation} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
               <CirclePlus size={20} strokeWidth={1.5} className='text-neutral-300' />
             </button>
           </div>
 
-          <div className={styles.cardContent}>
-            <div className={styles.iconBox}>
+          <div className="flex items-start gap-3 mb-[22.5px]">
+            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
               <HiOutlineDatabase size={20} className='text-neutral-400' />
             </div>
 
-            <div className={styles.amountSection}>
-              <div className={styles.cardAmount}>{formatAmount(received)} ₽</div>
-              <div className={styles.cardSubtext}>из {formatAmount(dealAmount)} ₽</div>
+            <div className="flex flex-col gap-0">
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(received)} ₽</div>
+              <div className="font-normal text-base text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
             </div>
           </div>
 
-          <div className={styles.progressBar}>
-            <CustomProgress value={receivedPercent} fillColor="#12B76A" />
+          <div className="w-full h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-2">
+            <CustomProgress min={0} value={received} max={dealAmount} fillColor="#12B76A" />
           </div>
-          <div className={styles.cardProgress}>Поступило: {receivedPercent}%</div>
+          <div className="font-normal text-sm text-gray-ucode-500 mt-2 mb-5">Поступило: {calculatePercent(dealAmount, received)}</div>
 
-          <div className={styles.clientDebt}>
-            <span className={styles.clientDebtLabel}>Клиент должен:</span>
-            <span className={styles.clientDebtAmount}>{formatAmount(clientDebt)} ₽</span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-normal text-sm text-gray-ucode-500">Клиент должен:</span>
+            <span className="font-medium text-base text-[#344054]">{formatAmount(clientDebt)} ₽</span>
           </div>
         </div>
 
         {/* Card 3: Shipments */}
-        <div className={styles.infoCard}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Отгрузки клиенту</span>
-            <button className={styles.addButton}>
+        <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
+          <div className="flex items-center justify-between mb-[22.5px]">
+            <span className="font-semibold text-base text-gray-ucode-800">Отгрузки клиенту</span>
+            <button onClick={() => setShowShipmentModal(true)} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
               <ShipmentPlusIcon />
             </button>
           </div>
 
-          <div className={styles.cardContent}>
-            <div className={styles.iconBox}>
+          <div className="flex items-start gap-3 mb-[22.5px]">
+            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
               <BoxIcon />
             </div>
 
-            <div className={styles.amountSection}>
-              <div className={styles.cardAmount}>{formatAmount(shipped)} ₽</div>
-              <div className={styles.cardSubtext}>из {formatAmount(dealAmount)} ₽</div>
+            <div className="flex flex-col gap-0">
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(shipped)} ₽</div>
+              <div className="font-normal text-base text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
             </div>
           </div>
 
-          <div className={styles.progressBar}>
-            <CustomProgress value={shippedPercent} fillColor="#48C206" />
+          <div className="w-full h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-2">
+            <CustomProgress min={0} value={shipped} max={dealAmount} fillColor="#48C206" />
           </div>
-          <div className={styles.cardProgress}>Отгружено: {shippedPercent}%</div>
+          <div className="font-normal text-sm text-gray-ucode-500 mt-2 mb-5">Отгружено: {calculatePercent(dealAmount, shipped)}</div>
 
-          <div className={styles.clientDebt}>
-            <span className={styles.clientDebtLabel}>Осталось отгрузить:</span>
-            <span className={styles.clientDebtAmount}>{formatAmount(remainingShipment)} ₽</span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-normal text-sm text-gray-ucode-500">Осталось отгрузить:</span>
+            <span className="font-medium text-base text-[#344054]">{formatAmount(remainingShipment)} ₽</span>
           </div>
         </div>
 
@@ -298,23 +381,30 @@ export default observer(function DealDetailPage() {
             </Popover>
           </div>
 
-          <div className={styles.cardAmount}>{formatAmount(profit)} ₽</div>
-          <div className={styles.cardSubtext}>Рентабельность {profitPercent}%</div>
-
-          <div className={styles.profitChart}>
-            <div className={styles.profitChartBar}>
-              <div className={styles.profitChartIncome} style={{ width: `${receivedPercent}%` }}></div>
+          <div className="flex items-start gap-3 mb-[22.5px] mt-4">
+            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
+              <HiOutlineCreditCard size={20} className='text-neutral-400' />
             </div>
+
+            <div className="flex flex-col gap-0">
+              <div className={styles.cardAmount}>{formatAmount(profit)} ₽</div>
+              <div className={styles.cardSubtext}>Рентабельность {profitPercent}%</div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 my-2">
+            <CustomProgress value={received} fillColor="#12B76A" min={0} max={received} />
+            <CustomProgress value={expenses} fillColor="#FFC609" min={0} max={received} />
           </div>
 
           <div className="flex  gap-2">
             <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#12B76A' }}></div>
               <span className={styles.profitLabel}>Доходы</span>
-              <span className={styles.profitValue}>+{formatAmount(received)} ₽</span>
+              <span className={styles.profitValue}>+{formatAmount(income)} ₽</span>
             </div>
             <div className="flex flex-col flex-1">
-              <div className={styles.profitBarDot} style={{ backgroundColor: '#F79009' }}></div>
+              <div className={styles.profitBarDot} style={{ backgroundColor: '#FFC609' }}></div>
               <span className={styles.profitLabel}>Расходы</span>
               <span className={styles.profitValue}>-{formatAmount(expenses)} ₽</span>
             </div>
@@ -327,27 +417,31 @@ export default observer(function DealDetailPage() {
         {/* Left side - Tabs and content */}
         <div className={styles.leftSection}>
           {/* Tabs */}
-          <div className={styles.tabs}>
+          <div className="flex bg-white border-b border-neutral-200 rounded-t-xl overflow-hidden mb-0">
             <button
-              className={`${styles.tab} ${activeTab === 'products' ? styles.tabActive : ''}`}
+              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'products' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                }`}
               onClick={() => setActiveTab('products')}
             >
-              Товары и услуги ({summeryCards?.products_count})
+              Товары и услуги ({summeryCards?.products_count ?? 0})
             </button>
             <button
-              className={`${styles.tab} ${activeTab === 'receipts' ? styles.tabActive : ''}`}
+              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'receipts' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                }`}
               onClick={() => setActiveTab('receipts')}
             >
               Поступления
             </button>
             <button
-              className={`${styles.tab} ${activeTab === 'expenses' ? styles.tabActive : ''}`}
+              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'expenses' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                }`}
               onClick={() => setActiveTab('expenses')}
             >
               Расходы
             </button>
             <button
-              className={`${styles.tab} ${activeTab === 'shipments' ? styles.tabActive : ''}`}
+              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'shipments' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                }`}
               onClick={() => setActiveTab('shipments')}
             >
               Отгрузки
@@ -387,80 +481,30 @@ export default observer(function DealDetailPage() {
               </div>
             </div>
             <div className={styles.contentContainer}>
-              {activeTab === 'products' && <ProductServiceTable handleSelect={handleSelectProduct} sellingDealId={dealId} />}
+              {activeTab === 'products' && <ProductServiceTable handleSelect={handleSelectProduct} sellingDealId={dealId} onAdd={() => setShowProductModal(true)} />}
 
-              {activeTab === 'receipts' && <IncomeOperationsTable type='Поступление' sellingDealId={dealId} />}
+              {activeTab === 'receipts' && <IncomeOperationsTable type='Поступление' sellingDealId={dealId} onAdd={handleCreateOperation} />}
 
-              {activeTab === 'expenses' && <ExpenseOperationsTable type='Выплата' sellingDealId={dealId} />}
+              {activeTab === 'expenses' && <ExpenseOperationsTable type='Выплата' sellingDealId={dealId} onAdd={handleCreateOperation} />}
 
-              {activeTab === 'shipments' && <ShipmenTable dealGuid={dealId} dealName={deal.nazvanie} />}
+              {activeTab === 'shipments' && <ShipmenTable dealGuid={dealId} dealName={summeryCards?.Nazvanie} onAdd={() => setShowShipmentModal(true)} />}
             </div>
           </div>
         </div>
 
         {/* Right side - Comments (always visible) */}
-        <div className={styles.commentsSection}>
-          <h3 className={styles.commentsSectionTitle}>ФАЙЛЫ И КОММЕНТАРИИ</h3>
 
-          <div className={styles.commentsList}>
-            <div className={styles.comment}>
-              <div className={styles.commentHeader}>
-                <span className={styles.commentAuthor}>hello</span>
-              </div>
-              <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар 26 в 22:24</div>
-            </div>
+        <CommentChat dealGuid={dealId} />
 
-            <div className={styles.comment}>
-              <div className={styles.commentHeader}>
-                <span className={styles.commentAuthor}>wow 3eir</span>
-              </div>
-              <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар 26 в 22:24</div>
-              <div className={styles.commentBadge}>Отредактировано</div>
-            </div>
-
-            <div className={styles.comment}>
-              <div className={styles.commentHeader}>
-                <span className={styles.commentAuthor}>wowo</span>
-              </div>
-              <div className={styles.commentEmail}>wajdi8845@gmbolu.com</div>
-              <div className={styles.commentDate}>08 мар 26 в 22:24</div>
-              <div className={styles.commentBadge}>Отредактировано</div>
-
-              <div className={styles.attachment}>
-                <div className={styles.attachmentIcon}>XLSX</div>
-                <div className={styles.attachmentInfo}>
-                  <div className={styles.attachmentName}>8dbb489f-3952-40cb-a1ee-e87bb09...</div>
-                  <div className={styles.attachmentSize}>.xlsx</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.commentInput}>
-            <input
-              type="text"
-              placeholder="Написать комментарий..."
-              className={styles.input}
-            />
-            <button className={styles.attachButton}>
-              <AttachIcon />
-            </button>
-            <button className={styles.sendButton}>
-              <SendIcon />
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Shipment Creation Modal */}
       <CreateShipment
         open={showShipmentModal}
         onClose={() => setShowShipmentModal(false)}
-        dealName={deal.nazvanie}
+        dealName={summeryCards?.Nazvanie}
         dealGuid={dealId}
-        kontragentId={deal.kontragentId}
+        kontragentId={summeryCards?.counterparty_id}
       />
 
       {/* Operation Modal */}
@@ -477,6 +521,7 @@ export default observer(function DealDetailPage() {
               setIsModalClosing(false)
             }, 300)
           }}
+          preselectedCounterparty={summeryCards?.counterparty_id}
           onSuccess={() => setShowOperationModal(false)}
           initialTab={activeTab === 'expenses' ? 'payment' : 'income'}
         />
@@ -490,9 +535,28 @@ export default observer(function DealDetailPage() {
           setItemToEdit(null);
           setIsCopying(false);
         }}
-        dealGuid={deal.guid}
+        dealGuid={dealId}
         initialData={itemToEdit}
         isEditing={!!itemToEdit && !isCopying}
+      />
+
+      <CreateDealModal
+        isOpen={isCreateModalOpen}
+        onClose={closeCreateModal}
+        initialData={dealToEdit}
+        isEditing={true}
+      />
+
+      <DeleteDealModal
+        isOpen={!!dealToDelete}
+        onClose={() => setDealToDelete(null)}
+        onConfirm={confirmDelete}
+        isDeleting={isDeletingDeal}
+        deal={dealToDelete ? {
+          name: summeryCards?.Nazvanie,
+          client: summeryCards?.counterparty_name,
+          amount: formatAmount(summeryCards?.total_products_summa)
+        } : null}
       />
 
 

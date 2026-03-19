@@ -58,7 +58,7 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
-  const handleDateChange = (date) => { 
+  const handleDateChange = (date) => {
     if (date) {
       onChange(date)
       setInputValue(date)
@@ -71,13 +71,15 @@ export function DatePicker({ value, onChange, placeholder = 'Выберите д
 
   return (
     <div className={styles.container} ref={containerRef}>
-      <CustomDatePicker
-        ref={datePickerRef}
-        value={dateValue}
-        format={dateFormat}
-        onChange={handleDateChange}
-        disabled={disabled}
-      />
+      <div className='w-44'>
+        <CustomDatePicker
+          ref={datePickerRef}
+          value={dateValue}
+          format={dateFormat}
+          onChange={handleDateChange}
+          disabled={disabled}
+        />
+      </div>
       {showCheckbox && (
         <OperationCheckbox
           checked={checkboxValue}

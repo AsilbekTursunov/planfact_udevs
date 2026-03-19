@@ -10,7 +10,9 @@ import { Loader2 } from 'lucide-react'
 import CustomModal from '../../../shared/CustomModal'
 import { useQueryClient } from '@tanstack/react-query'
 
-const ShipmenTable = ({ dealName = '', dealGuid = '' }) => {
+import EmptyState from '../EmptyState'
+
+const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
   const [showModal, setShowModal] = useState(false)
   const [selectedShipment, setSelectedShipment] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -88,6 +90,15 @@ const ShipmenTable = ({ dealName = '', dealGuid = '' }) => {
     </div>
   }
 
+  if (shipmentsList?.length === 0) {
+    return (
+      <EmptyState 
+        title="Добавьте отгрузки в сделку" 
+        subtitle="Учитывайте отгрузки товара/услуг, чтобы контролировать выполнение обязательств по сделке" 
+        onAdd={onAdd} 
+      />
+    )
+  }
 
   return (
     <>
@@ -96,7 +107,7 @@ const ShipmenTable = ({ dealName = '', dealGuid = '' }) => {
           <thead className='sticky top-0 z-10'>
             <tr className='bg-neutral-100  text-neutral-800 font-light text-sm w-full border-b border-gray-200'>
               <th className='px-4 py-1 text-left w-[150px]'>Дата</th>
-              <th className='px-4 py-1 text-left w-[150px]'>Юрлицо</th>
+              <th className='px-4 py-1 text-left w-[50px]'>Юрлицо</th>
               <th className='px-4 py-1 text-left w-[150px]'>Контрагент</th>
               <th className='px-4 py-1 text-left w-[150px]'>Состав</th>
               <th className='px-4 py-1 text-left w-[150px]'>Статья</th>
@@ -105,13 +116,15 @@ const ShipmenTable = ({ dealName = '', dealGuid = '' }) => {
           </thead>
           <tbody className='w-full'>
             {shipmentsList?.map((item) => {
+              console.log('item', item)
               return (
                 <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
                   <td className="px-4 py-3 text-left">{item.operationDate}</td>
-                  <td className="px-4 py-3 text-left">{item?.legal_entity_name || 'Юрлицо'}</td>
+                  <td className="px-4 py-3 text-left w-[50px]">{item?.legal_entity_name || 'Юрлицо'}</td>
                   <td className="px-4 py-3 text-left">{item.counterparty}</td>
                   <td className="px-4 py-3 text-left">{item?.product_and_service_data?.[0]?.Naimenovanie || 'Товары/услуги'}</td>
-                  <td className="px-4 py-3 text-left">{item?.my_account_name}</td>
+                  {/* Нераспределенный доход */}
+                  <td className="px-4 py-3 text-left w-[200px]">{item?.chartOfAccounts || 'Нераспределенный доход'}</td>
                   <td className={`px-4 py-3  w-52 text-right`}>
                     <div className="flex items-center justify-end gap-4 h-6">
                       <p className={`font-base text-neutral-600`}>

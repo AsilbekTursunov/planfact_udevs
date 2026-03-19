@@ -11,7 +11,9 @@ import Loader from '../../../shared/Loader'
 import { productServiceDto } from '../../../../lib/dtos/productServiceDto'
 import { Loader2 } from 'lucide-react'
 
-const ProductServiceTable = ({ handleSelect, sellingDealId }) => {
+import EmptyState from '../EmptyState'
+
+const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
   const [selectedItems, setSelectedItems] = useState(new Set())
   const [selectedItem, setSelectedItem] = useState([])
   const [open, setOpen] = useState(false)
@@ -83,7 +85,15 @@ const ProductServiceTable = ({ handleSelect, sellingDealId }) => {
   }
 
 
-  if (productServicesList.length === 0) return null
+  if (productServicesList.length === 0) {
+    return (
+      <EmptyState
+        title="Добавьте товары или услуги в сделку"
+        subtitle="Наполните сделку товарами/услугами, которые покупаете или продаете своим клиентам"
+        onAdd={onAdd}
+      />
+    )
+  }
 
 
   if (isLoading) {
@@ -94,7 +104,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId }) => {
 
   return (
     <>
-      <div className="h-[calc(100vh-200px)] overflow-y-auto min-w-[935px] pb-10">
+      <div className="max-h-[calc(100vh-200px)] overflow-y-auto flex-1 min-w-[935px] pb-10">
         <table className="w-full">
           <thead className='sticky top-0 z-10'>
             <tr className='bg-neutral-100  text-neutral-500 text-sm w-full border-b border-gray-200'>

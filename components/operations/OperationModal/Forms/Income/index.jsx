@@ -207,7 +207,7 @@ const IncomeForm = ({
       {!showStatya && (
         <div className={styles.formRow}>
           <label className={styles.label}>Статья</label>
-          <TreeSelect
+          {/* <TreeSelect
             data={chartOfAccountsTree}
             alwaysExpanded={true}
             value={formData.chartOfAccount}
@@ -215,13 +215,13 @@ const IncomeForm = ({
             placeholder='Выберите статью...'
             loading={loadingChartOfAccounts}
             className='flex-1'
-          />
-          {/* <SinglSelectStatiya
+          /> */}
+          <SinglSelectStatiya
             selectedValue={formData.chartOfAccount}
             setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}
             placeholder='Выберите статью...'
             className='flex-1 bg-white'
-          /> */}
+          />
         </div>
       )}
 

@@ -7,7 +7,7 @@ import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealMo
 import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import Input from '../../../components/shared/Input';
-import { Search } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { formatDateFormat } from '../../../utils/formatDate';
 import { formatAmount } from '../../../utils/helpers';
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox';
@@ -15,17 +15,22 @@ import { DeleteDealModal } from '../../../components/deals/DeleteDealModal/Delet
 import { MdOutlineModeEdit } from 'react-icons/md';
 import { IoCloseOutline, IoCopyOutline } from 'react-icons/io5';
 import FilterSidebar from '../../../components/deals/FilterSidebar';
+import { observer } from 'mobx-react-lite';
+import { sealDeal } from '../../../store/saleDeal.store';
+import CreateStudentModal from '../../../components/deals/CreateStudentModal';
 
-export default function DealsPage() {
+export default observer(function DealsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [dealToDelete, setDealToDelete] = useState(null);
   const [dealToEdit, setDealToEdit] = useState(null);
   const [dealToCopy, setDealToCopy] = useState(null);
+  const [showCreateStudentModal, setShowCreateStudentModal] = useState(false);
 
   const queryClient = useQueryClient();
   const [selectedDeals, setSelectedDeals] = useState(new Set());
+  const filters = sealDeal.filters;
 
   useUcodeRequestQuery({
     method: "get_sales_list",
@@ -39,6 +44,31 @@ export default function DealsPage() {
   })
 
 
+  const dealsFilters = useMemo(() => {
+    return {
+      page: 1,
+      limit: 100,
+      search: searchQuery,
+      from_date: filters?.operationDateStart || "",
+      to_date: filters?.operationDateEnd || "",
+      amount_from: filters?.amountFrom || "",
+      amount_to: filters?.amountTo || "",
+      profit_from: filters?.profitFrom || "",
+      profit_to: filters?.profitTo || "",
+    }
+  }, [searchQuery, filters])
+
+
+  const { data: deals } = useUcodeRequestQuery({
+    method: "get_sales_list_simple",
+    data: dealsFilters,
+    querySetting: {
+      select: (response) => response?.data?.data?.data
+    }
+  })
+
+
+
   const { data: dealsData } = useUcodeDefaultApiQuery({
     queryKey: 'deals',
     urlMethod: 'GET',
@@ -46,13 +76,11 @@ export default function DealsPage() {
   });
 
 
-
   const { mutate: deleteDeal, isPending: isDeletingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'delete-deal' });
 
   // Process API data into expected table format
   const formattedDeals = useMemo(() => {
-    const items = dealsData?.data?.data?.response || [];
-    return items.map(deal => ({
+    return deals?.map(deal => ({
       ...deal,
       guid: deal.guid,
       data_nachala: deal.sale_date,
@@ -65,7 +93,7 @@ export default function DealsPage() {
       otgruzheno: '0%',
       pribyl: deal.counterparties_id_data?.profit || 0
     }));
-  }, [dealsData]);
+  }, [deals]);
 
 
   const handleRowClick = (deal, e) => {
@@ -160,12 +188,15 @@ export default function DealsPage() {
   return (
     <div className="flex min-h-dvh">
       <FilterSidebar />
-      <main className={styles.mainContent}>
+      <main className="p-4 w-full">
         <header className={styles.header}>
           <div className={styles.headerLeft}>
             <h1 className={styles.title}>Сделки по продажам</h1>
             <button className='primary-btn' onClick={() => setIsCreateModalOpen(true)}>
               Создать
+            </button>
+            <button className='primary-btn' onClick={() => setShowCreateStudentModal(true)}>
+              Создать студента
             </button>
           </div>
 
@@ -183,38 +214,37 @@ export default function DealsPage() {
           </div>
         </header>
 
-        <div className={styles.tableWrapper}>
+        <div className="">
           <table className={styles.table}>
             <thead>
-              <tr>
-                <th className={styles.checkboxCell}>
-                  <OperationCheckbox
-                    checked={formattedDeals.length > 0 && selectedDeals.size === formattedDeals.length}
-                    onChange={handleSelectAll}
-                  />
+              <tr className='bg-neutral-100 text-neutral-600 h-10 text-sm'>
+                <th className="w-10">
+                  <div className="flex items-center justify-center">
+                    <OperationCheckbox
+                      checked={formattedDeals?.length > 0 && selectedDeals.size === formattedDeals?.length}
+                      onChange={handleSelectAll}
+                    />
+                  </div>
                 </th>
-                <th>
-                  <button className={styles.headerButton}>
+                <th className='text-start'>
+                  <button className="flex items-center gap-2">
                     Дата
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                    </svg>
+                    <ChevronDown size={14} />
                   </button>
                 </th>
-                <th>Название</th>
-                <th>Клиент</th>
-                <th>Статус</th>
-                <th>Сумма сделки</th>
-                <th>Поступило</th>
-                <th>Отгружено</th>
-                <th>Прибыль</th>
-                <th className={styles.actionsCell}></th>
+                <th className='px-2 text-start'>Название</th>
+                <th className='px-2 text-start'>Клиент</th>
+                <th className='px-2 text-start'>Статус</th>
+                <th className='px-2 text-start'>Сумма сделки</th>
+                <th className='px-2 text-start'>Поступило</th>
+                <th className='px-2 text-start'>Отгружено</th>
+                <th className='px-2  text-end w-44'>Прибыль</th>
               </tr>
             </thead>
             <tbody>
-              {formattedDeals.map(deal => (
-                <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} style={{ cursor: 'pointer' }}>
-                  <td className={styles.checkboxCell} onClick={(e) => e.stopPropagation()}>
+              {formattedDeals?.map(deal => (
+                <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 group cursor-pointer'>
+                  <td className="w-10" onClick={(e) => e.stopPropagation()}>
                     <OperationCheckbox
                       checked={selectedDeals.has(deal.guid)}
                       onChange={(e) => handleSelectOne(deal.guid, e)}
@@ -236,18 +266,22 @@ export default function DealsPage() {
                   <td>{formatAmount(deal.summa_sdelki)}</td>
                   <td>{deal.postupilo || '0%'}</td>
                   <td>{deal.otgruzheno || '0%'}</td>
-                  <td>{formatAmount(deal.pribyl)}</td>
-                  <td className={styles.actionsCell}>
-                    <div className={styles.actions}>
-                      <button className={styles.actionButton} title="Редактировать" onClick={(e) => handleEditClick(deal, e)}>
-                        <MdOutlineModeEdit size={14} color='#686868' />
-                      </button>
-                      <button className={styles.actionButton} title="Скопировать" onClick={(e) => handleCopyClick(deal, e)}>
-                        <IoCopyOutline size={14} color='#686868' />
-                      </button>
-                      <button className={styles.actionButton} title="Удалить" onClick={(e) => handleDeleteClick(deal, e)}>
-                        <IoCloseOutline size={14} color='#686868' />
-                      </button>
+                  <td className='relative  text-end w-32'>
+                    <div className='group-hover:hidden'>
+                      {formatAmount(deal.pribyl)}
+                    </div>
+                    <div className='hidden group-hover:flex justify-end'>
+                      <div className="flex items-center gap-2 ">
+                        <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Редактировать" onClick={(e) => handleEditClick(deal, e)}>
+                          <MdOutlineModeEdit size={14} color='#686868' />
+                        </button>
+                        <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Скопировать" onClick={(e) => handleCopyClick(deal, e)}>
+                          <IoCopyOutline size={14} color='#686868' />
+                        </button>
+                        <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Удалить" onClick={(e) => handleDeleteClick(deal, e)}>
+                          <IoCloseOutline size={14} color='#686868' />
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -269,6 +303,10 @@ export default function DealsPage() {
           </div>
         </footer> */}
       </main>
+      <CreateStudentModal
+        isOpen={showCreateStudentModal}
+        onClose={() => setShowCreateStudentModal(false)}
+      />
       <CreateDealModal
         isOpen={isCreateModalOpen}
         onClose={closeCreateModal}
@@ -289,4 +327,4 @@ export default function DealsPage() {
       />
     </div>
   );
-}
+})

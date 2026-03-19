@@ -11,8 +11,10 @@ import operationsDto from '../../../../lib/dtos/operationsDto'
 import { ReceiptsEmptyIcon } from '../../../../constants/icons'
 import { Loader2 } from 'lucide-react'
 
+import EmptyState from '../EmptyState'
+
 /* ─── Main table component ────────────────────────────────── */
-const ExpenseOperationsTable = ({ sellingDealId }) => {
+const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
   const [showModal, setShowModal] = useState(false)
   const [selectedOperation, setSelectedOperation] = useState(null)
   const [modalType, setModalType] = useState('income')
@@ -40,7 +42,15 @@ const ExpenseOperationsTable = ({ sellingDealId }) => {
   }, [operations])
 
 
-  if (dealOperations?.length === 0) return null
+  if (dealOperations?.length === 0) {
+    return (
+      <EmptyState 
+        title="Добавьте расходы по сделке" 
+        subtitle="Учитывайте расходы по сделке, чтобы контролировать финансовый результат" 
+        onAdd={onAdd}
+      />
+    )
+  }
 
   const handleEditOperation = (operation) => {
     setSelectedOperation(operation)
@@ -101,17 +111,7 @@ const ExpenseOperationsTable = ({ sellingDealId }) => {
 
   return (
     <>
-      {dealOperations?.length === 0 && <div className={styles.emptyState}>
-        <div className={styles.emptyStateIcon}>
-          <ReceiptsEmptyIcon />
-        </div>
-        <div className={styles.emptyStateTitle}>Добавьте поступления по сделке</div>
-        <div className={styles.emptyStateSubtext}>Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке</div>
-        <button className="primary-btn" onClick={handleCreateOperation}>
-          Добавить
-        </button>
-      </div>
-      }
+      {/* emptyState div is moved to top EmptyState component */}
       {dealOperations?.length > 0 && <>
         <div className="h-96 overflow-y-auto">
           <table className="w-full">
@@ -167,7 +167,7 @@ const ExpenseOperationsTable = ({ sellingDealId }) => {
           operation={selectedOperation}
           isClosing={isModalClosing}
           isOpening={isModalOpening}
-          defaultDealGuid={data?.[0]?.selling_deal_id}
+          defaultDealGuid={sellingDealId}
           onClose={() => {
             setIsModalClosing(true)
             setTimeout(() => {
