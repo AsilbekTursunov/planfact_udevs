@@ -35,6 +35,7 @@ export default function LegalEntitiesPage() {
   const [openRowMenuId, setOpenRowMenuId] = useState(null)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [isDeletingItem, setIsDeletingItem] = useState(false)
+  const [editGroup, setEditGroup] = useState(null)
   const [itemToEdit, setItemToEdit] = useState(null)
   const [isCopying, setIsCopying] = useState(false)
   const [selectedItems, setSelectedItems] = useState(new Set())
@@ -100,6 +101,9 @@ export default function LegalEntitiesPage() {
     }
   });
 
+  console.log('productServices', productServices)
+  console.log('productServicesGrouped', productServicesGrouped)
+
   const productServicesList = useMemo(() => {
     const rawList = productServices?.filter(item => filters?.type?.value === 'all' ? true : item.status?.includes(filters?.type?.value)).map(item => {
       const price = Number(item?.tsena_za_ed) || 0;
@@ -141,7 +145,8 @@ export default function LegalEntitiesPage() {
           guid: group.guid,
           name: group.name || group.nazvanie_gruppy || 'Без названия',
           items: [],
-          raw: group
+          raw: group,
+          commentary: group.commentary,
         });
       });
     }
@@ -388,10 +393,9 @@ export default function LegalEntitiesPage() {
                     productServicesList.map((item, index) => {
                       if (item.isGroup) {
                         const isExpanded = expandedGroups.has(item.guid);
-                        const isAllChildsSelected = item.items.every(child => selectedItems.has(child.guid));
+                        const isAllChildsSelected = item?.items?.length > 0 && item.items.every(child => selectedItems.has(child.guid));
                         return (
                           <React.Fragment key={item.guid}>
-
                           <tr
                             className="hover:bg-neutral-50 bg-neutral-50/50 font-medium cursor-pointer border-b border-gray-200"
                             onClick={() => toggleGroup(item.guid)}
@@ -401,7 +405,7 @@ export default function LegalEntitiesPage() {
                                 <OperationCheckbox checked={isAllChildsSelected} onChange={() => handleSelectChilds(item)} />
                               </div>
                             </td>
-                            <td colSpan={7} className="p-3">
+                              <td colSpan={6} className="p-3">
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid); }}
@@ -414,6 +418,9 @@ export default function LegalEntitiesPage() {
                                 </span>
                               </div>
                             </td>
+                              <td className="p-3 text-center">
+                                <p className='text-xs font-normal text-neutral-500'>{item.commentary}</p>
+                              </td>
                             <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                               {item.guid !== 'no-group' && (
                                 <div className="relative inline-block" ref={openRowMenuId === item.guid ? rowMenuRef : null}>
@@ -425,7 +432,10 @@ export default function LegalEntitiesPage() {
                                   </button>
                                   {openRowMenuId === item.guid && (
                                     <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 w-36 p-1 flex flex-col font-normal text-sm">
-                                      <button className="flex items-center gap-2 p-1.5 text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw || item); setIsCopying(false); setIsCreateGroupOpen(true); }}>
+                                        <button className="flex items-center gap-2 p-1.5 text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => {
+                                          setOpenRowMenuId(null); setItemToEdit(item.raw || item); setIsCopying(false); setIsCreateGroupOpen(true);
+                                          setEditGroup(item)
+                                        }}>
                                         <MdOutlineModeEdit size={14} className="text-neutral-500" /> Редактировать
                                       </button>
                                       <button className="flex items-center gap-2 p-1.5 text-red-600 hover:bg-red-50 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
@@ -557,7 +567,7 @@ export default function LegalEntitiesPage() {
         isEditing={!!itemToEdit && !isCopying}
       />
 
-      <CreateGroup open={isCreateGroupOpen} setOpen={() => setIsCreateGroupOpen(false)} />
+      <CreateGroup initialData={editGroup} open={isCreateGroupOpen} setOpen={() => setIsCreateGroupOpen(false)} />
 
       <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
         <h2 className="mb-3 text-xl font-bold text-neutral-900 font-sans">

@@ -8,7 +8,7 @@ export const formatDateRu = (dateStr) => {
 
 export const formatAmount = (v) => {
   if (v === null || v === undefined || v === '') return '0'
-  const raw = String(v).replace(/\s/g, '').replace(/[^0-9.]/g, '');
+  const raw = String(v).replace(/\s/g, '').replace(/[^0-9.-]/g, '');
   const num = parseFloat(raw);
   if (isNaN(num)) return '0'
   return num.toLocaleString('ru-RU')
