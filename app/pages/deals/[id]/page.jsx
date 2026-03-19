@@ -11,7 +11,7 @@ import { ChevronUp, CirclePlus, Ellipsis, Search } from 'lucide-react';
 import { HiOutlineDatabase } from "react-icons/hi";
 import { HiOutlineCreditCard } from "react-icons/hi2";
 import { PiDatabaseFill } from "react-icons/pi";
-import { ShipmentPlusIcon, BoxIcon, AttachIcon, SendIcon } from '@/constants/icons';
+import { ShipmentPlusIcon, BoxIcon } from '@/constants/icons';
 import Input from '@/components/shared/Input';
 import OperationModal from '@/components/operations/OperationModal/OperationModal';
 import CreateProductService from '@/components/deals/details/CreateProductService';
@@ -118,11 +118,11 @@ export default observer(function DealDetailPage() {
 
   // Deal statuses
   const [dealStatuses, setDealStatuses] = useState([
-    { guid: 'new', name: 'new', color: '#F79009' },
-    { guid: 'in_progress', name: 'in_progress', color: '#2E90FA' },
-    { guid: 'completed', name: 'completed', color: '#12B76A' },
+    { guid: 'Новая', name: 'Новая', color: '#F79009' },
+    { guid: 'В процессе', name: 'В процессе', color: '#2E90FA' },
+    { guid: 'Завершенная', name: 'Завершенная', color: '#12B76A' },
   ]);
-  const [selectedStatus, setSelectedStatus] = useState(dealStatuses[0]);
+  const [selectedStatus, setSelectedStatus] = useState(dealStatuses[summeryCards?.Status]);
 
   // Set initial status from deal data
   const currentDealStatus = selectedStatus
@@ -140,9 +140,9 @@ export default observer(function DealDetailPage() {
   const received = Number(summeryCards?.total_receipts_summa) || 0;
   const shipped = Number(summeryCards?.total_shipment_summa) || 0;
 
-  const profit = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.profit : summeryCards?.cash_method?.profit);
-  const expenses = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.expenses : summeryCards?.cash_method?.expenses) || 0;
-  const income = Number(accounting === 'accrual' ? summeryCards?.accrual_method?.income : summeryCards?.cash_method?.income) || 0;
+  const profit = (accounting === 'accrual' ? summeryCards?.accrual_method?.profit : summeryCards?.cash_method?.profit) || 0;
+  const expenses = (accounting === 'accrual' ? summeryCards?.accrual_method?.expenses : summeryCards?.cash_method?.expenses) || 0;
+  const income = (accounting === 'accrual' ? summeryCards?.accrual_method?.income : summeryCards?.cash_method?.income) || 0;
 
   const receivedPercent = summeryCards?.receipts_percentage != null ? Math.round(Number(summeryCards.receipts_percentage) * 100) : 0;
   const shippedPercent = summeryCards?.shipments_percentage != null ? Math.round(Number(summeryCards.shipments_percentage)) : 0;
@@ -152,15 +152,6 @@ export default observer(function DealDetailPage() {
 
   const clientDebt = Number(summeryCards?.client_debt) || 0;
   const remainingShipment = Number(summeryCards?.remaining_shipment) || 0;
-
-  console.log('profit', profit)
-  console.log('income', income)
-  console.log('expenses', expenses)
-  console.log('profitability', profitPercent)
-
-  console.log('dealAmount', dealAmount)
-  console.log('received', received)
-  console.log('shipped', shipped)
 
 
   const handleCreateOperation = () => {
@@ -183,7 +174,6 @@ export default observer(function DealDetailPage() {
       setIsCopying(true)
     }
   }
-
 
   return (
     <div className={styles.container}>
@@ -297,7 +287,7 @@ export default observer(function DealDetailPage() {
         <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
           <div className="flex items-center justify-between mb-[22.5px]">
             <span className="font-semibold text-base text-gray-ucode-800">Поступления</span>
-            <button onClick={handleCreateOperation} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
+            <button onClick={() => { handleCreateOperation(); setActiveTab('receipts'); }} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
               <CirclePlus size={20} strokeWidth={1.5} className='text-neutral-300' />
             </button>
           </div>
@@ -394,7 +384,7 @@ export default observer(function DealDetailPage() {
 
           <div className="flex flex-col gap-2 my-2">
             <CustomProgress value={received} fillColor="#12B76A" min={0} max={received} />
-            <CustomProgress value={expenses} fillColor="#FFC609" min={0} max={received} />
+            <CustomProgress value={expenses} fillColor="#FFC609" min={0} max={income} />
           </div>
 
           <div className="flex  gap-2">

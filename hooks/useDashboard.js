@@ -1250,7 +1250,8 @@ export const useCashFlowReport = (params = {}) => {
         return { status: 'ERROR', data: { data: { data: null } } }
       }
     }, 
-    refetchOnMount: true,
+    refetchOnMount: 'always',
+    staleTime: 0,
     refetchOnWindowFocus: true,
     retry: false
   })
@@ -1296,7 +1297,8 @@ export const useUcodeRequestQuery = ({ method, data, skip = false, querySetting 
       showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
     },
     ...querySetting,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
+    staleTime: 0,
     refetchOnWindowFocus: true,
   })
 }

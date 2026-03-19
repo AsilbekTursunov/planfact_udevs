@@ -2,14 +2,13 @@ import Modal from '../../common/Modal/Modal'
 import styles from './style.module.scss'
 import { X } from 'lucide-react'
 import { useState } from 'react'
-import SegmentedControl from '../../shared/SegmentedControl'
 import Input from '../../shared/Input'
 import TextArea from '../../shared/TextArea'
 import { useUcodeDefaultApiMutation } from '../../../hooks/useDashboard'
 import Loader from '../../shared/Loader'
 import { queryClient } from '../../../lib/queryClient'
 
-const CreateGroup = ({ open = true, setOpen }) => {
+const CreateGroup = ({ open = true, setOpen, initialData }) => {
   const [viewMode, setViewMode] = useState('product')
 
   const { mutateAsync: createProductServiceGroup, isPending } = useUcodeDefaultApiMutation({
@@ -17,8 +16,8 @@ const CreateGroup = ({ open = true, setOpen }) => {
   })
 
   const [formData, setFormData] = useState({
-    name: '',
-    commentary: ''
+    name: initialData?.name || '',
+    commentary: initialData?.commentary || ''
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
 
@@ -39,13 +38,20 @@ const CreateGroup = ({ open = true, setOpen }) => {
       ...formData,
     }
 
+    if (initialData?.guid) {
+      payload.guid = initialData.guid
+    }
+
     try {
       await createProductServiceGroup({
-        urlMethod: "POST",
-        urlParams: "/items/group_product_and_service",
+        urlMethod: initialData?.guid ? "PUT" : "POST",
+        urlParams: "/items/group_product_and_service?from-ofs=true",
         data: payload
       })
       queryClient.invalidateQueries({ queryKey: "get_product_services_groups" })
+      queryClient.invalidateQueries({ queryKey: "get_product_services_list" })
+      queryClient.invalidateQueries({ queryKey: "product-services-grouped" })
+
       setOpen(false)
       setFormData({ name: "", commentary: "" })
     } catch (error) {

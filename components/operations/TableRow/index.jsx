@@ -34,6 +34,8 @@ const OperationTableRow = ({
     }
   }, [children, counterpartyGuid, op.bankAccount])
 
+  const isDifferentDate = op?.accrualDate !== op?.operationDate
+
   return (
     <>
       <tr
@@ -63,7 +65,10 @@ const OperationTableRow = ({
               {open ? <ExpendClose /> : <ExpendOpen />}
               <span>{op?.operationDate}</span>
             </div>
-          </> : op?.operationDate}
+          </> : <div className='flex flex-col items-start'>
+            <span className=''>{op?.operationDate}</span>
+            {isDifferentDate && <span className="text-[10px] text-neutral-400">{op?.accrualDate}</span>}
+          </div>}
         </td>
         <td className={cn(styles.tableCell, styles.accountCell)}>
           {op?.tip == "Перемещение" ? <>
@@ -182,7 +187,7 @@ const OperationTableRow = ({
                   accrual={part.payment_accrual}
                   currency={part.currency}
                 />
-              </td> 
+              </td>
             </tr>
           )
         })}

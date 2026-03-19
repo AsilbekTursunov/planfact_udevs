@@ -30,6 +30,8 @@ export default function BalancePage() {
     queryKey: ['legal-entities'],
     queryFn: () => legalEntitiesAPI.getLegalEntitiesInvokeFunction({ page: 1, limit: 100 }),
     retry: 1,
+    refetchOnMount: 'always',
+    staleTime: 0,
     onError: (error) => {
       console.error('Error fetching legal entities:', error)
     }
@@ -46,6 +48,8 @@ export default function BalancePage() {
       contr_agent_ids: []
     }),
     retry: 1,
+    refetchOnMount: 'always',
+    staleTime: 0,
     onError: (error) => {
       console.error('Error fetching balance report:', error)
     }
