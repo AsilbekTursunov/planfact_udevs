@@ -1,7 +1,6 @@
 'use client'
 import React from 'react'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
-import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
@@ -10,6 +9,8 @@ import { DebitIcon, CreditIcon } from '../../../../../constants/icons'
 import { appStore } from '../../../../../store/app.store'
 import styles from '../../OperationModal.module.scss'
 import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
+import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
+import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 
 const IncomeForm = ({
   // form state
@@ -25,13 +26,10 @@ const IncomeForm = ({
   showStatya,
   // data
   bankAccounts,
-  counterAgentsTree,
   chartOfAccountsTree,
-  formattedDeals,
   counterAgents,
   // loading
   loadingBankAccounts,
-  isLoadingGroups,
   loadingChartOfAccounts,
   // split
   rows,
@@ -191,13 +189,11 @@ const IncomeForm = ({
       {!showAgent && (
         <div className={styles.formRow}>
           <label className={styles.label}>Контрагент</label>
-          <TreeSelect
-            data={counterAgentsTree}
+          <SingleCounterParty
             value={formData.counterparty}
             onChange={value => setFormData({ ...formData, counterparty: value })}
-            placeholder='Выберите контрагента...'
-            className='flex-1'
-            loading={isLoadingGroups}
+            placeholder='Не выбран.'
+            className='flex-1 bg-white'
             disabled={disableCounterpartySelect}
           />
         </div>
@@ -219,7 +215,7 @@ const IncomeForm = ({
           <SinglSelectStatiya
             selectedValue={formData.chartOfAccount}
             setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}
-            placeholder='Выберите статью...'
+            placeholder='Нераспределенный расход.'
             className='flex-1 bg-white'
           />
         </div>
@@ -250,8 +246,7 @@ const IncomeForm = ({
       <div className={styles.formRow}>
         <label className={styles.label}>Сделка продажи</label>
         <div className={styles.fieldWrapper}>
-          <GroupedSelect
-            data={formattedDeals}
+          <SingleZdelka
             value={formData.salesDeal}
             onChange={value => {
               if (value && showDate) {
@@ -263,10 +258,6 @@ const IncomeForm = ({
               if (errors.salesDeal) setErrors({ ...errors, salesDeal: null })
             }}
             placeholder='Выберите сделку...'
-            groupBy={false}
-            labelKey='label'
-            valueKey='guid'
-            loading={loadingBankAccounts}
             hasError={!!errors.salesDeal}
           />
           {errors.salesDeal && <span className={styles.errorText}>{errors.salesDeal}</span>}

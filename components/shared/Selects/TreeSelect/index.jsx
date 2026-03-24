@@ -1,4 +1,4 @@
-import { ChevronUp, Check, Search } from 'lucide-react'
+import { ChevronUp, Check, Search, X } from 'lucide-react'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -94,6 +94,8 @@ const TreeSelect = ({
     return findLabel(data) || placeholder;
   }
 
+  const isPlaceholder = getSelectedLabel() === placeholder;
+
 
   const filteredData = useMemo(() => {
     if (!searchQuery) return data;
@@ -115,7 +117,7 @@ const TreeSelect = ({
   const handleSelect = (node) => {
     if (multi) {
       const currentValues = Array.isArray(value) ? value : [];
-      
+
       const getSelectableValues = (n) => {
         let vals = [];
         if (n.isSelectable !== false) vals.push(n.value);
@@ -149,7 +151,7 @@ const TreeSelect = ({
       <button
         ref={buttonRef}
         type="button"
-        className={cn('flex items-center cursor-pointer bg-neutral-50 transition-all duration-200 justify-between w-full rounded-md border border-neutral-200 px-3 py-2 outline-none focus:border-primary/80', className)}
+        className={cn('flex items-center cursor-pointer bg-neutral-50 transition-all duration-200 justify-between w-full rounded-md border border-neutral-200 px-3 py-2.5 outline-none focus:border-primary/80', className)}
         onClick={() => {
           if (!open && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect()
@@ -160,7 +162,20 @@ const TreeSelect = ({
           setOpen(!open)
         }}
       >
-        <span className={cn('text-gray-ucode-400 font-normal text-xs', (multi && value?.length > 0) || (!multi && value) && 'text-gray-ucode-800')}>{getSelectedLabel()}</span>
+        {/* x button to delete selected */}
+        {value?.length > 0 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange([]);
+            }}
+            className="absolute right-8 top-1/2 cursor-pointer -translate-y-1/2 z-10"
+          >
+            <X size={16} className="text-neutral-400 hover:text-neutral-600" />
+          </button>
+        )}
+        <span className={cn('text-gray-ucode-400 font-normal text-xs', (multi && value?.length > 0) || (!multi && value) && 'text-gray-ucode-800', isPlaceholder && 'text-gray-ucode-400')}>{getSelectedLabel()}</span>
         <ChevronUp size={16} className={cn('text-neutral-400 transition-transform duration-200', open ? 'rotate-0' : 'rotate-180')} />
       </button>
 

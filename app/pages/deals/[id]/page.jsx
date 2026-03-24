@@ -248,34 +248,32 @@ export default observer(function DealDetailPage() {
 
           <div className={styles.cardDivider}></div>
 
-          <div className="flex flex-col gap-0 mt-4">
-            <div
-              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
-            >
-              <span className="text-sm font-normal text-gray-500">Тип</span>
-              <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5 font-sans">
-                <PiDatabaseFill size={16} className='text-neutral-400' />
+          <div className="grid grid-cols-[100px_1fr] gap-y-2 mt-2 font-sans">
+            <span className="text-sm font-normal text-[#8892A3]">Тип</span>
+            <div className="flex">
+              <span className="flex items-center gap-1.5 bg-[#F2F4F7] rounded-[10px] px-3 py-1 text-sm font-semibold text-neutral-800">
+                <PiDatabaseFill size={16} className='text-[#9aa4b3]' />
                 Продажа
               </span>
             </div>
 
-            <div
-              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
-              onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
-            >
-              <span className="text-sm font-normal text-gray-500">Клиент</span>
-              <span className="text-sm font-medium text-primary flex items-center gap-1.5 hover:underline underline-offset-2 decoration-dotted">
+            <span className="text-sm font-normal text-[#8892A3]">Клиент</span>
+            <div className="flex">
+              <span
+                className="text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer hover:text-primary transition-colors flex items-center gap-1 group"
+                onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
+              >
                 {summeryCards?.counterparty_name || 'test'}
                 <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
               </span>
             </div>
 
-            <div
-              className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0 group cursor-pointer"
-              onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
-            >
-              <span className="text-sm font-normal text-gray-500">Создана</span>
-              <span className="text-sm font-medium text-gray-800 flex items-center gap-1.5">
+            <span className="text-sm font-normal text-[#8892A3]">Создана</span>
+            <div className="flex">
+              <span
+                className="text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer flex items-center gap-1 group"
+                onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
+              >
                 {formatDateFormat(summeryCards?.Data_sdelki)}
                 <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
               </span>
@@ -285,70 +283,70 @@ export default observer(function DealDetailPage() {
 
         {/* Card 2: Receipts */}
         <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
-          <div className="flex items-center justify-between mb-[22.5px]">
+          <div className="flex items-center justify-between mb-4">
             <span className="font-semibold text-base text-gray-ucode-800">Поступления</span>
             <button onClick={() => { handleCreateOperation(); setActiveTab('receipts'); }} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
               <CirclePlus size={20} strokeWidth={1.5} className='text-neutral-300' />
             </button>
           </div>
 
-          <div className="flex items-start gap-3 mb-[22.5px]">
+          <div className="flex items-start gap-3 mb-5">
             <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
               <HiOutlineDatabase size={20} className='text-neutral-400' />
             </div>
 
             <div className="flex flex-col gap-0">
               <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(received)} ₽</div>
-              <div className="font-normal text-base text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
+              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
             </div>
           </div>
 
           <div className="w-full h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-2">
             <CustomProgress min={0} value={received} max={dealAmount} fillColor="#12B76A" />
           </div>
-          <div className="font-normal text-sm text-gray-ucode-500 mt-2 mb-5">Поступило: {calculatePercent(dealAmount, received)}</div>
+          <div className="font-normal text-xs text-gray-ucode-500 mt-2 mb-5">Поступило: {calculatePercent(dealAmount, received)}</div>
 
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-normal text-sm text-gray-ucode-500">Клиент должен:</span>
-            <span className="font-medium text-base text-[#344054]">{formatAmount(clientDebt)} ₽</span>
+          <div className="flex text-xs flex-1 items-end  gap-2">
+            <span className="font-normal  text-gray-ucode-500">Клиент должен:</span>
+            <span className="font-medium  text-[#344054]">{formatAmount(clientDebt)} ₽</span>
           </div>
         </div>
 
         {/* Card 3: Shipments */}
         <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
-          <div className="flex items-center justify-between mb-[22.5px]">
+          <div className="flex items-center justify-between mb-4">
             <span className="font-semibold text-base text-gray-ucode-800">Отгрузки клиенту</span>
             <button onClick={() => setShowShipmentModal(true)} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
               <ShipmentPlusIcon />
             </button>
           </div>
 
-          <div className="flex items-start gap-3 mb-[22.5px]">
+          <div className="flex items-start text-lg gap-3 mb-5">
             <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
               <BoxIcon />
             </div>
 
             <div className="flex flex-col gap-0">
               <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(shipped)} ₽</div>
-              <div className="font-normal text-base text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
+              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
             </div>
           </div>
 
           <div className="w-full h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-2">
-            <CustomProgress min={0} value={shipped} max={dealAmount} fillColor="#48C206" />
+            <CustomProgress min={0} value={shipped} max={dealAmount} fillColor="#12B76A" />
           </div>
-          <div className="font-normal text-sm text-gray-ucode-500 mt-2 mb-5">Отгружено: {calculatePercent(dealAmount, shipped)}</div>
+          <div className="font-normal text-xs text-gray-ucode-500 mt-2 mb-5">Отгружено: {calculatePercent(dealAmount, shipped)}</div>
 
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-normal text-sm text-gray-ucode-500">Осталось отгрузить:</span>
-            <span className="font-medium text-base text-[#344054]">{formatAmount(remainingShipment)} ₽</span>
+          <div className="flex text-xs  gap-2 flex-1 items-end">
+            <span className="font-normal  text-gray-ucode-500">Осталось отгрузить:</span>
+            <span className="font-medium  text-[#344054]">{formatAmount(remainingShipment)} ₽</span>
           </div>
         </div>
 
         {/* Card 4: Profit */}
         <div className={styles.infoCard}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Прибыль сделки</span>
+          <div className="flex items-center justify-between mb-4">
+            <span className="font-semibold text-base text-gray-ucode-800">Прибыль сделки</span>
             <Popover open={showAccounting} onOpenChange={setShowAccounting}>
               <PopoverTrigger className="relative bg-primary/10 cursor-pointer text-primary px-2 py-1 rounded-full text-xs border-none outline-none">
                 <div className="flex items-center gap-2">
@@ -371,14 +369,14 @@ export default observer(function DealDetailPage() {
             </Popover>
           </div>
 
-          <div className="flex items-start gap-3 mb-[22.5px] mt-4">
+          <div className="flex items-start gap-3 mb-3">
             <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
               <HiOutlineCreditCard size={20} className='text-neutral-400' />
             </div>
 
             <div className="flex flex-col gap-0">
-              <div className={styles.cardAmount}>{formatAmount(profit)} ₽</div>
-              <div className={styles.cardSubtext}>Рентабельность {profitPercent}%</div>
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(profit)} ₽</div>
+              <div className="font-normal text-xs text-gray-ucode-500">Рентабельность {profitPercent}%</div>
             </div>
           </div>
 
@@ -387,16 +385,16 @@ export default observer(function DealDetailPage() {
             <CustomProgress value={expenses} fillColor="#FFC609" min={0} max={income} />
           </div>
 
-          <div className="flex  gap-2">
+          <div className="flex flex-1 items-end   gap-2">
             <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#12B76A' }}></div>
-              <span className={styles.profitLabel}>Доходы</span>
-              <span className={styles.profitValue}>+{formatAmount(income)} ₽</span>
+              <span className="font-normal text-xs text-gray-ucode-500">Доходы</span>
+              <span className="font-medium text-sm text-gray-ucode-800">+{formatAmount(income)} ₽</span>
             </div>
             <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#FFC609' }}></div>
-              <span className={styles.profitLabel}>Расходы</span>
-              <span className={styles.profitValue}>-{formatAmount(expenses)} ₽</span>
+              <span className="font-normal text-xs text-gray-ucode-500">Расходы</span>
+              <span className="font-medium text-sm text-gray-ucode-800">-{formatAmount(expenses)} ₽</span>
             </div>
           </div>
         </div>

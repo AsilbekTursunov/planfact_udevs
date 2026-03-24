@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from 'react';
 import styles from './CreateDealModal.module.scss';
 import CustomDatePicker from '@/components/shared/DatePicker';
 import Input from '@/components/shared/Input';
-import { useRouter } from 'next/navigation';
 import TextArea from '../../shared/TextArea';
 import Select from '@/components/common/Select';
 import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect';
@@ -27,18 +26,20 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
   const [nds, setNds] = useState('');
   const [comment, setComment] = useState('');
   const [errors, setErrors] = useState({});
-  const router = useRouter();
+  // const router = useRouter();
 
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (isOpen && initialData) {
       // eslint-disable-next-line
-      setDealName(initialData.name || '');
-      setDealDate(initialData.sale_date ? formatDate(initialData.sale_date) : '');
-      setClient(initialData.counterparties_id || '');
-      setNds(initialData.nds ? 'true' : 'false');
-      setComment(initialData.commentary || '');
+      setDealName(initialData.Nazvanie || initialData.name || '');
+      const dateVal = initialData.Data_sdelki || initialData.sale_date;
+      setDealDate(dateVal ? formatDate(dateVal) : '');
+      setClient(initialData.partners_id || initialData.counterparties_id || '');
+      const ndsVal = initialData.NDS !== undefined ? initialData.NDS : initialData.nds;
+      setNds(ndsVal ? 'true' : 'false');
+      setComment(initialData.Kommentariy || initialData.commentary || '');
     } else if (isOpen && !initialData) {
       setDealName('');
       setDealDate('');
@@ -123,6 +124,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
         data: payload
       });
       queryClient.invalidateQueries({ queryKey: ['deals'] });
+      queryClient.invalidateQueries({ queryKey: ['get_sales_list_simple'] });
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] });
       onClose();
 
@@ -148,7 +150,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
           </button>
         </div>
 
-        <form id="create-deal-form" className="space-y-3 p-5" onSubmit={handleSubmit}>
+        <form id="create-deal-form" className="space-y-3 p-5 text-sm font-normal" onSubmit={handleSubmit}>
           <div className="grid grid-cols-7">
             <label className=" col-span-2 flex items-center">Название сделки</label>
             <div className=" col-span-5">

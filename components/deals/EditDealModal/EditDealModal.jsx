@@ -1,24 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from '../CreateDealModal/CreateDealModal.module.scss';
 
 export function EditDealModal({ isOpen, onClose, deal }) {
-  const [dealName, setDealName] = useState('');
-  const [dealDate, setDealDate] = useState('');
-  const [client, setClient] = useState('');
+  const [prevDealGuid, setPrevDealGuid] = useState(deal?.guid);
+  const [dealName, setDealName] = useState(deal?.name || '');
+  const [dealDate, setDealDate] = useState(deal?.date || deal?.sale_date || '');
+  const [client, setClient] = useState(deal?.client || deal?.counterparties_id || '');
   const [nds, setNds] = useState('');
   const [comment, setComment] = useState('');
 
-  useEffect(() => {
-    if (deal) {
-      setDealName(deal.name || '');
-      setDealDate(deal.date || '');
-      setClient(deal.client || '');
-      setNds('');
-      setComment('');
-    }
-  }, [deal]);
+  if (deal?.guid !== prevDealGuid) {
+    setPrevDealGuid(deal?.guid);
+    setDealName(deal?.name || '');
+    setDealDate(deal?.date || deal?.sale_date || '');
+    setClient(deal?.client || deal?.counterparties_id || '');
+    setNds('');
+    setComment('');
+  }
 
   if (!isOpen) return null;
 

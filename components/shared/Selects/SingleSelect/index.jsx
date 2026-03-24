@@ -1,4 +1,4 @@
-import { ChevronUp, Check, Search } from 'lucide-react'
+import { ChevronUp, Check, Search, X } from 'lucide-react'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -68,6 +68,19 @@ const SingleSelect = ({
           setOpen(!open)
         }}
       >
+        {/* x button to delete selected */}
+        {value && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange(null);
+            }}
+            className="absolute right-8 top-1/2 cursor-pointer -translate-y-1/2 z-10"
+          >
+            <X size={16} className="text-neutral-400 hover:text-neutral-600" />
+          </button>
+        )}
         <span className={cn('text-gray-ucode-400 font-normal text-xs', value && 'text-gray-ucode-800')}>{getSelectedLabel()}</span>
         <ChevronUp size={16} className={cn('text-neutral-400 transition-transform duration-200', open ? 'rotate-0' : 'rotate-180')} />
       </button>

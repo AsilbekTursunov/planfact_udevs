@@ -63,35 +63,28 @@ export default observer(function DealsPage() {
     method: "get_sales_list_simple",
     data: dealsFilters,
     querySetting: {
-      select: (response) => response?.data?.data?.data
+      select: (response) => response?.data?.data
     }
   })
 
-
-
-  const { data: dealsData } = useUcodeDefaultApiQuery({
-    queryKey: 'deals',
-    urlMethod: 'GET',
-    urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=20'
-  });
 
 
   const { mutate: deleteDeal, isPending: isDeletingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'delete-deal' });
 
   // Process API data into expected table format
   const formattedDeals = useMemo(() => {
-    return deals?.map(deal => ({
+    return deals?.data?.map(deal => ({
       ...deal,
       guid: deal.guid,
-      data_nachala: deal.sale_date,
-      nazvanie: deal.name,
-      kontragent: { nazvanie: deal.counterparties_id_data?.nazvanie },
-      status: deal.status?.[0] || 'New',
-      // Provide defaults or pick from counterparties_id_data if available
-      summa_sdelki: deal.counterparties_id_data?.receivables || 0,
-      postupilo: '0%',
-      otgruzheno: '0%',
-      pribyl: deal.counterparties_id_data?.profit || 0
+      data_nachala: deal.Data_sdelki,
+      nazvanie: deal.Nazvanie,
+      kontragent: { nazvanie: deal.partner_name || '-' },
+      status: deal.Status?.[0] || 'New',
+      summa_sdelki: deal?.total_products_summa || 0,
+      postupilo: deal?.receipts_percentage ? `${Math.round(deal.receipts_percentage)}%` : '0%',
+      otgruzheno: deal?.shipments_percentage ? `${Math.round(deal.shipments_percentage)}%` : '0%',
+      pribyl: deal?.profit || 0,
+      comment: deal?.Kommentariy
     }));
   }, [deals]);
 
@@ -185,6 +178,8 @@ export default observer(function DealsPage() {
     return statusMap[status] || 'gray'
   }
 
+
+
   return (
     <div className="flex min-h-dvh">
       <FilterSidebar />
@@ -217,7 +212,7 @@ export default observer(function DealsPage() {
         <div className="">
           <table className={styles.table}>
             <thead>
-              <tr className='bg-neutral-100 text-neutral-600 h-10 text-sm'>
+              <tr className='bg-neutral-100 text-neutral-500  text-xs'>
                 <th className="w-10">
                   <div className="flex items-center justify-center">
                     <OperationCheckbox
@@ -226,8 +221,8 @@ export default observer(function DealsPage() {
                     />
                   </div>
                 </th>
-                <th className='text-start'>
-                  <button className="flex items-center gap-2">
+                <th className='text-start p-0!'>
+                  <button className="flex items-center gap-2 p-2">
                     Дата
                     <ChevronDown size={14} />
                   </button>
@@ -250,14 +245,19 @@ export default observer(function DealsPage() {
                       onChange={(e) => handleSelectOne(deal.guid, e)}
                     />
                   </td>
-                  <td>
-                    <div className={styles.dateCell}>
-                      <div>{formatDateFormat(deal.data_nachala)}</div>
-                      {deal.data_okonchaniya && <div className={styles.dateEnd}>{formatDateFormat(deal.data_okonchaniya)}</div>}
+                  <td className='p-0!'>
+                    <div className="text-start p-2">
+                      <div>{formatDateFormat(deal.Data_sdelki)}</div>
+                      {/* {deal.data_okonchaniya && <div className={styles.dateEnd}>{formatDateFormat(deal.data_okonchaniya)}</div>} */}
                     </div>
                   </td>
-                  <td>{deal.nazvanie || '-'}</td>
-                  <td>{deal.kontragent?.nazvanie || '-'}</td>
+                  <td>
+                    <div className="flex flex-col">
+                      <p>{deal.nazvanie}</p>
+                      <p className='text-xs text-neutral-400'>{deal.comment}</p>
+                    </div>
+                  </td>
+                  <td>{deal?.partner_name || '-'}</td>
                   <td>
                     <span className={`${styles.status} ${styles[`status_${deal.status}`]}`}>
                       {deal?.status || '-'}
@@ -290,18 +290,18 @@ export default observer(function DealsPage() {
           </table>
         </div>
 
-        {/* <footer className={styles.footer}>
+        <footer className={styles.footer}>
           <div className={styles.footerContent}>
             <span className={styles.footerItem}>
-              <span className={styles.footerLabel}>{formattedDeals.length} продажа на сумму:</span>
-              <span className={styles.footerAmount}>{formatAmount(formattedDeals.reduce((sum, d) => sum + (Number(d.summa_sdelki) || 0), 0))}</span>
+              <span className={styles.footerLabel}>{deals?.summary?.count || 0} сделок на сумму:</span>
+              <span className={styles.footerAmount}>{formatAmount(deals?.summary?.total_deals_sum || 0)}</span>
             </span>
             <span className={styles.footerItem}>
               <span className={styles.footerLabel}>Общая прибыль:</span>
-              <span className={styles.footerProfit}>{formatAmount(formattedDeals.reduce((sum, d) => sum + (Number(d.pribyl) || 0), 0))}</span>
+              <span className={styles.footerProfit}>{formatAmount(deals?.summary?.total_profit || 0)}</span>
             </span>
           </div>
-        </footer> */}
+        </footer>
       </main>
       <CreateStudentModal
         isOpen={showCreateStudentModal}

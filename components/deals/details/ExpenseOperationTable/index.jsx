@@ -8,10 +8,10 @@ import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { useUcodeRequestQuery, useDeleteOperation } from '../../../../hooks/useDashboard'
 import CustomModal from '../../../shared/CustomModal'
 import operationsDto from '../../../../lib/dtos/operationsDto'
-import { ReceiptsEmptyIcon } from '../../../../constants/icons'
 import { Loader2 } from 'lucide-react'
 
 import EmptyState from '../EmptyState'
+import { CreditIcon, DebitIcon } from '../../../../constants/icons'
 
 /* ─── Main table component ────────────────────────────────── */
 const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
@@ -44,9 +44,9 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
 
   if (dealOperations?.length === 0) {
     return (
-      <EmptyState 
-        title="Добавьте расходы по сделке" 
-        subtitle="Учитывайте расходы по сделке, чтобы контролировать финансовый результат" 
+      <EmptyState
+        title="Добавьте расходы по сделке"
+        subtitle="Учитывайте расходы по сделке, чтобы контролировать финансовый результат"
         onAdd={onAdd}
       />
     )
@@ -109,6 +109,8 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
     </div>
   }
 
+
+
   return (
     <>
       {/* emptyState div is moved to top EmptyState component */}
@@ -126,6 +128,10 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
             </thead>
             <tbody className='w-full'>
               {dealOperations?.map((item) => {
+                const isDebit = item.tip === 'Выплата' && item.payment_confirmed && !item.payment_accrual;
+
+                const isCredit = item.tip === 'Выплата' && !item.payment_confirmed && item.payment_accrual;
+
                 return (
                   <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
                     <td className="p-3 text-left">{item.operationDate}</td>
@@ -134,9 +140,13 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
                     <td className="p-3 text-left">{item.chartOfAccounts}</td>
                     <td className={`p-3 text-right`}>
                       <div className="flex items-center justify-end gap-4 h-6">
-                        <p className={`font-base text-red-600`}>
-                          {'-'}{formatAmount(item.summa)} UZS
-                        </p>
+                        <div className="flex items-center gap-1">
+                          <span className='flex items-center gap-1'>{isDebit && <DebitIcon />}
+                            {isCredit && <CreditIcon />}</span>
+                          <p className={`font-base text-red-600`}>
+                            {'-'}{formatAmount(item.summa)} UZS
+                          </p>
+                        </div>
                         <div className=' items-center  hidden group-hover:flex '>
                           <button onClick={(e) => { e.stopPropagation(); handleEditOperation(item); }} className='text-neutral-600 size-6 hover:bg-gray-200 cursor-pointer flex items-center justify-center rounded-full hover:text-neutral-900'>
                             <MdOutlineModeEdit size={16} className='text-gray-400' />
@@ -189,21 +199,21 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
             <div className='flex justify-between items-center border-b border-gray-100 pb-4'>
               <h2 className='text-xl font-bold text-neutral-800'>Удалить операцию</h2>
             </div>
-            
+
             <div className='py-6 text-base text-neutral-700'>
               Вы действительно хотите удалить операцию на сумму <span className='font-bold'>{formatAmount(operationToDelete?.summa)} UZS</span>? <br />
               Восстановить её будет невозможно.
             </div>
 
             <div className='flex justify-end gap-4'>
-              <button 
-                onClick={() => setIsDeleteModalOpen(false)} 
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
                 className='px-4 py-2 text-sm text-primary hover:bg-gray-50 rounded-md font-semibold'
               >
                 Отменить
               </button>
-              <button 
-                onClick={handleDeleteConfirm} 
+              <button
+                onClick={handleDeleteConfirm}
                 disabled={deleteOperationMutation.isPending}
                 className='px-6 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-md flex items-center justify-center min-w-[100px]'
               >

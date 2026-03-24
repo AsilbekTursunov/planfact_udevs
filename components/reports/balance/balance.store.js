@@ -9,6 +9,8 @@ class BalanceStore {
   selectedDate = getDefaultDate()
   selectedEntity = ''
   selectedCurrency = 'RUB'
+  selectedCounterparties = []
+  selectedAccount = ''
 
   // ── Legal entities (loaded once in sidebar) ─────────────────────────────────
   legalEntities = []
@@ -34,6 +36,14 @@ class BalanceStore {
 
   setSelectedCurrency(currency) {
     this.selectedCurrency = currency
+  }
+
+  setSelectedCounterparties(items) {
+    this.selectedCounterparties = items
+  }
+
+  setSelectedAccount(account) {
+    this.selectedAccount = account
   }
 
   // ── Fetch legal entities ────────────────────────────────────────────────────
@@ -67,10 +77,10 @@ class BalanceStore {
     try {
       const response = await getBalanceReport({
         as_of: this.selectedDate,
-        account_ids: [],
+        account_ids: this.selectedAccount ? [this.selectedAccount] : [],
         legal_entity_id: this.selectedEntity,
         user_currency_code: this.selectedCurrency,
-        contr_agent_ids: []
+        counterparties_id: this.selectedCounterparties
       })
 
       const apiData = response?.data?.data

@@ -147,7 +147,7 @@ const PaymentForm = ({
               rows={rows}
               modalType='payment'
               dispatch={dispatch}
-              salesDeal={formData.salesDeal}
+              // salesDeal={formData.salesDeal}
               confirmAccural={formData.confirmAccrual}
               confirmPayment={formData.confirmPayment}
               selectedSplits={selectedSplits}
@@ -219,7 +219,7 @@ const PaymentForm = ({
           <SinglSelectStatiya
             selectedValue={formData.chartOfAccount}
             setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}
-            placeholder='Выберите статью...'
+            placeholder='Нераспределенный расход'
             className='flex-1 bg-white'
             type={"Доходы"}
           />

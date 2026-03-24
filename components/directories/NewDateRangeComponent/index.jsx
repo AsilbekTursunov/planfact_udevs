@@ -72,10 +72,18 @@ const PRESETS = {
 }
 
 export default function NewDateRangeComponent({ value, onChange, singleDateMode = false }) {
-  const [startDate, setStartDate] = useState(value?.start || getPresetRange('year')[0])
-  const [endDate, setEndDate] = useState(value?.end || getPresetRange('year')[1])
+
+  const [startDate, setStartDate] = useState(value?.start)
+  const [endDate, setEndDate] = useState(value?.end)
   const [activePreset, setActivePreset] = useState(value?.start ? null : 'year')
   const [dateType, setDateType] = useState()
+
+  // useEffect(() => {
+  //   if (!value?.start && !value?.end) {
+  //     onChange?.({ start: startDate, end: endDate })
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [])
   const wrapperRef = useRef(null)
   const [open, setOpen] = useState(false)
 

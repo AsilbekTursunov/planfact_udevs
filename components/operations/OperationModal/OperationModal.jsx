@@ -1000,9 +1000,9 @@ const OperationModal = observer(({
 
 	if (!operationData && !isNew) return null
 
-	const isDebit = (!showDate && activeTab === 'income' && !formData.confirmPayment && formData.confirmAccrual && !formData.salesDeal) || (!showDate && activeTab === 'payment' && formData.confirmPayment && !formData.confirmAccrual && !formData.salesDeal)
+	const isDebit = (!showDate && activeTab === 'income' && !formData.confirmPayment && formData.confirmAccrual && !formData.salesDeal) || (!showDate && activeTab === 'payment' && formData.confirmPayment && !formData.confirmAccrual)
 
-	const isCredit = (!showDate && activeTab === 'income' && formData.confirmPayment && !formData.confirmAccrual && !formData.salesDeal) || (!showDate && activeTab === 'payment' && !formData.confirmPayment && formData.confirmAccrual && !formData.salesDeal)
+	const isCredit = (!showDate && activeTab === 'income' && formData.confirmPayment && !formData.confirmAccrual && !formData.salesDeal) || (!showDate && activeTab === 'payment' && !formData.confirmPayment && formData.confirmAccrual)
 
 	return (
 		<>

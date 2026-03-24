@@ -5,6 +5,8 @@ import { autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import { balanceStore } from '@/components/reports/balance/balance.store'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
+import SelectCounterParties from '@/components/ReadyComponents/SelectCounterParties'
+import SelectMyAccounts from '@/components/ReadyComponents/SelectMyAccounts'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 import styles from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar.module.scss'
 import '@/styles/report-filters.css'
@@ -23,6 +25,8 @@ const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
       void balanceStore.selectedDate
       void balanceStore.selectedEntity
       void balanceStore.selectedCurrency
+      void balanceStore.selectedCounterparties
+      void balanceStore.selectedAccount
       balanceStore.fetchBalance()
     })
     return dispose
@@ -83,7 +87,7 @@ const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
         <div className={styles.filterContent}>
           {/* Date */}
           <div className={styles.filterSection}>
-            <h3 className={styles.filterSectionTitle}>Период</h3>
+            {/* <h3 className={styles.filterSectionTitle}>Период</h3> */}
             <NewDateRangeComponent
               value={dateRangeValue}
               onChange={handleDateRangeChange}
@@ -92,7 +96,7 @@ const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
           </div>
 
           {/* Legal entity */}
-          <div className={styles.filterSection}>
+          {/* <div className={styles.filterSection}>
             <h3 className={styles.filterSectionTitle}>Юридическое лицо</h3>
             {balanceStore.legalEntitiesLoading ? (
               <GroupedSelect
@@ -109,6 +113,25 @@ const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
                 placeholder="Все счета"
               />
             )}
+          </div> */}
+
+          {/* Accounts */}
+          <div className={styles.filterSection}>
+            <SelectMyAccounts
+              value={balanceStore.selectedAccount}
+              onSelect={(val) => balanceStore.setSelectedAccount(val)}
+              className="bg-gray-ucode-25"
+            />
+          </div>
+
+          {/* Counterparties */}
+          <div className={styles.filterSection}>
+            {/* <h3 className={styles.filterSectionTitle}>Контрагенты</h3> */}
+            <SelectCounterParties
+              value={balanceStore.selectedCounterparties}
+              onChange={(val) => balanceStore.setSelectedCounterparties(val)}
+              className="bg-gray-ucode-25"
+            />
           </div>
         </div>
       </div>

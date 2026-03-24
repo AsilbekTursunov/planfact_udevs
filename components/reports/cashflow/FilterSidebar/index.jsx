@@ -1,61 +1,18 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import { cashFlowStore } from '@/components/reports/cashflow/cashflow.store'
-import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
+import SelectCounterParties from '@/components/ReadyComponents/SelectCounterParties'
+import SelectMyAccounts from '@/components/ReadyComponents/SelectMyAccounts'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 import styles from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar.module.scss'
 import '@/styles/report-filters.css'
-import { useUcodeRequestQuery } from '@/hooks/useDashboard'
 import SalesTransactions from '@/components/ReadyComponents/SalesTransactions'
 
 const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
-  const accountQuery = useUcodeRequestQuery({
-    method: 'get_my_accounts',
-    data: { limit: 1000, page: 1 }
-  })
-
-  const { data: counterpartiesGroupData, isLoading: loadingCounterparties } = useUcodeRequestQuery({
-    method: 'get_counterparties_group',
-    data: { limit: 1000, page: 1 }
-  })
-
-  // ── Build options ─────────────────────────────────────────────────────────
-  const accountOptions = useMemo(() => {
-    const data = accountQuery.data
-    if (!data) return []
-    const raw = data?.data?.data?.data || []
-    const flatten = (items) => {
-      let result = []
-      items.forEach(item => {
-        result.push(item)
-        if (item.children?.length > 0) result = result.concat(flatten(item.children))
-      })
-      return result
-    }
-    return flatten(Array.isArray(raw) ? raw : []).map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия',
-      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
-    }))
-  }, [accountQuery.data])
-
-  const counterpartyOptions = useMemo(() => {
-    if (!counterpartiesGroupData) return []
-    const groups = counterpartiesGroupData?.data?.data?.data || []
-    return groups
-      .filter(item => item.children?.length > 0)
-      .flatMap(item => [
-        { value: '', label: item.nazvanie_gruppy, group: item.nazvanie_gruppy },
-        ...item.children.map(child => ({
-          value: child.guid,
-          label: child.nazvanie || '',
-          group: item.nazvanie_gruppy
-        }))
-      ])
-  }, [counterpartiesGroupData])
+  // Data fetching is now handled inside SelectMyAccounts and SelectCounterParties components
 
   // ── Fetch report reactively on filter changes ──────────────────────────────
   useEffect(() => {
@@ -104,10 +61,10 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
             <h3 className={styles.filterSectionTitle}>Период</h3>
             <NewDateRangeComponent
               value={{
-                start: filters.periodStartDate ? new Date(filters.periodStartDate) : null,
-                end: filters.periodEndDate ? new Date(filters.periodEndDate) : null
+                start: filters.periodStartDate ? new Date(filters.periodStartDate) : '',
+                end: filters.periodEndDate ? new Date(filters.periodEndDate) : ''
               }}
-              onChange={(val) => {
+              onChange={(val) => { 
                 cashFlowStore.setPeriodStartDate(val?.start)
                 cashFlowStore.setPeriodEndDate(val?.end)
               }}
@@ -116,47 +73,22 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
 
           {/* Accounts */}
           <div className={styles.filterSection}>
-            {accountOptions.length > 0 ? (
-              <MultiSelect
-                data={accountOptions}
-                value={filters.deals}
-                onChange={(val) => cashFlowStore.setDeals(val)}
-                placeholder="Юрлица и счета"
-                hideSelectAll={true}
-                valueKey="value"
-              />
-            ) : (
-              <MultiSelect
-                data={[]}
-                value={[]}
-                onChange={() => {}}
-                placeholder="Загрузка..."
-                loading={accountQuery.isLoading}
-              />
-            )}
+            <SelectMyAccounts
+              value={filters.accountId?.[0] || ''}
+              onSelect={(val) => cashFlowStore.setAccounts(val ? [val] : [])}
+              className="bg-gray-ucode-25"
+            />
           </div>
 
           {/* Counterparties */}
           <div className={styles.filterSection}>
-            {counterpartyOptions.length > 0 ? (
-              <MultiSelect
-                data={counterpartyOptions}
-                value={filters.contrAgentId}
-                onChange={(val) => cashFlowStore.setCounterparties(val)}
-                hideSelectAll={true}
-                placeholder="Все контрагенты"
-                valueKey="value"
-              />
-            ) : (
-              <MultiSelect
-                data={[]}
-                value={[]}
-                onChange={() => {}}
-                placeholder="Загрузка..."
-                loading={loadingCounterparties}
-              />
-            )}
+            <SelectCounterParties
+              value={filters.contrAgentId}
+              onChange={(val) => cashFlowStore.setCounterparties(val)}
+              className="bg-gray-ucode-25"
+            />
           </div>
+
           {/* Sales transtions */}
           <div className={styles.filterSection}>
             <SalesTransactions
@@ -166,7 +98,6 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
               dropdownClassName="w-56"
             />
           </div>
-          
         </div>
       </div>
     </div>

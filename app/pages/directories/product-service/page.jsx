@@ -9,7 +9,7 @@ import CreateSingle from '../../../../components/directories/ProductServices/Cre
 import { ChevronDown, ChevronUp, Search, MoreVertical, Download } from 'lucide-react'
 import Select from '../../../../components/common/Select'
 import Input from '../../../../components/shared/Input'
-import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation } from '../../../../hooks/useDashboard'
+import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 
 import { MdOutlineModeEdit } from "react-icons/md";
 import { GoTrash } from "react-icons/go";
@@ -35,6 +35,7 @@ export default function LegalEntitiesPage() {
   const [openRowMenuId, setOpenRowMenuId] = useState(null)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [isDeletingItem, setIsDeletingItem] = useState(false)
+  const [errorGroup, setErrorGroup] = useState(null)
   const [editGroup, setEditGroup] = useState(null)
   const [itemToEdit, setItemToEdit] = useState(null)
   const [isCopying, setIsCopying] = useState(false)
@@ -81,14 +82,33 @@ export default function LegalEntitiesPage() {
     return () => document.removeEventListener('mousedown', handleRowMenuClose)
   }, [])
 
-  const { data: productServices, isLoading } = useUcodeDefaultApiQuery({
-    queryKey: "get_product_services_list",
-    urlMethod: "GET",
-    urlParams: "/items/product_and_service?from-ofs=true&offset=0&limit=10",
+  const { data: productServices, isLoading } = useUcodeRequestQuery({
+    method: "list_products_and_services",
+    data: {
+      page: 1,
+      limit: 100,
+      from_date: "",
+      to_date: ""
+    },
     querySetting: {
-      select: data => data?.data?.data?.response
+      select: data => data?.data?.data?.data
     }
   })
+  const { data: productServicesGroups, } = useUcodeRequestQuery({
+    method: "list_product_and_service_groups",
+    data: {
+      page: 1,
+      limit: 100,
+      from_date: "",
+      to_date: ""
+    },
+    querySetting: {
+      select: data => data?.data?.data?.data
+    }
+  })
+
+  console.log('productServicesGroups', productServicesGroups)
+
 
 
 
@@ -101,31 +121,30 @@ export default function LegalEntitiesPage() {
     }
   });
 
-  console.log('productServices', productServices)
-  console.log('productServicesGrouped', productServicesGrouped)
 
   const productServicesList = useMemo(() => {
-    const rawList = productServices?.filter(item => filters?.type?.value === 'all' ? true : item.status?.includes(filters?.type?.value)).map(item => {
-      const price = Number(item?.tsena_za_ed) || 0;
-      const vatStr = item?.nds || '';
+    const rawList = productServices?.filter(item => filters?.type?.value === 'all' ? true : item?.Status?.includes(filters?.type?.value)).map(item => {
+      const price = Number(item?.TSena_za_ed) || 0;
+      const vatStr = item?.NDS || '';
       const vatNum = parseFloat(vatStr) || 0;
       const priceWithVat = vatNum > 0 ? price * (1 + vatNum / 100) : price;
 
-      const groupData = item?.group_product_and_service_id_data;
-      const groupName = groupData ? (groupData.name || groupData.nazvanie || groupData.naimenovanie || 'Без группы') : 'Товары & Услуги без группы ';
-      const groupId = groupData ? groupData.guid : 'no-group';
+      const groupResponse = productServicesGrouped;
+      const groupData = groupResponse?.find(g => g.guid === item?.product_and_service_group_id);
+      const groupName = groupData ? (groupData.name || groupData.nazvanie_gruppy || 'Без группы') : 'Товары & Услуги без группы ';
+      const groupId = item?.product_and_service_group_id || 'no-group';
 
       return {
         guid: item?.guid,
-        name: item?.naimenovanie,
-        artikul: item?.artikul,
-        group: item?.group_data?.nazvanie_gruppy || '—',
+        name: item?.Naimenovanie,
+        artikul: item?.Artikul,
+        group: groupName,
         price,
-        unit: item?.units_of_measurement_id_data?.full_name || item?.units_of_measurement_id_data?.abbreviation || '—',
+        unit: item?.unit_name || '—',
         vat: vatStr ? `${vatStr}%` : '—',
         priceWithVat: Math.round(priceWithVat),
-        comment: item?.commentary || '',
-        type: item?.status ? item?.status?.[0] === 'product' ? 'Товары' : 'Услуги' : '',
+        comment: item?.Kommentariy || '',
+        type: item?.Status ? item?.Status?.[0] === 'product' ? 'Товары' : 'Услуги' : '',
         raw: item,
         groupName: groupName,
         groupId: groupId
@@ -230,14 +249,28 @@ export default function LegalEntitiesPage() {
 
   const handleDeleteConfirm = async () => {
     if (!itemToDelete?.guid) return;
+
+    // If user wants to delete a group with items/children
+    if (itemToDelete.isGroup && itemToDelete.items && itemToDelete.items.length > 0) {
+      setErrorGroup(itemToDelete);
+      setItemToDelete(null); // close confirmation modal
+      return;
+    }
+
     setIsDeletingItem(true);
     try {
+      const isGroup = itemToDelete.isGroup;
       await deleteProductService({
         urlMethod: 'DELETE',
-        urlParams: `/items/product_and_service/${itemToDelete.guid}?from-ofs=true`,
+        urlParams: isGroup
+          ? `/items/group_product_and_service/${itemToDelete.guid}?from-ofs=true`
+          : `/items/product_and_service/${itemToDelete.guid}?from-ofs=true`,
         data: { guid: itemToDelete.guid }
       });
       queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] });
+      if (isGroup) {
+        queryClient.invalidateQueries({ queryKey: ['product-services-grouped'] });
+      }
       setItemToDelete(null);
     } catch (e) {
       console.error('delete error', e);
@@ -348,13 +381,13 @@ export default function LegalEntitiesPage() {
         <div id="table-container" className="flex-1 w-full">
           <table className='w-full max-h-[calc(100vh-60px)] overflow-y-auto'>
             <thead className='z-30 sticky top-0'>
-              <tr className='bg-neutral-100 text-neutral-500 font-normal text-sm w-full border-b border-gray-300'>
+              <tr className='bg-neutral-100 text-neutral-500 font-normal text-xs w-full border-b border-gray-300'>
                 <th className='w-10'>
                   <div className=' flex items-center justify-center'>
                     <OperationCheckbox checked={selectedItems.size === productServicesList.length} onChange={handleSelectAll} />
                   </div>
                 </th>
-                <th className='p-3 text-start'>
+                <th className='p-2 text-start'>
                   <div className="flex items-center gap-2">
                     {filters?.group?.value === 'group' && (
                       <button
@@ -367,13 +400,13 @@ export default function LegalEntitiesPage() {
                     <span>Наименование</span>
                   </div>
                 </th>
-                <th className='p-3 text-start'> Артикул</th>
-                <th className='p-3 text-end'> Цена за ед.</th>
-                <th className='p-3 text-center'> Единица</th>
-                <th className='p-3 text-center'> НДС</th>
-                <th className='p-3 text-end'> Цена с НДС</th>
-                <th className='p-3 text-start'> Комментарий</th>
-                <th className='p-3 text-start w-10'> &nbsp;</th>
+                <th className='p-2 text-start'> Артикул</th>
+                <th className='p-2 text-end'> Цена за ед.</th>
+                <th className='p-2 text-center'> Единица</th>
+                <th className='p-2 text-center'> НДС</th>
+                <th className='p-2 text-end'> Цена с НДС</th>
+                <th className='p-2 text-start'> Комментарий</th>
+                <th className='p-2 text-start w-10'> &nbsp;</th>
               </tr>
             </thead>
             <tbody className=' flex-1 overflow-y-auto'>
@@ -571,11 +604,19 @@ export default function LegalEntitiesPage() {
 
       <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
         <h2 className="mb-3 text-xl font-bold text-neutral-900 font-sans">
-          Удалить товар
+          {itemToDelete?.isGroup ? 'Удалить группу' : 'Удалить товар'}
         </h2>
-        <p className="mb-7 text-sm text-neutral-600 leading-5 font-sans">
-          Вы действительно хотите удалить товар «<strong>{itemToDelete?.name}</strong>» ?<br />Восстановить его будет невозможно.
-        </p>
+        <div className="mb-7 text-sm text-neutral-600 leading-5 font-sans">
+          {itemToDelete?.isGroup ? (
+            <p>
+              Вы действительно хотите удалить группу «<strong>{itemToDelete?.name}</strong>» с {itemToDelete?.items?.length} {itemToDelete?.items?.length === 1 ? 'элементом' : 'элементами'}? Восстановить её будет невозможно.
+            </p>
+          ) : (
+            <p>
+              Вы действительно хотите удалить товар «<strong>{itemToDelete?.name}</strong>» ?<br />Восстановить его будет невозможно.
+            </p>
+          )}
+        </div>
         <div className="flex justify-end gap-3">
           <button
             onClick={() => setItemToDelete(null)}
@@ -592,176 +633,44 @@ export default function LegalEntitiesPage() {
           </button>
         </div>
       </CustomModal>
+
+      {/* Error Modal for Group Delete with Children */}
+      <CustomModal isOpen={!!errorGroup} onClose={() => setErrorGroup(null)}>
+        <div className="flex items-start gap-4 mb-4">
+          <div className="shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M15 9L9 15" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M9 9L15 15" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-neutral-900 font-sans">
+              Ошибка удаления группы
+            </h2>
+          </div>
+        </div>
+        <p className="mb-7 text-sm text-neutral-600 leading-5 font-sans">
+          К группе «<strong>{errorGroup?.name}</strong>» относятся товары/услуги. Чтобы удалить группу, переместите их в другую группу или удалите их.
+        </p>
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => {
+              if (errorGroup?.guid) toggleGroup(errorGroup.guid);
+              setErrorGroup(null);
+            }}
+            className="bg-transparent text-[#00A389] font-semibold text-sm hover:underline cursor-pointer"
+          >
+            Посмотреть элементы
+          </button>
+          <button
+            onClick={() => setErrorGroup(null)}
+            className="bg-[#00A389] text-white font-semibold text-sm px-5 py-2 rounded-md hover:bg-[#048F7C] cursor-pointer"
+          >
+            Закрыть
+          </button>
+        </div>
+      </CustomModal>
     </>
-
-
-    // <div className={styles.container}>
-    //   <div className={styles.content}>
-    //     {/* Header */}
-    //
-
-
-    //     {/* Table */}
-    //     <div className={styles.tableWrapper}>
-    //       <div className={styles.tableOuter}>
-    //         <table className={styles.table}>
-    //           <thead className={styles.theadDefault}>
-    //             <tr>
-    //               <th className={cn(styles.th, styles.thIndex)}>№</th>
-    //               <th className={styles.th}>
-    //                 <button className={styles.headerButton}>
-    //                   Наименование
-    //                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    //                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    //                   </svg>
-    //                 </button>
-    //               </th>
-    //               <th className={styles.th}>Тип</th>
-    //               <th className={styles.th}>Артикул</th>
-    //               <th className={styles.th}>Группа</th>
-    //               <th className={styles.th}>Цена за ед.</th>
-    //               <th className={styles.th}>Единица</th>
-    //               <th className={styles.th}>НДС</th>
-    //               <th className={styles.th}>Цена с НДС</th>
-    //               <th className={styles.th}>Комментарий</th>
-    //               <th className={cn(styles.th, styles.thActions)}></th>
-    //             </tr>
-    //           </thead>
-
-    //           <tbody className={styles.tbody}>
-    //             {isLoading ? (
-    //               <tr>
-    //                 <td colSpan={11} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
-    //                   Загрузка...
-    //                 </td>
-    //               </tr>
-    //             ) : productServicesList.length === 0 ? (
-    //               <tr>
-    //                   <td colSpan={11} className={styles.td} style={{ textAlign: 'center', padding: '2rem', color: '#9ca3af' }}>
-    //                     Нет данных
-    //                 </td>
-    //               </tr>
-    //             ) : (
-    //                   productServicesList.map((item, index) => {
-    //                     if (item.isGroup) {
-    //                       const isExpanded = expandedGroups.has(item.guid);
-    //                       return (
-    //                         <React.Fragment key={item.guid}>
-    //                           <tr className={cn(styles.row, styles.groupRow)} onClick={() => toggleGroup(item.guid)} style={{ cursor: 'pointer', background: '#f9fafb' }}>
-    //                             <td colSpan={11} className={styles.td} style={{ padding: '12px 16px' }}>
-    //                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    //                                 <button
-    //                                   onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid); }}
-    //                                 >
-    //                                   {isExpanded ? <ExpendClose /> : <ExpendOpen />}
-    //                                 </button>
-    //                                 <span style={{ fontWeight: 600, color: '#111827', fontSize: '13px' }}>{item.name} ({item.items.length})</span>
-    //                               </div>
-    //                             </td>
-    //                           </tr>
-
-    //                           {isExpanded && item.items.length === 0 && (
-    //                             <tr className={styles.row}>
-    //                               <td colSpan={11} className={styles.td} style={{ textAlign: 'center', padding: '16px', color: '#9ca3af' }}>
-    //                                 Нет данных
-    //                               </td>
-    //                             </tr>
-    //                           )}
-
-    //                           {isExpanded && item.items.map((child, childIndex) => (
-    //                             <tr key={child.guid || childIndex} className={styles.row}>
-    //                               <td className={cn(styles.td, styles.tdIndex)}>
-    //                                 <div style={{ borderLeft: '1px dashed #d1d5db', height: '40px', marginLeft: '20px' }} />
-    //                               </td>
-    //                               <td className={styles.td} style={{ fontWeight: 500, paddingLeft: '1rem' }}>{child.name || '—'}</td>
-    //                               <td className={styles.tdMuted}>{child.type || '—'}</td>
-    //                               <td className={styles.tdMuted}>{child.artikul || '—'}</td>
-    //                               <td className={styles.tdMuted}>{child.groupName}</td>
-    //                               <td className={styles.td}>{child.price ? `${child.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
-    //                               <td className={styles.tdMuted}>{child.unit}</td>
-    //                               <td className={styles.tdMuted}>{child.vat}</td>
-    //                               <td className={styles.td}>{child.priceWithVat ? `${child.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
-    //                               <td className={styles.tdMuted} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{child.comment || '—'}</td>
-    //                               <td className={cn(styles.td, styles.tdActions)} onClick={(e) => e.stopPropagation()}>
-    //                                 <div style={{ position: 'relative' }} ref={openRowMenuId === child.guid ? rowMenuRef : null}>
-    //                                   <button className={styles.rowMenuButton} onClick={() => setOpenRowMenuId(openRowMenuId === child.guid ? null : child.guid)}>
-    //                                     <MoreVertical size={16} />
-    //                                   </button>
-    //                                   {openRowMenuId === child.guid && (
-    //                                     <div className={styles.rowMenu}>
-    //                                       <button className={styles.rowMenuItem} onClick={() => { setOpenRowMenuId(null); setItemToEdit(child.raw); setIsCopying(false); setIsCreateSingleOpen(true); }}>
-    //                                         <MdOutlineModeEdit size={14} color='#686868' /> Редактировать
-    //                                       </button>
-    //                                       <button className={styles.rowMenuItem} onClick={() => { setOpenRowMenuId(null); setItemToEdit(child.raw); setIsCopying(true); setIsCreateSingleOpen(true); }}>
-    //                                         <IoCopyOutline size={14} color='#686868' /> Копировать
-    //                                       </button>
-    //                                       <button className={cn(styles.rowMenuItem, styles.rowMenuItemDanger)} onClick={() => { setOpenRowMenuId(null); setItemToDelete(child); }}>
-    //                                         <GoTrash size={14} color='#ef4444' /> Удалить
-    //                                       </button>
-    //                                     </div>
-    //                                   )}
-    //                                 </div>
-    //                               </td>
-    //                             </tr>
-    //                           ))}
-    //                         </React.Fragment>
-    //                       )
-    //                     } else {
-    //                       return (
-    //                     <tr key={item.guid || index} className={styles.row}>
-    //                       <td className={cn(styles.td, styles.tdIndex)}>{index + 1}</td>
-    //                       <td className={styles.td} style={{ fontWeight: 500 }}>{item.name || '—'}</td>
-    //                       <td className={styles.tdMuted}>{item.type || '—'}</td>
-    //                       <td className={styles.tdMuted}>{item.artikul || '—'}</td>
-    //                       <td className={styles.tdMuted}>{item.groupName}</td>
-    //                       <td className={styles.td}>{item.price ? `${item.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
-    //                       <td className={styles.tdMuted}>{item.unit}</td>
-    //                       <td className={styles.tdMuted}>{item.vat}</td>
-    //                       <td className={styles.td}>{item.priceWithVat ? `${item.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
-    //                       <td className={styles.tdMuted} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.comment || '—'}</td>
-    //                           <td className={cn(styles.td, styles.tdActions)} onClick={(e) => e.stopPropagation()}>
-    //                         <div style={{ position: 'relative' }} ref={openRowMenuId === item.guid ? rowMenuRef : null}>
-    //                               <button className={styles.rowMenuButton} onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}>
-    //                             <MoreVertical size={16} />
-    //                           </button>
-    //                           {openRowMenuId === item.guid && (
-    //                             <div className={styles.rowMenu}>
-    //                                   <button className={styles.rowMenuItem} onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(false); setIsCreateSingleOpen(true); }}>
-    //                                     <MdOutlineModeEdit size={14} color='#686868' /> Редактировать
-    //                               </button>
-    //                                   <button className={styles.rowMenuItem} onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(true); setIsCreateSingleOpen(true); }}>
-    //                                     <IoCopyOutline size={14} color='#686868' /> Копировать
-    //                               </button>
-    //                               <button className={cn(styles.rowMenuItem, styles.rowMenuItemDanger)} onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
-    //                                     <GoTrash size={14} color='#ef4444' /> Удалить
-    //                               </button>
-    //                             </div>
-    //                           )}
-    //                         </div>
-    //                           </td>
-    //                         </tr>
-    //                       )
-    //                     }
-    //                   })
-    //             )}
-    //           </tbody>
-
-    //         </table>
-    //       </div>
-    //     </div>
-
-    //     {/* Footer */}
-    //     <div className={styles.footer}>
-    //       <div className={styles.footerText}>
-    //         <span className={styles.footerCount}>
-    //           {isLoadingLegalEntities ? 'Загрузка...' : `${legalEntitiesItems.length} ${legalEntitiesItems.length === 1 ? 'юрлицо' : legalEntitiesItems.length < 5 ? 'юрлица' : 'юрлиц'}`}
-    //         </span>
-    //       </div>
-    //     </div>
-    //   </div>
-
-
-
-    // </div>
   )
 }

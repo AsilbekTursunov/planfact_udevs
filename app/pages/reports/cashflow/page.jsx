@@ -8,7 +8,7 @@ import {
   getExpandedRowModel,
   flexRender,
 } from '@tanstack/react-table'
-import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
+import SingleSelect from '@/components/shared/Selects/SingleSelect'
 import CashFlowFilterSidebar from '@/components/reports/cashflow/FilterSidebar'
 import { cashFlowStore } from '@/components/reports/cashflow/cashflow.store'
 import styles from './cashflow.module.scss'
@@ -17,9 +17,9 @@ import OperationCashFlowModal from '@/components/directories/OperationCashFlowMo
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 
 const groupingOptions = [
-  { guid: 'monthly', label: 'По месяцам' },
-  { guid: 'quarterly', label: 'По кварталам' },
-  { guid: 'yearly', label: 'По годам' }
+  { value: 'monthly', label: 'По месяцам' },
+  { value: 'quarterly', label: 'По кварталам' },
+  { value: 'yearly', label: 'По годам' }
 ]
 
 export default observer(function CashFlowReportPage() {
@@ -33,8 +33,7 @@ export default observer(function CashFlowReportPage() {
 
   const { reportData: cashFlowData, isLoading, isFetching } = cashFlowStore
   const loading = isLoading || isFetching
-
-  console.log('response', cashFlowData)
+ 
 
   // Extract months from legend
   const months = useMemo(() => {
@@ -229,14 +228,15 @@ export default observer(function CashFlowReportPage() {
                 <h1 className={styles.title}>Отчет о движении денежных средств</h1>
               </div>
               <div className={styles.headerRight}>
-                <GroupedSelect
+                <SingleSelect
                   data={groupingOptions}
-                  value={cashFlowStore.selectedGrouping}
+                  value={cashFlowStore.filters.periodType}
                   onChange={(value) => {
-                    cashFlowStore.setSelectedGrouping(value)
+                    cashFlowStore.setPeriodType(value)
                     cashFlowStore.fetchReport()
                   }}
                   placeholder="Способ построения"
+                  withSearch={false}
                   className={styles.groupingSelect}
                 />
                 <button className={styles.moreButton}>
