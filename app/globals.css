@@ -139,6 +139,7 @@
   --border-radius-lg: 12px;
   --border-radius-xl: 16px; 
 
+  --font-size-mini: 10px;
   --font-size-xs: 12px;
   --font-size-sm: 14px;
   --font-size-md: 16px;
@@ -258,6 +259,8 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --text-mini: 10px;
+  --text-active: #0E73F6;
 }
 
 .duration-250 {
@@ -337,4 +340,11 @@
   html {
     @apply font-sans;
   }
+}
+
+
+/* operations table row active color */
+
+.active-row{
+  @apply text-primary-dark!
 }

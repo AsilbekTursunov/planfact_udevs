@@ -136,6 +136,7 @@
   width: 160px; 
   font-size: 14px;
   color: #0f172a;
+  font-weight: 400;
   flex-shrink: 0;
 }
 
@@ -250,8 +251,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 1.25rem 0rem;
-  border-top: 1px solid #e5e7eb;
+  padding: 1rem;
+    border-top: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 

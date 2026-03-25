@@ -445,7 +445,7 @@ const OperationModal = observer(({
 			toAmount: '0',
 			// For accrual
 			accrualDate: new Date().toISOString().split('T')[0],
-			confirmAccrual: true, // Включен по умолчанию
+			confirmAccrual: defaultDealGuid && activeTab === 'payment' ? true : false, // Включен по умолчанию
 			legalEntity: null,
 			expenseItem: null,
 			cashMethod: true,
@@ -863,7 +863,7 @@ const OperationModal = observer(({
 				summa: Number(activeTab === 'transfer' ? Number(formData.fromAmount || formData.toAmount || 0) : Number(activeTab === 'accrual' ? formData.amount || 0 : formData.amount || 0).toFixed(2)),
 				oplata_podtverzhdena: formData.confirmPayment || false,
 				payment_confirmed: formData.confirmPayment || false,
-				payment_accrual: activeTab === 'transfer' || activeTab === 'accrual' ? false : (formData.salesDeal ? false : formData.confirmAccrual),
+				payment_accrual: activeTab === 'transfer' || activeTab === 'accrual' ? false : formData.confirmAccrual,
 				operationType: activeTab,
 				legal_entity_id: authStore.userData?.legal_entity_id || null
 			}

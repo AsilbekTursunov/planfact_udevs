@@ -80,7 +80,7 @@ class BalanceStore {
         account_ids: this.selectedAccount ? [this.selectedAccount] : [],
         legal_entity_id: this.selectedEntity,
         user_currency_code: this.selectedCurrency,
-        counterparties_id: this.selectedCounterparties
+        contr_agent_ids: this.selectedCounterparties
       })
 
       const apiData = response?.data?.data

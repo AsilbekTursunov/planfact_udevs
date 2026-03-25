@@ -37,7 +37,6 @@ export const CreditIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none">
     <rect width="16" height="16" fill="#6C65BB" rx="3"></rect>
     <path fill="#fff" d="M5.186 11.636V4.364h1.097v3.473h.089l3.05-3.473h1.382L7.87 7.638l2.944 3.998h-1.32L7.141 8.387l-.859.987v2.262H5.186Z">
-
     </path>
   </svg>
 )

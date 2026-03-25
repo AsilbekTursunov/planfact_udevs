@@ -98,6 +98,7 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
       setIsDeleteModalOpen(false)
       setOperationToDelete(null)
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['find_operations'] })
     } catch (error) {
       console.error('Error deleting operation:', error)
     }
@@ -118,12 +119,12 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
         <div className="h-96 overflow-y-auto">
           <table className="w-full">
             <thead className='sticky top-0 z-10'>
-              <tr className='bg-neutral-100 text-neutral-600 font-normal text-sm w-full border-b border-gray-200'>
-                <th className='p-4 text-left w-[150px]'>Дата</th>
-                <th className='p-4 text-left w-[150px]'>Счет</th>
-                <th className='p-4 text-left w-[150px]'>Контрагент</th>
-                <th className='p-4 text-left w-[150px]'>Статья</th>
-                <th className='p-4 text-right w-[150px]'>Сумма</th>
+              <tr className='bg-neutral-100 text-neutral-600 font-normal text-xs w-full border-b border-gray-200'>
+                <th className='px-3 py-2 text-left w-[150px]'>Дата</th>
+                <th className='px-3 py-2 text-left w-[150px]'>Счет</th>
+                <th className='px-3 py-2 text-left w-[150px]'>Контрагент</th>
+                <th className='px-3 py-2 text-left w-[150px]'>Статья</th>
+                <th className='px-3 py-2 text-right w-[150px]'>Сумма</th>
               </tr>
             </thead>
             <tbody className='w-full'>
@@ -131,15 +132,15 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
                 const isDebit = item.tip === 'Выплата' && item.payment_confirmed && !item.payment_accrual;
 
                 const isCredit = item.tip === 'Выплата' && !item.payment_confirmed && item.payment_accrual;
-
+                const isActive = !item?.payment_confirmed && !item?.payment_accrual
                 return (
-                  <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
-                    <td className="p-3 text-left">{item.operationDate}</td>
-                    <td className="p-3 text-left">{item.my_account_name}</td>
-                    <td className="p-3 text-left">{item.counterparty}</td>
-                    <td className="p-3 text-left">{item.chartOfAccounts}</td>
-                    <td className={`p-3 text-right`}>
-                      <div className="flex items-center justify-end gap-4 h-6">
+                  <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-xs font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
+                    <td className={`p-3 text-left ${isActive ? 'active-row' : ''}`}>{item.operationDate}</td>
+                    <td className={`p-3 text-left ${isActive ? 'active-row' : ''}`}>{item.my_account_name}</td>
+                    <td className={`p-3 text-left ${isActive ? 'active-row' : ''}`}>{item.counterparty}</td>
+                    <td className={`p-3 text-left ${isActive ? 'active-row' : ''}`}>{item.chartOfAccounts}</td>
+                    <td className={`p-3 text-right w-40`}>
+                      <div className="flex items-center justify-end gap-2 h-6">
                         <div className="flex items-center gap-1">
                           <span className='flex items-center gap-1'>{isDebit && <DebitIcon />}
                             {isCredit && <CreditIcon />}</span>

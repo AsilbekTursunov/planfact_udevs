@@ -1,19 +1,18 @@
 'use client'
 import React from 'react'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
-import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import SplitAmount from '../../SplitAmount'
 import { DebitIcon, CreditIcon } from '../../../../../constants/icons'
 import { appStore } from '../../../../../store/app.store'
-import { cn } from '@/app/lib/utils'
 import styles from '../../OperationModal.module.scss'
 import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
+import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 
-const PaymentForm = ({
+const IncomeForm = ({
   // form state
   formData,
   setFormData,
@@ -27,13 +26,10 @@ const PaymentForm = ({
   showStatya,
   // data
   bankAccounts,
-  counterAgentsTree,
   chartOfAccountsTree,
-  formattedDeals,
   counterAgents,
   // loading
   loadingBankAccounts,
-  isLoadingGroups,
   loadingChartOfAccounts,
   // split
   rows,
@@ -67,9 +63,10 @@ const PaymentForm = ({
               setFormData({ ...formData, paymentDate: value, confirmPayment: isFuture ? false : true })
               if (errors.paymentDate) setErrors({ ...errors, paymentDate: null })
             }}
+            dateFormat='YYYY-MM-DD'
+            className={styles.datePicker}
             placeholder='Выберите дату'
             showCheckbox={true}
-            dateFormat='YYYY-MM-DD'
             checkboxLabel='Подтвердить оплату'
             checkboxValue={formData.confirmPayment}
             onCheckboxChange={checked => {
@@ -78,8 +75,8 @@ const PaymentForm = ({
               if (isFuture) return
               setFormData({ ...formData, confirmPayment: checked })
             }}
-            className={cn(styles.datePicker, errors.paymentDate && styles.error)}
           />
+          {errors.paymentDate && <span className={styles.errorText}>{errors.paymentDate}</span>}
         </div>
       </div>
 
@@ -100,7 +97,6 @@ const PaymentForm = ({
             groupBy={false}
             labelKey='label'
             valueKey='guid'
-            groupKey='group'
             loading={loadingBankAccounts}
             hasError={!!errors.accountAndLegalEntity}
           />
@@ -117,20 +113,19 @@ const PaymentForm = ({
           <div className={styles.fieldWrapper}>
             <div className={styles.inputGroup}>
               <Input
-                type='text'
                 value={formatAmount(formData.amount)}
                 onChange={e => {
                   setFormData({ ...formData, amount: parseAmount(e.target.value) })
                   if (errors.amount) setErrors({ ...errors, amount: null })
                 }}
                 placeholder='0'
-                className={cn(styles.input, errors.amount && styles.error)}
+                className={styles.input}
               />
               {isDebit && <DebitIcon />}
               {isCredit && <CreditIcon />}
               {getAccountCurrency(formData.accountAndLegalEntity) && (
                 <div className={styles.currencyDisplay}>
-                  {getAccountCurrency(formData.accountAndLegalEntity)}
+                  {getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}
                 </div>
               )}
             </div>
@@ -146,9 +141,9 @@ const PaymentForm = ({
               chartOfAccountsOptions={chartOfAccountsTree}
               onChange={setdivivedAmounts}
               rows={rows}
-              modalType='payment'
+              modalType='income'
               dispatch={dispatch}
-              // salesDeal={formData.salesDeal}
+              salesDeal={formData.salesDeal}
               confirmAccural={formData.confirmAccrual}
               confirmPayment={formData.confirmPayment}
               selectedSplits={selectedSplits}
@@ -162,28 +157,30 @@ const PaymentForm = ({
 
       {/* Дата начисления */}
       {!showDate && (
-        <div className={styles.formRow}>
+        <div className={styles.formRow} style={{ opacity: formData.salesDeal ? '0.5' : '1' }}>
           <label className={styles.label}>Дата начисления</label>
           <DatePicker
-            value={formData.accrualDate}
+            value={formData.salesDeal ? null : formData.accrualDate}
+            disabled={!!formData.salesDeal}
+            checkboxDisabled={!!formData.salesDeal}
             onChange={value => {
               const pickDate = Number(value?.slice(-2))
               const isFuture = pickDate > todayDate
               setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : true })
               if (errors.accrualDate) setErrors({ ...errors, accrualDate: null })
             }}
+            dateFormat='YYYY-MM-DD'
             placeholder='Выберите дату'
             showCheckbox
-            dateFormat='YYYY-MM-DD'
+            className={styles.datePicker}
             checkboxLabel='Подтвердить начисление'
-            checkboxValue={formData.confirmAccrual}
+            checkboxValue={formData.salesDeal ? false : formData.confirmAccrual}
             onCheckboxChange={checked => {
               const pickDate = Number(formData.accrualDate?.slice(-2))
               const isFuture = pickDate > todayDate
               if (isFuture) return
               setFormData({ ...formData, confirmAccrual: checked })
             }}
-            className={cn(styles.datePicker, errors.accrualDate && styles.error)}
           />
         </div>
       )}
@@ -192,13 +189,11 @@ const PaymentForm = ({
       {!showAgent && (
         <div className={styles.formRow}>
           <label className={styles.label}>Контрагент</label>
-          <TreeSelect
-            data={counterAgentsTree}
+          <SingleCounterParty
             value={formData.counterparty}
             onChange={value => setFormData({ ...formData, counterparty: value })}
-            placeholder='Выберите контрагента...'
-            className='flex-1'
-            loading={isLoadingGroups}
+            placeholder='Не выбран.'
+            className='flex-1 bg-white'
             disabled={disableCounterpartySelect}
           />
         </div>
@@ -207,13 +202,21 @@ const PaymentForm = ({
       {/* Статья */}
       {!showStatya && (
         <div className={styles.formRow}>
-          <label className={styles.label}>Статья</label> 
+          <label className={styles.label}>Статья</label>
+          {/* <TreeSelect
+            data={chartOfAccountsTree}
+            alwaysExpanded={true}
+            value={formData.chartOfAccount}
+            onChange={value => setFormData({ ...formData, chartOfAccount: value })}
+            placeholder='Выберите статью...'
+            loading={loadingChartOfAccounts}
+            className='flex-1'
+          /> */}
           <SinglSelectStatiya
             selectedValue={formData.chartOfAccount}
             setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}
-            placeholder='Нераспределенный расход'
+            placeholder='Нераспределенный расход.'
             className='flex-1 bg-white'
-            type={"Доходы"}
           />
         </div>
       )}
@@ -256,27 +259,7 @@ const PaymentForm = ({
             }}
             placeholder='Выберите сделку...'
             hasError={!!errors.salesDeal}
-            className='flex-1 bg-white'
           />
-          {/* <GroupedSelect
-            data={formattedDeals}
-            value={formData.salesDeal}
-            onChange={value => {
-              if (value && showDate) {
-                setTempSalesDeal(value)
-                setIsDateModalOpen(true)
-              } else {
-                setFormData({ ...formData, salesDeal: value })
-              }
-              if (errors.salesDeal) setErrors({ ...errors, salesDeal: null })
-            }}
-            placeholder='Выберите сделку...'
-            groupBy={false}
-            labelKey='label'
-            valueKey='guid'
-            loading={loadingBankAccounts}
-            hasError={!!errors.salesDeal}
-          /> */}
           {errors.salesDeal && <span className={styles.errorText}>{errors.salesDeal}</span>}
         </div>
       </div>
@@ -304,4 +287,4 @@ const PaymentForm = ({
   )
 }
 
-export default PaymentForm
+export default IncomeForm

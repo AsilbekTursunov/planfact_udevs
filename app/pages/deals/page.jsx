@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import debounce from 'lodash/debounce';
 import styles from './deals.module.scss';
 import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
 import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard';
@@ -18,10 +19,24 @@ import FilterSidebar from '../../../components/deals/FilterSidebar';
 import { observer } from 'mobx-react-lite';
 import { sealDeal } from '../../../store/saleDeal.store';
 import CreateStudentModal from '../../../components/deals/CreateStudentModal';
+import SingleSelect from '../../../components/shared/Selects/SingleSelect';
 
 export default observer(function DealsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  const debouncedSetSearch = useMemo(
+    () => debounce((val) => setDebouncedSearchQuery(val), 200),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSetSearch.cancel()
+    }
+  }, [debouncedSetSearch])
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [dealToDelete, setDealToDelete] = useState(null);
   const [dealToEdit, setDealToEdit] = useState(null);
@@ -48,18 +63,21 @@ export default observer(function DealsPage() {
     return {
       page: 1,
       limit: 100,
-      search: searchQuery,
-      from_date: filters?.operationDateStart || "",
-      to_date: filters?.operationDateEnd || "",
-      amount_from: filters?.amountFrom || "",
-      amount_to: filters?.amountTo || "",
-      profit_from: filters?.profitFrom || "",
-      profit_to: filters?.profitTo || "",
+      search: debouncedSearchQuery || null,
+      from_date: filters?.operationDateStart || null,
+      to_date: filters?.operationDateEnd || null,
+      amount_from: Number(filters?.amountFrom) || null,
+      amount_to: Number(filters?.amountTo) || null,
+      profit_from: Number(filters?.profitFrom) || null,
+      profit_to: Number(filters?.profitTo) || null,
+      partners_id: filters?.selectedCounterparties?.length > 0 ? filters.selectedCounterparties[0] : null,
+      status: filters?.status || [],
+      isCalculation: filters?.isCalculation || false,
     }
-  }, [searchQuery, filters])
+  }, [debouncedSearchQuery, filters])
 
 
-  const { data: deals } = useUcodeRequestQuery({
+  const { data: deals, isFetching } = useUcodeRequestQuery({
     method: "get_sales_list_simple",
     data: dealsFilters,
     querySetting: {
@@ -184,32 +202,53 @@ export default observer(function DealsPage() {
     <div className="flex min-h-dvh">
       <FilterSidebar />
       <main className="p-4 w-full">
-        <header className={styles.header}>
-          <div className={styles.headerLeft}>
+        <header className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 flex-1">
             <h1 className={styles.title}>Сделки по продажам</h1>
-            <button className='primary-btn' onClick={() => setIsCreateModalOpen(true)}>
+            <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setIsCreateModalOpen(true)}>
               Создать
             </button>
-            <button className='primary-btn' onClick={() => setShowCreateStudentModal(true)}>
+            <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setShowCreateStudentModal(true)}>
               Создать студента
             </button>
           </div>
 
-          <div className={styles.headerRight}>
-            <div className={styles.searchWrapper}>
+          <div className="flex items-center gap-2">
+            {/* filter by method like given image with  singleSelect */}
+            <div className="w-44">
+              <SingleSelect
+                data={[
+                  { value: 'accrual', label: 'Метод начисления' },
+                  { value: 'cash', label: 'Кассовый метод' },
+                ]}
+                withSearch={false}
+                value={sealDeal.accounting}
+                onChange={(value) => sealDeal.setState('accounting', value)}
+                className='bg-white'
+              />
+            </div>
+            <div className="w-72">
               <Input
                 type="text"
                 placeholder="Поиск по краткому названию"
                 className={styles.searchInput}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  debouncedSetSearch(e.target.value)
+                }}
                 leftIcon={<Search size={18} />}
               />
             </div>
           </div>
         </header>
 
-        <div className="">
+        <div className="relative">
+          {isFetching && (
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          )}
           <table className={styles.table}>
             <thead>
               <tr className='bg-neutral-100 text-neutral-500  text-xs'>

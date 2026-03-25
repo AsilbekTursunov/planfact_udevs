@@ -23,14 +23,12 @@ const SingleZdelka = ({
     }
   })
 
-  console.log('deals', deals)
-
   const options = useMemo(() => {
     if (!deals || !Array.isArray(deals)) return []
 
     return deals.map(deal => ({
       value: deal.guid,
-      label: deal?.name|| 'Без названия'
+      label: deal?.Nazvanie || 'Без названия'
     }))
   }, [deals])
 

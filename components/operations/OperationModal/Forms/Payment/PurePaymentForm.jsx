@@ -11,7 +11,6 @@ import { appStore } from '../../../../../store/app.store'
 import { cn } from '@/app/lib/utils'
 import styles from '../../OperationModal.module.scss'
 import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
-import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 
 const PaymentForm = ({
   // form state
@@ -207,7 +206,16 @@ const PaymentForm = ({
       {/* Статья */}
       {!showStatya && (
         <div className={styles.formRow}>
-          <label className={styles.label}>Статья</label> 
+          <label className={styles.label}>Статья</label>
+          {/* <TreeSelect
+            data={chartOfAccountsTree}
+            alwaysExpanded={true}
+            value={formData.chartOfAccount}
+            onChange={value => setFormData({ ...formData, chartOfAccount: value })}
+            placeholder='Выберите статью...'
+            loading={loadingChartOfAccounts}
+            className='flex-1'
+          /> */}
           <SinglSelectStatiya
             selectedValue={formData.chartOfAccount}
             setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}
@@ -243,22 +251,7 @@ const PaymentForm = ({
       <div className={styles.formRow}>
         <label className={styles.label}>Сделка продажи</label>
         <div className={styles.fieldWrapper}>
-          <SingleZdelka
-            value={formData.salesDeal}
-            onChange={value => {
-              if (value && showDate) {
-                setTempSalesDeal(value)
-                setIsDateModalOpen(true)
-              } else {
-                setFormData({ ...formData, salesDeal: value })
-              }
-              if (errors.salesDeal) setErrors({ ...errors, salesDeal: null })
-            }}
-            placeholder='Выберите сделку...'
-            hasError={!!errors.salesDeal}
-            className='flex-1 bg-white'
-          />
-          {/* <GroupedSelect
+          <GroupedSelect
             data={formattedDeals}
             value={formData.salesDeal}
             onChange={value => {
@@ -276,7 +269,7 @@ const PaymentForm = ({
             valueKey='guid'
             loading={loadingBankAccounts}
             hasError={!!errors.salesDeal}
-          /> */}
+          />
           {errors.salesDeal && <span className={styles.errorText}>{errors.salesDeal}</span>}
         </div>
       </div>

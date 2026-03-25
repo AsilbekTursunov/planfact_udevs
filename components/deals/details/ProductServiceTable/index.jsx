@@ -107,7 +107,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
       <div className="max-h-[calc(100vh-200px)] overflow-y-auto flex-1 min-w-[935px] pb-10">
         <table className="w-full">
           <thead className='sticky top-0 z-10'>
-            <tr className='bg-neutral-100  text-neutral-500 text-sm w-full border-b border-gray-200'>
+            <tr className='bg-neutral-100  text-neutral-600 font-normal text-xs w-full border-b border-gray-200'>
               <th className='w-14 py-2 text-center place-content-center'>
                 <div className='flex items-center justify-center'>
                   <OperationCheckbox checked={selectedItems.size === productServicesList.length} onChange={handleSelectAll} />
@@ -128,20 +128,20 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
                 </div>
               </th>}
               {selectedItems.size == 0 && <>
-                <th className='px-4 py-1 font-semibold text-left border-r border-neutral-200'>Наименование</th>
-                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>Кол-во</th>
-                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>Единица</th>
-                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>Цена за ед.</th>
-                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>Скидка</th>
-                <th className='px-4 py-1 font-semibold text-right border-r border-neutral-200'>НДС</th>
-                <th className='px-4 py-1 font-semibold text-right'>Сумма</th>
+                <th className='px-3 py-2 font-medium text-left border-r border-neutral-200'>Наименование</th>
+                <th className='px-3 py-2 font-medium text-right border-r border-neutral-200'>Кол-во</th>
+                <th className='px-3 py-2 font-medium text-right border-r border-neutral-200'>Единица</th>
+                <th className='px-3 py-2 font-medium text-right border-r border-neutral-200'>Цена за ед.</th>
+                <th className='px-3 py-2 font-medium text-right border-r border-neutral-200'>Скидка</th>
+                <th className='px-3 py-2 font-medium text-right border-r border-neutral-200'>НДС</th>
+                <th className='px-4 py-1 font-medium text-right'>Сумма</th>
               </>}
             </tr>
           </thead>
           <tbody className='w-full'>
             {productServicesList?.map((item) => {
               return (
-                <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
+                <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-xs font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
                   <td className="w-14 py-3 text-center">
                     <div className='flex items-center justify-center'>
                       <OperationCheckbox checked={selectedItems.has(item.guid)} onChange={(e) => handleSelectItem(e, item.guid)} />

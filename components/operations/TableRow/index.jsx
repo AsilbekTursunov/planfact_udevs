@@ -36,6 +36,8 @@ const OperationTableRow = ({
 
   const isDifferentDate = op?.accrualDate !== op?.operationDate
 
+  const isActive = !op?.payment_confirmed && !op?.payment_accrual
+
   return (
     <>
       <tr
@@ -59,7 +61,7 @@ const OperationTableRow = ({
             onChange={() => toggleOperation(op.id)}
           /> : <span>{showIndex}</span>}
         </td>
-        <td className={cn(styles.tableCell, styles.dateCell)}>
+        <td className={cn(styles.tableCell, styles.dateCell, isActive && styles.activeRow)}>
           {op.operationParts?.length > 0 ? <>
             <div className={styles.childrenControl} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
               {open ? <ExpendClose /> : <ExpendOpen />}
@@ -70,7 +72,7 @@ const OperationTableRow = ({
             {isDifferentDate && <span className="text-[10px] text-neutral-400">{op?.accrualDate}</span>}
           </div>}
         </td>
-        <td className={cn(styles.tableCell, styles.accountCell)}>
+        <td className={cn(styles.tableCell, styles.accountCell, isActive && styles.activeRow)}>
           {op?.tip == "Перемещение" ? <>
             <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
               <span>{op.my_account_name}</span>
@@ -81,30 +83,28 @@ const OperationTableRow = ({
         <td className={styles.tableCell}>
           {op.tip ? (
             <div className={styles.typeIcon}>
-              {op.selling_deal_id ? (
-                <ShipmentIcon />
-              ) : op.tip === 'Поступление' ? (
+              {op.tip === 'Поступление' ? (
                 <TypeIncomeIcon />
               ) : op.tip === 'Выплата' ? (
                 <TypeExpenseIcon />
-                  ) : op.tip === 'Перемещение' ||
-                    op.tip === 'Начисление' ? (
+                ) : op.tip === 'Перемещение' ||
+                  op.tip === 'Начисление' ? (
                 <TypeTransferIcon />
-              ) : null}
+              ) : op.tip === 'Отгрузка' && <ShipmentIcon />}
             </div>
           ) : null}
         </td>
-        <td className={cn(styles.tableCell, styles.counterpartyCell)}>
+        <td className={cn(styles.tableCell, styles.counterpartyCell, isActive && styles.activeRow)}>
           {titleContragent}
         </td>
-        <td className={cn(styles.tableCell, styles.statusCell)}>
+        <td className={cn(styles.tableCell, styles.statusCell, isActive && styles.activeRow)}>
           {op?.tip == "Перемещение" ? <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
             <span>[Перемещение - списание]</span>
             <span>[Перемещение - зачисление]</span>
           </div> : op.chartOfAccounts || ''}
         </td>
-        <td className={styles.tableCell}>{op?.project_name || '-'}</td>
-        <td className={styles.tableCell}>{op?.selling_deal_name || '-'}</td>
+        <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td>
+        <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.selling_deal_name || '-'}</td>
         <td className={styles.tableCell} onClick={e => e.stopPropagation()}>
           <PriceStatus
             amount={op.summa}
@@ -113,6 +113,7 @@ const OperationTableRow = ({
             confirmed={op.payment_confirmed}
             accrual={op.payment_accrual}
             currency={op.currency}
+            dealId={op?.selling_deal_id}
           />
         </td>
         <td

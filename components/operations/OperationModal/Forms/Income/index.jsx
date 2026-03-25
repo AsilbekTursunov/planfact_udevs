@@ -1,5 +1,4 @@
 'use client'
-import React from 'react'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import Input from '@/components/shared/Input'
@@ -259,6 +258,7 @@ const IncomeForm = ({
             }}
             placeholder='Выберите сделку...'
             hasError={!!errors.salesDeal}
+            className='flex-1 bg-white'
           />
           {errors.salesDeal && <span className={styles.errorText}>{errors.salesDeal}</span>}
         </div>

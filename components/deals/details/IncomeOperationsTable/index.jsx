@@ -45,9 +45,9 @@ const IncomeOperationsTable = ({ sellingDealId, onAdd }) => {
 
   if (dealOperations?.length === 0) {
     return (
-      <EmptyState 
-        title="Добавьте поступления по сделке" 
-        subtitle="Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке" 
+      <EmptyState
+        title="Добавьте поступления по сделке"
+        subtitle="Учитывайте поступления клиента, чтобы контролировать выполнение обязательств по сделке"
         onAdd={onAdd}
       />
     )
@@ -119,22 +119,28 @@ const IncomeOperationsTable = ({ sellingDealId, onAdd }) => {
           <table className="w-full">
             <thead className='sticky top-0 z-10'>
               <tr className='bg-neutral-100 text-neutral-600 font-normal text-sm w-full border-b border-gray-200'>
-                <th className='p-4 text-left w-[150px]'>Дата</th>
-                <th className='p-4 text-left w-[150px]'>Счет</th>
-                <th className='p-4 text-left w-[150px]'>Контрагент</th>
-                <th className='p-4 text-left w-[150px]'>Статья</th>
-                <th className='p-4 text-right w-[150px]'>Сумма</th>
+                <th className='px-3 py-2 text-left w-[150px]'>Дата</th>
+                <th className='px-3 py-2 text-left w-[150px]'>Счет</th>
+                <th className='px-3 py-2 text-left w-[150px]'>Контрагент</th>
+                <th className='px-3 py-2 text-left w-[150px]'>Статья</th>
+                <th className='px-3 py-2 text-right w-[150px]'>Сумма</th>
               </tr>
             </thead>
             <tbody className='w-full'>
               {dealOperations?.map((item) => {
+                const isActive = !item?.payment_confirmed && !item?.payment_accrual
                 return (
-                  <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
-                    <td className="p-3 text-left">{item.operationDate}</td>
-                    <td className="p-3 text-left">{item.my_account_name}</td>
-                    <td className="p-3 text-left">{item.counterparty}</td>
-                    <td className="p-3 text-left">{item.chartOfAccounts}</td>
-                    <td className={`p-3 text-right`}>
+                  <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-xs font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
+                    <td className={`p-3 text-left ${isActive ? 'active-row' : ''}`}>{item.operationDate}</td>
+                    <td className={`p-3 text-left ${isActive ? 'active-row' : ''}`}>{item.my_account_name}</td>
+                    <td className={`p-3 text-left ${isActive ? 'active-row' : ''}`}>{item.counterparty}</td>
+                    <td className={`p-3 text-left ${isActive ? 'active-row' : ''}`}>
+                      <div className="flex flex-col items-start">
+                        <p>{item.chartOfAccounts}</p>
+                        <p className="text-gray-400 text-mini">{item.opisanie}</p>
+                      </div>
+                    </td>
+                    <td className={`p-3 text-right ${isActive ? 'active-row' : ''}`}>
                       <div className="flex items-center justify-end gap-4 h-6">
                         <p className={`font-base text-green-600`}>
                           {'+'}{formatAmount(item.summa)} UZS

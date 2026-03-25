@@ -15,6 +15,8 @@ class SealDeal {
     amountTo: '',
     profitFrom: '',
     profitTo: '',
+    status: [],
+    isCalculation: false,
   }
 
   constructor() {
@@ -48,6 +50,8 @@ class SealDeal {
       amountTo: '',
       profitFrom: '',
       profitTo: '',
+      status: [],
+      isCalculation: false,
     }
   }
 }

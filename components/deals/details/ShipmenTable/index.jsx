@@ -105,12 +105,12 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
       <div className="h-96 overflow-y-auto min-w-[935px]">
         <table className="w-full">
           <thead className='sticky top-0 z-10'>
-            <tr className='bg-neutral-100  text-neutral-800 font-light text-sm w-full border-b border-gray-200'>
-              <th className='px-4 py-1 text-left w-[150px]'>Дата</th>
-              <th className='px-4 py-1 text-left w-[50px]'>Юрлицо</th>
-              <th className='px-4 py-1 text-left w-[150px]'>Контрагент</th>
-              <th className='px-4 py-1 text-left w-[150px]'>Состав</th>
-              <th className='px-4 py-1 text-left w-[150px]'>Статья</th>
+            <tr className='bg-neutral-100  text-neutral-600 font-normal text-xs w-full border-b border-gray-200'>
+              <th className='px-3 py-2 text-left w-[150px]'>Дата</th>
+              <th className='px-3 py-2 text-left w-[50px]'>Юрлицо</th>
+              <th className='px-3 py-2 text-left w-[150px]'>Контрагент</th>
+              <th className='px-3 py-2 text-left w-[150px]'>Состав</th>
+              <th className='px-3 py-2 text-left w-[150px]'>Статья</th>
               <th className='px-4 py-1 text-right w-[150px]'>Сумма</th>
             </tr>
           </thead>
@@ -118,7 +118,7 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
             {shipmentsList?.map((item) => {
               console.log('item', item)
               return (
-                <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-sm font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
+                <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-xs font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
                   <td className="px-4 py-3 text-left">{item.operationDate}</td>
                   <td className="px-4 py-3 text-left w-[50px]">{item?.legal_entity_name || 'Юрлицо'}</td>
                   <td className="px-4 py-3 text-left">{item.counterparty}</td>

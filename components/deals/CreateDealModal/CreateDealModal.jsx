@@ -110,7 +110,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
       counterparties_id: client,
       nds: nds === 'true',
       commentary: comment,
-      status: ["new"]
+      status: ["Новая"]
     };
 
     if (isEditing && initialData?.guid) {

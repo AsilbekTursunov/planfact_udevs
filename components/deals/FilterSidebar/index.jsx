@@ -1,14 +1,23 @@
 import { ArrowLeftToLine, Trash } from "lucide-react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { cn } from "@/app/lib/utils"
 import { observer } from 'mobx-react-lite'
 import { sealDeal } from '@/store/saleDeal.store'
+import debounce from 'lodash/debounce'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 import { useCounterpartiesPlanFact } from '@/hooks/useDashboard'
 import { formatDate } from '@/utils/formatDate'
 import Input from "../../shared/Input"
 import { returnNumber } from "../../../utils/helpers"
+import SingleSelect from "../../shared/Selects/SingleSelect"
+import SelectCounterParties from "../../ReadyComponents/SelectCounterParties"
+
+const statusOptions = [
+  { value: 'Новая', label: 'Новая' },
+  { value: 'В работе', label: 'В работе' },
+  { value: 'Завершена', label: 'Завершена' }
+]
 
 const FilterSidebar = observer(() => {
   const [isOpen, setIsOpen] = useState(true)
@@ -30,6 +39,28 @@ const FilterSidebar = observer(() => {
   }, [counterpartiesFilterData])
 
   const filters = sealDeal.filters
+
+  const [localAmountFrom, setLocalAmountFrom] = useState(filters.amountFrom || '')
+  const [localAmountTo, setLocalAmountTo] = useState(filters.amountTo || '')
+  const [localProfitFrom, setLocalProfitFrom] = useState(filters.profitFrom || '')
+  const [localProfitTo, setLocalProfitTo] = useState(filters.profitTo || '')
+
+  useEffect(() => {
+    setLocalAmountFrom(filters.amountFrom || '')
+    setLocalAmountTo(filters.amountTo || '')
+    setLocalProfitFrom(filters.profitFrom || '')
+    setLocalProfitTo(filters.profitTo || '')
+  }, [filters.amountFrom, filters.amountTo, filters.profitFrom, filters.profitTo])
+
+  const debouncedUpdateFilters = useMemo(
+    () => debounce((field, value) => {
+      sealDeal.filters = {
+        ...sealDeal.filters,
+        [field]: value
+      }
+    }, 200),
+    []
+  )
 
   const activeFilterCount = useMemo(() => {
     let count = 0
@@ -74,22 +105,31 @@ const FilterSidebar = observer(() => {
 
       {isOpen && (
         <div className="flex flex-col gap-4">
+
+          {/* status filter with singleSelect component */}
+          <div className="flex flex-col gap-1.5">
+            {/* <p className="text-neutral-600 text-xs font-medium">Статус сделки</p> */}
+            <SingleSelect
+              data={statusOptions}
+              value={filters.status?.[0] || ''}
+              onChange={(val) => updateFilters('status', val ? [val] : [])}
+              placeholder="Статус сделки"
+            />
+          </div>
+
           {/* Counterparty Selection */}
           <div className="flex flex-col gap-1.5">
-            <p className="text-neutral-600 text-xs font-medium">Контрагенты</p>
-            <MultiSelect
-              data={counterpartiesOptions}
-              value={filters.selectedCounterparties || []}
-              onChange={(values) => updateFilters('selectedCounterparties', values)}
+            {/* <p className="text-neutral-600 text-xs font-medium">Контрагенты</p> */}
+            <SelectCounterParties
+              onChange={(values) => {}}
               placeholder="Выберите контрагентов"
-              valueKey="value"
-              hideSelectAll={true}
+              value={filters.selectedCounterparties}
             />
           </div>
 
           {/* Date Range Selector */}
           <div className="flex flex-col gap-1.5">
-            <p className="text-neutral-600 text-xs font-medium">Период аналитики</p>
+            {/* <p className="text-neutral-600 text-xs font-medium">Период аналитики</p> */}
             <NewDateRangeComponent
               value={filters.dateRange}
               onChange={(range) => {
@@ -108,41 +148,52 @@ const FilterSidebar = observer(() => {
 
           {/* Amount Borders Selectors */}
           <div className="flex flex-col gap-1.5">
-            <p className="text-neutral-600 text-xs font-medium">Сумма сделки</p>
+            {/* <p className="text-neutral-600 text-xs font-medium">Сумма сделки</p> */}
             <div className="flex items-center gap-1.5">
               <Input
                 type="text"
                 placeholder="От"
-                value={returnNumber(filters.amountFrom) || ''}
-                onChange={e => updateFilters('amountFrom', (e.target.value))}
+                value={localAmountFrom}
+                onChange={e => {
+                  setLocalAmountFrom(e.target.value)
+                  debouncedUpdateFilters('amountFrom', e.target.value)
+                }}
               />
               <span className="text-neutral-400 font-light">-</span>
               <Input
                 type="text"
                 placeholder="До"
-                value={returnNumber(filters.amountTo) || ''}
-                onChange={e => updateFilters('amountTo', (e.target.value))}
-
+                value={localAmountTo}
+                onChange={e => {
+                  setLocalAmountTo(e.target.value)
+                  debouncedUpdateFilters('amountTo', e.target.value)
+                }}
               />
             </div>
           </div>
 
           {/* Profit Borders Selectors */}
           <div className="flex flex-col gap-1.5">
-            <p className="text-neutral-600 text-xs font-medium">Прибыль сделки</p>
+            {/* <p className="text-neutral-600 text-xs font-medium">Прибыль сделки</p> */}
             <div className="flex items-center gap-1.5">
               <Input
                 type="text"
                 placeholder="От"
-                value={returnNumber(filters.profitFrom) || ''}
-                onChange={e => updateFilters('profitFrom', (e.target.value))}
+                value={localProfitFrom}
+                onChange={e => {
+                  setLocalProfitFrom(e.target.value)
+                  debouncedUpdateFilters('profitFrom', e.target.value)
+                }}
               />
               <span className="text-neutral-400 font-light">-</span>
               <Input
                 type="text"
                 placeholder="До"
-                value={returnNumber(filters.profitTo) || ''}
-                onChange={e => updateFilters('profitTo', (e.target.value))}
+                value={localProfitTo}
+                onChange={e => {
+                  setLocalProfitTo(e.target.value)
+                  debouncedUpdateFilters('profitTo', e.target.value)
+                }}
               />
             </div>
           </div>

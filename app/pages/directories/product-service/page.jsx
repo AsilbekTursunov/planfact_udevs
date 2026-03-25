@@ -27,7 +27,7 @@ export default function LegalEntitiesPage() {
   const [isCreateSingleOpen, setIsCreateSingleOpen] = useState(false)
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
   const [filters, setFilters] = useState({
-    type: { value: 'all', label: 'Все' },
+    type: { value: 'Все', label: 'Все' },
     group: { value: 'none', label: 'Без группировки' },
   })
 
@@ -94,16 +94,21 @@ export default function LegalEntitiesPage() {
       select: data => data?.data?.data?.data
     }
   })
-  const { data: productServicesGroups, } = useUcodeRequestQuery({
-    method: "list_product_and_service_groups",
-    data: {
+
+  const filterProductServiceGroups = useMemo(() => {
+    return {
       page: 1,
       limit: 100,
-      from_date: "",
-      to_date: ""
-    },
+      search: "",
+      type: filters.type.value,
+      root_only: false
+    }
+  }, [filters])
+  const { data: productServicesGroups, } = useUcodeRequestQuery({
+    method: "list_product_and_service_groups",
+    data: filterProductServiceGroups,
     querySetting: {
-      select: data => data?.data?.data?.data
+      select: data => data?.data?.data
     }
   })
 
@@ -123,7 +128,7 @@ export default function LegalEntitiesPage() {
 
 
   const productServicesList = useMemo(() => {
-    const rawList = productServices?.filter(item => filters?.type?.value === 'all' ? true : item?.Status?.includes(filters?.type?.value)).map(item => {
+    const rawList = productServices?.filter(item => filters?.type?.value === 'Все' ? true : item?.Status?.includes(filters?.type?.value)).map(item => {
       const price = Number(item?.TSena_za_ed) || 0;
       const vatStr = item?.NDS || '';
       const vatNum = parseFloat(vatStr) || 0;
@@ -346,9 +351,9 @@ export default function LegalEntitiesPage() {
               <Select
                 instanceId="product-service-type-filter"
                 options={[
-                  { value: 'all', label: 'Все' },
-                  { value: 'product', label: 'Товары' },
-                  { value: 'service', label: 'Услуги' }
+                  { value: 'Все', label: 'Все' },
+                  { value: 'Товары', label: 'Товары' },
+                  { value: 'Услуги', label: 'Услуги' }
                 ]}
                 value={filters.type}
                 isSearchable={false}
@@ -400,6 +405,7 @@ export default function LegalEntitiesPage() {
                     <span>Наименование</span>
                   </div>
                 </th>
+                <th className='p-2 text-start'> Тип</th>
                 <th className='p-2 text-start'> Артикул</th>
                 <th className='p-2 text-end'> Цена за ед.</th>
                 <th className='p-2 text-center'> Единица</th>
@@ -451,6 +457,9 @@ export default function LegalEntitiesPage() {
                                 </span>
                               </div>
                             </td>
+                              <td className="p-3 text-center">
+                                <p className='text-xs font-normal text-neutral-500'>{item.type}</p>
+                              </td>
                               <td className="p-3 text-center">
                                 <p className='text-xs font-normal text-neutral-500'>{item.commentary}</p>
                               </td>
@@ -542,6 +551,7 @@ export default function LegalEntitiesPage() {
                             </div>
                           </td>
                           <td className="p-3 text-start font-medium text-neutral-700">{item.name || '—'}</td>
+                            <td className="p-3 text-start font-normal text-xs  text-neutral-500">{item.type || '—'}</td>
                           <td className="p-3 text-start text-neutral-500">{item.artikul || '—'}</td>
                           <td className="p-3 text-end text-neutral-700">{item.price ? `${item.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
                           <td className="p-3 text-center text-neutral-500">{item.unit}</td>
