@@ -9,7 +9,7 @@ class CounterpartiesStore {
     selectedCounterparties: [],
     selectedChartOfAccounts: [],
     operationDateStart: "",
-    calculationMethod: "Cashflow",
+    calculationMethod: "Cashflow", 
     dateRange: null,
     deals: []
   }

@@ -843,7 +843,7 @@ const KontragentDetailPage = observer(() => {
               <div className={styles.operationsHeaderLeft}>
                 <h2 className={styles.operationsTitle}>Операции по контрагенту</h2>
                 <button
-                  className={styles.createButton}
+                  className="bg-primary px-2 py-1 rounded-md text-white text-sm hover:bg-primary-dark cursor-pointer"
                   onClick={() => {
                     setCreatingOperation({ isNew: true })
                     setCreateModalType('income')

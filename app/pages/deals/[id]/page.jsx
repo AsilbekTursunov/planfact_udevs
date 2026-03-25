@@ -32,7 +32,7 @@ import CommentChat from '../../../../components/deals/details/CommentChat';
 import { sealDeal } from '../../../../store/saleDeal.store';
 import ExpenseOperationsTable from '../../../../components/deals/details/ExpenseOperationTable';
 import IncomeOperationsTable from '../../../../components/deals/details/IncomeOperationsTable';
-import { calculatePercent } from '../../../../utils/helpers';
+import { calculatePercent, formatDateRu } from '../../../../utils/helpers';
 import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
 import { DeleteDealModal } from '@/components/deals/DeleteDealModal/DeleteDealModal';
 import { useUcodeDefaultApiMutation } from '@/hooks/useDashboard';
@@ -183,13 +183,13 @@ export default observer(function DealDetailPage() {
           Сделки по продажам
         </button>
         <span className={styles.breadcrumbSeparator}>/</span>
-        <span className={styles.breadcrumbCurrent}>{summeryCards?.Nazvanie || 'Без названия'}</span>
+        <span className={styles.breadcrumbCurrent}>{deal?.name || 'Без названия'}</span>
       </div>
 
       {/* Header */}
       <div className='flex items-center justify-between '>
         <div className={styles.header}>
-          <h1 className={styles.title}>{summeryCards?.Nazvanie || 'Без названия'}</h1>
+          <h1 className={styles.title}>{deal?.name || 'Без названия'}</h1>
         </div>
         <Popover>
           <PopoverTrigger asChild>
@@ -263,7 +263,7 @@ export default observer(function DealDetailPage() {
                 className="text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer hover:text-primary transition-colors flex items-center gap-1 group"
                 onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
               >
-                {summeryCards?.counterparty_name || 'test'}
+                {summeryCards?.counterparties_name || 'test'}
                 <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
               </span>
             </div>
@@ -274,7 +274,7 @@ export default observer(function DealDetailPage() {
                 className="text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer flex items-center gap-1 group"
                 onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
               >
-                {summeryCards?.counterparties_name}
+                {formatDateRu(deal?.sale_date)}
                 <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
               </span>
             </div>

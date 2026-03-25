@@ -108,6 +108,10 @@ const CounterpartiesPage = observer(() => {
       apiFilters.calculationMethod = filters.calculationMethod
     }
 
+    if (filters.deals && filters.deals.length > 0) {
+      apiFilters.sellingDealId = filters.deals
+    }
+
     return apiFilters
   }, [filters])
 
@@ -122,7 +126,7 @@ const CounterpartiesPage = observer(() => {
     calculationMethod: filters.calculationMethod,
     contrAgentId: filters.selectedCounterparties,
     operationCategoryId: filters.selectedChartOfAccounts,
-    deals: filters.deals,
+    sellingDealId: filters.deals,
     searchString: viewMode === 'list' ? debouncedSearchQuery : '',
   }, true) // Always enable the query
 
