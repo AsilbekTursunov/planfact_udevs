@@ -6,13 +6,9 @@ import { CalendarCellIcon, CalendarIcon, CreditIcon, DebitIcon, MergeArrowsIcon,
 import { formatAmount, formatDateRu } from '../../../../utils/helpers'
 import CustomCalendar from '../../../shared/Calendar'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
-import { GroupedSelect } from '../../../common/GroupedSelect/GroupedSelect'
-import { TreeSelect } from '../../../common/TreeSelect/TreeSelect'
-
-
-
-import { SplitAmountCancelModal } from './SplitAmountCancelModal'
 import CustomModal from '../../../shared/CustomModal'
+import SingleCounterParty from '../../../ReadyComponents/SingleCounterParty'
+import SinglSelectStatiya from '../../../ReadyComponents/SingleSelectStatiya'
 
 const today = new Date().getDate()
 
@@ -64,8 +60,7 @@ const DateCell = ({ row, i, dispatch, openCalendarIdx, setOpenCalendarIdx, disab
 }
 
 // ── Main component ──────────────────────────────────────────
-const SplitAmount = ({ amount, counterAgents,
-  chartOfAccountsOptions, onChange, rows,
+const SplitAmount = ({ amount, onChange, rows,
   dispatch, selectedSplits, setSelectedSplits, confirmPayment, initiallyOpen = false, modalType, salesDeal }) => {
   const [open, setOpen] = useState(initiallyOpen)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
@@ -132,7 +127,7 @@ const SplitAmount = ({ amount, counterAgents,
     }
     dispatch({ type: 'UPDATE', index, field: 'isCalculationCommitted', value: check })
   }
- 
+
 
 
   return (
@@ -228,18 +223,12 @@ const SplitAmount = ({ amount, counterAgents,
                         {showAgent && (
                           <td className="split-td col-agent">
                             <div className="borderless-select" style={{ maxWidth: '180px' }}>
-                              <GroupedSelect
-                                data={counterAgents || []}
+                              <SingleCounterParty
                                 value={row.contrAgentId}
                                 onChange={(value) => dispatch({ type: 'UPDATE', index: i, field: 'contrAgentId', value: value || '' })}
                                 placeholder="Не выбран"
-                                groupBy={true}
-                                groupKey="group"
-                                labelKey="label"
-                                valueKey="guid"
-                                className="grouped-select"
-                                dropdownClassName='grouped-select-dropdown'
-                                usePortal={true}
+                                className="bg-transparent border-none p-0 py-2"
+                                dropdownClassName="w-64"
                               />
                             </div>
                           </td>
@@ -249,15 +238,13 @@ const SplitAmount = ({ amount, counterAgents,
                         {showStatya && (
                           <td className="split-td col-statya">
                             <div className="borderless-select" >
-                              <TreeSelect
-                                data={chartOfAccountsOptions || []}
-                                alwaysExpanded={true}
-                                value={row.operationCategoryId}
-                                onChange={value => dispatch({ type: 'UPDATE', index: i, field: 'operationCategoryId', value })}
+                              <SinglSelectStatiya
+                                selectedValue={row.operationCategoryId}
+                                setSelectedValue={value => dispatch({ type: 'UPDATE', index: i, field: 'operationCategoryId', value })}
                                 placeholder='Выберите статью...'
-                                className="TreeSelect"
-                                dropdownClassName="TreeSelectDropDown"
-                                usePortal={true}
+                                className="bg-transparent border-none p-0 py-2"
+                                dropdownClassName="w-64"
+                                type={modalType === 'income' ? 'Расходы' : modalType === 'payment' ? 'Доходы' : "Расходы"}
                               />
                             </div>
                           </td>

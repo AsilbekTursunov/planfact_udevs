@@ -6,8 +6,6 @@ import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
 import { MoreHorizontal, PenLine, Trash2 } from 'lucide-react'
 import { useUcodeRequestMutation } from '@/hooks/useDashboard'
-import { useLegalEntitiesPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
-import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 import { useDeleteOperation } from '@/hooks/useDashboard'
@@ -19,11 +17,13 @@ import EditCounterpartyModal from '@/components/directories/EditCounterpartyModa
 import OperationModal from '../../../../../components/operations/OperationModal/OperationModal'
 import { useUcodeRequestQuery } from '../../../../../hooks/useDashboard'
 import { formatDate } from '../../../../../utils/formatDate'
-import { formatDateRu } from '../../../../../utils/helpers'
 import OperationTableRow from '../../../../../components/operations/TableRow'
 import { observer } from 'mobx-react-lite'
 import counterpartiesStore from '@/store/counterparties.store'
 import MultiSelectZdelka from '../../../../../components/ReadyComponents/MultiZdelka'
+import operationsDto from '../../../../../lib/dtos/operationsDto'
+import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMyAccounts'
+import MultiSelectStatiya from '../../../../../components/ReadyComponents/MultiSelectStatiya'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -78,7 +78,7 @@ const KontragentDetailPage = observer(() => {
   const [isEditModalClosing, setIsEditModalClosing] = useState(false)
   const [isEditModalOpening, setIsEditModalOpening] = useState(false)
   const [deletingOperation, setDeletingOperation] = useState(null)
-  const [isEditCounterpartyModalOpen, setIsEditCounterpartyModalOpen] = useState(false) 
+  const [isEditCounterpartyModalOpen, setIsEditCounterpartyModalOpen] = useState(false)
   const deleteOperationMutation = useDeleteOperation()
   const queryClient = useQueryClient()
 
@@ -98,215 +98,53 @@ const KontragentDetailPage = observer(() => {
   const { data: counterpartyData, isPending: isLoadingCounterparty } = useUcodeRequestQuery({
     method: 'get_counterparty_by_id',
     data: filterCounterParty,
-    // skip: !counterpartyGuid,
+    skip: !counterpartyGuid,
     querySetting: {
       refetchOnWindowFocus: false
     }
   })
 
-  // Fetch data for filters
-  const { data: legalEntitiesData } = useLegalEntitiesPlanFact()
-  const { data: chartOfAccountsData } = useChartOfAccountsPlanFact()
-  const { data: myaccountsData } = useUcodeRequestQuery({
-    method: 'get_my_accounts',
-    data: {},
+  const filterCounterpartyOperations = useMemo(() => {
+    return {
+      counterparties_ids: [counterpartyGuid],
+      chart_of_accounts_ids: selectedChartOfAccounts,
+      my_accounts_ids: selectedLegalEntities,
+      selling_deals_ids: filters.deals,
+      sales: [],
+      page: 1,
+      limit: 1000,
+    }
+  }, [selectedChartOfAccounts, selectedLegalEntities, filters.deals, counterpartyGuid])
+
+  const { data: operationsListData, isLoading: isLoadingOperations } = useUcodeRequestQuery({
+    method: 'find_operations',
+    data: filterCounterpartyOperations,
     skip: !counterpartyGuid,
     querySetting: {
-      select: (data) => data.data.data
+      refetchOnWindowFocus: true,
+      select: response => response?.data?.data?.data
     }
   })
 
-
-  // Transform chart of accounts data for MultiSelect
-  const chartOfAccountsOptions = useMemo(() => {
-    const rawData = chartOfAccountsData?.data?.data?.data || []
-    const flatten = (items) => {
-      let result = []
-      items.forEach(item => {
-        result.push(item)
-        if (item.children && item.children.length > 0) {
-          result = result.concat(flatten(item.children))
-        }
-      })
-      return result
+  const operationsList = useMemo(() => {
+    return {
+      today: operationsDto(operationsListData || [], 'today'),
+      before: operationsDto(operationsListData || [], 'before'),
     }
-    const flat = Array.isArray(rawData) ? flatten(rawData) : []
-    return flat.map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия',
-      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
-    }))
-  }, [chartOfAccountsData])
+  }, [operationsListData])
 
 
-  // Extract counterparty from response
+  // console.log('single countepary', operationsList)
+
+
   // Response structure: { data: { data: { data: { counterparty: {...}, operations: [...] } } } }
   const responseData = counterpartyData?.data?.data?.data
   const counterparty = responseData?.counterparty || null
-  const counterpartyOperations = useMemo(() => {
-    return responseData?.operations || []
-  }, [responseData])
-
-
-  // Use operations from counterparty response directly
+  // Unified operations data from find_operations
   const operations = useMemo(() => {
-    if (!counterpartyOperations || counterpartyOperations.length === 0) return []
+    return operationsDto(operationsListData || [], 'all')
+  }, [operationsListData])
 
-
-    return counterpartyOperations.map((item, index) => {
-      const operationDate = item.data_operatsii ? new Date(item.data_operatsii) : null
-
-      // Determine operation type from tip array
-      let type = 'out'
-      let typeLabel = 'Выплата'
-      if (item.tip && Array.isArray(item.tip)) {
-        if (item.tip.includes('Поступление')) {
-          type = 'in'
-          typeLabel = 'Поступление'
-        } else if (item.tip.includes('Перемещение')) {
-          type = 'transfer'
-          typeLabel = 'Перемещение'
-        } else if (item.tip.includes('Начисление')) {
-          type = 'transfer'
-          typeLabel = 'Начисление'
-        } else if (item.tip.includes('Выплата')) {
-          type = 'out'
-          typeLabel = 'Выплата'
-        } else {
-          typeLabel = item.tip[0] || 'Выплата'
-        }
-      }
-
-      // Format date
-      const formatDate = (date) => {
-        if (!date) return ''
-        try {
-          const d = new Date(date)
-          const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
-          return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
-        } catch {
-          return ''
-        }
-      }
-
-      // Format amount
-      const amount = item.summa || 0
-      const amountFormatted = amount.toLocaleString('ru-RU')
-
-      // Determine section (today vs yesterday/earlier)
-      const today = new Date()
-      const isToday = operationDate &&
-        operationDate.getDate() === today.getDate() &&
-        operationDate.getMonth() === today.getMonth() &&
-        operationDate.getFullYear() === today.getFullYear()
-
-      return {
-        id: item.guid || index,
-        guid: item.guid,
-        date: formatDate(operationDate),
-        accrualDate: formatDateRu(item?.data_nachisleniya),
-        operationDate: formatDateRu(operationDate),
-        paymentConfirmed: item.oplata_podtverzhdena,
-        account: item.my_accounts_name || item.bank_accounts_id_data?.nazvanie || '',
-        type: type,
-        typeCategory: type,
-        typeLabel: typeLabel,
-        counterparty: item.counterparties_name || item.counterparties_id_data?.nazvanie || '',
-        category: item.chart_of_accounts_name || item.chart_of_accounts_id_data?.nazvanie || '',
-        project: '',
-        deal: '',
-        amount: amountFormatted,
-        amountRaw: amount,
-        chartOfAccounts: item.chart_of_accounts_id_data?.nazvanie || item.chart_of_accounts_name || '',
-        chartOfAccountsId: item.chart_of_accounts_id || null,
-        bankAccount: item.my_accounts_name || '',
-        bankAccount2: item.my_accounts_name_2 || '',
-        bankAccountId: item.my_accounts_id || null,
-        counterparty: item.counterparties_name || '',
-        counterpartyId: item.counterparties_id || null,
-        paymentConfirmed: item.oplata_podtverzhdena,
-        payment_confirmed: item.payment_confirmed !== undefined
-          ? item.payment_confirmed
-          : (item.oplata_podtverzhdena !== undefined ? item.oplata_podtverzhdena : false),
-        payment_accrual: item.payment_accrual !== undefined
-          ? item.payment_accrual
-          : false,
-        currency: item.currenies_kod || '',
-        section: isToday ? 'today' : 'yesterday',
-        operationParts: item?.operation_parts?.map(part => ({
-          ...part,
-          tip: part.tip?.[0],
-          typeCategory: part.tip?.[0] === 'Поступление' ? 'in' : part.tip?.[0] === 'Выплата' ? 'out' : 'transfer',
-          amount: part?.summa?.toLocaleString('ru-RU'),
-          amountFormatted: part.summa.toLocaleString('ru-RU'),
-          currency: part.currenies_kod || part.currenies_id_data?.nazvanie || '',
-          currencyId: part.currenies_id || null,
-          description: part.opisanie || '',
-          chartOfAccounts: part.chart_of_accounts_id_data?.nazvanie || part.chart_of_accounts_name || '',
-          chartOfAccountsId: part.chart_of_accounts_id || null,
-          bankAccount: part.my_accounts_name || '',
-          bankAccount2: part.my_accounts_name_2 || '',
-          bankAccountId: part.my_accounts_id || null,
-          counterparty: part.counterparties_name || '',
-          counterpartyId: part.counterparties_id || null,
-          data_nachisleniya: part?.data_nachisleniya,
-          accrualDate: formatDateRu(part?.data_nachisleniya),
-          operationDate: formatDateRu(part?.data_operatsii),
-          createdAt: formatDate(part.data_sozdaniya ? new Date(part.data_sozdaniya) : null),
-          createdAtRaw: part.data_sozdaniya,
-          updatedAt: formatDate(part.data_obnovleniya ? new Date(part.data_obnovleniya) : null),
-          updatedAtRaw: part.data_obnovleniya,
-          section: isToday ? 'today' : 'yesterday',
-          payment_confirmed: part.payment_confirmed !== undefined
-            ? part.payment_confirmed
-            : (part.oplata_podtverzhdena !== undefined ? part.oplata_podtverzhdena : false),
-          payment_accrual: part.payment_accrual !== undefined
-            ? part.payment_accrual
-            : false,
-        })),
-        rawData: item
-      }
-    })
-  }, [counterpartyOperations])
-
-
-  const filteredOperations = useMemo(() => {
-    let result = operations;
-
-    if (selectedLegalEntities && selectedLegalEntities.length > 0) {
-      const selectedAccounts = selectedLegalEntities.map(guid => {
-        const entity = legalEntitiesData?.data?.data?.data?.find(e => e.guid === guid);
-        return entity?.nazvanie;
-      }).filter(Boolean);
-
-      if (selectedAccounts.length > 0) {
-        result = result.filter(op => selectedAccounts.includes(op.account));
-      } else {
-        result = result.filter(op =>
-          selectedLegalEntities.includes(op.rawData?.bank_accounts_id) ||
-          selectedLegalEntities.includes(op.rawData?.my_accounts_id)
-        );
-      }
-    }
-
-    if (selectedChartOfAccounts && selectedChartOfAccounts.length > 0) {
-      const selectedCategories = selectedChartOfAccounts.map(guid => {
-        const option = chartOfAccountsOptions.find(o => o.value === guid);
-        return option?.label;
-      }).filter(Boolean);
-
-      if (selectedCategories.length > 0) {
-        result = result.filter(op => selectedCategories.includes(op.category));
-      } else {
-        result = result.filter(op =>
-          selectedChartOfAccounts.includes(op.rawData?.chart_of_accounts_id) ||
-          selectedChartOfAccounts.includes(op.rawData?.chart_of_accounts_id_data?.guid)
-        );
-      }
-    }
-
-    return result;
-  }, [operations, selectedLegalEntities, legalEntitiesData, selectedChartOfAccounts, chartOfAccountsOptions]);
 
   // Format counterparty info - DECLARE FIRST
   const counterpartyInfo = useMemo(() => {
@@ -341,12 +179,12 @@ const KontragentDetailPage = observer(() => {
     let receiptsCount = 0
     let paymentsCount = 0
 
-    filteredOperations.forEach(op => {
-      const amount = op.amountRaw || 0
-      if (op.type === 'in') {
+    operations.forEach(op => {
+      const amount = op.summa || 0
+      if (op.tip === 'Поступление') {
         receipts += amount
         receiptsCount++
-      } else if (op.type === 'out') {
+      } else if (op.tip === 'Выплата') {
         payments += amount
         paymentsCount++
       }
@@ -360,9 +198,9 @@ const KontragentDetailPage = observer(() => {
       difference,
       receiptsCount,
       paymentsCount,
-      totalCount: filteredOperations.length
+      totalCount: operations.length
     }
-  }, [filteredOperations])
+  }, [operations])
 
   const renderMultiValue = (values, type) => {
     if (!values || values.length === 0) return '–';
@@ -511,22 +349,7 @@ const KontragentDetailPage = observer(() => {
     }
   }
 
-  // Toggle row expansion
-  const toggleRowExpansion = (rowId) => {
-    setExpandedRows(prev => ({
-      ...prev,
-      [rowId]: !prev[rowId]
-    }))
-  }
 
-  // Mock detail data - replace with real data later
-  const getDetailData = (operation) => {
-    console.log('operation', operation)
-    return [
-      { id: 1, date: '05 мар \'26', account: 'Основной счет', type: 'in', typeLabel: 'Поступление', counterparty: 'test', category: 'Оказание услуг', amount: '+15 000 000', amountRaw: 15000000 },
-      { id: 2, date: '31 мар \'26', account: 'Основной счет', type: 'in', typeLabel: 'Поступление', counterparty: 'test', category: 'Оказание услуг', amount: '+4 500 000', amountRaw: 4500000 },
-    ]
-  }
 
   // Close modals when clicking on page header
   useEffect(() => {
@@ -804,32 +627,32 @@ const KontragentDetailPage = observer(() => {
                 </div>
               ) : (
                 <>
-                    <div className={styles.infoCardDetails}>
-                      <div className={styles.infoCardRow}>
-                        <span className={styles.infoCardLabel}>ИНН</span>
-                        <span className={styles.infoCardValue}>{counterpartyInfo?.inn || '–'}</span>
-                      </div>
-                      <div className={styles.infoCardRow}>
-                        <span className={styles.infoCardLabel}>Статья для поступлений</span>
-                        <span className={styles.infoCardValue}>{counterpartyInfo?.receiptArticle || '–'}</span>
-                      </div>
-                      <div className={styles.infoCardRow}>
-                        <span className={styles.infoCardLabel}>КПП</span>
-                        <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.kpp, 'kpp')}</span>
-                      </div>
-                      <div className={styles.infoCardRow}>
-                        <span className={styles.infoCardLabel}>Статья для выплат</span>
-                        <span className={styles.infoCardValue}>{counterpartyInfo?.paymentArticle || '–'}</span>
-                      </div>
-                      <div className={styles.infoCardRow}>
-                        <span className={styles.infoCardLabel}>№ счета</span>
-                        <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.accountNumber, 'accountNumber')}</span>
-                      </div>
-                      <div className={styles.infoCardRow}>
-                        <span className={styles.infoCardLabel}>Комментарий</span>
-                        <span className={styles.infoCardValue}>{counterpartyInfo?.comment || '–'}</span>
-                      </div>
+                  <div className={styles.infoCardDetails}>
+                    <div className={styles.infoCardRow}>
+                      <span className={styles.infoCardLabel}>ИНН</span>
+                      <span className={styles.infoCardValue}>{counterpartyInfo?.inn || '–'}</span>
                     </div>
+                    <div className={styles.infoCardRow}>
+                      <span className={styles.infoCardLabel}>Статья для поступлений</span>
+                      <span className={styles.infoCardValue}>{counterpartyInfo?.receiptArticle || '–'}</span>
+                    </div>
+                    <div className={styles.infoCardRow}>
+                      <span className={styles.infoCardLabel}>КПП</span>
+                      <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.kpp, 'kpp')}</span>
+                    </div>
+                    <div className={styles.infoCardRow}>
+                      <span className={styles.infoCardLabel}>Статья для выплат</span>
+                      <span className={styles.infoCardValue}>{counterpartyInfo?.paymentArticle || '–'}</span>
+                    </div>
+                    <div className={styles.infoCardRow}>
+                      <span className={styles.infoCardLabel}>№ счета</span>
+                      <span className={styles.infoCardValue}>{renderMultiValue(counterpartyInfo?.accountNumber, 'accountNumber')}</span>
+                    </div>
+                    <div className={styles.infoCardRow}>
+                      <span className={styles.infoCardLabel}>Комментарий</span>
+                      <span className={styles.infoCardValue}>{counterpartyInfo?.comment || '–'}</span>
+                    </div>
+                  </div>
                 </>
               )}
             </div>
@@ -878,44 +701,37 @@ const KontragentDetailPage = observer(() => {
 
             {/* Filters Panel */}
             {isFiltersOpen && (
-              <div className={styles.filtersPanel}>
-                <div className={styles.filtersPanelContent}>
-                  <div className={styles.filterGroup}>
-                    <MultiSelect
-                      data={myaccountsData?.data?.map(entity => ({
-                        value: entity.guid,
-                        label: entity.nazvanie
-                      })) || []}
-                      value={selectedLegalEntities}
-                      onChange={setSelectedLegalEntities}
-                      hideSelectAll={true}
-                      placeholder="Юрлица и счета"
-                      valueKey="value"
-                    />
-                  </div>
-                  <div className={styles.filterGroup}>
-                    <MultiSelect
-                      data={chartOfAccountsOptions || []}
-                      value={selectedChartOfAccounts}
-                      onChange={setSelectedChartOfAccounts}
-                      hideSelectAll={true}
-                      grouped
-                      placeholder="Статьи"
-                      valueKey="value"
-                    />
-                  </div>
-                  <div className={styles.filterGroup}>
-                    <MultiSelectZdelka
-                      value={filters.deals}
-                      onChange={(values) => setFilters(prev => ({ ...prev, deals: values }))}
-                      placeholder="Сделки"
-                    />
-                  </div>
+              <div className='flex items-center gap-3 my-3'>
+                <div className="w-48">
+                  <SelectMyAccounts
+                    value={selectedLegalEntities}
+                    onChange={setSelectedLegalEntities}
+                    placeholder="Юрлица и счета"
+                    className={'bg-white'}
+                    dropdownClassName={'w-64'}
+                  />
+                </div>
+                <div className="w-48 flex items-center">
+                  <MultiSelectStatiya
+                    value={selectedChartOfAccounts}
+                    onChange={setSelectedChartOfAccounts}
+                    placeholder="Статьи"
+                    className={'bg-white'}
+                    dropdownClassName={'w-64'}
+                  />
+                </div>
+                <div className="w-48 flex items-center">
+                  <MultiSelectZdelka
+                    value={filters.deals}
+                    onChange={(values) => setFilters(prev => ({ ...prev, deals: values }))}
+                    placeholder="Сделки"
+                    className={'bg-white'}
+                  />
                 </div>
               </div>
             )}
 
-            {isLoadingCounterparty ? (
+            {(isLoadingOperations && !operationsListData) ? (
               <div className={styles.tableWrapper}>
                 <table className={styles.operationsTable}>
                   <thead className={styles.tableHeader}>
@@ -966,7 +782,7 @@ const KontragentDetailPage = observer(() => {
                   </tbody>
                 </table>
               </div>
-            ) : operations.length === 0 ? (
+            ) : counterpartyInfo?.operationsCount === 0 ? (
               <div className={styles.emptyState}>
                 <div className={styles.emptyStateIcon}>
                   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -979,15 +795,15 @@ const KontragentDetailPage = observer(() => {
                   <div className={styles.emptyStateTitle}>Создайте операции с контрагентом</div>
                   <div className={styles.emptyStateSubtitle}>
                     Добавляйте платежи и учитывайте предоплаты или отсрочки.
-                    </div> 
-                </div>
-              </div>
-              ) : filteredOperations.length === 0 ? (
-                <div className={styles.emptyState}>
-                  <div className={styles.emptyStateText}>
-                    <div className={styles.emptyStateTitle}>По заданным фильтрам ничего не найдено</div>
                   </div>
                 </div>
+              </div>
+            ) : operations.length === 0 ? (
+              <div className={styles.emptyState}>
+                <div className={styles.emptyStateText}>
+                  <div className={styles.emptyStateTitle}>По заданным фильтрам ничего не найдено</div>
+                </div>
+              </div>
             ) : (
               <div className={styles.tableWrapper}>
                 <table className={styles.operationsTable}>
@@ -999,55 +815,53 @@ const KontragentDetailPage = observer(() => {
                       <th className={styles.tableHeaderCell}>Тип</th>
                       <th className={styles.tableHeaderCell}>Контрагент</th>
                       <th className={styles.tableHeaderCell}>Статья</th>
-                      <th className={styles.tableHeaderCell}>Проект</th>
+                      <th className={styles.tableHeaderCell}>Сделка</th>
                       <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
                       <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
                     </tr>
                   </thead>
                   <tbody className={styles.tableBody}>
-                          {/* Today — Section Header */}
-                          {filteredOperations.filter(op => op.section === 'today').length > 0 && (
-                            <tr className={styles.sectionHeader}>
-                              <td colSpan='9' className={styles.sectionHeaderCell}>
-                                <h3 className={styles.sectionHeaderTitle}>Сегодня</h3>
-                              </td>
-                            </tr>
-                          )}
-                          {filteredOperations.filter(op => op.section === 'today').map((op, index) => (
-                            <OperationTableRow
-                              key={op.id}
-                              op={op}
-                              showIndex={index + 1}
-                              counterpartyGuid={counterpartyGuid}
-                              selectedOperations={selectedOperations}
-                              openOperationModal={handleEditOperation}
-                              handleEditOperation={handleEditOperation}
-                              handleDeleteOperation={handleDeleteOperation}
-                              handleCopyOperation={handleCopyOperation}
-                            />
-                          )
-                          )}
-
-                          {/* Вчера и ранее — Section Header */}
-                          {filteredOperations.filter(op => op.section === 'yesterday').length > 0 && (
-                            <tr className={styles.sectionHeader}>
-                              <td colSpan='9' className={styles.sectionHeaderCell}>
-                                <h3 className={styles.sectionHeaderTitle}>Вчера и ранее</h3>
+                    {/* Today — Section Header */}
+                    {operationsList?.today?.length > 0 && (
+                      <tr className={styles.sectionHeader}>
+                        <td colSpan='9' className={styles.sectionHeaderCell}>
+                          <h3 className={styles.sectionHeaderTitle}>Сегодня</h3>
                         </td>
-                            </tr>
-                          )}
-                          {filteredOperations.filter(op => op.section === 'yesterday').map((op, index) =>
-                            <OperationTableRow
-                              key={op.id}
-                              op={op}
-                              counterpartyGuid={counterpartyGuid}
-                              showIndex={index + 1}
-                              selectedOperations={selectedOperations}
-                              openOperationModal={handleEditOperation}
-                              handleEditOperation={handleEditOperation}
-                              handleDeleteOperation={handleDeleteOperation}
-                              handleCopyOperation={handleCopyOperation}
-                            />)}
+                      </tr>
+                    )}
+
+                    {operationsList?.today?.map(op => (
+                      <OperationTableRow
+                        key={op.guid}
+                        op={op}
+                        selectedOperations={selectedOperations}
+                        toggleOperation={toggleOperation}
+                        openOperationModal={handleEditOperation}
+                        handleEditOperation={handleEditOperation}
+                        handleDeleteOperation={handleDeleteOperation}
+                        handleCopyOperation={handleCopyOperation}
+                      />
+                    ))}
+                    {/* Вчера и ранее - Section Header */}
+                    {operationsList?.before?.length > 0 && (
+                      <tr className={styles.sectionHeader}>
+                        <td colSpan='9' className={styles.sectionHeaderCell}>
+                          <h3 className={styles.sectionHeaderTitle}>Вчера и ранее</h3>
+                        </td>
+                      </tr>
+                    )}
+                    {operationsList?.before?.map(op => (
+                      <OperationTableRow
+                        key={op.guid}
+                        op={op}
+                        selectedOperations={selectedOperations}
+                        toggleOperation={toggleOperation}
+                        openOperationModal={handleEditOperation}
+                        handleEditOperation={handleEditOperation}
+                        handleDeleteOperation={handleDeleteOperation}
+                        handleCopyOperation={handleCopyOperation}
+                      />
+                    ))}
                   </tbody>
                 </table>
               </div>

@@ -418,21 +418,21 @@ export default observer(function DealDetailPage() {
                 }`}
               onClick={() => setActiveTab('receipts')}
             >
-              Поступления
+              Поступления ({summeryCards?.receipts_count ?? 0})
             </button>
             <button
               className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'expenses' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
                 }`}
               onClick={() => setActiveTab('expenses')}
             >
-              Расходы
+              Расходы ({summeryCards?.expenses_count ?? 0})
             </button>
             <button
               className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'shipments' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
                 }`}
               onClick={() => setActiveTab('shipments')}
             >
-              Отгрузки
+              Отгрузки ({summeryCards?.shipments_count ?? 0})
             </button>
           </div>
 

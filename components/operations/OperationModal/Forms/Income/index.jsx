@@ -25,11 +25,8 @@ const IncomeForm = ({
   showStatya,
   // data
   bankAccounts,
-  chartOfAccountsTree,
-  counterAgents,
   // loading
   loadingBankAccounts,
-  loadingChartOfAccounts,
   // split
   rows,
   dispatch,
@@ -136,8 +133,6 @@ const IncomeForm = ({
           <div className={styles.fieldWrapper}>
             <SplitAmount
               amount={formData?.amount}
-              counterAgents={counterAgents}
-              chartOfAccountsOptions={chartOfAccountsTree}
               onChange={setdivivedAmounts}
               rows={rows}
               modalType='income'
@@ -201,20 +196,14 @@ const IncomeForm = ({
       {/* Статья */}
       {!showStatya && (
         <div className={styles.formRow}>
-          <label className={styles.label}>Статья</label>
-          {/* <TreeSelect
-            data={chartOfAccountsTree}
-            alwaysExpanded={true}
-            value={formData.chartOfAccount}
-            onChange={value => setFormData({ ...formData, chartOfAccount: value })}
-            placeholder='Выберите статью...'
-            loading={loadingChartOfAccounts}
-            className='flex-1'
-          /> */}
+          <label className={styles.label}>Статья</label> 
           <SinglSelectStatiya
             selectedValue={formData.chartOfAccount}
-            setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}
-            placeholder='Нераспределенный расход.'
+            setSelectedValue={value => {
+              setFormData({ ...formData, chartOfAccount: value })
+              console.log('value', value)
+            }}
+            placeholder='Нераспределенный доход.'
             className='flex-1 bg-white'
           />
         </div>

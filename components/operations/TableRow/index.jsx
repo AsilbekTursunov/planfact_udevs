@@ -103,7 +103,7 @@ const OperationTableRow = ({
             <span>[Перемещение - зачисление]</span>
           </div> : op.chartOfAccounts || ''}
         </td>
-        <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td>
+        {/* <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td> */}
         <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.selling_deal_name || '-'}</td>
         <td className={styles.tableCell} onClick={e => e.stopPropagation()}>
           <PriceStatus

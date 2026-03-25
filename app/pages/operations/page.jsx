@@ -126,7 +126,6 @@ export default function OperationsPage() {
 		}))
 	}, [chartOfAccountsData])
 
-	console.log('chartOfAccountsOptions', chartOfAccountsOptions)
 
 	// Pagination state
 	const [page, setPage] = useState(1)
@@ -825,7 +824,6 @@ export default function OperationsPage() {
 									<th className={styles.tableHeaderCell}>Тип</th>
 									<th className={styles.tableHeaderCell}>Контрагент</th>
 									<th className={styles.tableHeaderCell}>Статья</th>
-									<th className={styles.tableHeaderCell}>Проект</th>
 									<th className={styles.tableHeaderCell}>Сделка</th>
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
@@ -850,29 +848,13 @@ export default function OperationsPage() {
 								) : (
 									<>
 										{/* Сегодня - Section Header */}
-										{operations.filter(op => op.section === 'today').length > 0 && (
+												{operationsList?.today?.length > 0 && (
 											<tr className={styles.sectionHeader}>
 												<td colSpan='9' className={styles.sectionHeaderCell}>
 													<h3 className={styles.sectionHeaderTitle}>Сегодня</h3>
 												</td>
 											</tr>
 										)}
-
-										{/* Today Operations */}
-												{/* {operations
-											.filter(op => op.section === 'today')
-													.map(op => (
-												<OperationTableRow
-													key={op.id}
-													op={op}
-													selectedOperations={selectedOperations}
-													toggleOperation={toggleOperation}
-													openOperationModal={openOperationModal}
-													handleEditOperation={handleEditOperation}
-													handleDeleteOperation={handleDeleteOperation}
-													handleCopyOperation={handleCopyOperation}
-												/>
-											))} */}
 
 												{operationsList?.today?.map(op => (
 													<OperationTableRow
@@ -887,7 +869,7 @@ export default function OperationsPage() {
 													/>
 												))}
 										{/* Вчера и ранее - Section Header */}
-										{operations.filter(op => op.section === 'yesterday').length > 0 && (
+												{operationsList?.before?.length > 0 && (
 											<tr className={styles.sectionHeader}>
 												<td colSpan='9' className={styles.sectionHeaderCell}>
 													<h3 className={styles.sectionHeaderTitle}>Вчера и ранее</h3>
@@ -907,21 +889,6 @@ export default function OperationsPage() {
 													/>
 												))}
 
-										{/* Yesterday Operations */}
-												{/* {operations
-											.filter(op => op.section === 'yesterday')
-													.map(op => (
-														<OperationTableRow
-													key={op.id}
-													op={op}
-													selectedOperations={selectedOperations}
-													toggleOperation={toggleOperation}
-													openOperationModal={openOperationModal}
-													handleEditOperation={handleEditOperation}
-													handleDeleteOperation={handleDeleteOperation}
-													handleCopyOperation={handleCopyOperation}
-												/>
-											))} */}
 									</>
 								)}
 							</tbody>

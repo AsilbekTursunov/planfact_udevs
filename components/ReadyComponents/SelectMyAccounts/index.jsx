@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
-import SingleSelect from '../../shared/Selects/SingleSelect'
+import MultiSelect from '../../shared/Selects/MultiSelect'
 
-const SelectMyAccounts = ({ value, onSelect, placeholder = "Выберите счет", className, dropdownClassName }) => {
+const SelectMyAccounts = ({ value = [], onChange, placeholder = "Выберите счет", className, dropdownClassName }) => {
 
   const { data: accountsData, isLoading } = useUcodeRequestQuery({
     method: "get_my_accounts",
@@ -23,10 +23,10 @@ const SelectMyAccounts = ({ value, onSelect, placeholder = "Выберите с�
   }
 
   return (
-    <SingleSelect
+    <MultiSelect
       data={mappedData}
       value={value}
-      onChange={onSelect}
+      onChange={onChange}
       placeholder={placeholder}
       className={className}
       dropdownClassName={dropdownClassName}

@@ -445,7 +445,7 @@ const OperationModal = observer(({
 			toAmount: '0',
 			// For accrual
 			accrualDate: new Date().toISOString().split('T')[0],
-			confirmAccrual: defaultDealGuid && activeTab === 'payment' ? true : false, // Включен по умолчанию
+			confirmAccrual: true, // Включен по умолчанию
 			legalEntity: null,
 			expenseItem: null,
 			cashMethod: true,

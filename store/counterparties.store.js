@@ -9,7 +9,7 @@ class CounterpartiesStore {
     selectedCounterparties: [],
     selectedChartOfAccounts: [],
     operationDateStart: "",
-    calculationMethod: "Cashflow", 
+    calculationMethod: "Cashflow",
     dateRange: null,
     deals: []
   }
@@ -19,6 +19,14 @@ class CounterpartiesStore {
     calculationMethod: "Cashflow",
     dateRange: null,
     deals: []
+  }
+
+  operationFilters = {
+    page: 1,
+    limit: 50,
+    legalEntities: [],
+    chartOfAccounts: [],
+    sellingDeals: []
   }
 
   constructor() {
@@ -39,6 +47,10 @@ class CounterpartiesStore {
     if (typeof window !== 'undefined') {
       localStorage.setItem('counterpartiesFilters', JSON.stringify(this.filters))
     }
+  }
+
+  setOperationFilters = (newFilters) => {
+    this.operationFilters = { ...this.operationFilters, ...newFilters }
   }
 
   setSingleCounterpartyFilters = (newFilters) => {

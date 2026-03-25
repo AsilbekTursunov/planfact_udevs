@@ -24,10 +24,10 @@ const mapNode = (item, type) => {
   const isDisabled = NOT_SELECTABLE.has(item.nazvanie)
 
   return item?.nazvanie === type ? null : {
-    value: item.guid || item.chart_of_accounts_id_2,
+    value: item.guid || item.chart_of_accounts_id_2 || item.id || `fallback-key-${Math.random().toString(36).substring(2, 9)}`,
     label: item.nazvanie,
     bold: isDisabled,
-    children: item.children?.map(child => mapNode(child, type)) || []
+    children: item.children?.map(child => mapNode(child, type)).filter(Boolean) || []
   }
 }
 
@@ -36,6 +36,7 @@ const mapTree = (data, type) => {
   return data
     ?.filter(item => !type || item.nazvanie !== type)
     .map(item => mapNode(item, type))
+    .filter(Boolean)
 }
 
 const MultiSelectStatiya = ({ value = [], onChange, placeholder = 'Выберите статьи', className, type = "", dropdownClassName }) => {

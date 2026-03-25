@@ -1,7 +1,5 @@
 'use client'
 import React from 'react'
-import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
-import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
@@ -12,6 +10,8 @@ import { cn } from '@/app/lib/utils'
 import styles from '../../OperationModal.module.scss'
 import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
+import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
+import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 
 const PaymentForm = ({
   // form state
@@ -27,14 +27,9 @@ const PaymentForm = ({
   showStatya,
   // data
   bankAccounts,
-  counterAgentsTree,
-  chartOfAccountsTree,
   formattedDeals,
-  counterAgents,
   // loading
   loadingBankAccounts,
-  isLoadingGroups,
-  loadingChartOfAccounts,
   // split
   rows,
   dispatch,
@@ -142,8 +137,6 @@ const PaymentForm = ({
           <div className={styles.fieldWrapper}>
             <SplitAmount
               amount={formData?.amount}
-              counterAgents={counterAgents}
-              chartOfAccountsOptions={chartOfAccountsTree}
               onChange={setdivivedAmounts}
               rows={rows}
               modalType='payment'
@@ -192,13 +185,11 @@ const PaymentForm = ({
       {!showAgent && (
         <div className={styles.formRow}>
           <label className={styles.label}>Контрагент</label>
-          <TreeSelect
-            data={counterAgentsTree}
+          <SingleCounterParty
             value={formData.counterparty}
             onChange={value => setFormData({ ...formData, counterparty: value })}
             placeholder='Выберите контрагента...'
-            className='flex-1'
-            loading={isLoadingGroups}
+            className='flex-1 bg-white'
             disabled={disableCounterpartySelect}
           />
         </div>

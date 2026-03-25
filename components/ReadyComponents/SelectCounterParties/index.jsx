@@ -17,13 +17,15 @@ const SelectCounterParties = ({ value = [], onChange, placeholder = "Выбер�
     }))
   }, [counterpartiesFilterData])
 
+  const actualPlaceholder = isLoading ? "Загрузка..." : placeholder;
+
   return (
     <MultiSelect
       data={counterpartiesOptions}
       value={value}
       onChange={onChange}
       className={className}
-      placeholder={isLoading ? "Загрузка..." : placeholder}
+      placeholder={actualPlaceholder}
       dropdownClassName={dropdownClassName}
     />
   )
