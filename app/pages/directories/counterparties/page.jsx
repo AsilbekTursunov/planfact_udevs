@@ -33,6 +33,7 @@ const calculationOptions = [
 
 import counterpartiesStore from '@/store/counterparties.store'
 import { observer } from 'mobx-react-lite'
+import MultiSelectZdelka from '../../../../components/ReadyComponents/MultiZdelka'
 
 const CounterpartiesPage = observer(() => {
 
@@ -121,6 +122,7 @@ const CounterpartiesPage = observer(() => {
     calculationMethod: filters.calculationMethod,
     contrAgentId: filters.selectedCounterparties,
     operationCategoryId: filters.selectedChartOfAccounts,
+    deals: filters.deals,
     searchString: viewMode === 'list' ? debouncedSearchQuery : '',
   }, true) // Always enable the query
 
@@ -480,6 +482,11 @@ const CounterpartiesPage = observer(() => {
               value={filters.selectedChartOfAccounts}
               onChange={(values) => setFilters(prev => ({ ...prev, selectedChartOfAccounts: values }))}
               placeholder="Выберите статьи учета"
+              dropdownClassName="w-64"
+            />
+            <MultiSelectZdelka
+              value={filters.deals}
+              onChange={(values) => setFilters(prev => ({ ...prev, deals: values }))}
               dropdownClassName="w-64"
             />
           </div>

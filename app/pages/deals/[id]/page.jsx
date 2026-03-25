@@ -62,11 +62,11 @@ export default observer(function DealDetailPage() {
 
   const deal = {
     guid: dealId,
-    name: summeryCards?.Nazvanie,
-    sale_date: summeryCards?.Data_sdelki,
-    counterparties_id: summeryCards?.counterparty_id,
+    name: summeryCards?.name,
+    sale_date: summeryCards?.sale_date,
+    counterparties_id: summeryCards?.counterparties_id,
     nds: summeryCards?.nds,
-    commentary: summeryCards?.Kommentariy
+    commentary: summeryCards?.commentary
   }
 
 
@@ -274,7 +274,7 @@ export default observer(function DealDetailPage() {
                 className="text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer flex items-center gap-1 group"
                 onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
               >
-                {formatDateFormat(summeryCards?.Data_sdelki)}
+                {summeryCards?.counterparties_name}
                 <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
               </span>
             </div>

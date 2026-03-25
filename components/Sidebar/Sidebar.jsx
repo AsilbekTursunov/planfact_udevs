@@ -25,8 +25,8 @@ const navItems = [
         href: '/pages/reports',
         hasPage: true,
         submenu: [
-            { label: 'Движение денег (ДДС)', href: '/pages/reports/cashflow', hasPage: true },
-            { label: 'Прибыли и убытки (P&L)', href: '/pages/reports/profit-and-loss', hasPage: true },
+            { label: 'Движение денег (ДД)', href: '/pages/reports/cashflow', hasPage: true },
+            { label: 'Прибыли и убытки (П&У)', href: '/pages/reports/profit-and-loss', hasPage: true },
             { label: 'Баланс', href: '/pages/reports/balance', hasPage: true }
         ]
     },

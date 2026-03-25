@@ -4,6 +4,8 @@ import { makePersistable } from 'mobx-persist-store'
 class SealDeal {
   // single deal Методом начисления || Кассовым методом
   accounting = 'accrual' // accrual || cash
+  // deals list page filter my method
+  dealsMethod = 'accrual_method' // accrual_method || cash_method
 
   // deals page filters
   filters = {

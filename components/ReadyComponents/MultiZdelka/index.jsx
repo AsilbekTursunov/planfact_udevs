@@ -1,0 +1,45 @@
+'use client'
+import React, { useMemo } from 'react'
+import { useUcodeRequestQuery } from '@/hooks/useDashboard'
+import MultiSelect from '../../shared/Selects/MultiSelect'
+
+const MultiSelectZdelka = ({
+  value = [],
+  onChange = () => { },
+  placeholder = 'Выберите сделки',
+  className,
+  dropdownClassName
+}) => {
+  const { data: deals, isLoading } = useUcodeRequestQuery({
+    method: "get_sales_list_simple",
+    data: {
+      page: 1,
+      limit: 100,
+    },
+    querySetting: {
+      select: (response) => response?.data?.data?.data
+    }
+  })
+
+  const options = useMemo(() => {
+    if (!deals || !Array.isArray(deals)) return []
+
+    return deals.map(deal => ({
+      value: deal.guid,
+      label: deal?.Nazvanie || 'Без названия'
+    }))
+  }, [deals])
+
+  return (
+    <MultiSelect
+      data={options}
+      value={Array.isArray(value) ? value : []}
+      onChange={onChange}
+      placeholder={isLoading ? "Загрузка..." : placeholder}
+      className={className}
+      dropdownClassName={dropdownClassName}
+    />
+  )
+}
+
+export default MultiSelectZdelka

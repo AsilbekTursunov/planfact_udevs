@@ -99,6 +99,7 @@ const IncomeOperationsTable = ({ sellingDealId, onAdd }) => {
       setIsDeleteModalOpen(false)
       setOperationToDelete(null)
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['find_operations'] })
     } catch (error) {
       console.error('Error deleting operation:', error)
     }

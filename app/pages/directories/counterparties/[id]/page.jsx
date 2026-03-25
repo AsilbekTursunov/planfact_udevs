@@ -23,6 +23,7 @@ import { formatDateRu } from '../../../../../utils/helpers'
 import OperationTableRow from '../../../../../components/operations/TableRow'
 import { observer } from 'mobx-react-lite'
 import counterpartiesStore from '@/store/counterparties.store'
+import MultiSelectZdelka from '../../../../../components/ReadyComponents/MultiZdelka'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -87,8 +88,11 @@ const KontragentDetailPage = observer(() => {
       operationDateStart: filters.operationDateStart,
       operationDateEnd: filters.operationDateEnd,
       calculationMethod: filters.calculationMethod,
+      legal_entity_id: selectedLegalEntities,
+      chart_of_accounts_id: selectedChartOfAccounts,
+      deals: filters.deals,
     }
-  }, [counterpartyGuid, filters.operationDateStart, filters.operationDateEnd, filters.calculationMethod])
+  }, [counterpartyGuid, filters.operationDateStart, filters.operationDateEnd, filters.calculationMethod, selectedLegalEntities, selectedChartOfAccounts, filters.deals])
 
   // Fetch counterparty data by GUID using get_counterparty_by_id
   const { data: counterpartyData, isPending: isLoadingCounterparty } = useUcodeRequestQuery({
@@ -898,6 +902,13 @@ const KontragentDetailPage = observer(() => {
                       grouped
                       placeholder="Статьи"
                       valueKey="value"
+                    />
+                  </div>
+                  <div className={styles.filterGroup}>
+                    <MultiSelectZdelka
+                      value={filters.deals}
+                      onChange={(values) => setFilters(prev => ({ ...prev, deals: values }))}
+                      placeholder="Сделки"
                     />
                   </div>
                 </div>

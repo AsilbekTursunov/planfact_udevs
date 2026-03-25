@@ -9,16 +9,16 @@ class CounterpartiesStore {
     selectedCounterparties: [],
     selectedChartOfAccounts: [],
     operationDateStart: "",
-    operationDateEnd: "",
     calculationMethod: "Cashflow",
-    dateRange: null
+    dateRange: null,
+    deals: []
   }
 
   filtersingleCounterparty = {
     operationDateStart: "",
-    operationDateEnd: "",
     calculationMethod: "Cashflow",
-    dateRange: null
+    dateRange: null,
+    deals: []
   }
 
   constructor() {
@@ -55,7 +55,8 @@ class CounterpartiesStore {
       operationDateStart: "",
       operationDateEnd: "",
       calculationMethod: "Cashflow",
-      dateRange: null
+      dateRange: null,
+      deals: []
     }
   }
 

@@ -70,7 +70,7 @@ export default observer(function DealsPage() {
       amount_to: Number(filters?.amountTo) || null,
       profit_from: Number(filters?.profitFrom) || null,
       profit_to: Number(filters?.profitTo) || null,
-      partners_id: filters?.selectedCounterparties?.length > 0 ? filters.selectedCounterparties[0] : null,
+      partners_id: filters?.selectedCounterparties?.length > 0 ? filters.selectedCounterparties : null,
       status: filters?.status || [],
       isCalculation: filters?.isCalculation || false,
     }
@@ -85,7 +85,7 @@ export default observer(function DealsPage() {
     }
   })
 
-
+  console.log('deals', deals)
 
   const { mutate: deleteDeal, isPending: isDeletingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'delete-deal' });
 
@@ -97,11 +97,11 @@ export default observer(function DealsPage() {
       data_nachala: deal.Data_sdelki,
       nazvanie: deal.Nazvanie,
       kontragent: { nazvanie: deal.partner_name || '-' },
-      status: deal.Status?.[0] || 'New',
+      status: deal.Status?.[0] || 'Новая',
       summa_sdelki: deal?.total_products_summa || 0,
       postupilo: deal?.receipts_percentage ? `${Math.round(deal.receipts_percentage)}%` : '0%',
       otgruzheno: deal?.shipments_percentage ? `${Math.round(deal.shipments_percentage)}%` : '0%',
-      pribyl: deal?.profit || 0,
+      pribyl: deal?.profit,
       comment: deal?.Kommentariy
     }));
   }, [deals]);
@@ -218,12 +218,12 @@ export default observer(function DealsPage() {
             <div className="w-44">
               <SingleSelect
                 data={[
-                  { value: 'accrual', label: 'Метод начисления' },
-                  { value: 'cash', label: 'Кассовый метод' },
+                  { value: 'accrual_method', label: 'Метод начисления' },
+                  { value: 'cash_method', label: 'Кассовый метод' },
                 ]}
                 withSearch={false}
-                value={sealDeal.accounting}
-                onChange={(value) => sealDeal.setState('accounting', value)}
+                value={sealDeal.dealsMethod}
+                onChange={(value) => sealDeal.setState('dealsMethod', value)}
                 className='bg-white'
               />
             </div>
@@ -276,55 +276,60 @@ export default observer(function DealsPage() {
               </tr>
             </thead>
             <tbody>
-              {formattedDeals?.map(deal => (
-                <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 group cursor-pointer'>
-                  <td className="w-10" onClick={(e) => e.stopPropagation()}>
-                    <OperationCheckbox
-                      checked={selectedDeals.has(deal.guid)}
-                      onChange={(e) => handleSelectOne(deal.guid, e)}
-                    />
-                  </td>
-                  <td className='p-0!'>
-                    <div className="text-start p-2">
-                      <div>{formatDateFormat(deal.Data_sdelki)}</div>
-                      {/* {deal.data_okonchaniya && <div className={styles.dateEnd}>{formatDateFormat(deal.data_okonchaniya)}</div>} */}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="flex flex-col">
-                      <p>{deal.nazvanie}</p>
-                      <p className='text-xs text-neutral-400'>{deal.comment}</p>
-                    </div>
-                  </td>
-                  <td>{deal?.partner_name || '-'}</td>
-                  <td>
-                    <span className={`${styles.status} ${styles[`status_${deal.status}`]}`}>
-                      {deal?.status || '-'}
-                    </span>
-                  </td>
-                  <td>{formatAmount(deal.summa_sdelki)}</td>
-                  <td>{deal.postupilo || '0%'}</td>
-                  <td>{deal.otgruzheno || '0%'}</td>
-                  <td className='relative  text-end w-32'>
-                    <div className='group-hover:hidden'>
-                      {formatAmount(deal.pribyl)}
-                    </div>
-                    <div className='hidden group-hover:flex justify-end'>
-                      <div className="flex items-center gap-2 ">
-                        <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Редактировать" onClick={(e) => handleEditClick(deal, e)}>
-                          <MdOutlineModeEdit size={14} color='#686868' />
-                        </button>
-                        <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Скопировать" onClick={(e) => handleCopyClick(deal, e)}>
-                          <IoCopyOutline size={14} color='#686868' />
-                        </button>
-                        <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Удалить" onClick={(e) => handleDeleteClick(deal, e)}>
-                          <IoCloseOutline size={14} color='#686868' />
-                        </button>
+              {formattedDeals?.map(deal => {
+                const price = sealDeal.dealsMethod === 'accrual_method' ? deal?.accrual_method?.profit : deal?.cash_method?.profit
+                return (
+                  <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 group cursor-pointer'>
+                    <td className="w-10" onClick={(e) => e.stopPropagation()}>
+                      <OperationCheckbox
+                        checked={selectedDeals.has(deal.guid)}
+                        onChange={(e) => handleSelectOne(deal.guid, e)}
+                      />
+                    </td>
+                    <td className='p-0!'>
+                      <div className="text-start p-2">
+                        <div>{formatDateFormat(deal.Data_sdelki)}</div>
+                        {/* {deal.data_okonchaniya && <div className={styles.dateEnd}>{formatDateFormat(deal.data_okonchaniya)}</div>} */}
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td>
+                      <div className="flex flex-col">
+                        <p>{deal.nazvanie}</p>
+                        <p className='text-xs text-neutral-400'>{deal.comment}</p>
+                      </div>
+                    </td>
+                    <td>{deal?.partner_name || '-'}</td>
+                    <td>
+                      <span className={`${styles.status} ${styles[`status_${deal.status}`]}`}>
+                        {deal?.status || '-'}
+                      </span>
+                    </td>
+                    <td>{formatAmount(deal.summa_sdelki)}</td>
+                    <td>{deal.postupilo || '0%'}</td>
+                    <td>{deal.otgruzheno || '0%'}</td>
+                    <td className='relative  text-end'>
+                      <div className='group-hover:hidden'>
+                        <p className={`${price < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {formatAmount(price)}
+                        </p>
+                      </div>
+                      <div className='hidden group-hover:flex justify-end'>
+                        <div className="flex items-center ">
+                          <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Редактировать" onClick={(e) => handleEditClick(deal, e)}>
+                            <MdOutlineModeEdit size={14} color='#686868' />
+                          </button>
+                          <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Скопировать" onClick={(e) => handleCopyClick(deal, e)}>
+                            <IoCopyOutline size={14} color='#686868' />
+                          </button>
+                          <button className="hover:bg-neutral-100 rounded-full p-2 cursor-pointer" title="Удалить" onClick={(e) => handleDeleteClick(deal, e)}>
+                            <IoCloseOutline size={14} color='#686868' />
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

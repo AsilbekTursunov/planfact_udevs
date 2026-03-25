@@ -4,14 +4,12 @@ import { cn } from "@/app/lib/utils"
 import { observer } from 'mobx-react-lite'
 import { sealDeal } from '@/store/saleDeal.store'
 import debounce from 'lodash/debounce'
-import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
-import { useCounterpartiesPlanFact } from '@/hooks/useDashboard'
 import { formatDate } from '@/utils/formatDate'
 import Input from "../../shared/Input"
-import { returnNumber } from "../../../utils/helpers"
 import SingleSelect from "../../shared/Selects/SingleSelect"
 import SelectCounterParties from "../../ReadyComponents/SelectCounterParties"
+import { formatAmount } from "../../../utils/helpers"
 
 const statusOptions = [
   { value: 'Новая', label: 'Новая' },
@@ -22,21 +20,6 @@ const statusOptions = [
 const FilterSidebar = observer(() => {
   const [isOpen, setIsOpen] = useState(true)
 
-  // Fetch counterparties specifically for filter dropdowns (unfiltered)
-  const { data: counterpartiesFilterData } = useCounterpartiesPlanFact({
-    page: 1,
-    limit: 1000,
-  })
-
-  // Prepare options for filters using unfiltered counterparties
-  const counterpartiesOptions = useMemo(() => {
-    const items = counterpartiesFilterData?.data?.data?.data || []
-    if (!items || items.length === 0) return []
-    return items.map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия'
-    }))
-  }, [counterpartiesFilterData])
 
   const filters = sealDeal.filters
 
@@ -76,7 +59,7 @@ const FilterSidebar = observer(() => {
       ...sealDeal.filters,
       [field]: value
     }
-  }
+  } 
 
   return (
     <div className={cn("bg-neutral-100 transition-all duration-300 min-h-dvh border-r border-neutral-200", isOpen ? "w-64 p-3" : " px-2 pt-3")}>
@@ -121,7 +104,7 @@ const FilterSidebar = observer(() => {
           <div className="flex flex-col gap-1.5">
             {/* <p className="text-neutral-600 text-xs font-medium">Контрагенты</p> */}
             <SelectCounterParties
-              onChange={(values) => {}}
+              onChange={(values) => sealDeal.setState('filters', { ...filters, selectedCounterparties: values })}
               placeholder="Выберите контрагентов"
               value={filters.selectedCounterparties}
             />
@@ -148,52 +131,56 @@ const FilterSidebar = observer(() => {
 
           {/* Amount Borders Selectors */}
           <div className="flex flex-col gap-1.5">
-            {/* <p className="text-neutral-600 text-xs font-medium">Сумма сделки</p> */}
+            <p className="text-neutral-600 text-xs font-medium">Сумма сделки</p>
             <div className="flex items-center gap-1.5">
               <Input
                 type="text"
                 placeholder="От"
-                value={localAmountFrom}
+                value={localAmountFrom ? formatAmount(localAmountFrom) : localAmountFrom}
                 onChange={e => {
                   setLocalAmountFrom(e.target.value)
                   debouncedUpdateFilters('amountFrom', e.target.value)
                 }}
+                className="h-8!"
               />
               <span className="text-neutral-400 font-light">-</span>
               <Input
                 type="text"
                 placeholder="До"
-                value={localAmountTo}
+                value={localAmountTo ? formatAmount(localAmountTo) : localAmountTo}
                 onChange={e => {
                   setLocalAmountTo(e.target.value)
                   debouncedUpdateFilters('amountTo', e.target.value)
                 }}
+                className="h-8!"
               />
             </div>
           </div>
 
           {/* Profit Borders Selectors */}
           <div className="flex flex-col gap-1.5">
-            {/* <p className="text-neutral-600 text-xs font-medium">Прибыль сделки</p> */}
+            <p className="text-neutral-600 text-xs font-medium">Прибыль сделки</p>
             <div className="flex items-center gap-1.5">
               <Input
                 type="text"
                 placeholder="От"
-                value={localProfitFrom}
+                value={localProfitFrom ? formatAmount(localProfitFrom) : localProfitTo}
                 onChange={e => {
                   setLocalProfitFrom(e.target.value)
                   debouncedUpdateFilters('profitFrom', e.target.value)
                 }}
+                className="h-8!"
               />
               <span className="text-neutral-400 font-light">-</span>
               <Input
                 type="text"
                 placeholder="До"
-                value={localProfitTo}
+                value={localProfitTo ? formatAmount(localProfitTo) : localProfitTo}
                 onChange={e => {
                   setLocalProfitTo(e.target.value)
                   debouncedUpdateFilters('profitTo', e.target.value)
                 }}
+                className="h-8!"
               />
             </div>
           </div>
