@@ -6,6 +6,7 @@ import { cn } from '@/app/lib/utils'
 import styles from '../Header.module.scss'
 import { formatDateTime } from '../../../utils/formatDate'
 import { useMyAccountsBoard } from '../../../hooks/useDashboard'
+import { formatAmount } from '../../../utils/helpers'
 
 const TotalPrice = () => {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false)
@@ -114,7 +115,7 @@ const TotalPrice = () => {
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div className={styles.balanceDot}></div>
-                            <span className={styles.balanceText}>На счетах {totalBalance.toLocaleString('ru-RU')} <span className={styles.balanceCurrency}>₽</span></span>
+                            <span className={styles.balanceText}>На счетах {formatAmount(totalBalance)} <span className={styles.balanceCurrency}>₽</span></span>
                             <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
                         </div>
                         <div className={styles.balanceSubtext} style={{ marginLeft: '17px', color: '#fbbf24' }}>
@@ -177,7 +178,7 @@ const TotalPrice = () => {
                                             </div>
                                             {acc?.balance && (
                                                 <span className={styles.balanceAccountValue} style={{ fontSize: '14px', color: '#334155' }}>
-                                                    {acc?.balance} <span className={styles.balanceAccountCurrency} style={{ color: '#94a3b8' }}>{acc?.currency?.toLocaleString('ru-RU')}</span>
+                                                    {formatAmount(acc?.balance)} <span className={styles.balanceAccountCurrency} style={{ color: '#94a3b8' }}>{acc?.currency?.toLocaleString('ru-RU')}</span>
                                                 </span>
                                             )}
                                         </div>
@@ -233,7 +234,7 @@ const TotalPrice = () => {
                                             <div className={styles.balanceGroupHeaderInner}>
                                                 <span className={styles.balanceGroupName}>{group?.name} ({group?.total_items})</span>
                                                 <div className={styles.balanceGroupValue}>
-                                                    <span className={styles.balanceGroupValueText}>{group?.balance?.toLocaleString('ru-RU')} <span className={styles.balanceGroupValueCurrency}>₽</span></span>
+                                                    <span className={styles.balanceGroupValueText}>{formatAmount(group?.balance)} <span className={styles.balanceGroupValueCurrency}>₽</span></span>
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();

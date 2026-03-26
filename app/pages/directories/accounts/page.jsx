@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { FilterSidebar, FilterSection, FilterCheckbox } from '@/components/directories/FilterSidebar/FilterSidebar'
+import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
 import { DropdownFilter } from '@/components/directories/DropdownFilter/DropdownFilter'
 import { useDeleteMyAccounts, useBankAccountsPlanFact, useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
 import CreateMyAccountModal from '@/components/directories/CreateMyAccountModal/CreateMyAccountModal'

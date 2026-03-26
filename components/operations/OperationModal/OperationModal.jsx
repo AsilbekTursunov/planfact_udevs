@@ -305,8 +305,8 @@ const OperationModal = observer(({
 
 	// console.log('operationData', operationData)
 
-	// Current active tab
-	const type = operationData?.typeLabel == 'Начисление' ? 'accrual' : operationData?.typeLabel == 'Поступление' ? 'income' : operationData?.typeLabel == 'Перемещение' ? 'transfer' : operationData?.typeLabel == 'Выплата' ? 'payment' : (initialTab || 'income')
+	// Current active tab 
+	const type = operationData?.tip == 'Начисление' ? 'accrual' : operationData?.tip == 'Поступление' ? 'income' : operationData?.tip == 'Перемещение' ? 'transfer' : operationData?.tip == 'Выплата' ? 'payment' : (initialTab || 'income')
 	const [activeTab, setActiveTab] = useState(type)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false)
@@ -964,6 +964,8 @@ const OperationModal = observer(({
 			queryClient.invalidateQueries({ queryKey: ['find_operations'] })
 			queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
 			queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+			queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
+			queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
 
 
 			onClose()

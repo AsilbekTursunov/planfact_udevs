@@ -30,10 +30,13 @@ export default observer(function CashFlowReportPage() {
   const [selectedMonth, setSelectedMonth] = useState(null)
 
 
-
   const { reportData: cashFlowData, isLoading, isFetching } = cashFlowStore
   const loading = isLoading || isFetching
  
+  // Refetch data every time user enters the page
+  useEffect(() => {
+    cashFlowStore.fetchReport()
+  }, [])
 
   // Extract months from legend
   const months = useMemo(() => {

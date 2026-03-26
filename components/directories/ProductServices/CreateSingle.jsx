@@ -26,7 +26,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
   const { data: units, } = useUcodeDefaultApiQuery({
     queryKey: "get_product_services_units",
     urlMethod: "GET",
-    urlParams: "/items/units_of_measurement",
+    urlParams: "/items/units_of_measurement?from-ofs=true&data=%7B%22offset%22%3A0%2C%22limit%22%3A100%7D",
     querySetting: {
       select: data => data?.data?.data?.response
     }
@@ -35,7 +35,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
   const { data: groups } = useUcodeDefaultApiQuery({
     queryKey: "get_product_services_groups",
     urlMethod: "GET",
-    urlParams: "/items/group_product_and_service",
+    urlParams: "/items/group_product_and_service?from-ofs=true&data=%7B%22offset%22%3A0%2C%22limit%22%3A100%7D",
     querySetting: {
       select: data => data?.data?.data?.response
     }

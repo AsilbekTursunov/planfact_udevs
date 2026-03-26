@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { dashboardAPI } from '@/lib/api/dashboard'
 import { chartOfAccountsAPI } from '@/lib/api/ucode/chartOfAccounts'
 import { ucodeRequest, defaultUcodeApiRequest } from '@/lib/api/ucode/base'
@@ -1300,6 +1300,27 @@ export const useUcodeRequestQuery = ({ method, data, skip = false, querySetting 
     refetchOnMount: 'always',
     staleTime: 0,
     refetchOnWindowFocus: true,
+  })
+}
+
+/**
+ * Universal useUcodeRequestInfinite globally accessible
+ */
+export const useUcodeRequestInfinite = ({ method, data, skip = false, querySetting = {} }) => {
+  return useInfiniteQuery({
+    queryKey: [method, data],
+    queryFn: ({ pageParam = 1 }) => ucodeRequest({ method, data: { ...data, page: pageParam } }),
+    getNextPageParam: (lastPage) => {
+      const pagination = lastPage?.data?.data?.pagination || lastPage?.data?.pagination;
+      if (!pagination) return undefined;
+      return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
+    },
+    enabled: !skip,
+    onError: (error) => {
+      console.error('useUcodeRequestInfinite Error:', error)
+      showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
+    },
+    ...querySetting,
   })
 }
 

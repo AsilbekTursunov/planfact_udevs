@@ -5,7 +5,7 @@ import { cn } from '@/app/lib/utils'
 import {
 	useCounterpartiesGroupsPlanFact,
 	useLegalEntitiesPlanFact,
-	useOperationsList,
+	useUcodeRequestInfinite,
 	useDeleteOperation,
 	useChartOfAccountsPlanFact,
 } from '@/hooks/useDashboard'
@@ -128,10 +128,6 @@ export default function OperationsPage() {
 
 
 	// Pagination state
-	const [page, setPage] = useState(1)
-	const [hasMore, setHasMore] = useState(true)
-	const [allOperations, setAllOperations] = useState([])
-	const [isLoadingMore, setIsLoadingMore] = useState(false)
 	const limit = 50
 	const tableWrapperRef = useRef(null)
 
@@ -150,7 +146,6 @@ export default function OperationsPage() {
 		const endDate = safeFormatDate(selectedDatePaymentRange?.end)
 
 		return {
-			page: page,
 			limit: limit,
 			...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
 			...(startDate && endDate && {
@@ -173,52 +168,27 @@ export default function OperationsPage() {
 			podtverzhdena: dateFilters.podtverzhdena,
 			ne_podtverzhdena: dateFilters.nePodtverzhdena,
 		}
-	}, [page, limit, debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters, paymentType])
+	}, [limit, debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters, paymentType])
 
-	const { data: operationsListData, isLoading: isLoadingOperations, isFetching } = useOperationsList(requestOperationFilters)
-
-
-	// Reset pagination when filters change
-	useEffect(() => {
-		setPage(1)
-		setHasMore(true)
-		setAllOperations([])
-	}, [debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters, paymentType])
-
-	// Update operations when new data arrives
-	useEffect(() => {
-		if (operationsListData?.data?.data?.data !== undefined) {
-			const newOps = operationsListData.data.data.data || []
-
-			if (page === 1) {
-				// First page - replace all operations (even if empty)
-				setAllOperations(newOps)
-			} else {
-				// Only update if we actually have new data for appended pages
-				if (newOps.length === 0) {
-					setHasMore(false)
-					setIsLoadingMore(false)
-					return
-				}
-				// Subsequent pages - append to existing operations
-				setAllOperations(prev => {
-					// Avoid duplicates by checking if operations already exist
-					const existingGuids = new Set(prev.map(op => op.guid))
-					const uniqueNewOps = newOps.filter(op => !existingGuids.has(op.guid))
-
-					// Only append if we have new unique operations
-					if (uniqueNewOps.length > 0) {
-						return [...prev, ...uniqueNewOps]
-					}
-					return prev
-				})
-			}
-
-			// Check if there are more pages
-			setHasMore(newOps.length === limit)
-			setIsLoadingMore(false)
+	const {
+		data: infiniteData,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+		isLoading: isLoadingOperations,
+		isFetching
+	} = useUcodeRequestInfinite({
+		method: 'find_operations',
+		data: requestOperationFilters,
+		querySetting: {
+			select: (response) => response
 		}
-	}, [operationsListData, page, limit])
+	})
+
+	const allOperations = useMemo(() => {
+		console.log('infite response', infiniteData?.pages?.[0]?.data?.data)
+		return infiniteData?.pages?.flatMap(page => page?.data?.data?.data || []) || []
+	}, [infiniteData])
 
 	// Infinite scroll handler
 	useEffect(() => {
@@ -228,17 +198,16 @@ export default function OperationsPage() {
 		const handleScroll = () => {
 			const { scrollTop, scrollHeight, clientHeight } = tableWrapper
 			// Load more when scrolled to the bottom (with small threshold)
-			const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10
+			const isAtBottom = scrollTop + clientHeight >= scrollHeight - 30
 
-			if (isAtBottom && hasMore && !isLoadingOperations && !isLoadingMore) {
-				setIsLoadingMore(true)
-				setPage(prev => prev + 1)
+			if (isAtBottom && hasNextPage && !isLoadingOperations && !isFetchingNextPage) {
+				fetchNextPage()
 			}
 		}
 
 		tableWrapper.addEventListener('scroll', handleScroll)
 		return () => tableWrapper.removeEventListener('scroll', handleScroll)
-	}, [hasMore, isLoadingOperations, isLoadingMore])
+	}, [hasNextPage, isLoadingOperations, isFetchingNextPage, fetchNextPage])
 
 
 	// Extract and transform data from API responses - use groups with children
@@ -259,138 +228,12 @@ export default function OperationsPage() {
 
 
 
-	// Transform operations data for display
-	const operations = useMemo(() => {
-		if (!allOperations || allOperations.length === 0) return []
-
-		const today = new Date()
-		today.setHours(0, 0, 0, 0)
-
-		return allOperations.map((item, index) => {
-			const operationDate = item.data_operatsii ? new Date(item.data_operatsii) : null
-			const accrualDate = item.data_nachisleniya ? new Date(item.data_nachisleniya) : null
-
-			// operation_parts
-
-			// Determine section based on date
-			let section = 'yesterday'
-			if (operationDate) {
-				const opDate = new Date(operationDate)
-				opDate.setHours(0, 0, 0, 0)
-				const diffTime = today - opDate
-				const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-				if (diffDays === 0) {
-					section = 'today'
-				} else if (diffDays === 1) {
-					section = 'yesterday'
-				}
-			}
-
-			// Determine operation type from tip array
-			let type = 'out'
-			let typeLabel = 'Выплата'
-			if (item.tip && Array.isArray(item.tip)) {
-				if (item.tip.includes('Поступление')) {
-					type = 'in'
-					typeLabel = 'Поступление'
-				} else if (item.tip.includes('Перемещение')) {
-					type = 'transfer'
-					typeLabel = 'Перемещение'
-				} else if (item.tip.includes('Начисление')) {
-					type = 'transfer'
-					typeLabel = 'Начисление'
-				} else if (item.tip.includes('Выплата')) {
-					type = 'out'
-					typeLabel = 'Выплата'
-				} else {
-					// Use first type from array
-					typeLabel = item.tip[0] || 'Выплата'
-				}
-			}
-
-
-			// Format amount
-			const amount = item.summa || 0
-			const amountFormatted = amount.toLocaleString('ru-RU')
-
-			// Get type text from tip array
-			const typeText = typeLabel
-
-			return {
-				id: item.guid || index,
-				guid: item.guid,
-				type: typeText,
-				typeCategory: type, // 'in', 'out', 'transfer'
-				typeLabel: typeLabel,
-				accrualDate: formatDateRu(accrualDate),
-				operationDate: formatDateRu(operationDate),
-				paymentConfirmed: item.oplata_podtverzhdena,
-				payment_confirmed: item.payment_confirmed !== undefined
-					? item.payment_confirmed
-					: (item.oplata_podtverzhdena !== undefined ? item.oplata_podtverzhdena : false),
-				payment_accrual: item.payment_accrual !== undefined
-					? item.payment_accrual
-					: false,
-				amount: amountFormatted,
-				amountRaw: amount,
-				currency: item.currenies_kod || item.currenies_id_data?.nazvanie || '',
-				currencyId: item.currenies_id || null,
-				description: item.opisanie || '',
-				chartOfAccounts: item.chart_of_accounts_id_data?.nazvanie || item.chart_of_accounts_name || '',
-				chartOfAccountsId: item.chart_of_accounts_id || null,
-				bankAccount: item.my_accounts_name || '',
-				bankAccount2: item.my_accounts_name_2 || '',
-				bankAccountId: item.my_accounts_id || null,
-				counterparty: item.counterparties_name || '',
-				counterpartyId: item.counterparties_id || null,
-				createdAt: formatDate(item.data_sozdaniya ? new Date(item.data_sozdaniya) : null),
-				createdAtRaw: item.data_sozdaniya,
-				updatedAt: formatDate(item.data_obnovleniya ? new Date(item.data_obnovleniya) : null),
-				updatedAtRaw: item.data_obnovleniya,
-				section: section,
-				rawData: item,
-				operationParts: item.operation_parts?.map(part => ({
-					...part,
-					tip: part.tip?.[0],
-					typeCategory: part.tip?.[0] === 'Поступление' ? 'in' : part.tip?.[0] === 'Выплата' ? 'out' : 'transfer',
-					amount: part?.summa?.toLocaleString('ru-RU'),
-					amountFormatted: part.summa.toLocaleString('ru-RU'),
-					currency: part.currenies_kod || part.currenies_id_data?.nazvanie || '',
-					currencyId: part.currenies_id || null,
-					description: part.opisanie || '',
-					chartOfAccounts: part.chart_of_accounts_id_data?.nazvanie || part.chart_of_accounts_name || '',
-					chartOfAccountsId: part.chart_of_accounts_id || null,
-					bankAccount: part.my_accounts_name || '',
-					bankAccount2: part.my_accounts_name_2 || '',
-					bankAccountId: part.my_accounts_id || null,
-					counterparty: part.counterparties_name || '',
-					counterpartyId: part.counterparties_id || null,
-					data_nachisleniya: part?.data_nachisleniya,
-					accrualDate: formatDateRu(part?.data_nachisleniya),
-					operationDate: formatDateRu(part?.data_operatsii),
-					createdAt: formatDate(part.data_sozdaniya ? new Date(part.data_sozdaniya) : null),
-					createdAtRaw: part.data_sozdaniya,
-					updatedAt: formatDate(part.data_obnovleniya ? new Date(part.data_obnovleniya) : null),
-					updatedAtRaw: part.data_obnovleniya,
-					section: section,
-					payment_confirmed: part.payment_confirmed !== undefined
-						? part.payment_confirmed
-						: (part.oplata_podtverzhdena !== undefined ? part.oplata_podtverzhdena : false),
-					payment_accrual: part.payment_accrual !== undefined
-						? part.payment_accrual
-						: false,
-				}))
-			}
-		})
-	}, [allOperations])
-
 	const operationsList = useMemo(() => {
 		return {
-			today: operationsDto(operationsListData?.data?.data?.data || [], 'today'),
-			before: operationsDto(operationsListData?.data?.data?.data || [], 'before'),
+			today: operationsDto(allOperations, 'today'),
+			before: operationsDto(allOperations, 'before'),
 		}
-	}, [operationsListData])
+	}, [allOperations])
 
 	const [isDatePaymentModalOpen, setIsDatePaymentModalOpen] = useState(false)
 	const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)
@@ -469,14 +312,14 @@ export default function OperationsPage() {
 	}
 
 	const toggleSelectAll = () => {
-		if (selectedOperations.length === operations.length) {
+		if (selectedOperations.length === allOperations.length) {
 			setSelectedOperations([])
 		} else {
-			setSelectedOperations(operations.map(op => op.id))
+			setSelectedOperations(allOperations.map(op => op.id))
 		}
 	}
 
-	const isAllSelected = operations.length > 0 && selectedOperations.length === operations.length
+	const isAllSelected = allOperations.length > 0 && selectedOperations.length === allOperations.length
 
 	const toggleExpand = id => {
 		setExpandedRows(prev =>
@@ -588,7 +431,7 @@ export default function OperationsPage() {
 			setOperationToDelete(null)
 			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
-			queryClient.invalidateQueries({ queryKey: ['operations'] })
+			queryClient.invalidateQueries({ queryKey: ['find_operations'] })
 			queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
 		} catch (error) {
 			console.error('Error deleting operation:', error)
@@ -601,13 +444,13 @@ export default function OperationsPage() {
 	}
 
 	const selectedTotal = useMemo(() => {
-		return operations
+		return allOperations
 			.filter(op => selectedOperations.includes(op.id))
 			.reduce((sum, op) => {
 				const amount = op.rawData?.summa || 0
 				return sum + amount
 			}, 0)
-	}, [operations, selectedOperations])
+	}, [allOperations, selectedOperations])
 
 	const toggleFilter = (category, key, forceValue) => {
 		if (category === 'type') {
@@ -839,7 +682,7 @@ export default function OperationsPage() {
 											</div>
 										</td>
 									</tr>
-								) : operations.length === 0 ? (
+								) : allOperations.length === 0 ? (
 									<tr className={styles.emptyRow}>
 										<td colSpan='9' className={styles.emptyCell}>
 											Нет данных
@@ -897,7 +740,7 @@ export default function OperationsPage() {
 				</div>
 
 				{/* Loading indicator at the bottom outside the table */}
-				{isLoadingMore && page > 1 && (
+				{isFetchingNextPage && (
 					<div className={styles.loadingMore}>
 						<div className={styles.loadingSpinner}></div>
 						<span>Загрузка...</span>
@@ -905,11 +748,11 @@ export default function OperationsPage() {
 				)}
 
 				{/* Footer Stats */}
-				<OperationsFooter
+				{/* <OperationsFooter
 					isFilterOpen={isFilterOpen}
 					operations={operations}
-					totalOperations={operationsListData?.data?.data?.pagination?.total || operations.length}
-				/>
+					totalOperations={infiniteData?.pages?.[0]?.data?.data?.pagination?.total || operations.length}
+				/> */}
 			</div>
 
 			{/* Right Side Modal */}
@@ -919,40 +762,9 @@ export default function OperationsPage() {
 					isClosing={isModalClosing}
 					isOpening={isModalOpening}
 					onClose={closeOperationModal}
-					onSuccess={(operationData, isUpdate) => {
-
-						if (isUpdate) {
-							// Обновляем существующую операцию в списке
-							setAllOperations(prev => {
-								console.log('Previous operations count:', prev.length)
-								const updated = prev.map(op => {
-									if (op.guid === operationData.guid) {
-										console.log('Found and updating operation:', op.guid)
-										// Создаем новый объект с обновленными данными
-										const updatedOp = {
-											...op,
-											...operationData,
-											// Убеждаемся что guid сохранен
-											guid: op.guid
-										}
-										console.log('Updated operation:', updatedOp)
-										return updatedOp
-									}
-									return op
-								})
-								console.log('Updated operations count:', updated.length)
-								return updated
-							})
-						} else {
-							// Добавляем новую операцию в начало списка
-							console.log('Adding new operation to beginning of list')
-							setAllOperations(prev => {
-								console.log('Previous operations count:', prev.length)
-								const newList = [operationData, ...prev]
-								console.log('New operations count:', newList.length)
-								return newList
-							})
-						}
+					onSuccess={() => {
+						queryClient.invalidateQueries({ queryKey: ['find_operations'] })
+						queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 					}}
 				/>
 			)}

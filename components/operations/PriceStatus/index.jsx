@@ -7,7 +7,7 @@ import { PiCurrencyKztDuotone } from 'react-icons/pi'
 import { CreditIcon, DebitIcon } from '../../../constants/icons'
 import { formatAmount } from '../../../utils/helpers'
 
-const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency, dealId }) => {
+const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency, dealId, percent }) => {
   return (
     <div
       className={cn(
@@ -39,7 +39,7 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency, dealId }
             currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
         </div>
         {/* Отгрузка */}
-      </> : `${type == 'Поступление' ? '+' : type == 'Выплата' ? '-' : ''}${formatAmount(amount)}`}
+      </> : `${type == 'Поступление' ? '+' : type == 'Выплата' ? '-' : ''}${formatAmount(amount)} ${percent ? `(${percent?.toFixed(0)}%)` : ''}`}
       </div>
       {tab != "Перемещение" && <span className={styles.currency}>{
         currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span>}

@@ -10,6 +10,7 @@ import styles from '../../OperationModal.module.scss'
 import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
 import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
+import SelectMyAccounts from '../../../../ReadyComponents/SelectMyAccounts'
 
 const IncomeForm = ({
   // form state
@@ -82,7 +83,7 @@ const IncomeForm = ({
           Счет и юрлицо <span className={styles.required}>*</span>
         </label>
         <div className={styles.fieldWrapper}>
-          <GroupedSelect
+          {/* <GroupedSelect
             data={bankAccounts}
             value={formData.accountAndLegalEntity}
             onChange={value => {
@@ -95,6 +96,17 @@ const IncomeForm = ({
             valueKey='guid'
             loading={loadingBankAccounts}
             hasError={!!errors.accountAndLegalEntity}
+          /> */}
+
+          <SelectMyAccounts
+            multi={false}
+            value={formData.accountAndLegalEntity}
+            onChange={value => {
+              setFormData({ ...formData, accountAndLegalEntity: value })
+              if (errors.accountAndLegalEntity) setErrors({ ...errors, accountAndLegalEntity: null })
+            }}
+            placeholder="Юрлица и счета"
+            className={"bg-white"}
           />
           {errors.accountAndLegalEntity && (
             <span className={styles.errorText}>{errors.accountAndLegalEntity}</span>
@@ -196,7 +208,7 @@ const IncomeForm = ({
       {/* Статья */}
       {!showStatya && (
         <div className={styles.formRow}>
-          <label className={styles.label}>Статья</label> 
+          <label className={styles.label}>Статья</label>
           <SinglSelectStatiya
             selectedValue={formData.chartOfAccount}
             setSelectedValue={value => {
