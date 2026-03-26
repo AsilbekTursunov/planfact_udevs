@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { X, TrashIcon } from 'lucide-react'
 import styles from './style.module.scss'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
-import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
-import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
-import { useLegalEntitiesPlanFact, useCounterpartiesGroupsPlanFact, useChartOfAccountsPlanFact } from '@/hooks/useDashboard'
-import { MultiSelect } from '../../../common/MultiSelect/MultiSelect'
 import { formatAmount } from '../../../../utils/helpers'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
@@ -13,8 +9,9 @@ import Loader from '../../../shared/Loader'
 import { queryClient } from '../../../../lib/queryClient'
 import { productServiceDto } from '../../../../lib/dtos/productServiceDto'
 import SinglSelectStatiya from '../../../ReadyComponents/SingleSelectStatiya'
-import SelectMyAccounts from '../../../ReadyComponents/SelectMyAccounts'
 import SingleCounterParty from '../../../ReadyComponents/SingleCounterParty'
+import SelectProductService from '../../../ReadyComponents/SelectProductService'
+import SelectLegelEntitties from '../../../ReadyComponents/SelectLegelEntitties'
 
 const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false }) => {
   const today = new Date()
@@ -66,27 +63,8 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
   const [errors, setErrors] = useState({})
 
   // Fetch legal entities data
-  const { data: legalEntitiesData, isLoading: loadingLegalEntities } = useLegalEntitiesPlanFact({
-    page: 1,
-    limit: 100,
-  })
 
   const { mutateAsync: createShipment, isPending: isCreating } = useUcodeRequestMutation()
-
-  // Transform legal entities data for GroupedSelect
-  const legalEntities = (legalEntitiesData?.data?.data?.data || []).map(item => ({
-    guid: item.guid,
-    label: item.nazvanie || 'Без названия',
-    group: 'Юрлица',
-  }))
-
-  const { data: counterpartiesGroupsData, isLoading: isLoadingGroups } = useCounterpartiesGroupsPlanFact({
-    page: 1, limit: 100
-  })
-
-  const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({
-    page: 1, limit: 100
-  })
 
 
   const { data: productServices } = useUcodeRequestQuery({
@@ -100,46 +78,6 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     return productServiceDto(productServices)
   }, [productServices])
 
-  const groupedProductServicesList = useMemo(() => {
-    if (!productServicesList) return []
-    return productServicesList.map(item => {
-      const groupData = item?.group_product_and_service_id_data
-      const groupName = groupData ? (groupData.name || groupData.nazvanie || 'Без группы') : 'Без группы'
-
-      return {
-        ...item,
-        value: item.guid,
-        label: item.name || 'Без названия',
-        group: groupName
-      }
-    })
-  }, [productServicesList])
-
-  // Transform counterparties
-  const counterAgentsTree = React.useMemo(() => {
-    const groups = counterpartiesGroupsData?.data?.data?.data || []
-    if (groups.length === 0) return []
-    const buildTree = item => {
-      if (item.children && Array.isArray(item.children) && item.children.length > 0) {
-        return {
-          value: item.guid,
-          title: item.nazvanie_gruppy || 'Без названия',
-          selectable: false,
-          children: item.children.map(child => ({
-            value: child.guid,
-            title: child.nazvanie || 'Без названия',
-            selectable: true,
-          }))
-        }
-      }
-      return {
-        value: item.guid,
-        title: item.nazvanie_gruppy || item.nazvanie || 'Без названия',
-        selectable: true,
-      }
-    }
-    return groups.map(buildTree)
-  }, [counterpartiesGroupsData])
 
 
   // Block body scroll when modal is open
@@ -292,6 +230,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     const product = productServicesList?.find(p => p.guid === value)
     if (!product) return;
 
+
     setRows(prev => prev.map(row => {
       if (row.id !== rowId) return row;
       const q = Number(product.kolvo) || 0;
@@ -301,8 +240,8 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
         name: value,
         price: p,
         quantity: q,
-        discount: product.discount || '',
-        nds: product.nds || '',
+        discount: String(product.discount || 0),
+        nds: String(product.nds || 0),
         sum: q * p
       }
     }))
@@ -377,7 +316,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
               Юрлицо <span className={styles.required}>*</span>
             </label>
             <div className={styles.inputContainer} style={{ flex: 1, maxWidth: '600px' }}>
-              <SelectMyAccounts
+              <SelectLegelEntitties
                 multi={false}
                 value={legalEntity}
                 onChange={(value) => setLegalEntity(value)}
@@ -435,8 +374,8 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
 
             <div className={styles.tableContainer}>
               <table className="w-full">
-                <thead className='sticky top-0 z-10 bg-neutral-100'>
-                  <tr className='bg-neutral-100  text-neutral-800 font-light h-10 text-sm w-full border-b border-gray-200'>
+                <thead className='sticky top-0 z-10 bg-neutral-50'>
+                  <tr className='bg-neutral-50  text-neutral-600 font-light h-8 text-xs w-full border-b border-gray-200'>
                     <th className="w-[10px]">
                       <div className='flex items-center justify-center'>
                         <OperationCheckbox type="checkbox" checked={selectedProducts?.size > 0 && selectedProducts?.size === rows?.length} onChange={(e) => {
@@ -481,7 +420,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                 </thead>
                 <tbody>
                   {rows.map((row) => (
-                    <tr key={row.id}>
+                    <tr key={row.id} className='border-b last:border-none'>
                       <td className={styles.checkCol}>
                         <div className='flex items-center justify-center'>
                           <OperationCheckbox type="checkbox" checked={selectedProducts.has(row.id)} className={styles.checkbox} onChange={(e) => {
@@ -503,7 +442,13 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                       </td>
                       <td className='w-[200px]'>
                         <div className="pr-2 pt-2 pb-2">
-                          <GroupedSelect
+                          <SelectProductService
+                            value={row.name}
+                            onChange={(value) => handleSelectProductSerice(row?.id, value)}
+                            placeholder="Выберите позицию"
+                            className="bg-white border-none"
+                          />
+                          {/* <GroupedSelect
                             data={groupedProductServicesList}
                             value={row.name}
                             onChange={(value) => handleSelectProductSerice(row?.id, value)}
@@ -513,7 +458,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                             valueKey="value"
                             className="shipment-grouped-select"
                             dropdownClassName='grouped-select-dropdown'
-                          />
+                          /> */}
                         </div>
                       </td>
                       <td className="w-[80px] border-l">
@@ -537,7 +482,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
                       <td className="w-[80px] border-l relative">
                         <input
                           type="text"
-                          value={row.discount}
+                          value={row.discount.replace(/\D/g, '')}
                           maxLength={2}
                           onChange={(e) => updateRow(row.id, 'discount', e.target.value)}
                           className={`w-[80px] outline-none text-xs text-right pr-2 mr-2`}

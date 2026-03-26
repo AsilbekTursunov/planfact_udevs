@@ -28,6 +28,7 @@ import CustomModal from '../../shared/CustomModal'
 import { authStore } from '../../../store/auth.store'
 import { formatDateRu } from '../../../utils/helpers'
 import SelectMyAccounts from '../../ReadyComponents/SelectMyAccounts'
+import CustomDatePicker from '../../shared/DatePicker'
 
 const today = new Date().toISOString().split('T')[0]
 const todayDate = new Date().getDate()
@@ -380,10 +381,11 @@ const OperationModal = observer(({
 		return value.toString().replace(/\s/g, '')
 	}
 
+	console.log('operationData', operationData)
+
 	// Initialize form data from operation or defaults
 	const getInitialFormData = () => {
 		if (operationData && (!isNew || operation?.isCopy)) {
-			console.log('operationData', operationData)
 			const raw = operationData
 			const paymentDate = raw.data_operatsii
 				? new Date(raw.data_operatsii).toISOString().split('T')[0]
@@ -391,6 +393,7 @@ const OperationModal = observer(({
 			const accrualDate = raw.data_nachisleniya
 				? new Date(raw.data_nachisleniya).toISOString().split('T')[0]
 				: paymentDate
+
 
 			return {
 				paymentDate,
@@ -404,11 +407,11 @@ const OperationModal = observer(({
 				salesDeal: raw.selling_deal_id || null,
 				purpose: raw.opisanie || '',
 				// For transfer
-				fromDate: paymentDate,
+				fromDate: new Date(paymentDate),
 				fromAccount: raw.my_accounts_id || raw.bank_accounts_id || null,
 				fromAmount: raw.summa ? formatAmount(Math.abs(raw.summa)) : '',
-				toDate: paymentDate,
-				toAccount: null,
+				toDate: new Date(accrualDate),
+				toAccount: raw.my_accounts_id_2 || raw.bank_accounts_id_2 || null,
 				toAmount: '0',
 				// For accrual
 				accrualDate,
@@ -486,6 +489,10 @@ const OperationModal = observer(({
 				transfer: { ...newFormData },
 				accrual: { ...newFormData }
 			})
+
+			// Set active tab based on operation type
+			const newType = operationData?.tip == 'Начисление' ? 'accrual' : operationData?.tip == 'Поступление' ? 'income' : operationData?.tip == 'Перемещение' ? 'transfer' : operationData?.tip == 'Выплата' ? 'payment' : (initialTab || 'income')
+			setActiveTab(newType)
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [operationData, isNew, isLoadingOperation])
@@ -880,6 +887,9 @@ const OperationModal = observer(({
 				requestData.my_accounts_id_2 = formData.toAccount || null
 				requestData.summa = parseFloat(formData.fromAmount?.toString().replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '')) || 0
 
+				requestData.data_operatsii = formData.fromDate
+				requestData.data_nachisleniya = formData.toDate
+
 				// Get currency from fromAccount
 				const fromAccount = bankAccounts.find(acc => acc.guid === formData.fromAccount)
 				if (fromAccount && fromAccount.currenies_id) {
@@ -1172,44 +1182,44 @@ const OperationModal = observer(({
 								<>
 									{/* Секция ОТКУДА */}
 									<div className={styles.formSection}>
-										<div className={styles.sectionHeader}>
-											<div className={styles.sectionLine}></div>
-											<h3 className={styles.sectionTitle}>ОТКУДА</h3>
-											<div className={styles.sectionLine}></div>
+										<div className="flex items-center gap-2">
+											<div className="w-full h-px bg-gray-200"></div>
+											<h3 className="text-neutral-400 text-xs font-medium">ОТКУДА</h3>
+											<div className="w-full h-px bg-gray-200"></div>
 										</div>
 
 										{/* Дата оплаты */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
+										<div className="flex items-center">
+											<label htmlFor="" className="w-40 text-neutral-700 text-sm">
 												Дата оплаты
 											</label>
-											<div className={styles.fieldWrapper}>
-												<DatePicker
-													value={formData.fromDate}
-													onChange={value => {
-														setFormData({ ...formData, fromDate: value })
-														if (errors.fromDate) {
-															setErrors({ ...errors, fromDate: null })
-														}
-													}}
-													placeholder='Выберите дату'
-													showCheckbox={true}
-													checkboxLabel='Подтвердить оплату'
-													checkboxValue={formData.confirmPayment}
-													onCheckboxChange={checked =>
-														setFormData({ ...formData, confirmPayment: checked })
-													}
-													className={[styles.datePicker, errors.fromDate ? styles.error : ''].join(' ')}
+											<div className="flex items-center gap-2 flex-1">
+												<div className='w-44'>
+													<CustomDatePicker
+														value={formData.fromDate}
+														onChange={value => {
+															setFormData({ ...formData, fromDate: value })
+															if (errors.fromDate) {
+																setErrors({ ...errors, fromDate: null })
+															}
+														}}
+														format='YYYY-MM-DD'
+														placeholder='Выберите дату'
+													/>
+												</div>
+												<OperationCheckbox
+													checked={formData.confirmPayment}
+													onChange={event => setFormData({ ...formData, confirmPayment: event.target.checked })}
+													label="Подтвердить оплату"
 												/>
 											</div>
 										</div>
-
 										{/* Счет и юрлицо */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Счет и юрлицо <span className={styles.required}>*</span>
+										<div className="flex items-center flex-1">
+											<label className="w-40 text-neutral-700 text-sm">
+												Счет и юрлицо <span className="text-red-500">*</span>
 											</label>
-											<div className={styles.fieldWrapper}>
+											<div className="flex-1">
 												<SelectMyAccounts
 													multi={false}
 													type="show"
@@ -1225,18 +1235,18 @@ const OperationModal = observer(({
 													className={"bg-white"}
 												/>
 												{errors.fromAccount && (
-													<span className={styles.errorText}>{errors.fromAccount}</span>
+													<span className="text-red-500 text-sm">{errors.fromAccount}</span>
 												)}
 											</div>
 										</div>
 
 										{/* Сумма списания */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
+										<div className="flex items-center flex-1">
+											<label className="w-40 text-neutral-700 text-sm">
 												Сумма списания
 											</label>
-											<div className={styles.fieldWrapper}>
-												<div className={styles.inputGroup}>
+											<div className="flex-1">
+												<div className="flex items-center gap-2">
 													<Input
 														type='text'
 														value={formatAmount(formData.fromAmount)}
@@ -1257,19 +1267,19 @@ const OperationModal = observer(({
 
 									{/* Секция КУДА */}
 									<div className={styles.formSection}>
-										<div className={styles.sectionHeader}>
-											<div className={styles.sectionLine}></div>
-											<h3 className={styles.sectionTitle}>КУДА</h3>
-											<div className={styles.sectionLine}></div>
+										<div className="flex items-center gap-2">
+											<div className="w-full h-px bg-gray-200"></div>
+											<h3 className="text-neutral-400 text-xs font-medium">КУДА</h3>
+											<div className="w-full h-px bg-gray-200"></div>
 										</div>
 
 										{/* Дата */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
+										<div className="flex items-center flex-1">
+											<label className="w-40 text-neutral-700 text-sm">
 												Дата
 											</label>
-											<div className={styles.fieldWrapper}>
-												<DatePicker
+											<div className="w-44">
+												<CustomDatePicker
 													value={formData.toDate}
 													onChange={value => {
 														setFormData({ ...formData, toDate: value })
@@ -1277,19 +1287,19 @@ const OperationModal = observer(({
 															setErrors({ ...errors, toDate: null })
 														}
 													}}
+													format='YYYY-MM-DD'
 													placeholder='Выберите дату'
-													className={[styles.datePicker, errors.toDate ? styles.error : ''].join(' ')}
 												/>
-												{errors.toDate && <span className={styles.errorText}>{errors.toDate}</span>}
+												{errors.toDate && <span className="text-red-500 text-sm">{errors.toDate}</span>}
 											</div>
 										</div>
 
 										{/* Счет и юрлицо */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Счет и юрлицо <span className={styles.required}>*</span>
+										<div className="flex items-center flex-1">
+											<label className="w-40 text-neutral-700 text-sm">
+												Счет и юрлицо <span className="text-red-500">*</span>
 											</label>
-											<div className={styles.fieldWrapper}>
+											<div className="flex-1">
 												<SelectMyAccounts
 													multi={false}
 													type="show"
@@ -1305,19 +1315,19 @@ const OperationModal = observer(({
 													className={"bg-white"}
 												/>
 												{errors.toAccount && (
-													<span className={styles.errorText}>{errors.toAccount}</span>
+													<span className="text-red-500 text-sm">{errors.toAccount}</span>
 												)}
 											</div>
 										</div>
 
 										{/* Сумма зачисления */}
 										{!isSameCurrency && (
-											<div className={styles.formRow}>
-												<label className={styles.label}>
-													Сумма зачисления <span className={styles.required}>*</span>
+											<div className="flex items-center flex-1">
+												<label className="w-40 text-neutral-700 text-sm">
+													Сумма зачисления <span className="text-red-500">*</span>
 												</label>
-												<div className={styles.fieldWrapper}>
-													<div className={styles.inputGroup}>
+												<div className="flex-1">
+													<div className="flex items-center gap-2">
 														<Input
 															type='text'
 															value={formatAmount(formData.toAmount)}
@@ -1335,18 +1345,18 @@ const OperationModal = observer(({
 														</div>}
 													</div>
 													{errors.toAmount && (
-														<span className={styles.errorText}>{errors.toAmount}</span>
+														<span className="text-red-500 text-sm">{errors.toAmount}</span>
 													)}
 												</div>
 											</div>
 										)}
 
 										{/* Назначение платежа */}
-										<div className={styles.formRowStart}>
-											<label className={styles.label} style={{ paddingTop: '0.5rem' }}>
-												Назначение платежа <span className={styles.required}>*</span>
+										<div className="flex items-start flex-1">
+											<label className="w-40 text-neutral-700 text-sm" style={{ paddingTop: '0.5rem' }}>
+												Назначение платежа <span className="text-red-500">*</span>
 											</label>
-											<div className={styles.fieldWrapper}>
+											<div className="flex-1">
 												<TextArea
 													value={formData.purpose}
 													onChange={e => {
@@ -1360,7 +1370,7 @@ const OperationModal = observer(({
 													className={cn(styles.textarea, errors.purpose && styles.error)}
 												/>
 												{errors.purpose && (
-													<span className={styles.errorText}>{errors.purpose}</span>
+													<span className="text-red-500 text-sm">{errors.purpose}</span>
 												)}
 											</div>
 										</div>
@@ -1369,15 +1379,7 @@ const OperationModal = observer(({
 							)}
 
 							{/* Начисление */}
-							{activeTab === 'accrual' && (
-								<AccuralForm
-									onCancel={onClose}
-									onSuccess={() => {
-										// Handle form submission logic here if needed
-										onClose();
-									}}
-								/>
-							)}
+
 						</div>
 					</div>
 
@@ -1392,6 +1394,14 @@ const OperationModal = observer(({
 					</div>
 
 				</div>
+				{activeTab === 'accrual' && (
+					<AccuralForm
+						onCancel={onClose}
+						onSuccess={() => {
+							onClose();
+						}}
+					/>
+				)}
 				{isAttachmentsOpen && <div className={cn(styles.messageContent, isAttachmentsOpen && styles.open)}>
 					<div className={styles.filesAttachWrap}>
 						<div className={styles.filesAttachCollapseWrp}>

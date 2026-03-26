@@ -9,6 +9,11 @@ import { shipmentsDto } from '../../../../lib/dtos/shipmentsDto'
 import { Loader2 } from 'lucide-react'
 import CustomModal from '../../../shared/CustomModal'
 import { useQueryClient } from '@tanstack/react-query'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 import EmptyState from '../EmptyState'
 
@@ -115,14 +120,42 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
             </tr>
           </thead>
           <tbody className='w-full'>
-            {shipmentsList?.map((item) => {
-              console.log('item', item)
+            {shipmentsList?.map((item) => { 
               return (
                 <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-xs font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
                   <td className="px-4 py-3 text-left">{item.operationDate}</td>
                   <td className="px-4 py-3 text-left w-[50px]">{item?.legal_entity_name || 'Юрлицо'}</td>
                   <td className="px-4 py-3 text-left">{item.counterparty}</td>
-                  <td className="px-4 py-3 text-left">{item?.product_and_service_data?.[0]?.Naimenovanie || 'Товары/услуги'}</td>
+                  <td className="px-4 py-3 text-left">
+                    {item?.product_and_service_data?.length > 0 ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <span className="cursor-pointer border-b border-dashed border-neutral-400 pb-0.5 hover:border-neutral-600 transition-colors">
+                            {item.product_and_service_data.length} {
+                              item.product_and_service_data.length === 1 ? 'позиция' :
+                                (item.product_and_service_data.length >= 2 && item.product_and_service_data.length <= 4) ? 'позиции' : 'позиций'
+                            }
+                          </span>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-64 p-0 overflow-hidden bg-white  borde-none rounded-md">
+                          <div className="flex flex-col">
+                            {item.product_and_service_data.map((prod, idx) => (
+                              <div key={prod.guid || idx} className="flex justify-between items-center p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0">
+                                <span className="text-neutral-700 font-medium truncate mr-4">
+                                  {prod.naimenovanie || 'Без названия'}
+                                </span>
+                                <span className="text-neutral-500 tabular-nums">
+                                  {prod.quantity || prod.Kol_vo || prod.kolvo || 1}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <span className="text-neutral-400">Товары/услуги</span>
+                    )}
+                  </td>
                   {/* Нераспределенный доход */}
                   <td className="px-4 py-3 text-left w-[200px]">{item?.chartOfAccounts || 'Нераспределенный доход'}</td>
                   <td className={`px-4 py-3  w-52 text-right`}>

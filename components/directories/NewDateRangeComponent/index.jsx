@@ -101,7 +101,7 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
     setEndDate(null)
     setDateType(null)
     setActivePreset(null)
-    onChange?.({ start: null, end: null })
+    onChange?.({ start: '', end: '' })
   }
 
   const handleApply = () => {

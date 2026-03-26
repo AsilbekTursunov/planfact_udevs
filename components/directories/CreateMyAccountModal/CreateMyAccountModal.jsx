@@ -9,6 +9,7 @@ import SelectLegelEntitties from '../../ReadyComponents/SelectLegelEntitties'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import CustomModal from '../../shared/CustomModal'
 import Loader from '../../shared/Loader'
+import { returnNumber } from '../../../utils/helpers'
 
 export default function CreateMyAccountModal({ isOpen, onClose, account = null }) {
   const createMutation = useCreateMyAccount()
@@ -156,11 +157,11 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           <h2 className="text-xl font-semibold">{isEdit ? 'Редактирование счета' : 'Создание счета'}</h2>
         </div>
 
-        <div className="px-4 overflow-y-auto max-h-[70vh]">
+        <div className="px-4 overflow-y-auto max-h-[70vh] py-4">
           <div className="flex flex-col gap-3">
             {/* Название */}
             <div className="flex flex-row gap-2">
-              <label className="w-[30%] text-sm font-medium text-[#0f172a] flex items-center gap-1">
+              <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">
                 Название <span className="text-red-500">*</span>
               </label>
               <div className="flex-1 flex flex-col gap-1">
@@ -179,7 +180,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
             {/* Юрлицо */}
             <div className="flex flex-row gap-2">
-              <label className="w-[30%] text-sm font-medium text-[#0f172a] flex items-center gap-1">Юрлицо <span className="text-red-500">*</span></label>
+              <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">Юрлицо <span className="text-red-500">*</span></label>
               <div className="flex-1 flex flex-col gap-1">
                 <SelectLegelEntitties
                   value={formData.legal_entity_id}
@@ -197,7 +198,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
             {/* Тип */}
             <div className="flex flex-row gap-2">
-              <label className="w-[30%] text-sm font-medium text-[#0f172a] flex items-center gap-1">
+              <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">
                 Выберите тип счета
               </label>
               <div className="flex-1 flex flex-col gap-1">
@@ -216,11 +217,11 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
             {/* Начальный остаток - показываем только при создании */}
             {!isEdit && (
               <div className="flex flex-row gap-2">
-                <label className="w-[30%] text-sm font-medium text-[#0f172a] flex items-center gap-1">Начальный остаток</label>
+                <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">Начальный остаток</label>
                 <div className="flex items-center flex-1 gap-2">
                   <Input
-                    type="number"
-                    value={formData.nachalьnyy_ostatok}
+                    type="text"
+                    value={returnNumber(formData.nachalьnyy_ostatok)}
                     onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: e.target.value })}
                     placeholder="0"
                     className="flex-1"
@@ -240,7 +241,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
             {/* Валюта */}
             <div className="flex flex-row gap-2">
-              <label className="w-[30%] text-sm font-medium text-[#0f172a] flex items-center gap-1">
+              <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">
                 Выберите валюту счета
               </label>
               <div className="flex-1 flex flex-col gap-1">
@@ -257,7 +258,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
             {/* Комментарий */}
             <div className="flex flex-row gap-2">
-              <label className="w-[30%] text-sm font-medium text-[#0f172a] flex items-center gap-1">Комментарий</label>
+              <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">Комментарий</label>
               <div className="flex-1 flex flex-col gap-1">
                 <textarea
                   value={formData.komentariy}
@@ -279,14 +280,14 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
         <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-neutral-200 p-4">
           <button
             type="button"
-            className="px-6 py-2.5 text-sm font-medium text-gray-500 bg-transparent rounded-md cursor-pointer transition-all hover:text-[#0f172a] hover:bg-gray-100"
+            className="px-3 py-2 text-sm font-medium text-gray-500 bg-transparent rounded-md cursor-pointer transition-all hover:text-[#0f172a] hover:bg-gray-100"
             onClick={handleClose}
           >
             Отменить
           </button>
           <button
             type="button"
-            className="px-6 py-2.5 text-sm font-medium text-white bg-primary rounded-md cursor-pointer transition-all hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            className="px-3 py-2 text-sm font-medium text-white bg-primary rounded-md cursor-pointer transition-all hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
             onClick={handleSubmit}
             disabled={isSubmitting}
           >

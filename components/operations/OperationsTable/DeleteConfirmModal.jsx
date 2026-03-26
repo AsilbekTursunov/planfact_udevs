@@ -1,21 +1,21 @@
 "use client"
 
-import { cn } from '@/app/lib/utils'
 import styles from './OperationsTable.module.scss'
+import Loader from '../../shared/Loader'
 
 export function DeleteConfirmModal({ isOpen, operation, onConfirm, onCancel, isDeleting = false }) {
   if (!isOpen) return null
 
   return (
     <>
-      <div 
+      <div
         className={styles.deleteModalOverlay}
         onClick={onCancel}
       />
       <div className={styles.deleteModal}>
         <div className={styles.deleteModalHeader}>
           <h3 className={styles.deleteModalTitle}>Подтверждение удаления</h3>
-          <button 
+          <button
             className={styles.deleteModalClose}
             onClick={onCancel}
           >
@@ -30,32 +30,32 @@ export function DeleteConfirmModal({ isOpen, operation, onConfirm, onCancel, isD
             <div className={styles.deleteModalInfo}>
               <div className={styles.deleteModalInfoItem}>
                 <span className={styles.deleteModalInfoLabel}>Описание:</span>
-                <span className={styles.deleteModalInfoValue}>{operation.description || '—'}</span>
+                <span className={styles.deleteModalInfoValue}>{operation.opisanie || '—'}</span>
               </div>
               <div className={styles.deleteModalInfoItem}>
                 <span className={styles.deleteModalInfoLabel}>Сумма:</span>
-                <span className={styles.deleteModalInfoValue}>{operation.amount || '—'}</span>
+                <span className={styles.deleteModalInfoValue}>{operation.summa || '—'}</span>
               </div>
               <div className={styles.deleteModalInfoItem}>
                 <span className={styles.deleteModalInfoLabel}>Дата:</span>
-                <span className={styles.deleteModalInfoValue}>{operation.date || '—'}</span>
+                <span className={styles.deleteModalInfoValue}>{operation.operationDate || '—'}</span>
               </div>
             </div>
           )}
         </div>
         <div className={styles.deleteModalFooter}>
-          <button 
+          <button
             className={styles.deleteModalButtonCancel}
             onClick={onCancel}
           >
             Отмена
           </button>
-          <button 
+          <button
             className={styles.deleteModalButtonConfirm}
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? 'Удаление...' : 'Удалить'}
+            {isDeleting ? <Loader /> : 'Удалить'}
           </button>
         </div>
       </div>

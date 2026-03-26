@@ -1,31 +1,44 @@
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { observer } from 'mobx-react-lite'
+import { toJS } from 'mobx'
+import { formatDate } from '../../../utils/formatDate'
+import { operationFilterStore } from '../../../store/operationFilter.store'
 import { cn } from '@/app/lib/utils'
 import {
-	useCounterpartiesGroupsPlanFact,
-	useLegalEntitiesPlanFact,
 	useUcodeRequestInfinite,
 	useDeleteOperation,
-	useChartOfAccountsPlanFact,
 	useUcodeRequestMutation,
 } from '@/hooks/useDashboard'
 import { OperationsFiltersSidebar } from '@/components/operations/OperationsFiltersSidebar/OperationsFiltersSidebar'
 import { OperationsHeader } from '@/components/operations/OperationsHeader/OperationsHeader'
-import { OperationsFooter } from '@/components/operations/OperationsFooter/OperationsFooter'
 import OperationModal from '@/components/operations/OperationModal/OperationModal'
 import CreateShipment from '@/components/deals/details/CreatingShipment'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
 import OperationTableRow from '@/components/operations/TableRow'
 import styles from './operations.module.scss'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
-import { formatDate } from '../../../utils/formatDate'
-import { useBankAccountsPlanFact } from '../../../hooks/useDashboard'
-import { formatDateRu } from '../../../utils/helpers'
 import { useQueryClient } from '@tanstack/react-query'
 import operationsDto from '../../../lib/dtos/operationsDto'
 
-export default function OperationsPage() {
+const OperationsPage = observer(() => {
+	const [isModalClosing, setIsModalClosing] = useState(false)
+	const [isModalOpening, setIsModalOpening] = useState(false)
+
+	const [selectedOperations, setSelectedOperations] = useState([])
+	const [openModal, setOpenModal] = useState(false)
+	const [modalType, setModalType] = useState(null)
+	const [operationToDelete, setOperationToDelete] = useState(null)
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+	const queryClient = useQueryClient()
+
+	// Shipment state
+	const [showShipmentModal, setShowShipmentModal] = useState(false)
+	const [selectedShipment, setSelectedShipment] = useState(null)
+	const [isShipmentEditing, setIsShipmentEditing] = useState(false)
+	const [isShipmentCopying, setIsShipmentCopying] = useState(false)
+	const [isShipmentDeleting, setIsShipmentDeleting] = useState(false)
 	// Block body scroll for this page only
 	useEffect(() => {
 		document.body.style.overflow = 'hidden'
@@ -39,138 +52,105 @@ export default function OperationsPage() {
 
 	// Filter states
 	const [isFilterOpen, setIsFilterOpen] = useState(true)
-	const [selectedFilters, setSelectedFilters] = useState([])
 
-	// Search state
-	const [searchQuery, setSearchQuery] = useState('')
-	const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-
-	const [dateFilters, setDateFilters] = useState({
-		podtverzhdena: true,
-		nePodtverzhdena: true,
-	})
-
-	const [dateStartFilters, setDateStartFilters] = useState({
-		podtverzhdena: true,
-		nePodtverzhdena: true,
-	})
-
-	const [selectedDatePaymentRange, setSelectedDatePaymentRange] = useState(null)
-	const [selectedDateStartRange, setSelectedDateStartRange] = useState(null)
-	const [selectedLegalEntities, setSelectedLegalEntities] = useState([]) // Will store legal entity GUIDs
-	const [selectedCounterAgents, setSelectedCounterAgents] = useState([])
-	const [amountRange, setAmountRange] = useState({ min: '', max: '' })
-	const [selectedChartOfAccounts, setSelectedChartOfAccounts] = useState([])
-	const [paymentType, setPaymentType] = useState(null)
+	const {
+		limit,
+		searchQuery,
+		debouncedSearchQuery,
+		selectedDatePaymentRange,
+		selectedDateStartRange,
+		selectedCounterAgents,
+		selectedLegalEntities,
+		selectedFilters,
+		amountRange,
+		selectedChartOfAccounts,
+		paymentType,
+		dateFilters,
+		dateStartFilters
+	} = operationFilterStore
 
 	// Debounce search query
 	useEffect(() => {
 		const timer = setTimeout(() => {
-			setDebouncedSearchQuery(searchQuery)
+			operationFilterStore.setDebouncedSearchQuery(searchQuery)
 		}, 500)
 
 		return () => clearTimeout(timer)
 	}, [searchQuery])
 
-	// No filtering - filters are just UI elements
-	const filtersForAPI = useMemo(() => {
-		return {} // Empty object - no filters sent to API
-	}, [])
-
-	// Log filters for debugging
-	useEffect(() => {
-		console.log('Filters for API:', filtersForAPI)
-	}, [filtersForAPI])
-
-
-	const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact()
-
-	const { data: legalEntitiesData } = useLegalEntitiesPlanFact({
-		page: 1,
-		limit: 100,
-	})
-
-	const { data: chartOfAccountsData } = useChartOfAccountsPlanFact({
-		page: 1,
-		limit: 100,
-	})
-
-	const { data: myAccountsData } = useBankAccountsPlanFact({
-		page: 1,
-		limit: 100,
-	})
-
-	const leagatEntities = useMemo(() => {
-		const data = myAccountsData?.data?.data?.data || []
-		return data.map(item => ({
-			value: item.guid,
-			label: item.nazvanie,
-		}))
-	}, [myAccountsData])
-
-	const chartOfAccountsOptions = useMemo(() => {
-		const rawData = chartOfAccountsData?.data?.data?.data || []
-		const flatten = (items) => {
-			let result = []
-			items.forEach(item => {
-				result.push(item)
-				if (item.children && item.children.length > 0) {
-					result = result.concat(flatten(item.children))
-				}
-			})
-			return result
-		}
-		const flat = Array.isArray(rawData) ? flatten(rawData) : []
-		return flat.map(item => ({
-			value: item.guid,
-			label: item.nazvanie || 'Без названия',
-			group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
-		}))
-	}, [chartOfAccountsData])
 
 
 	// Pagination state
-	const limit = 50
 	const tableWrapperRef = useRef(null)
 
 
 	const requestOperationFilters = useMemo(() => {
 		const safeFormatDate = (date) => {
-			if (!date) return undefined
+			if (!date) return undefined;
 			try {
-				return formatDate(new Date(date))
+				const d = date instanceof Date ? date : new Date(date);
+				if (isNaN(d.getTime())) return undefined;
+				return formatDate(d);
 			} catch {
-				return undefined
+				return undefined;
 			}
-		}
+		};
 
-		const startDate = safeFormatDate(selectedDatePaymentRange?.start)
-		const endDate = safeFormatDate(selectedDatePaymentRange?.end)
+		const startDate = safeFormatDate(selectedDatePaymentRange?.start);
+		const endDate = safeFormatDate(selectedDatePaymentRange?.end);
 
-		return {
-			limit: limit,
+		const accrualStartDate = safeFormatDate(selectedDateStartRange?.start);
+		const accrualEndDate = safeFormatDate(selectedDateStartRange?.end);
+
+		const result = {
+			limit,
 			...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
 			...(startDate && endDate && {
-				date_range: {
-					start_date: startDate,
-					end_date: endDate,
-				}
+				paymentDateStart: startDate,
+				paymentDateEnd: endDate,
 			}),
-			...(selectedCounterAgents.length > 0 && { counterparties_ids: selectedCounterAgents }),
-			...(selectedLegalEntities.length > 0 && { my_accounts_ids: selectedLegalEntities }),
-			...(selectedFilters.length > 0 && { tip: selectedFilters }),
-			...((amountRange.min !== '' || amountRange.max !== '') && {
+			...(accrualStartDate && accrualEndDate && {
+				accrualDateStart: accrualStartDate,
+				accrualDateEnd: accrualEndDate,
+			}),
+			...(selectedCounterAgents.length > 0 && {
+				counterparties_ids: toJS(selectedCounterAgents),
+			}),
+			...(selectedLegalEntities.length > 0 && {
+				my_accounts_ids: toJS(selectedLegalEntities),
+			}),
+			...(selectedFilters.length > 0 && { tip: toJS(selectedFilters) }),
+			...((amountRange.min !== "" || amountRange.max !== "") && {
 				amount_range: {
-					...(amountRange.min !== '' && { min: Number(amountRange.min) }),
-					...(amountRange.max !== '' && { max: Number(amountRange.max) }),
-				}
+					...(amountRange.min !== "" && { min: Number(amountRange.min) }),
+					...(amountRange.max !== "" && { max: Number(amountRange.max) }),
+				},
 			}),
-			...(selectedChartOfAccounts.length > 0 && { chart_of_accounts_ids: selectedChartOfAccounts }),
+			...(selectedChartOfAccounts.length > 0 && {
+				chart_of_accounts_ids: toJS(selectedChartOfAccounts),
+			}),
 			...(paymentType && { payment_type: paymentType }),
-			podtverzhdena: dateFilters.podtverzhdena,
-			ne_podtverzhdena: dateFilters.nePodtverzhdena,
-		}
-	}, [limit, debouncedSearchQuery, selectedLegalEntities, selectedCounterAgents, selectedFilters, selectedDatePaymentRange, amountRange, selectedChartOfAccounts, dateFilters, paymentType])
+			paymentConfirmed: dateFilters.podtverzhdena,
+			paymentNotConfirmed: dateFilters.nePodtverzhdena,
+			accrualConfirmed: dateStartFilters.podtverzhdena,
+			accrualNotConfirmed: dateStartFilters.nePodtverzhdena,
+		};
+
+		return result;
+	}, [
+		limit,
+		debouncedSearchQuery,
+		selectedDatePaymentRange,
+		selectedDateStartRange,
+		selectedCounterAgents,
+		selectedLegalEntities,
+		selectedFilters,
+		amountRange,
+		selectedChartOfAccounts,
+		paymentType,
+		dateFilters,
+		dateStartFilters
+	])
 
 	const {
 		data: infiniteData,
@@ -188,9 +168,18 @@ export default function OperationsPage() {
 	})
 
 	const allOperations = useMemo(() => {
-		console.log('infite response', infiniteData?.pages?.[0]?.data?.data)
 		return infiniteData?.pages?.flatMap(page => page?.data?.data?.data || []) || []
 	}, [infiniteData])
+
+	const isAllSelected = allOperations.length > 0 && selectedOperations.length === allOperations.length
+
+	const toggleSelectAll = () => {
+		if (isAllSelected) {
+			setSelectedOperations([])
+		} else {
+			setSelectedOperations(allOperations.map(op => op.id))
+		}
+	}
 
 	// Infinite scroll handler
 	useEffect(() => {
@@ -212,21 +201,6 @@ export default function OperationsPage() {
 	}, [hasNextPage, isLoadingOperations, isFetchingNextPage, fetchNextPage])
 
 
-	// Extract and transform data from API responses - use groups with children
-	const counterAgents = useMemo(() => {
-		const groups = counterpartiesGroupsData?.data?.data?.data || []
-
-		const hasChildren = groups.filter(item => item.children && item.children.length > 0)
-
-		return hasChildren.map(item => [
-			{ value: '', label: item.nazvanie_gruppy, group: item.nazvanie_gruppy },
-			...(item.children || []).map(child => ({
-				value: child.guid,
-				label: child.nazvanie || '',
-				group: item.nazvanie_gruppy
-			}))
-		]).flat()
-	}, [counterpartiesGroupsData])
 
 
 
@@ -237,63 +211,7 @@ export default function OperationsPage() {
 		}
 	}, [allOperations])
 
-	const [isDatePaymentModalOpen, setIsDatePaymentModalOpen] = useState(false)
-	const [isDateStartModalOpen, setIsDateStartModalOpen] = useState(false)
-	const [activeInput, setActiveInput] = useState(null) // 'start' or 'end'
-	const [isClosing, setIsClosing] = useState(false)
-	const datePickerRef = useRef(null)
-	const dateStartPickerRef = useRef(null)
 
-	const closeDatePaymentModal = () => {
-		setIsClosing(true)
-		setTimeout(() => {
-			setIsDatePaymentModalOpen(false)
-			setIsClosing(false)
-			setActiveInput(null)
-		}, 200)
-	}
-
-	const closeDateStartModal = () => {
-		setIsClosing(true)
-		setTimeout(() => {
-			setIsDateStartModalOpen(false)
-			setIsClosing(false)
-			setActiveInput(null)
-		}, 200)
-	}
-
-	useEffect(() => {
-		function handleClickOutside(event) {
-			if (
-				datePickerRef.current &&
-				!datePickerRef.current.contains(event.target) &&
-				dateStartPickerRef.current &&
-				!dateStartPickerRef.current.contains(event.target)
-			) {
-				closeDatePaymentModal()
-				closeDateStartModal()
-			}
-		}
-		document.addEventListener('mousedown', handleClickOutside)
-		return () => document.removeEventListener('mousedown', handleClickOutside)
-	}, [])
-
-	const [selectedOperations, setSelectedOperations] = useState([])
-	const [expandedRows, setExpandedRows] = useState([])
-	const [openModal, setOpenModal] = useState(null)
-	const [modalType, setModalType] = useState(null)
-	const [isModalClosing, setIsModalClosing] = useState(false)
-	const [isModalOpening, setIsModalOpening] = useState(false)
-	const [operationToDelete, setOperationToDelete] = useState(null)
-	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-	const queryClient = useQueryClient()
-
-	// Shipment state
-	const [showShipmentModal, setShowShipmentModal] = useState(false)
-	const [selectedShipment, setSelectedShipment] = useState(null)
-	const [isShipmentEditing, setIsShipmentEditing] = useState(false)
-	const [isShipmentCopying, setIsShipmentCopying] = useState(false)
-	const [isShipmentDeleting, setIsShipmentDeleting] = useState(false)
 
 	const { mutateAsync: deleteShipmentMutationForShipment, isPending: isDeletingShipment } = useUcodeRequestMutation()
 
@@ -319,22 +237,6 @@ export default function OperationsPage() {
 	const toggleOperation = id => {
 		setSelectedOperations(prev =>
 			prev.includes(id) ? prev.filter(opId => opId !== id) : [...prev, id],
-		)
-	}
-
-	const toggleSelectAll = () => {
-		if (selectedOperations.length === allOperations.length) {
-			setSelectedOperations([])
-		} else {
-			setSelectedOperations(allOperations.map(op => op.id))
-		}
-	}
-
-	const isAllSelected = allOperations.length > 0 && selectedOperations.length === allOperations.length
-
-	const toggleExpand = id => {
-		setExpandedRows(prev =>
-			prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id],
 		)
 	}
 
@@ -492,6 +394,9 @@ export default function OperationsPage() {
 			queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
 			queryClient.invalidateQueries({ queryKey: ["list_sales_operations"] })
 			queryClient.invalidateQueries({ queryKey: ["get_sales_transaction"] })
+			queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
+			queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+			queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
 		} catch (error) {
 			console.error('Error deleting operation:', error)
 		}
@@ -512,58 +417,6 @@ export default function OperationsPage() {
 			}, 0)
 	}, [allOperations, selectedOperations])
 
-	const toggleFilter = (category, key, forceValue) => {
-		if (category === 'type') {
-			setSelectedFilters(prev => {
-				const arr = prev || []
-				const shouldAdd = forceValue !== undefined ? forceValue : !arr.includes(key)
-				if (shouldAdd) {
-					return arr.includes(key) ? arr : [...arr, key]
-				} else {
-					return arr.filter(v => v !== key)
-				}
-			})
-		} else if (category === 'date') {
-			setDateFilters(prev => ({ ...prev, [key]: !prev[key] }))
-		} else if (category === 'dateStart') {
-			setDateStartFilters(prev => ({ ...prev, [key]: !prev[key] }))
-		}
-	}
-
-	const handleLegalEntityToggle = guid => {
-		setSelectedLegalEntities(prev => ({ ...prev, [guid]: !prev[guid] }))
-	}
-
-	const handleSelectAllLegalEntities = () => {
-		const legalEntities = legalEntitiesData?.data?.data?.data || []
-		const allLegalEntityGuids = legalEntities.map(le => le.guid)
-		const allSelected = allLegalEntityGuids.every(guid => selectedLegalEntities[guid])
-
-		if (allSelected) {
-			setSelectedLegalEntities({})
-		} else {
-			const newSelected = {}
-			legalEntities.forEach(le => (newSelected[le.guid] = true))
-			setSelectedLegalEntities(newSelected)
-		}
-	}
-
-	const handleSelectAllCounterAgents = () => {
-		// Check if all counter agents are already selected
-		const allCounterAgentGuids = counterAgents.map(ca => ca.guid)
-		const allSelected = allCounterAgentGuids.every(guid => selectedCounterAgents[guid])
-
-		if (allSelected) {
-			// If all are selected, deselect all
-			setSelectedCounterAgents({})
-		} else {
-			// If not all are selected, select all
-			const newSelected = {}
-			counterAgents.forEach(ca => (newSelected[ca.guid] = true))
-			setSelectedCounterAgents(newSelected)
-		}
-	}
-
 
 	return (
 		<div className={styles.container}>
@@ -571,32 +424,6 @@ export default function OperationsPage() {
 			<OperationsFiltersSidebar
 				isOpen={isFilterOpen}
 				onClose={() => setIsFilterOpen(false)}
-				selectedFilters={selectedFilters}
-				onFilterChange={toggleFilter}
-				dateFilters={dateFilters}
-				onDateFilterChange={key => toggleFilter('date', key)}
-				dateStartFilters={dateStartFilters}
-				onDateStartFilterChange={key => toggleFilter('dateStart', key)}
-				selectedDatePaymentRange={selectedDatePaymentRange}
-				onDatePaymentRangeChange={setSelectedDatePaymentRange}
-				selectedDateStartRange={selectedDateStartRange}
-				onDateStartRangeChange={setSelectedDateStartRange}
-				legalEntities={leagatEntities}
-				selectedLegalEntities={selectedLegalEntities}
-				onLegalEntityToggle={setSelectedLegalEntities}
-				onSelectAllLegalEntities={handleSelectAllLegalEntities}
-				counterAgents={counterAgents}
-				selectedCounterAgents={selectedCounterAgents}
-				onCounterAgentToggle={setSelectedCounterAgents}
-				onSelectAllCounterAgents={handleSelectAllCounterAgents}
-				amountRange={amountRange}
-				onAmountRangeChange={setAmountRange}
-				isLoading={isLoadingOperations || isFetching}
-				chartOfAccountsOptions={chartOfAccountsOptions}
-				selectedChartOfAccounts={selectedChartOfAccounts}
-				onChartOfAccountsChange={setSelectedChartOfAccounts}
-				paymentType={paymentType}
-				onPaymentTypeChange={setPaymentType}
 			/>
 
 			{/* Filter Toggle Bar */}
@@ -628,7 +455,7 @@ export default function OperationsPage() {
 					}}
 					selectedCount={selectedOperations.length}
 					searchQuery={searchQuery}
-					onSearchChange={setSearchQuery}
+					onSearchChange={(val) => operationFilterStore.setSearchQuery(val)}
 				/>
 
 				{/* Table */}
@@ -800,25 +627,20 @@ export default function OperationsPage() {
 				</div>
 
 				{/* Loading indicator at the bottom outside the table */}
-				{isFetchingNextPage && (
+				{/* {isFetchingNextPage && (
 					<div className={styles.loadingMore}>
 						<div className={styles.loadingSpinner}></div>
 						<span>Загрузка...</span>
 					</div>
-				)}
+				)} */}
 
-				{/* Footer Stats */}
-				{/* <OperationsFooter
-					isFilterOpen={isFilterOpen}
-					operations={operations}
-					totalOperations={infiniteData?.pages?.[0]?.data?.data?.pagination?.total || operations.length}
-				/> */}
 			</div>
 
 			{/* Right Side Modal */}
 			{openModal && (
 				<OperationModal
 					operation={openModal}
+					initialTab={modalType}
 					isClosing={isModalClosing}
 					isOpening={isModalOpening}
 					onClose={closeOperationModal}
@@ -852,4 +674,7 @@ export default function OperationsPage() {
 			)}
 		</div>
 	)
-}
+})
+
+
+export default OperationsPage
