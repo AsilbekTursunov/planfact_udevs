@@ -8,11 +8,13 @@ import {
 	useUcodeRequestInfinite,
 	useDeleteOperation,
 	useChartOfAccountsPlanFact,
+	useUcodeRequestMutation,
 } from '@/hooks/useDashboard'
 import { OperationsFiltersSidebar } from '@/components/operations/OperationsFiltersSidebar/OperationsFiltersSidebar'
 import { OperationsHeader } from '@/components/operations/OperationsHeader/OperationsHeader'
 import { OperationsFooter } from '@/components/operations/OperationsFooter/OperationsFooter'
 import OperationModal from '@/components/operations/OperationModal/OperationModal'
+import CreateShipment from '@/components/deals/details/CreatingShipment'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
 import OperationTableRow from '@/components/operations/TableRow'
 import styles from './operations.module.scss'
@@ -286,6 +288,15 @@ export default function OperationsPage() {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 	const queryClient = useQueryClient()
 
+	// Shipment state
+	const [showShipmentModal, setShowShipmentModal] = useState(false)
+	const [selectedShipment, setSelectedShipment] = useState(null)
+	const [isShipmentEditing, setIsShipmentEditing] = useState(false)
+	const [isShipmentCopying, setIsShipmentCopying] = useState(false)
+	const [isShipmentDeleting, setIsShipmentDeleting] = useState(false)
+
+	const { mutateAsync: deleteShipmentMutationForShipment, isPending: isDeletingShipment } = useUcodeRequestMutation()
+
 	// Close modal when clicking on header
 	useEffect(() => {
 		if (!openModal) return
@@ -328,6 +339,10 @@ export default function OperationsPage() {
 	}
 
 	const openOperationModal = operation => {
+		if (operation.tip === 'Отгрузка') {
+			handleEditShipment(operation)
+			return
+		}
 		setOpenModal(operation)
 		setIsModalClosing(false)
 		setIsModalOpening(true)
@@ -346,6 +361,26 @@ export default function OperationsPage() {
 		}, 50)
 	}
 
+	const handleEditShipment = (shipment) => {
+		setSelectedShipment(shipment)
+		setIsShipmentEditing(true)
+		setIsShipmentCopying(false)
+		setShowShipmentModal(true)
+	}
+
+	const handleCopyShipment = (shipment) => {
+		setSelectedShipment(shipment)
+		setIsShipmentEditing(false)
+		setIsShipmentCopying(true)
+		setShowShipmentModal(true)
+	}
+
+	const handleDeleteShipment = (shipment) => {
+		setOperationToDelete(shipment)
+		setIsShipmentDeleting(true)
+		setIsDeleteModalOpen(true)
+	}
+
 	const closeOperationModal = () => {
 		setIsModalClosing(true)
 		// Разблокируем скролл страницы
@@ -357,6 +392,10 @@ export default function OperationsPage() {
 	}
 
 	const handleEditOperation = operation => {
+		if (operation.tip === 'Отгрузка') {
+			handleEditShipment(operation)
+			return
+		}
 		if (operation.typeCategory === 'transfer') {
 			setModalType('transfer')
 		} else if (operation.typeCategory === 'out') {
@@ -372,11 +411,19 @@ export default function OperationsPage() {
 
 
 	const handleDeleteOperation = operation => {
+		if (operation.tip === 'Отгрузка') {
+			handleDeleteShipment(operation)
+			return
+		}
 		setOperationToDelete(operation)
 		setIsDeleteModalOpen(true)
 	}
 
 	const handleCopyOperation = operation => {
+		if (operation.tip === 'Отгрузка') {
+			handleCopyShipment(operation)
+			return
+		}
 		// Open modal as "new" but with the copied operation's data
 		const copiedOperation = { ...operation };
 
@@ -426,13 +473,25 @@ export default function OperationsPage() {
 		}
 
 		try {
-			await deleteOperationMutation.mutateAsync([guid])
+			if (isShipmentDeleting) {
+				await deleteShipmentMutationForShipment({
+					"method": "delete_shipment_transaction",
+					"data": {
+						"guid": guid
+					}
+				})
+			} else {
+				await deleteOperationMutation.mutateAsync([guid])
+			}
 			setIsDeleteModalOpen(false)
 			setOperationToDelete(null)
+			setIsShipmentDeleting(false)
 			queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 			queryClient.invalidateQueries({ queryKey: ['operationsList'] })
 			queryClient.invalidateQueries({ queryKey: ['find_operations'] })
 			queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
+			queryClient.invalidateQueries({ queryKey: ["list_sales_operations"] })
+			queryClient.invalidateQueries({ queryKey: ["get_sales_transaction"] })
 		} catch (error) {
 			console.error('Error deleting operation:', error)
 		}
@@ -441,6 +500,7 @@ export default function OperationsPage() {
 	const handleDeleteCancel = () => {
 		setIsDeleteModalOpen(false)
 		setOperationToDelete(null)
+		setIsShipmentDeleting(false)
 	}
 
 	const selectedTotal = useMemo(() => {
@@ -775,8 +835,21 @@ export default function OperationsPage() {
 				operation={operationToDelete}
 				onConfirm={handleDeleteConfirm}
 				onCancel={handleDeleteCancel}
-				isDeleting={deleteOperationMutation.isPending}
+				isDeleting={isShipmentDeleting ? isDeletingShipment : deleteOperationMutation.isPending}
 			/>
+
+			{showShipmentModal && (
+				<CreateShipment
+					open={showShipmentModal}
+					onClose={() => setShowShipmentModal(false)}
+					initialData={selectedShipment}
+					isEditing={isShipmentEditing}
+					isCopying={isShipmentCopying}
+					dealName={selectedShipment?.selling_deal_name}
+					dealGuid={selectedShipment?.selling_deal_id}
+					kontragentId={selectedShipment?.counterparties_id}
+				/>
+			)}
 		</div>
 	)
 }

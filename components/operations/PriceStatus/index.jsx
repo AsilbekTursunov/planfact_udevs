@@ -31,18 +31,21 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency, dealId, 
       {!confirmed && accrual && (tab === 'Выплата') && (
         <CreditIcon />
       )}
-      <div className={styles.amountText}>{tab == "Перемещение" ? <>
-        <div className={`${styles.doubleAccount} flex flex-col `}>
-          <span className='flex items-center gap-1'>-{formatAmount(amount)} <span className={styles.currency}>{
-            currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
-          <span className='flex items-center gap-1'>+{formatAmount(amount)} <span className={styles.currency}>{
-            currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
-        </div>
-        {/* Отгрузка */}
-      </> : `${type == 'Поступление' ? '+' : type == 'Выплата' ? '-' : ''}${formatAmount(amount)} ${percent ? `(${percent?.toFixed(0)}%)` : ''}`}
+      <div className={styles.amountText}>
+        {tab == "Перемещение" ? <>
+          <div className={`${styles.doubleAccount} flex flex-col `}>
+            <span className='flex items-center gap-1'>-{formatAmount(amount)} <span className={styles.currency}>{
+              currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
+            <span className='flex items-center gap-1'>+{formatAmount(amount)} <span className={styles.currency}>{
+              currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
+          </div>
+          {/* Отгрузка */}
+        </> : <div>
+          <span className='flex items-center justify-end gap-0.5'>{type == 'Поступление' ? '+' : type == 'Выплата' ? '-' : ''}{formatAmount(amount)} {tab != "Перемещение" && <span className={styles.currency}>{
+            currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span>} {percent ? `(${percent?.toFixed(0)}%)` : ''}</span>
+        </div>}
       </div>
-      {tab != "Перемещение" && <span className={styles.currency}>{
-        currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span>}
+
     </div>
   )
 }

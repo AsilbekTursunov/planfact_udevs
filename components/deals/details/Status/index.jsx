@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react'
-import { ChevronUp, GripVertical, Check, Pencil, Trash2 } from 'lucide-react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { ChevronUp, GripVertical, Check, Pencil, Trash2, Loader2 } from 'lucide-react'
 import styles from './style.module.scss'
+import { useUcodeDefaultApiMutation, useUcodeDefaultApiQuery } from '@/hooks/useDashboard'
+import { useQueryClient } from '@tanstack/react-query'
 
 const DEFAULT_COLORS = [
   '#F79009', // orange
@@ -13,8 +15,10 @@ const DEFAULT_COLORS = [
   '#15B79E', // teal
 ]
 
+const STATUS_API_URL = '/items/sales_status?from-ofs=true'
+
 export default function DealStatus({ 
-  statuses = [], 
+  statuses: propsStatuses = [], 
   currentStatus = null, 
   onStatusChange, 
   onStatusEdit, 
@@ -29,6 +33,24 @@ export default function DealStatus({
   const [showNewForm, setShowNewForm] = useState(false)
   const dropdownRef = useRef(null)
   const contextRef = useRef(null)
+  const queryClient = useQueryClient()
+
+  // Fetch statuses
+  const { data: fetchedData, isLoading: isLoadingStatuses } = useUcodeDefaultApiQuery({
+    queryKey: 'sales_status',
+    urlMethod: 'GET',
+    urlParams: STATUS_API_URL,
+    data: {}
+  })
+
+  // Mutations
+  const { mutateAsync: mutateStatus } = useUcodeDefaultApiMutation({
+    mutationKey: 'sales_status_mutation'
+  })
+
+  const statuses = useMemo(() => {
+    return fetchedData?.data?.data?.response || propsStatuses || []
+  }, [fetchedData, propsStatuses])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -74,23 +96,47 @@ export default function DealStatus({
   }
 
   const handleEdit = (status, index) => {
-    setEditingStatus({ index, name: status.name, color: status.color })
+    setEditingStatus({ index, guid: status.guid, name: status.name, color: status.color })
     setContextMenu(null)
   }
 
-  const handleDelete = (status) => {
-    onStatusDelete?.(status)
-    setContextMenu(null)
-  }
-
-  const handleSaveEdit = () => {
-    if (editingStatus) {
-      onStatusEdit?.({
-        ...statuses[editingStatus.index],
-        name: editingStatus.name,
-        color: editingStatus.color,
+  const handleDelete = async (status) => {
+    try {
+      await mutateStatus({
+        urlMethod: 'DELETE',
+        urlParams: STATUS_API_URL,
+        data: { guid: status.guid }
       })
-      setEditingStatus(null)
+      queryClient.invalidateQueries({ queryKey: ['sales_status'] })
+      onStatusDelete?.(status)
+      setContextMenu(null)
+    } catch (error) {
+      console.error('Failed to delete status:', error)
+    }
+  }
+
+  const handleSaveEdit = async () => {
+    if (editingStatus) {
+      try {
+        const payload = {
+          guid: editingStatus.guid,
+          name: editingStatus.name,
+          color: editingStatus.color,
+        }
+        await mutateStatus({
+          urlMethod: 'PUT',
+          urlParams: STATUS_API_URL,
+          data: payload
+        })
+        queryClient.invalidateQueries({ queryKey: ['sales_status'] })
+        onStatusEdit?.({
+          ...statuses[editingStatus.index],
+          ...payload
+        })
+        setEditingStatus(null)
+      } catch (error) {
+        console.error('Failed to update status:', error)
+      }
     }
   }
 
@@ -98,12 +144,26 @@ export default function DealStatus({
     setEditingStatus(null)
   }
 
-  const handleSaveNew = () => {
+  const handleSaveNew = async () => {
     if (newStatusName.trim()) {
-      onStatusCreate?.({ name: newStatusName.trim(), color: newStatusColor })
-      setNewStatusName('')
-      setNewStatusColor(DEFAULT_COLORS[0])
-      setShowNewForm(false)
+      try {
+        const payload = {
+          name: newStatusName.trim(),
+          color: newStatusColor
+        }
+        await mutateStatus({
+          urlMethod: 'POST',
+          urlParams: STATUS_API_URL,
+          data: payload
+        })
+        queryClient.invalidateQueries({ queryKey: ['sales_status'] })
+        onStatusCreate?.(payload)
+        setNewStatusName('')
+        setNewStatusColor(DEFAULT_COLORS[0])
+        setShowNewForm(false)
+      } catch (error) {
+        console.error('Failed to create status:', error)
+      }
     }
   }
 
@@ -132,72 +192,78 @@ export default function DealStatus({
       {/* Dropdown */}
       {isOpen && (
         <div className={styles.dropdown}>
-          <div className={styles.statusList}>
-            {statuses.map((status, index) => {
-              const isActive = status.guid === activeStatus?.guid || status.name === activeName
-              const isEditing = editingStatus?.index === index
+          {isLoadingStatuses ? (
+            <div className='flex items-center justify-center p-6'>
+              <Loader2 className='animate-spin text-primary' size={24} />
+            </div>
+          ) : (
+            <div className={styles.statusList}>
+              {statuses.map((status, index) => {
+                const isActive = status.guid === activeStatus?.guid || status.name === activeName
+                const isEditing = editingStatus?.index === index
 
-              if (isEditing) {
+                if (isEditing) {
+                  return (
+                    <div key={status.guid || index} className={styles.editRow}>
+                      <input
+                        className={styles.editInput}
+                        value={editingStatus.name}
+                        onChange={(e) => setEditingStatus({ ...editingStatus, name: e.target.value })}
+                        autoFocus
+                      />
+                      <div className={styles.colorPicker}>
+                        {DEFAULT_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            className={`${styles.colorOption} ${editingStatus.color === color ? styles.colorActive : ''}`}
+                            style={{ backgroundColor: color }}
+                            onClick={() => setEditingStatus({ ...editingStatus, color })}
+                          />
+                        ))}
+                      </div>
+                      <div className={styles.editActions}>
+                        <button className={styles.cancelBtn} onClick={handleCancelEdit}>Отменить</button>
+                        <button className={styles.saveBtn} onClick={handleSaveEdit}>Сохранить</button>
+                      </div>
+                    </div>
+                  )
+                }
+
                 return (
-                  <div key={status.guid || index} className={styles.editRow}>
-                    <input
-                      className={styles.editInput}
-                      value={editingStatus.name}
-                      onChange={(e) => setEditingStatus({ ...editingStatus, name: e.target.value })}
-                      autoFocus
-                    />
-                    <div className={styles.colorPicker}>
-                      {DEFAULT_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          className={`${styles.colorOption} ${editingStatus.color === color ? styles.colorActive : ''}`}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setEditingStatus({ ...editingStatus, color })}
-                        />
-                      ))}
+                  <div key={status.guid || index} className={styles.statusItem}>
+                    <div className={styles.statusItemLeft} onClick={() => handleSelect(status)}>
+                      <GripVertical size={14} className={styles.gripIcon} />
+                      <span className={styles.statusDot} style={{ backgroundColor: status.color || '#667085' }} />
+                      <span className={styles.statusItemName}>{status.name}</span>
                     </div>
-                    <div className={styles.editActions}>
-                      <button className={styles.cancelBtn} onClick={handleCancelEdit}>Отменить</button>
-                      <button className={styles.saveBtn} onClick={handleSaveEdit}>Сохранить</button>
+                    <div className={styles.statusItemRight}>
+                      {isActive && <Check size={16} className={styles.checkIcon} />}
+                      <button
+                        className={styles.moreBtn}
+                        onClick={(e) => handleContextMenu(e, index)}
+                      >
+                        ⋯
+                      </button>
                     </div>
+
+                    {/* Context Menu */}
+                    {contextMenu?.index === index && (
+                      <div className={styles.contextMenu} ref={contextRef}>
+                        <button className={styles.contextItem} onClick={() => handleEdit(status, index)}>
+                          <Pencil size={14} />
+                          <span>Редактировать</span>
+                        </button>
+                        <button className={`${styles.contextItem} ${styles.contextDelete}`} onClick={() => handleDelete(status)}>
+                          <Trash2 size={14} />
+                          <span>Удалить</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
-              }
-
-              return (
-                <div key={status.guid || index} className={styles.statusItem}>
-                  <div className={styles.statusItemLeft} onClick={() => handleSelect(status)}>
-                    <GripVertical size={14} className={styles.gripIcon} />
-                    <span className={styles.statusDot} style={{ backgroundColor: status.color || '#667085' }} />
-                    <span className={styles.statusItemName}>{status.name}</span>
-                  </div>
-                  <div className={styles.statusItemRight}>
-                    {isActive && <Check size={16} className={styles.checkIcon} />}
-                    <button
-                      className={styles.moreBtn}
-                      onClick={(e) => handleContextMenu(e, index)}
-                    >
-                      ⋯
-                    </button>
-                  </div>
-
-                  {/* Context Menu */}
-                  {contextMenu?.index === index && (
-                    <div className={styles.contextMenu} ref={contextRef}>
-                      <button className={styles.contextItem} onClick={() => handleEdit(status, index)}>
-                        <Pencil size={14} />
-                        <span>Редактировать</span>
-                      </button>
-                      <button className={`${styles.contextItem} ${styles.contextDelete}`} onClick={() => handleDelete(status)}>
-                        <Trash2 size={14} />
-                        <span>Удалить</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+              })}
+            </div>
+          )}
 
           {/* New Status Form */}
           {showNewForm ? (

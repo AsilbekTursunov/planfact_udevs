@@ -1,11 +1,7 @@
-
 'use client'
-import React, { useReducer, useRef } from 'react'
-import { useState, useMemo, useEffect } from 'react'
+import React, { useReducer, useRef, useState, useMemo, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/app/lib/utils'
-import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
-import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import {
 	useCounterpartiesGroupsPlanFact,
@@ -470,7 +466,7 @@ const OperationModal = observer(({
 
 	const formData = formStates[activeTab] || formStates['income'];
 
-	const setFormData = (updater) => {
+	const setFormData = useCallback((updater) => {
 		setFormStates(prev => {
 			const updated = typeof updater === 'function' ? updater(prev[activeTab]) : updater;
 			return {
@@ -478,7 +474,7 @@ const OperationModal = observer(({
 				[activeTab]: updated
 			};
 		});
-	}
+	}, [activeTab]);
 
 	// Update form data when operationData changes (for editing)
 	useEffect(() => {
@@ -664,6 +660,19 @@ const OperationModal = observer(({
 				: null,
 		}))
 	}, [bankAccountsData, legalEntitiesData, currenciesData])
+
+	const isSameCurrency = useMemo(() => {
+		if (activeTab !== 'transfer' || !formData.fromAccount || !formData.toAccount) return false;
+		const fromCurrency = bankAccounts.find(acc => acc.guid === formData.fromAccount)?.currenies_id;
+		const toCurrency = bankAccounts.find(acc => acc.guid === formData.toAccount)?.currenies_id;
+		return fromCurrency && toCurrency && fromCurrency === toCurrency;
+	}, [formData.fromAccount, formData.toAccount, bankAccounts, activeTab]);
+
+	useEffect(() => {
+		if (activeTab === 'transfer' && isSameCurrency) {
+			setFormData(prev => ({ ...prev, toAmount: prev.fromAmount }));
+		}
+	}, [formData.fromAmount, isSameCurrency, activeTab, setFormData]);
 
 	// Get currency from selected account
 	const getAccountCurrency = accountGuid => {
@@ -1201,22 +1210,19 @@ const OperationModal = observer(({
 												Счет и юрлицо <span className={styles.required}>*</span>
 											</label>
 											<div className={styles.fieldWrapper}>
-												<GroupedSelect
-													data={bankAccounts.filter(acc => acc.guid !== formData.toAccount)}
+												<SelectMyAccounts
+													multi={false}
+													type="show"
 													value={formData.fromAccount}
+													selected={formData.toAccount}
 													onChange={value => {
 														setFormData({ ...formData, fromAccount: value })
 														if (errors.fromAccount) {
 															setErrors({ ...errors, fromAccount: null })
 														}
 													}}
-													placeholder='Выберите счет...'
-													groupBy={false}
-													labelKey='label'
-													valueKey='guid'
-													groupKey='group'
-													loading={loadingBankAccounts}
-													hasError={!!errors.fromAccount}
+													placeholder="Юрлица и счета"
+													className={"bg-white"}
 												/>
 												{errors.fromAccount && (
 													<span className={styles.errorText}>{errors.fromAccount}</span>
@@ -1284,22 +1290,19 @@ const OperationModal = observer(({
 												Счет и юрлицо <span className={styles.required}>*</span>
 											</label>
 											<div className={styles.fieldWrapper}>
-												<GroupedSelect
-													data={bankAccounts.filter(acc => acc.guid !== formData.fromAccount)}
+												<SelectMyAccounts
+													multi={false}
+													type="show"
 													value={formData.toAccount}
+													selected={formData.fromAccount}
 													onChange={value => {
 														setFormData({ ...formData, toAccount: value })
 														if (errors.toAccount) {
 															setErrors({ ...errors, toAccount: null })
 														}
 													}}
-													placeholder='Выберите счет...'
-													groupBy={false}
-													labelKey='label'
-													valueKey='guid'
-													groupKey='group'
-													loading={loadingBankAccounts}
-													hasError={!!errors.toAccount}
+													placeholder="Юрлица и счета"
+													className={"bg-white"}
 												/>
 												{errors.toAccount && (
 													<span className={styles.errorText}>{errors.toAccount}</span>
@@ -1308,33 +1311,35 @@ const OperationModal = observer(({
 										</div>
 
 										{/* Сумма зачисления */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Сумма зачисления <span className={styles.required}>*</span>
-											</label>
-											<div className={styles.fieldWrapper}>
-												<div className={styles.inputGroup}>
-													<Input
-														type='text'
-														value={formatAmount(formData.toAmount)}
-														onChange={e => {
-															setFormData({ ...formData, toAmount: parseAmount(e.target.value) })
-															if (errors.toAmount) {
-																setErrors({ ...errors, toAmount: null })
-															}
-														}}
-														placeholder='0'
-														className={cn(styles.input, errors.toAmount && styles.error)}
-													/>
-													{getAccountCurrency(formData.toAccount) && <div className={styles.currencyDisplay}>
-														{getAccountCurrency(formData.toAccount)}
-													</div>}
+										{!isSameCurrency && (
+											<div className={styles.formRow}>
+												<label className={styles.label}>
+													Сумма зачисления <span className={styles.required}>*</span>
+												</label>
+												<div className={styles.fieldWrapper}>
+													<div className={styles.inputGroup}>
+														<Input
+															type='text'
+															value={formatAmount(formData.toAmount)}
+															onChange={e => {
+																setFormData({ ...formData, toAmount: parseAmount(e.target.value) })
+																if (errors.toAmount) {
+																	setErrors({ ...errors, toAmount: null })
+																}
+															}}
+															placeholder='0'
+															className={cn(styles.input, errors.toAmount && styles.error)}
+														/>
+														{getAccountCurrency(formData.toAccount) && <div className={styles.currencyDisplay}>
+															{getAccountCurrency(formData.toAccount)}
+														</div>}
+													</div>
+													{errors.toAmount && (
+														<span className={styles.errorText}>{errors.toAmount}</span>
+													)}
 												</div>
-												{errors.toAmount && (
-													<span className={styles.errorText}>{errors.toAmount}</span>
-												)}
 											</div>
-										</div>
+										)}
 
 										{/* Назначение платежа */}
 										<div className={styles.formRowStart}>

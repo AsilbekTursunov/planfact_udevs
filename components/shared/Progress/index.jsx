@@ -10,7 +10,10 @@ const CustomProgress = ({
   height = "8px",
   style = {}
 }) => {
-  const percentage = Math.min(Math.max(((value - min) / (max - min)) * 100, 0), 100);
+  const range = max - min;
+  const percentage = range === 0 
+    ? (value > min ? 100 : 0)
+    : Math.min(Math.max(((value - min) / range) * 100, 0), 100);
 
   const isTailwindTrack = typeof trackColor === 'string' && trackColor.startsWith('bg-');
   const isTailwindFill = typeof fillColor === 'string' && fillColor.startsWith('bg-');
