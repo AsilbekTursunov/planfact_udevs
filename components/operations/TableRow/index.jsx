@@ -24,9 +24,7 @@ const OperationTableRow = ({
   op.operationParts?.forEach(part => {
     children.add(part?.counterparties_id)
     chartofaccounts.add(part?.chart_of_accounts_id)
-  })
-
-  console.log('counteparties', op)
+  }) 
 
   const titleContragent = useMemo(() => {
     if (children.size === 1 && children.has(counterpartyGuid)) {

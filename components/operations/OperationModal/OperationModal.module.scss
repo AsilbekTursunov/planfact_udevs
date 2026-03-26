@@ -9,6 +9,7 @@
   transition: opacity 0.3s;
   background-color: lab(34.66 -0.95 -5.29 / 0.78);
   pointer-events: auto;
+
   &.closing {
     opacity: 0;
   }
@@ -109,7 +110,7 @@
 }
 
 .header {
-  padding: 1rem 1.5rem 0 1.5rem;
+  padding: 1rem 1rem 0 1rem;
   background-color: white;
   flex-shrink: 0;
 }
@@ -250,7 +251,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   background-color: white;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
   display: flex;
   flex-direction: column;
   min-height: 0;

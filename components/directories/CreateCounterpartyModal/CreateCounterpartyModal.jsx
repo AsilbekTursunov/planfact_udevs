@@ -158,11 +158,11 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
         ...(tip.length > 0 && { tip }),
         ...(data.inn && { inn: Number(data.inn) }),
         ...(validKpp && { kpp: validKpp }),
-        ...(validAccount && { nomer_scheta: validAccount }),
+        ...(validAccount && { account_number: validAccount }),
         ...(data.counterparties_group_id && { counterparties_group_id: data.counterparties_group_id }),
         primenyat_stat_i_po_umolchaniyu: data.primenyat_stat_i_po_umolchaniyu,
-        ...(data.chart_of_accounts_id && { chart_of_accounts_id: data.chart_of_accounts_id }),
-        ...(data.chart_of_accounts_id_2 && { chart_of_accounts_id_2: data.chart_of_accounts_id_2 }),
+        ...(data.chart_of_accounts_id && data.primenyat_stat_i_po_umolchaniyu && { chart_of_accounts_id: data.chart_of_accounts_id }),
+        ...(data.chart_of_accounts_id_2 && data.primenyat_stat_i_po_umolchaniyu && { chart_of_accounts_id_2: data.chart_of_accounts_id_2 }),
         ...(data.komentariy && { komentariy: data.komentariy }),
       }
 

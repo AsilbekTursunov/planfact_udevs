@@ -24,12 +24,14 @@ import { FilesClipIcon } from '../../../constants/icons'
 import SentMessages from './SentMessages'
 import IncomeForm from './Forms/Income'
 import PaymentForm from './Forms/Payment'
+import AccuralForm from './Forms/Accural'
 import { observer } from 'mobx-react-lite'
 import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard'
 import Loader from '../../shared/Loader'
 import CustomModal from '../../shared/CustomModal'
 import { authStore } from '../../../store/auth.store'
 import { formatDateRu } from '../../../utils/helpers'
+import SelectMyAccounts from '../../ReadyComponents/SelectMyAccounts'
 
 const today = new Date().toISOString().split('T')[0]
 const todayDate = new Date().getDate()
@@ -543,7 +545,7 @@ const OperationModal = observer(({
 		page: 1,
 		limit: 100,
 	})
-	const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
+	const { data: currenciesData } = useCurrencies({ limit: 100 })
 
 	const { mutateAsync: createUcodeOperation, isPending: isLoadingUcodeOperation } = useUcodeRequestMutation()
 
@@ -603,14 +605,6 @@ const OperationModal = observer(({
 	}, [counterpartiesGroupsData])
 
 	// Transform legal entities data
-	const legalEntities = useMemo(() => {
-		const items = legalEntitiesData?.data?.data?.data || []
-		return items.map(item => ({
-			guid: item.guid,
-			label: item.nazvanie || 'Без названия',
-			group: 'Юрлица', // All legal entities in one group
-		}))
-	}, [legalEntitiesData])
 
 	// Transform chart of accounts data - show only children of relevant root based on tab
 
@@ -680,15 +674,6 @@ const OperationModal = observer(({
 	}
 
 	// Get currency from selected legal entity (through its accounts)
-	const getLegalEntityCurrency = legalEntityGuid => {
-		if (!legalEntityGuid) return null
-		// Find first account of this legal entity to get currency
-		const legalEntityAccounts = bankAccounts.filter(
-			acc => acc.group === legalEntities.find(le => le.guid === legalEntityGuid)?.label,
-		)
-		if (legalEntityAccounts.length === 0 || !legalEntityAccounts[0].currenies_id_data) return null
-		return `${legalEntityAccounts[0].currenies_id_data.kod || ''} (${legalEntityAccounts[0].currenies_id_data.nazvanie || ''})`.trim()
-	}
 
 	// Handle form submission
 	const handleSubmit = async () => {
@@ -1022,9 +1007,9 @@ const OperationModal = observer(({
 					isOpening ? styles.opening : isClosing ? styles.closing : styles.open,
 				)}
 			>
-				<div className={styles.modalContent}>
+				<div className="flex flex-col flex-1 overflow-hidden h-full max-h-dvh min-h-0">
 					{/* Header */}
-					<div className={styles.header}>
+					<div className="w-full pr-5 pt-5 pl-5">
 						<div className={styles.headerTop}>
 							<div className={styles.headerLeft}>
 								<h2 className={styles.title}>
@@ -1093,6 +1078,7 @@ const OperationModal = observer(({
 							</button>
 						</div>
 					</div>
+
 
 					{/* Form */}
 					<div className={styles.body}>
@@ -1379,196 +1365,13 @@ const OperationModal = observer(({
 
 							{/* Начисление */}
 							{activeTab === 'accrual' && (
-								<>
-									{/* Секция ОТКУДА */}
-									<div className={styles.formSection}>
-										<div className={styles.sectionHeader}>
-											<div className={styles.sectionLine}></div>
-											<h3 className={styles.sectionTitle}>ОТКУДА</h3>
-											<div className={styles.sectionLine}></div>
-										</div>
-
-										{/* Дата начисления */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Дата начисления
-											</label>
-											<div className={styles.fieldWrapper}>
-												<DatePicker
-													value={formData.accrualDate}
-													onChange={value => {
-														setFormData({ ...formData, accrualDate: value })
-														if (errors.accrualDate) {
-															setErrors({ ...errors, accrualDate: null })
-														}
-													}}
-													placeholder='Выберите дату'
-													className={[styles.datePicker, errors.accrualDate ? styles.error : ''].join(' ')}
-												/>
-											</div>
-										</div>
-
-										{/* Подтвердить начисление */}
-										<div className={styles.formRow}>
-											<div className={styles.labelSpacer}></div>
-
-											<OperationCheckbox
-												checked={formData.confirmAccrual}
-												label='Подтвердить начисление'
-												onChange={e => setFormData({ ...formData, confirmAccrual: e.target.checked })}
-											/>
-										</div>
-
-										{/* Юрлицо */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Юрлицо <span className={styles.required}>*</span>
-											</label>
-											<div className={styles.fieldWrapper}>
-												<GroupedSelect
-													data={legalEntities}
-													value={formData.legalEntity}
-													onChange={value => {
-														setFormData({ ...formData, legalEntity: value })
-														if (errors.legalEntity) {
-															setErrors({ ...errors, legalEntity: null })
-														}
-													}}
-													placeholder='Выберите юрлицо...'
-													groupBy={false}
-													labelKey='label'
-													valueKey='guid'
-													loading={loadingLegalEntities}
-													hasError={!!errors.legalEntity}
-												/>
-												{errors.legalEntity && (
-													<span className={styles.errorText}>{errors.legalEntity}</span>
-												)}
-											</div>
-										</div>
-
-										{/* Статья списания */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Статья списания <span className={styles.required}>*</span>
-											</label>
-											<div className={styles.fieldWrapper}>
-												<TreeSelect
-													data={chartOfAccountsTree}
-													alwaysExpanded={true}
-													value={formData.expenseItem}
-													onChange={value => {
-														setFormData({ ...formData, expenseItem: value })
-														if (errors.expenseItem) {
-															setErrors({ ...errors, expenseItem: null })
-														}
-													}}
-													placeholder='Выберите статью списания...'
-													loading={loadingChartOfAccounts}
-													hasError={!!errors.expenseItem}
-												/>
-												{errors.expenseItem && (
-													<span className={styles.errorText}>{errors.expenseItem}</span>
-												)}
-											</div>
-										</div>
-
-										{/* Сумма */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Сумма
-											</label>
-											<div className={styles.fieldWrapper}>
-												<div className={styles.inputGroup}>
-													<Input
-														type='text'
-														value={formatAmount(formData.amount)}
-														onChange={e => {
-															setFormData({ ...formData, amount: parseAmount(e.target.value) })
-
-														}}
-														placeholder='0'
-														className={cn(styles.input, errors.amount && styles.error)}
-													/>
-													{getLegalEntityCurrency(formData.legalEntity) && <div className={styles.currencyDisplay}>
-														{getLegalEntityCurrency(formData.legalEntity)}
-													</div>}
-												</div>
-											</div>
-										</div>
-
-										{/* Учитывать в ОПиУ кассовым методом */}
-										<div className={styles.formRow}>
-											<div className={styles.labelSpacer}></div>
-											<OperationCheckbox
-												checked={formData.cashMethod}
-												label='Учитывать в ОПиУ кассовым методом'
-												onChange={e => setFormData({ ...formData, cashMethod: e.target.checked })}
-											/>
-										</div>
-									</div>
-
-									{/* Секция КУДА */}
-									<div className={styles.formSection}>
-										<div className={styles.sectionHeader}>
-											<div className={styles.sectionLine}></div>
-											<h3 className={styles.sectionTitle}>КУДА</h3>
-											<div className={styles.sectionLine}></div>
-										</div>
-
-										{/* Статья зачисления */}
-										<div className={styles.formRow}>
-											<label className={styles.label}>
-												Статья зачисления <span className={styles.required}>*</span>
-											</label>
-											<div className={styles.fieldWrapper}>
-												<TreeSelect
-													data={chartOfAccountsTree}
-													alwaysExpanded={true}
-													value={formData.creditItem}
-													onChange={value => {
-														setFormData({ ...formData, creditItem: value })
-														if (errors.creditItem) {
-															setErrors({ ...errors, creditItem: null })
-														}
-													}}
-													placeholder='Выберите статью зачисления...'
-													loading={loadingChartOfAccounts}
-													hasError={!!errors.creditItem}
-												/>
-												{errors.creditItem && (
-													<span className={styles.errorText}>{errors.creditItem}</span>
-												)}
-											</div>
-										</div>
-
-
-
-										{/* Назначение */}
-										<div className={styles.formRowStart}>
-											<label className={styles.label} style={{ paddingTop: '0.5rem' }}>
-												Назначение <span className={styles.required}>*</span>
-											</label>
-											<div className={styles.fieldWrapper}>
-												<TextArea
-													value={formData.purpose}
-													onChange={e => {
-														setFormData({ ...formData, purpose: e.target.value })
-														if (errors.purpose) {
-															setErrors({ ...errors, purpose: null })
-														}
-													}}
-													placeholder='Назначение платежа'
-													rows={3}
-													className={cn(styles.textarea, errors.purpose && styles.error)}
-												/>
-												{errors.purpose && (
-													<span className={styles.errorText}>{errors.purpose}</span>
-												)}
-											</div>
-										</div>
-									</div>
-								</>
+								<AccuralForm
+									onCancel={onClose}
+									onSuccess={() => {
+										// Handle form submission logic here if needed
+										onClose();
+									}}
+								/>
 							)}
 						</div>
 					</div>
@@ -1582,6 +1385,7 @@ const OperationModal = observer(({
 							{isSubmitting ? <Loader /> : isNew ? 'Создать' : 'Сохранить'}
 						</button>
 					</div>
+
 				</div>
 				{isAttachmentsOpen && <div className={cn(styles.messageContent, isAttachmentsOpen && styles.open)}>
 					<div className={styles.filesAttachWrap}>

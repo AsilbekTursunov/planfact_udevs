@@ -32,7 +32,7 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency, dealId, 
         <CreditIcon />
       )}
       <div className={styles.amountText}>{tab == "Перемещение" ? <>
-        <div className={`${styles.doubleAccount} flex flex-col gap-1`}>
+        <div className={`${styles.doubleAccount} flex flex-col `}>
           <span className='flex items-center gap-1'>-{formatAmount(amount)} <span className={styles.currency}>{
             currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
           <span className='flex items-center gap-1'>+{formatAmount(amount)} <span className={styles.currency}>{

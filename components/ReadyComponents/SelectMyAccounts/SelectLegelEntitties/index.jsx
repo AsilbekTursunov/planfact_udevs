@@ -1,0 +1,40 @@
+import React, { useMemo } from 'react'
+import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import MultiSelect from '../../../shared/Selects/MultiSelect'
+import SingleSelect from '../../../shared/Selects/SingleSelect'
+
+const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите юрлицо", className, dropdownClassName, multi = false }) => {
+
+  const { data: legalEntitiesData, isLoading } = useUcodeRequestQuery({
+    method: "get_legal_entities",
+    querySetting: {
+      select: (response) => response?.data?.data?.data || []
+    }
+  })
+
+  const mappedData = useMemo(() => {
+    return (legalEntitiesData || []).map(item => ({
+      value: item.guid,
+      label: item.nazvanie || 'Без названия'
+    }))
+  }, [legalEntitiesData])
+
+  if (isLoading) {
+    return <div className="text-xs text-neutral-400 flex items-center h-10 px-3 border border-neutral-200 rounded-md bg-neutral-50">Загрузка...</div>
+  }
+
+  const Component = multi ? MultiSelect : SingleSelect;
+
+  return (
+    <Component
+      data={mappedData}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className={className}
+      dropdownClassName={dropdownClassName}
+    />
+  )
+}
+
+export default SelectLegelEntitties;
