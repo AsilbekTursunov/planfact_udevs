@@ -24,6 +24,7 @@ import MultiSelectZdelka from '../../../../../components/ReadyComponents/MultiZd
 import operationsDto from '../../../../../lib/dtos/operationsDto'
 import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMyAccounts'
 import MultiSelectStatiya from '../../../../../components/ReadyComponents/MultiSelectStatiya'
+import { formatAmount } from '../../../../../utils/helpers'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -47,6 +48,7 @@ const KontragentDetailPage = observer(() => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
+  const [page, setPage] = useState(1)
 
   const [activePopover, setActivePopover] = useState(null)
   const [isRequisitesModalOpen, setIsRequisitesModalOpen] = useState(false)
@@ -88,11 +90,12 @@ const KontragentDetailPage = observer(() => {
       operationDateStart: filters.operationDateStart,
       operationDateEnd: filters.operationDateEnd,
       calculationMethod: filters.calculationMethod,
-      legal_entity_id: selectedLegalEntities,
-      chart_of_accounts_id: selectedChartOfAccounts,
-      deals: filters.deals,
+      legalEntityId: selectedLegalEntities,
+      chartOfAccountId: selectedChartOfAccounts,
+      sellingDealId: filters.deals,
+      page
     }
-  }, [counterpartyGuid, filters.operationDateStart, filters.operationDateEnd, filters.calculationMethod, selectedLegalEntities, selectedChartOfAccounts, filters.deals])
+  }, [counterpartyGuid, page, filters.operationDateStart, filters.operationDateEnd, filters.calculationMethod, selectedLegalEntities, selectedChartOfAccounts, filters.deals])
 
   // Fetch counterparty data by GUID using get_counterparty_by_id
   const { data: counterpartyData, isPending: isLoadingCounterparty } = useUcodeRequestQuery({
@@ -126,12 +129,7 @@ const KontragentDetailPage = observer(() => {
     }
   })
 
-  const operationsList = useMemo(() => {
-    return {
-      today: operationsDto(operationsListData || [], 'today'),
-      before: operationsDto(operationsListData || [], 'before'),
-    }
-  }, [operationsListData])
+
 
 
   // console.log('single countepary', operationsList)
@@ -140,10 +138,21 @@ const KontragentDetailPage = observer(() => {
   // Response structure: { data: { data: { data: { counterparty: {...}, operations: [...] } } } }
   const responseData = counterpartyData?.data?.data?.data
   const counterparty = responseData?.counterparty || null
+  const summary = responseData?.summary || null
+  const counterpartyOperations = useMemo(() => {
+    return responseData?.operations || []
+  }, [responseData])
   // Unified operations data from find_operations
   const operations = useMemo(() => {
-    return operationsDto(operationsListData || [], 'all')
-  }, [operationsListData])
+    return operationsDto(counterpartyOperations || [], 'all')
+  }, [counterpartyOperations])
+
+  const operationsList = useMemo(() => {
+    return {
+      today: operationsDto(counterpartyOperations || [], 'today'),
+      before: operationsDto(counterpartyOperations || [], 'before'),
+    }
+  }, [counterpartyOperations])
 
 
   // Format counterparty info - DECLARE FIRST
@@ -157,15 +166,15 @@ const KontragentDetailPage = observer(() => {
       inn: counterparty.inn && counterparty.inn !== 0 ? counterparty.inn : null,
       kpp: (Array.isArray(counterparty.kpp) ? counterparty.kpp.filter(v => v !== null && v !== '') : (counterparty.kpp && counterparty.kpp !== 0 ? [counterparty.kpp] : [])),
       accountNumber: (Array.isArray(counterparty.nomer_scheta) ? counterparty.nomer_scheta.filter(v => v !== null && v !== '') : (counterparty.nomer_scheta && counterparty.nomer_scheta !== 0 ? [counterparty.nomer_scheta] : [])),
-      receiptArticle: counterparty.chart_of_accounts_id_data?.nazvanie || (counterparty.chart_of_accounts_id ? 'Загрузка...' : null),
-      paymentArticle: counterparty.chart_of_accounts_id_2_data?.nazvanie || (counterparty.chart_of_accounts_id_2 ? 'Загрузка...' : null),
+      receiptArticle: counterparty.chart_of_accounts_id_data?.nazvanie || (counterparty.chart_of_accounts_id ? '-' : null),
+      paymentArticle: counterparty.chart_of_accounts_id_2_data?.nazvanie || (counterparty.chart_of_accounts_id_2 ? '-' : null),
       comment: counterparty.komentariy || null,
       type: counterparty.tip || 'Не указан',
       // Financial metrics from API
       income: counterparty.income || 0,
       expense: counterparty.expense || 0,
       difference: counterparty.difference || 0,
-
+      guid: counterparty.guid || null,
       receivables: counterparty.receivables || counterparty.debitorka || 0,
       payables: counterparty.payables || counterparty.kreditorka || 0,
       operationsCount: counterparty.operations_count || 0
@@ -562,7 +571,7 @@ const KontragentDetailPage = observer(() => {
                     <span className={styles.financialItemLabel}>Поступления</span>
                   </div>
                   <div className={styles.financialItemValue}>
-                    {stats.receipts >= 0 ? '+' : ''}{stats.receipts.toLocaleString('ru-RU')}
+                    {formatAmount(counterpartyInfo?.income)}
                   </div>
                 </div>
 
@@ -572,7 +581,7 @@ const KontragentDetailPage = observer(() => {
                     <span className={styles.financialItemLabel}>Выплаты</span>
                   </div>
                   <div className={styles.financialItemValue}>
-                    {stats.payments >= 0 ? '-' : ''}{Math.abs(stats.payments).toLocaleString('ru-RU')}
+                    {formatAmount(counterpartyInfo?.expense)}
                   </div>
                 </div>
 
@@ -582,7 +591,7 @@ const KontragentDetailPage = observer(() => {
                     <span className={styles.financialItemLabel}>Разница</span>
                   </div>
                   <div className={styles.financialItemValue}>
-                    {stats.difference >= 0 ? '+' : ''}{stats.difference.toLocaleString('ru-RU')}
+                    {formatAmount(counterpartyInfo.difference)}
                   </div>
                 </div>
               </div>
@@ -837,6 +846,7 @@ const KontragentDetailPage = observer(() => {
                         selectedOperations={selectedOperations}
                         toggleOperation={toggleOperation}
                         openOperationModal={handleEditOperation}
+                        counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
                         handleDeleteOperation={handleDeleteOperation}
                         handleCopyOperation={handleCopyOperation}
@@ -857,6 +867,7 @@ const KontragentDetailPage = observer(() => {
                         selectedOperations={selectedOperations}
                         toggleOperation={toggleOperation}
                         openOperationModal={handleEditOperation}
+                        counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
                         handleDeleteOperation={handleDeleteOperation}
                         handleCopyOperation={handleCopyOperation}
@@ -874,27 +885,33 @@ const KontragentDetailPage = observer(() => {
           <div className={styles.footerContent}>
             <div className={styles.footerStats}>
               <span className={styles.footerText}>
-                <span className={styles.footerTextBold}>{stats.totalCount}</span> {stats.totalCount === 1 ? 'операция' : stats.totalCount < 5 ? 'операции' : 'операций'}
+                <span className={styles.footerTextBold}>{summary?.total}</span> {summary?.total === 1 ? 'операция' : summary?.total < 5 ? 'операции' : 'операций'}
               </span>
               {stats.receiptsCount > 0 && (
                 <span className={styles.footerText}>
-                  {stats.receiptsCount} {stats.receiptsCount === 1 ? 'поступление' : stats.receiptsCount < 5 ? 'поступления' : 'поступлений'}: <span className={styles.footerTextBold}>{stats.receipts.toLocaleString('ru-RU')}</span>
+                  {stats.receiptsCount} {stats.receiptsCount === 1 ? 'поступление' : stats.receiptsCount < 5 ? 'поступления' : 'поступлений'}: <span className={styles.footerTextBold}>{formatAmount(summary?.incoming)}</span>
                 </span>
               )}
               {stats.paymentsCount > 0 && (
                 <span className={styles.footerText}>
-                  {stats.paymentsCount} {stats.paymentsCount === 1 ? 'выплата' : stats.paymentsCount < 5 ? 'выплаты' : 'выплат'}: <span className={styles.footerTextBold}>{stats.payments.toLocaleString('ru-RU')}</span>
+                  {stats.paymentsCount} {counterparty?.expense === 1 ? 'выплата' : counterparty?.expense < 5 ? 'выплаты' : 'выплат'}: <span className={styles.footerTextBold}>{formatAmount(summary?.outgoing)}</span>
                 </span>
               )}
               <span className={styles.footerText}>
-                Итого: <span className={cn(styles.footerTextBold, stats.difference >= 0 ? styles.footerTextGreen : styles.footerTextRed)}>
-                  {stats.difference >= 0 ? '+' : ''}{stats.difference.toLocaleString('ru-RU')}
+                Итого: <span className={cn(styles.footerTextBold, summary.profit >= 0 ? styles.footerTextGreen : styles.footerTextRed)}>
+                  {summary.profit >= 0 ? '+' : ''}{formatAmount(summary.profit)}
                 </span>
               </span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* "difference": -9496457,
+                    "incoming": 503666,
+                    "outgoing": 10000123,
+                    "profit": -9496457,
+                    "total": 6 */}
 
       {/* Create Operation Modal */}
       {isCreateOperationModalOpen && (

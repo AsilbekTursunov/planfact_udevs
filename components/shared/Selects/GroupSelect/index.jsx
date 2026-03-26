@@ -156,7 +156,7 @@ const GroupSelect = ({
           <div
             ref={dropdownRef}
             className={cn(
-              'z-9999 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-64 overflow-hidden flex flex-col',
+              'z-99999 bg-white border border-neutral-200 rounded-lg shadow-lg max-h-64 overflow-hidden flex flex-col',
               dropdownClassName
             )}
             style={{

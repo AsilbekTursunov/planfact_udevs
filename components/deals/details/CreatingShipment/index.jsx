@@ -12,6 +12,9 @@ import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks
 import Loader from '../../../shared/Loader'
 import { queryClient } from '../../../../lib/queryClient'
 import { productServiceDto } from '../../../../lib/dtos/productServiceDto'
+import SinglSelectStatiya from '../../../ReadyComponents/SingleSelectStatiya'
+import SelectMyAccounts from '../../../ReadyComponents/SelectMyAccounts'
+import SingleCounterParty from '../../../ReadyComponents/SingleCounterParty'
 
 const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false }) => {
   const today = new Date()
@@ -138,26 +141,6 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     return groups.map(buildTree)
   }, [counterpartiesGroupsData])
 
-  // Chart of accounts options
-  const chartOfAccountsOptions = React.useMemo(() => {
-    const rawData = chartOfAccountsData?.data?.data?.data || [];
-    const flatten = (items) => {
-      let result = []
-      items.forEach(item => {
-        result.push(item)
-        if (item.children && item.children.length > 0) {
-          result = result.concat(flatten(item.children))
-        }
-      })
-      return result
-    }
-    const flat = Array.isArray(rawData) ? flatten(rawData) : []
-    return flat.map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия',
-      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
-    }))
-  }, [chartOfAccountsData])
 
   // Block body scroll when modal is open
   useEffect(() => {
@@ -394,17 +377,12 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
               Юрлицо <span className={styles.required}>*</span>
             </label>
             <div className={styles.inputContainer} style={{ flex: 1, maxWidth: '600px' }}>
-              <GroupedSelect
-                data={legalEntities}
+              <SelectMyAccounts
+                multi={false}
                 value={legalEntity}
                 onChange={(value) => setLegalEntity(value)}
                 placeholder="Выберите юрлицо"
-                groupBy={false}
-                labelKey="label"
-                valueKey="guid"
-                disabled={false}
-                loading={loadingLegalEntities}
-                className="flex-1"
+                className="flex-1 bg-white"
               />
               {errors.legalEntity && (
                 <div className={styles.errorMessage}>{errors.legalEntity}</div>
@@ -417,19 +395,15 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
             <label className={styles.label}>
               Клиент <span className={styles.required}>*</span>
             </label>
-            <div className={styles.inputContainer} style={{ flex: 1, maxWidth: '600px' }}>
-              <TreeSelect
-                data={counterAgentsTree}
-                value={client}
-                onChange={value => setClient(value)}
-                placeholder='Выберите клиента...'
-                className='flex-1'
-                loading={isLoadingGroups}
-              />
-              {errors.client && (
-                <div className={styles.errorMessage}>{errors.client}</div>
-              )}
-            </div>
+            <SingleCounterParty
+              value={client}
+              onChange={value => setClient(value)}
+              placeholder='Выберите клиента...'
+              className='flex-1 bg-white'
+            />
+            {errors.client && (
+              <div className={styles.errorMessage}>{errors.client}</div>
+            )}
           </div>
 
           {/* Chart of accounts */}
@@ -438,16 +412,12 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
               <label className={styles.label}>
                 Статья доходов
               </label>
-              <div className={styles.inputContainer} style={{ flex: 1, maxWidth: '600px' }}>
-                <MultiSelect
-                  data={chartOfAccountsOptions}
-                  value={chartOfAccounts}
-                  onChange={(values) => setChartOfAccounts(values)}
-                  placeholder="Выберите статьи учета"
-                  valueKey="value"
-                  hideSelectAll={true}
-                />
-              </div>
+              <SinglSelectStatiya
+                selectedValue={chartOfAccounts}
+                setSelectedValue={value => setChartOfAccounts(value)}
+                placeholder='Нераспределенный доход'
+                className='flex-1 bg-white'
+              />
             </div>
           )}
 

@@ -19,20 +19,34 @@ const OperationTableRow = ({
 }) => {
   const [open, setOpen] = useState(false)
   const children = new Set()
+  const chartofaccounts = new Set()
 
   op.operationParts?.forEach(part => {
-    children.add(part?.counterpartyId)
+    children.add(part?.counterparties_id)
+    chartofaccounts.add(part?.chart_of_accounts_id)
   })
+
+  console.log('counteparties', op)
 
   const titleContragent = useMemo(() => {
     if (children.size === 1 && children.has(counterpartyGuid)) {
       return op.counterparty || ''
     } else if (children.size > 1) {
-      return `${children.size || 2} статьи`
+      return `${children.size || 2} [контрагента]`
     } else {
       return op.counterparty || ''
     }
-  }, [children, counterpartyGuid, op.bankAccount])
+  }, [children, counterpartyGuid, op.counterparty])
+
+  const titleChartOfAccounts = useMemo(() => {
+    if (chartofaccounts.size === 1) {
+      return op.chartOfAccounts || ''
+    } else if (chartofaccounts.size > 1) {
+      return `${chartofaccounts.size || 2} [статьи]`
+    } else {
+      return op.chartOfAccounts || ''
+    }
+  }, [chartofaccounts, op.chartOfAccounts])
 
   const isDifferentDate = op?.accrualDate !== op?.operationDate
 
@@ -76,7 +90,7 @@ const OperationTableRow = ({
           {op?.tip == "Перемещение" ? <>
             <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
               <span>{op.my_account_name}</span>
-              <span>{op.my_account_name_2}</span>
+              <span>{op.my_account_name2}</span>
             </div>
           </> : op.my_account_name || ''}
         </td>
@@ -101,7 +115,7 @@ const OperationTableRow = ({
           {op?.tip == "Перемещение" ? <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
             <span>[Перемещение - списание]</span>
             <span>[Перемещение - зачисление]</span>
-          </div> : op.chartOfAccounts || ''}
+          </div> : titleChartOfAccounts || ''}
         </td>
         {/* <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td> */}
         <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.selling_deal_name || '-'}</td>
@@ -134,10 +148,10 @@ const OperationTableRow = ({
           return (
             <tr
               key={part.id}
-              className={`${styles.tableRow} ${styles.child} ${counterpartyGuid && counterpartyGuid !== part?.counterpartyId ? styles.disabled : ''}`}
-              aria-disabled={counterpartyGuid && counterpartyGuid === part?.counterpartyId}
+              className={`${styles.tableRow} ${styles.child} ${counterpartyGuid && counterpartyGuid !== part?.counterparties_id ? styles.disabled : ''}`}
+              // aria-disabled={counterpartyGuid && counterpartyGuid === part?.counterpartyId}
               onClick={e => {
-                if (!e.target.closest('input') && !e.target.closest('button') && counterpartyGuid === part?.counterpartyId) {
+                if (!e.target.closest('input') && !e.target.closest('button') && counterpartyGuid === part?.counterparties_id) {
                   openOperationModal(part)
                 }
               }}
@@ -178,7 +192,7 @@ const OperationTableRow = ({
                   part.chartOfAccounts || ''
                 )}
               </td>
-              <td className={styles.tableCell}>{part?.project_name || '-'}</td>
+              {/* <td className={styles.tableCell}>{part?.project_name || '-'}</td> */}
               <td className={styles.tableCell}>{part?.selling_deal_name || '-'}</td>
               <td colSpan={2} className={styles.tableCell} onClick={e => e.stopPropagation()}>
                 <PriceStatus

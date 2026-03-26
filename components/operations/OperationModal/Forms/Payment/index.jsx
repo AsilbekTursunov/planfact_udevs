@@ -1,5 +1,4 @@
 'use client'
-import React from 'react'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
@@ -11,8 +10,8 @@ import styles from '../../OperationModal.module.scss'
 import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
-import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import SelectMyAccounts from '../../../../ReadyComponents/SelectMyAccounts'
+import SingleSelect from '../../../../shared/Selects/SingleSelect'
 
 const PaymentForm = ({
   // form state
@@ -26,11 +25,6 @@ const PaymentForm = ({
   showDate,
   showAgent,
   showStatya,
-  // data
-  bankAccounts,
-  formattedDeals,
-  // loading
-  loadingBankAccounts,
   // split
   rows,
   dispatch,
@@ -187,7 +181,7 @@ const PaymentForm = ({
             onChange={value => setFormData({ ...formData, counterparty: value })}
             placeholder='Выберите контрагента...'
             className='flex-1 bg-white'
-            disabled={disableCounterpartySelect}
+            // disabled={disableCounterpartySelect}
           />
         </div>
       )}
@@ -210,19 +204,17 @@ const PaymentForm = ({
       {appStore.isPayment && (
         <div className={styles.formRow}>
           <label className={styles.label}>Тип платежа</label>
-          <GroupedSelect
+          <SingleSelect
             data={[
               { label: 'Наличный', value: 'cash' },
               { label: 'Карта', value: 'card' },
               { value: 'transfer', label: 'Перечисление' },
             ]}
+            withSearch={false}
             value={formData.paymentType}
             onChange={value => setFormData(prev => ({ ...prev, paymentType: value }))}
             placeholder='Выберите тип платежа...'
-            groupBy={false}
-            labelKey='label'
-            valueKey='value'
-            className='flex-1'
+            className='flex-1 bg-white'
           />
         </div>
       )}
