@@ -338,7 +338,7 @@ export default observer(function DealDetailPage() {
           <div className="font-normal text-xs text-gray-ucode-500 mt-2 mb-5">Отгружено: {calculatePercent(dealAmount, shipped)}</div>
 
           <div className="flex text-xs  gap-2 flex-1 items-end">
-            <span className="font-normal  text-gray-ucode-500">Осталось отгрузить:</span>
+            <span className="font-normal  text-gray-ucode-500">Мы должны:</span>
             <span className="font-medium  text-[#344054]">{formatAmount(remainingShipment)} ₽</span>
           </div>
         </div>

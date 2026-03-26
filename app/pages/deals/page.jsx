@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import debounce from 'lodash/debounce';
 import styles from './deals.module.scss';
 import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
-import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard';
+import { useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import Input from '../../../components/shared/Input';
 import { ChevronDown, Search } from 'lucide-react';
@@ -81,7 +81,9 @@ export default observer(function DealsPage() {
     method: "get_sales_list_simple",
     data: dealsFilters,
     querySetting: {
-      select: (response) => response?.data?.data
+      select: (response) => response?.data?.data,
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
     }
   })
 

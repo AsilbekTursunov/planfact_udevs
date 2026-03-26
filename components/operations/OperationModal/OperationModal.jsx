@@ -966,6 +966,7 @@ const OperationModal = observer(({
 			queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
 			queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
 			queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+			queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
 
 
 			onClose()

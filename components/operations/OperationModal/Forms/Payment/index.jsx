@@ -12,6 +12,7 @@ import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
+import SelectMyAccounts from '../../../../ReadyComponents/SelectMyAccounts'
 
 const PaymentForm = ({
   // form state
@@ -84,20 +85,16 @@ const PaymentForm = ({
           Счет и юрлицо <span className={styles.required}>*</span>
         </label>
         <div className={styles.fieldWrapper}>
-          <GroupedSelect
-            data={bankAccounts}
+          <SelectMyAccounts
+            multi={false}
+            type="show"
             value={formData.accountAndLegalEntity}
             onChange={value => {
               setFormData({ ...formData, accountAndLegalEntity: value })
               if (errors.accountAndLegalEntity) setErrors({ ...errors, accountAndLegalEntity: null })
             }}
-            placeholder='Выберите счет...'
-            groupBy={false}
-            labelKey='label'
-            valueKey='guid'
-            groupKey='group'
-            loading={loadingBankAccounts}
-            hasError={!!errors.accountAndLegalEntity}
+            placeholder="Юрлица и счета"
+            className={"bg-white"}
           />
           {errors.accountAndLegalEntity && (
             <span className={styles.errorText}>{errors.accountAndLegalEntity}</span>
@@ -198,7 +195,7 @@ const PaymentForm = ({
       {/* Статья */}
       {!showStatya && (
         <div className={styles.formRow}>
-          <label className={styles.label}>Статья</label> 
+          <label className={styles.label}>Статья</label>
           <SinglSelectStatiya
             selectedValue={formData.chartOfAccount}
             setSelectedValue={value => setFormData({ ...formData, chartOfAccount: value })}

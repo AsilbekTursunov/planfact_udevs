@@ -189,6 +189,7 @@ const OperationTableRow = ({
                   confirmed={part.payment_confirmed}
                   accrual={part.payment_accrual}
                   currency={part.currency}
+                  dealId={op?.selling_deal_id}
                 />
               </td>
             </tr>

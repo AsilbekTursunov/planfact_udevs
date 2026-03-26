@@ -100,6 +100,7 @@ const IncomeForm = ({
 
           <SelectMyAccounts
             multi={false}
+            type="show"
             value={formData.accountAndLegalEntity}
             onChange={value => {
               setFormData({ ...formData, accountAndLegalEntity: value })
