@@ -8,6 +8,7 @@ const GroupSelect = ({
   value = [],
   onChange = () => { },
   placeholder = "Выберите",
+  isClearable = true,
   dropdownClassName,
   className
 }) => {
@@ -133,7 +134,7 @@ const GroupSelect = ({
           {value.length > 0 ? `Выбрано: ${value.length}` : placeholder}
         </span>
         <div className="flex items-center">
-          {value?.length > 0 && (
+          {isClearable && value?.length > 0 && (
             <div
               role="button"
               tabIndex={0}

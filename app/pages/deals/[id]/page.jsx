@@ -68,7 +68,7 @@ export default observer(function DealDetailPage() {
     nds: summeryCards?.nds,
     commentary: summeryCards?.commentary
   }
-
+  console.log('summeryCards', summeryCards)
 
   const [activeTab, setActiveTab] = useState('products');
   const [showShipmentModal, setShowShipmentModal] = useState(false);
@@ -509,7 +509,7 @@ export default observer(function DealDetailPage() {
               setIsModalClosing(false)
             }, 300)
           }}
-          preselectedCounterparty={summeryCards?.counterparty_id}
+          preselectedCounterparty={summeryCards?.counterparties_id}
           onSuccess={() => setShowOperationModal(false)}
           initialTab={activeTab === 'expenses' ? 'payment' : 'income'}
         />

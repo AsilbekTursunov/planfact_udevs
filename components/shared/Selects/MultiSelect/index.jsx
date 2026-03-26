@@ -9,6 +9,7 @@ const MultiSelect = ({
   onChange = () => { },
   placeholder = "Выберите",
   withSearch = true,
+  isClearable = true,
   className,
   dropdownClassName
 }) => {
@@ -102,7 +103,7 @@ const MultiSelect = ({
       >
         <span className={cn('text-gray-ucode-400 text-start line-clamp-1 font-normal text-xs', value.length > 0 && 'text-gray-ucode-800')}>{getSelectedLabel()}</span>
         <div className="flex items-center">
-          {value?.length > 0 && (
+          {isClearable && value?.length > 0 && (
             <div
               role="button"
               tabIndex={0}

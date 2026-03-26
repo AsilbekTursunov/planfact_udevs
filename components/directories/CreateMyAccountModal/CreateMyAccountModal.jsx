@@ -208,6 +208,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   placeholder="Выберите тип"
                   className="flex-1 bg-white"
                   withSearch={false}
+                  isClearable={false}
                 />
               </div>
             </div>

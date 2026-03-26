@@ -46,6 +46,7 @@ const TreeSelect = ({
   onChange = () => { },
   placeholder = "Выберите",
   multi = false,
+  isClearable = true,
   className, dropdownClassName
 }) => {
   const [open, setOpen] = useState(false)
@@ -190,7 +191,7 @@ const TreeSelect = ({
       >
         <span className={cn('text-gray-ucode-400 text-start line-clamp-1 font-normal text-xs', (multi && value?.length > 0) || (!multi && value) && 'text-gray-ucode-800', isPlaceholder && 'text-gray-ucode-400')}>{getSelectedLabel()}</span>
         <div className="flex items-center">
-          {((multi && value?.length > 0) || (!multi && value)) && (
+          {isClearable && ((multi && value?.length > 0) || (!multi && value)) && (
             <div
               role="button"
               tabIndex={0}

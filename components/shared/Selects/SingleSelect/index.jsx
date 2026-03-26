@@ -9,6 +9,7 @@ const SingleSelect = ({
   onChange = () => { },
   placeholder = "Выберите",
   withSearch = true,
+  isClearable = true,
   className,
   dropdownClassName
 }) => {
@@ -98,7 +99,7 @@ const SingleSelect = ({
 
         <span className={cn('text-gray-ucode-400 text-start line-clamp-1 font-normal text-xs', value && 'text-gray-ucode-800')}>{getSelectedLabel()}</span>
         <div className="flex items-center">
-          {value && (
+          {isClearable && value && (
             <div
               role="button"
               tabIndex={0}
