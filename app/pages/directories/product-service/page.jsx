@@ -429,12 +429,12 @@ export default function LegalEntitiesPage() {
                     </td>
                   </tr>
                 ) : (
-                    productServicesList.map((item, index) => {
-                      if (item.isGroup) {
-                        const isExpanded = expandedGroups.has(item.guid);
-                        const isAllChildsSelected = item?.items?.length > 0 && item.items.every(child => selectedItems.has(child.guid));
-                        return (
-                          <React.Fragment key={item.guid}>
+                  productServicesList.map((item, index) => {
+                    if (item.isGroup) {
+                      const isExpanded = expandedGroups.has(item.guid);
+                      const isAllChildsSelected = item?.items?.length > 0 && item.items.every(child => selectedItems.has(child.guid));
+                      return (
+                        <React.Fragment key={item.guid}>
                           <tr
                             className="hover:bg-neutral-50 bg-neutral-50/50 font-medium cursor-pointer border-b border-gray-200"
                             onClick={() => toggleGroup(item.guid)}
@@ -444,7 +444,7 @@ export default function LegalEntitiesPage() {
                                 <OperationCheckbox checked={isAllChildsSelected} onChange={() => handleSelectChilds(item)} />
                               </div>
                             </td>
-                              <td colSpan={6} className="p-3">
+                            <td colSpan={6} className="p-3">
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid); }}
@@ -457,12 +457,12 @@ export default function LegalEntitiesPage() {
                                 </span>
                               </div>
                             </td>
-                              <td className="p-3 text-center">
-                                <p className='text-xs font-normal text-neutral-500'>{item.type}</p>
-                              </td>
-                              <td className="p-3 text-center">
-                                <p className='text-xs font-normal text-neutral-500'>{item.commentary}</p>
-                              </td>
+                            <td className="p-3 text-center">
+                              <p className='text-xs font-normal text-neutral-500'>{item.type}</p>
+                            </td>
+                            <td className="p-3 text-center">
+                              <p className='text-xs font-normal text-neutral-500'>{item.commentary}</p>
+                            </td>
                             <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                               {item.guid !== 'no-group' && (
                                 <div className="relative inline-block" ref={openRowMenuId === item.guid ? rowMenuRef : null}>
@@ -474,10 +474,10 @@ export default function LegalEntitiesPage() {
                                   </button>
                                   {openRowMenuId === item.guid && (
                                     <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 w-36 p-1 flex flex-col font-normal text-sm">
-                                        <button className="flex items-center gap-2 p-1.5 text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => {
-                                          setOpenRowMenuId(null); setItemToEdit(item.raw || item); setIsCopying(false); setIsCreateGroupOpen(true);
-                                          setEditGroup(item)
-                                        }}>
+                                      <button className="flex items-center gap-2 p-1.5 text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => {
+                                        setOpenRowMenuId(null); setItemToEdit(item.raw || item); setIsCopying(false); setIsCreateGroupOpen(true);
+                                        setEditGroup(item)
+                                      }}>
                                         <MdOutlineModeEdit size={14} className="text-neutral-500" /> Редактировать
                                       </button>
                                       <button className="flex items-center gap-2 p-1.5 text-red-600 hover:bg-red-50 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
@@ -490,15 +490,15 @@ export default function LegalEntitiesPage() {
                             </td>
                           </tr>
 
-                          {isExpanded && item.items.length === 0 && (
-                            <tr>
-                              <td colSpan={9} className="p-4 text-center text-neutral-400 text-sm">
-                                Нет данных
-                              </td>
-                            </tr>
-                          )}
+                        {isExpanded && item.items.length === 0 && (
+                          <tr>
+                            <td colSpan={9} className="p-4 text-center text-neutral-400 text-sm">
+                              Нет данных
+                            </td>
+                          </tr>
+                        )}
 
-                          {isExpanded && item.items.map((child, childIndex) => (
+                        {isExpanded && item.items.map((child, childIndex) => (
                           <tr key={child.guid || childIndex} className="hover:bg-neutral-50 border-b border-gray-200 text-sm">
                             <td className="p-3 text-center">
                               <div className="flex items-center justify-center">
@@ -540,51 +540,51 @@ export default function LegalEntitiesPage() {
                             </td>
                           </tr>
                         ))}
-                          </React.Fragment>
-                        )
-                      } else {
-                        return (
-                        <tr key={item.guid || index} className="hover:bg-neutral-50 border-b border-gray-200 text-sm">
-                          <td className="p-3 text-center">
-                            <div className="flex items-center justify-center">
-                              <OperationCheckbox checked={selectedItems.has(item.guid)} onChange={() => handleSelectChild(item)} />
-                            </div>
-                          </td>
-                          <td className="p-3 text-start font-medium text-neutral-700">{item.name || '—'}</td>
-                            <td className="p-3 text-start font-normal text-xs  text-neutral-500">{item.type || '—'}</td>
-                          <td className="p-3 text-start text-neutral-500">{item.artikul || '—'}</td>
-                          <td className="p-3 text-end text-neutral-700">{item.price ? `${item.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
-                          <td className="p-3 text-center text-neutral-500">{item.unit}</td>
-                          <td className="p-3 text-center text-neutral-500">{item.vat}</td>
-                          <td className="p-3 text-end text-neutral-700">{item.priceWithVat ? `${item.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
-                          <td className="p-3 text-start text-neutral-500 max-w-[160px] overflow-hidden text-overflow-ellipsis whitespace-nowrap">{item.comment || '—'}</td>
-                          <td className="p-3 text-center w-10 " onClick={(e) => e.stopPropagation()}>
-                            <div className="relative  inline-block" ref={openRowMenuId === item.guid ? rowMenuRef : null}>
-                              <button
-                                className="p-1 hover:bg-neutral-200 cursor-pointer rounded-full"
-                                onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}
-                              >
-                                <MoreVertical size={16} />
-                              </button>
-                              {openRowMenuId === item.guid && (
-                                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 w-36 p-1 flex flex-col">
-                                  <button className="flex items-center gap-2 p-1.5 text-sm text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(false); setIsCreateSingleOpen(true); }}>
-                                    <MdOutlineModeEdit size={14} className="text-neutral-500" /> Редактировать
-                                  </button>
-                                  <button className="flex items-center gap-2 p-1.5 text-sm text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(true); setIsCreateSingleOpen(true); }}>
-                                    <IoCopyOutline size={14} className="text-neutral-500" /> Копировать
-                                  </button>
-                                  <button className="flex items-center  gap-2 p-1.5 text-sm text-red-600 hover:bg-red-50 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
-                                    <GoTrash size={14} className="text-red-500" /> Удалить
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                            </td>
-                          </tr>
-                        )
-                      }
-                    })
+                      </React.Fragment>
+                    )
+                  } else {
+                    return (
+                      <tr key={item.guid || index} className="hover:bg-neutral-50 border-b border-gray-200 text-sm">
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center">
+                            <OperationCheckbox checked={selectedItems.has(item.guid)} onChange={() => handleSelectChild(item)} />
+                          </div>
+                        </td>
+                        <td className="p-3 text-start font-medium text-neutral-700">{item.name || '—'}</td>
+                        <td className="p-3 text-start font-normal text-xs  text-neutral-500">{item.type || '—'}</td>
+                        <td className="p-3 text-start text-neutral-500">{item.artikul || '—'}</td>
+                        <td className="p-3 text-end text-neutral-700">{item.price ? `${item.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                        <td className="p-3 text-center text-neutral-500">{item.unit}</td>
+                        <td className="p-3 text-center text-neutral-500">{item.vat}</td>
+                        <td className="p-3 text-end text-neutral-700">{item.priceWithVat ? `${item.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                        <td className="p-3 text-start text-neutral-500 max-w-[160px] overflow-hidden text-overflow-ellipsis whitespace-nowrap">{item.comment || '—'}</td>
+                        <td className="p-3 text-center w-10 " onClick={(e) => e.stopPropagation()}>
+                          <div className="relative  inline-block" ref={openRowMenuId === item.guid ? rowMenuRef : null}>
+                            <button
+                              className="p-1 hover:bg-neutral-200 cursor-pointer rounded-full"
+                              onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+                            {openRowMenuId === item.guid && (
+                              <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 w-36 p-1 flex flex-col">
+                                <button className="flex items-center gap-2 p-1.5 text-sm text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(false); setIsCreateSingleOpen(true); }}>
+                                  <MdOutlineModeEdit size={14} className="text-neutral-500" /> Редактировать
+                                </button>
+                                <button className="flex items-center gap-2 p-1.5 text-sm text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToEdit(item.raw); setIsCopying(true); setIsCreateSingleOpen(true); }}>
+                                  <IoCopyOutline size={14} className="text-neutral-500" /> Копировать
+                                </button>
+                                <button className="flex items-center  gap-2 p-1.5 text-sm text-red-600 hover:bg-red-50 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
+                                  <GoTrash size={14} className="text-red-500" /> Удалить
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  }
+                })
               )}
             </tbody>
           </table>

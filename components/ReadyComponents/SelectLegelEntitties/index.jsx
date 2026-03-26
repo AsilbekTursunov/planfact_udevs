@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
-import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
-import MultiSelect from '../../../shared/Selects/MultiSelect'
-import SingleSelect from '../../../shared/Selects/SingleSelect'
+import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
+import MultiSelect from '../../shared/Selects/MultiSelect'
+import SingleSelect from '../../shared/Selects/SingleSelect'
 
 const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите юрлицо", className, dropdownClassName, multi = false }) => {
 

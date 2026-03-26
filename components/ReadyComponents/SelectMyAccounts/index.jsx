@@ -16,7 +16,7 @@ const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите с�
   const mappedData = useMemo(() => {
     return (accountsData || []).map(item => ({
       value: item.guid,
-      label: type === "show" ? `${item?.nazvanie} [${item?.legal_entity_name}] ${formatAmount(item?.balans)}` : item.nazvanie
+      label: type === "show" ? `${item?.nazvanie} [${item?.legal_entity_name}] ${formatAmount(item?.balans)} ${item?.currenies_kod}` : item.nazvanie
     }))
   }, [accountsData, type])
 
