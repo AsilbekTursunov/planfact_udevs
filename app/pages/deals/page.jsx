@@ -203,7 +203,7 @@ export default observer(function DealsPage() {
   return (
     <div className="flex min-h-dvh">
       <FilterSidebar />
-      <main className="p-4 w-full">
+      <main className="p-4 w-full relative">
         <header className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2 flex-1">
             <h1 className={styles.title}>Сделки по продажам</h1>
@@ -336,7 +336,7 @@ export default observer(function DealsPage() {
           </table>
         </div>
 
-        <footer className={styles.footer}>
+        <footer className={[styles.footer]}>
           <div className={styles.footerContent}>
             <span className={styles.footerItem}>
               <span className={styles.footerLabel}>{deals?.summary?.count || 0} сделок на сумму:</span>
