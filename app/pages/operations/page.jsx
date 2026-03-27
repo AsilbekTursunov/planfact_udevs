@@ -21,6 +21,7 @@ import styles from './operations.module.scss'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
 import { useQueryClient } from '@tanstack/react-query'
 import operationsDto from '../../../lib/dtos/operationsDto'
+import { OperationsFooter } from '../../../components/operations/OperationsFooter/OperationsFooter'
 
 const OperationsPage = observer(() => {
 	const [isModalClosing, setIsModalClosing] = useState(false)
@@ -170,6 +171,11 @@ const OperationsPage = observer(() => {
 	const allOperations = useMemo(() => {
 		return infiniteData?.pages?.flatMap(page => page?.data?.data?.data || []) || []
 	}, [infiniteData])
+
+	const totalSummary = useMemo(() => {
+		return infiniteData?.pages?.[0]?.data?.data?.totalSummary
+	}, [infiniteData])
+
 
 	const isAllSelected = allOperations.length > 0 && selectedOperations.length === allOperations.length
 
@@ -633,6 +639,9 @@ const OperationsPage = observer(() => {
 						<span>Загрузка...</span>
 					</div>
 				)} */}
+
+
+				<OperationsFooter totalSummary={totalSummary} isFilterOpen={isFilterOpen} />
 
 			</div>
 
