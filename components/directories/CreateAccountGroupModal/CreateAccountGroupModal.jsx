@@ -70,7 +70,7 @@ export default function CreateAccountGroupModal({ isOpen, onClose }) {
     >
       <div className="flex flex-col h-full text-slate-900 bg-white">
         <div className="border-b pb-3 p-4 flex items-center justify-between bg-white sticky top-0 z-10">
-          <h2 className="text-xl font-semibold">Создать группу счетов</h2>
+          <h2 className="text-xl font-semibold">Создать группу</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
@@ -95,7 +95,7 @@ export default function CreateAccountGroupModal({ isOpen, onClose }) {
 
             <div className="flex flex-row items-start gap-4">
               <label className="w-[35%] text-sm  text-slate-700 pt-2">
-                Описание группы
+                Комментарий
               </label>
               <div className="flex-1">
                 <TextArea

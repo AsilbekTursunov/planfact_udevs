@@ -17,10 +17,10 @@ const CustomModal = ({ isOpen, onClose, children, className }) => {
   return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div className={cn('bg-white p-5 rounded-lg relative', className)} onClick={(e) => e.stopPropagation()}>
+        {children}
         <button className={styles.closeButton} onClick={onClose}>
           <IoCloseOutline size={24} color="#98A2B3" />
         </button>
-        {children}
       </div>
     </div>,
     document.body

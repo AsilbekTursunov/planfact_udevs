@@ -102,17 +102,21 @@ const IncomeForm = ({
           <label className={styles.label}>Сумма</label>
           <div className={styles.fieldWrapper}>
             <div className={styles.inputGroup}>
-              <Input
-                value={formatAmount(formData.amount)}
-                onChange={e => {
-                  setFormData({ ...formData, amount: parseAmount(e.target.value) })
-                  if (errors.amount) setErrors({ ...errors, amount: null })
-                }}
-                placeholder='0'
-                className={styles.input}
-              />
-              {isDebit && <DebitIcon />}
-              {isCredit && <CreditIcon />}
+              <div className='flex items-center gap-4'>
+                <Input
+                  value={formatAmount(formData.amount)}
+                  onChange={e => {
+                    setFormData({ ...formData, amount: parseAmount(e.target.value) })
+                    if (errors.amount) setErrors({ ...errors, amount: null })
+                  }}
+                  placeholder='0'
+                  className={'w-56'}
+                />
+                <span className=''>
+                  {isDebit && <DebitIcon />}
+                  {isCredit && <CreditIcon />}
+                </span>
+              </div>
               {getAccountCurrency(formData.accountAndLegalEntity) && (
                 <div className={styles.currencyDisplay}>
                   {getAccountCurrency(formData.accountAndLegalEntity) || 'Выберите счет'}

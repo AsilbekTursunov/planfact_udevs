@@ -102,18 +102,22 @@ const PaymentForm = ({
           <label className={styles.label}>Сумма</label>
           <div className={styles.fieldWrapper}>
             <div className={styles.inputGroup}>
-              <Input
-                type='text'
-                value={formatAmount(formData.amount)}
-                onChange={e => {
-                  setFormData({ ...formData, amount: parseAmount(e.target.value) })
-                  if (errors.amount) setErrors({ ...errors, amount: null })
-                }}
-                placeholder='0'
-                className={cn(styles.input, errors.amount && styles.error)}
-              />
-              {isDebit && <DebitIcon />}
-              {isCredit && <CreditIcon />}
+              <div className="flex items-center gap-2">
+                <Input
+                  type='text'
+                  value={formatAmount(formData.amount)}
+                  onChange={e => {
+                    setFormData({ ...formData, amount: parseAmount(e.target.value) })
+                    if (errors.amount) setErrors({ ...errors, amount: null })
+                  }}
+                  placeholder='0'
+                  className={cn(styles.input, errors.amount && styles.error)}
+                />
+                <span>
+                  {isDebit && <DebitIcon />}
+                  {isCredit && <CreditIcon />}
+                </span>
+              </div>
               {getAccountCurrency(formData.accountAndLegalEntity) && (
                 <div className={styles.currencyDisplay}>
                   {getAccountCurrency(formData.accountAndLegalEntity)}
