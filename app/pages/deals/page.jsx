@@ -232,8 +232,7 @@ export default observer(function DealsPage() {
             <div className="w-72">
               <Input
                 type="text"
-                placeholder="Поиск по краткому названию"
-                className={styles.searchInput}
+                placeholder="Поиск по краткому названию" 
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value)

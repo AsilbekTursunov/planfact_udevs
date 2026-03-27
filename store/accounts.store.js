@@ -3,7 +3,8 @@ import { makePersistable } from 'mobx-persist-store'
 
 class AccountsStore {
   searchQuery = ''
-  selectedTypes = []
+  selectedTypes =
+    ["Карта физлица", "Безналичный", "Наличный", "Электронный"]
   selectedEntity = []
   selectedAccounts = []
   selectedGrouping = 'single'

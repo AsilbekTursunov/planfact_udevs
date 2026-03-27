@@ -91,7 +91,9 @@ export default function LegalEntitiesPage() {
       page: 1,
       limit: 100,
       from_date: "",
-      to_date: ""
+      to_date: "",
+      search: debouncedSearchQuery,
+      type: filters?.type?.value,
     },
     querySetting: {
       select: data => data?.data?.data?.data
