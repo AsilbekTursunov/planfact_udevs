@@ -213,6 +213,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
 
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
       queryClient.invalidateQueries({ queryKey: ['list_sales_operations'] })
+      queryClient.invalidateQueries({ queryKey: ['find_operations'] })
       onClose()
     } catch (error) {
       console.error(error)

@@ -25,7 +25,7 @@ export default function RootLayout({ children }) {
         className={` ${roboto.className} antialiased bg-slate-50 text-slate-900`}
       >
         <QueryClientProvider client={queryClient}>
-          <div className="flex max-h-screen overflow-hidden max-w-[100vw]">
+          <div className="flex max-h-screen overflow-hidden max-w-dvw">
             {!isLoginPage && <Sidebar />}
             <div className="flex flex-col flex-1 max-h-screen overflow-hidden">
               {!isLoginPage && <Header />}

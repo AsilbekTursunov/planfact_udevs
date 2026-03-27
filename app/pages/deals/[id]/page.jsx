@@ -16,7 +16,6 @@ import Input from '@/components/shared/Input';
 import OperationModal from '@/components/operations/OperationModal/OperationModal';
 import CreateProductService from '@/components/deals/details/CreateProductService';
 import Loader from '@/components/shared/Loader';
-import { formatDateFormat } from '@/utils/formatDate';
 import { formatAmount } from '@/utils/helpers';
 import ShipmenTable from '../../../../components/deals/details/ShipmenTable';
 import ProductServiceTable from '../../../../components/deals/details/ProductServiceTable';
@@ -38,6 +37,7 @@ import { DeleteDealModal } from '@/components/deals/DeleteDealModal/DeleteDealMo
 import { useUcodeDefaultApiMutation } from '@/hooks/useDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import { Pencil, Trash } from 'lucide-react';
+import { useUcodeRequestMutation } from '../../../../hooks/useDashboard';
 
 
 export default observer(function DealDetailPage() {
@@ -56,6 +56,24 @@ export default observer(function DealDetailPage() {
     }
   })
 
+  const { mutateAsync: updateDeal } = useUcodeRequestMutation()
+
+  const handleUpdateStatus = async (status) => {
+    try {
+      await updateDeal({
+        method: "update_sales_transaction",
+        data: {
+          guid: dealId,
+          name: status?.name,
+          sales_status_id: status?.guid,
+        }
+      })
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const summeryCards = useMemo(() => {
     return dealData || null
   }, [dealData])
@@ -68,7 +86,6 @@ export default observer(function DealDetailPage() {
     nds: summeryCards?.nds,
     commentary: summeryCards?.commentary
   }
-  console.log('summeryCards', summeryCards)
 
   const [activeTab, setActiveTab] = useState('products');
   const [showShipmentModal, setShowShipmentModal] = useState(false);
@@ -125,7 +142,7 @@ export default observer(function DealDetailPage() {
   const [selectedStatus, setSelectedStatus] = useState(dealStatuses[summeryCards?.Status]);
 
   // Set initial status from deal data
-  const currentDealStatus = selectedStatus
+
 
 
   if (isLoading) {
@@ -230,9 +247,11 @@ export default observer(function DealDetailPage() {
               Сделка на сумму /
             </span>
             <DealStatus
-              statuses={dealStatuses}
-              currentStatus={currentDealStatus}
-              onStatusChange={(status) => setSelectedStatus(status)}
+              currentStatus={summeryCards?.status}
+              onStatusChange={(status) => {
+                setSelectedStatus(status);
+                handleUpdateStatus(status);
+              }}
               onStatusEdit={(updated) => {
                 setDealStatuses(prev => prev.map(s => s.guid === updated.guid ? updated : s))
               }}

@@ -231,7 +231,7 @@ export default function DealStatus({
 
                 return (
                   <div key={status.guid || index} className={styles.statusItem}>
-                    <div className={styles.statusItemLeft} onClick={() => handleSelect(status)}>
+                    <div className={styles.statusItemLeft} onDoubleClick={() => handleSelect(status)}>
                       <GripVertical size={14} className={styles.gripIcon} />
                       <span className={styles.statusDot} style={{ backgroundColor: status.color || '#667085' }} />
                       <span className={styles.statusItemName}>{status.name}</span>

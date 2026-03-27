@@ -67,7 +67,8 @@ const OperationsPage = observer(() => {
 		selectedChartOfAccounts,
 		paymentType,
 		dateFilters,
-		dateStartFilters
+		dateStartFilters,
+		deals
 	} = operationFilterStore
 
 	// Debounce search query
@@ -135,6 +136,7 @@ const OperationsPage = observer(() => {
 			paymentNotConfirmed: dateFilters.nePodtverzhdena,
 			accrualConfirmed: dateStartFilters.podtverzhdena,
 			accrualNotConfirmed: dateStartFilters.nePodtverzhdena,
+			...(deals.length > 0 && { selling_deal_ids: toJS(deals) }),
 		};
 
 		return result;
@@ -150,7 +152,8 @@ const OperationsPage = observer(() => {
 		selectedChartOfAccounts,
 		paymentType,
 		dateFilters,
-		dateStartFilters
+		dateStartFilters,
+		deals
 	])
 
 	const {
@@ -584,7 +587,7 @@ const OperationsPage = observer(() => {
 								) : (
 									<>
 										{/* Сегодня - Section Header */}
-												{operationsList?.today?.length > 0 && (
+										{operationsList?.today?.length > 0 && (
 											<tr className={styles.sectionHeader}>
 												<td colSpan='9' className={styles.sectionHeaderCell}>
 													<h3 className={styles.sectionHeaderTitle}>Сегодня</h3>
@@ -592,38 +595,38 @@ const OperationsPage = observer(() => {
 											</tr>
 										)}
 
-												{operationsList?.today?.map(op => (
-													<OperationTableRow
-														key={op.guid}
-														op={op}
-														selectedOperations={selectedOperations}
-														toggleOperation={toggleOperation}
-														openOperationModal={openOperationModal}
-														handleEditOperation={handleEditOperation}
-														handleDeleteOperation={handleDeleteOperation}
-														handleCopyOperation={handleCopyOperation}
-													/>
-												))}
+										{operationsList?.today?.map(op => (
+											<OperationTableRow
+												key={op.guid}
+												op={op}
+												selectedOperations={selectedOperations}
+												toggleOperation={toggleOperation}
+												openOperationModal={openOperationModal}
+												handleEditOperation={handleEditOperation}
+												handleDeleteOperation={handleDeleteOperation}
+												handleCopyOperation={handleCopyOperation}
+											/>
+										))}
 										{/* Вчера и ранее - Section Header */}
-												{operationsList?.before?.length > 0 && (
+										{operationsList?.before?.length > 0 && (
 											<tr className={styles.sectionHeader}>
 												<td colSpan='9' className={styles.sectionHeaderCell}>
 													<h3 className={styles.sectionHeaderTitle}>Вчера и ранее</h3>
 												</td>
 											</tr>
 										)}
-												{operationsList?.before?.map(op => (
-													<OperationTableRow
-														key={op.guid}
-														op={op}
-														selectedOperations={selectedOperations}
-														toggleOperation={toggleOperation}
-														openOperationModal={openOperationModal}
-														handleEditOperation={handleEditOperation}
-														handleDeleteOperation={handleDeleteOperation}
-														handleCopyOperation={handleCopyOperation}
-													/>
-												))}
+										{operationsList?.before?.map(op => (
+											<OperationTableRow
+												key={op.guid}
+												op={op}
+												selectedOperations={selectedOperations}
+												toggleOperation={toggleOperation}
+												openOperationModal={openOperationModal}
+												handleEditOperation={handleEditOperation}
+												handleDeleteOperation={handleDeleteOperation}
+												handleCopyOperation={handleCopyOperation}
+											/>
+										))}
 
 									</>
 								)}

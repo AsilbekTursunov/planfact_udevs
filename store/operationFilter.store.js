@@ -25,35 +25,37 @@ class OperationFilterStore {
   paymentDateEnd = '';
   accrualDateStart = '';
   accrualDateEnd = '';
+  deals = [];
 
   constructor() {
     makeAutoObservable(this);
-     if (typeof window !== 'undefined') {
-          makePersistable(this, {
-            name: "operationFilter",
-            properties: [
-              "limit",
-              "searchQuery",
-              "debouncedSearchQuery",
-              "selectedDatePaymentRange",
-              "selectedDateStartRange",
-              "selectedCounterAgents",
-              "selectedLegalEntities",
-              "selectedFilters",
-              "amountRange",
-              "selectedChartOfAccounts",
-              "paymentType",
-              "dateFilters",
-              "dateStartFilters",
-              "paymentDateStart",
-              "paymentDateEnd",
-              "accrualDateStart",
-              "accrualDateEnd",
-            ],
-            storage: window.localStorage,
-            debugMode: true,
-          })
-        }
+    if (typeof window !== 'undefined') {
+      makePersistable(this, {
+        name: "operationFilter",
+        properties: [
+          "limit",
+          "searchQuery",
+          "debouncedSearchQuery",
+          "selectedDatePaymentRange",
+          "selectedDateStartRange",
+          "selectedCounterAgents",
+          "selectedLegalEntities",
+          "selectedFilters",
+          "amountRange",
+          "selectedChartOfAccounts",
+          "paymentType",
+          "dateFilters",
+          "dateStartFilters",
+          "paymentDateStart",
+          "paymentDateEnd",
+          "accrualDateStart",
+          "accrualDateEnd",
+          "deals",
+        ],
+        storage: window.localStorage,
+        debugMode: true,
+      })
+    }
   }
 
   // Actions
@@ -141,6 +143,10 @@ class OperationFilterStore {
     this.dateStartFilters = { ...this.dateStartFilters, [key]: value };
   }
 
+  setSelectedDeals(deals) {
+    this.deals = deals;
+  }
+
   resetFilters() {
     this.searchQuery = "";
     this.debouncedSearchQuery = "";
@@ -160,6 +166,7 @@ class OperationFilterStore {
       podtverzhdena: true,
       nePodtverzhdena: true,
     };
+    this.deals = [];
   }
 }
 

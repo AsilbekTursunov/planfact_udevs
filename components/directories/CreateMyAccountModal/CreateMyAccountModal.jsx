@@ -148,11 +148,12 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
     setIsSubmitting(true)
 
+
     try {
       const submitData = {
         nazvanie: formData.nazvanie.trim(),
         tip: formData.tip,
-        ...(formData.nachalьnyy_ostatok && { nachalьnyy_ostatok: Number(formData.nachalьnyy_ostatok) }),
+        ...(formData.nachalьnyy_ostatok && { nachalьnyy_ostatok: Number(formData.nachalьnyy_ostatok.replace(/\s/g, '').replace(/,/g, '.')) }),
         ...(formData.data_sozdaniya && {
           data_nachalьnogo_ostatka: formData.data_sozdaniya
         }),

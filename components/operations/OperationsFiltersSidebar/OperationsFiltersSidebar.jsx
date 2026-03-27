@@ -15,6 +15,7 @@ import SelectMyAccounts from '../../ReadyComponents/SelectMyAccounts'
 import { operationFilterStore } from '../../../store/operationFilter.store'
 import { cn } from '@/app/lib/utils'
 import { ChevronLeft } from 'lucide-react'
+import MultiSelectZdelka from '../../ReadyComponents/MultiZdelka'
 
 export const OperationsFiltersSidebar = observer(({
   isOpen,
@@ -30,6 +31,7 @@ export const OperationsFiltersSidebar = observer(({
     selectedCounterAgents,
     selectedChartOfAccounts,
     paymentType,
+    deals
   } = operationFilterStore
 
   // Ensure selectedFilters is always an array
@@ -303,6 +305,12 @@ export const OperationsFiltersSidebar = observer(({
                         placeholder="Статьи учета"
                         type=""
                         dropdownClassName={'w-64'}
+                      />
+
+                      <MultiSelectZdelka
+                        value={deals}
+                        onChange={(val) => operationFilterStore.setSelectedDeals(val)}
+                        placeholder="Сделки"
                       />
 
 
