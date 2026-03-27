@@ -294,14 +294,11 @@ export default function LegalEntitiesPage() {
     setIsBulkDeleting(true);
     try {
       const guids = Array.from(selectedItems);
-      // Process deletions. Since there's no batch API, we do them one by one.
-      for (const guid of guids) {
-        await deleteProductService({
-          urlMethod: 'DELETE',
-          urlParams: `/items/product_and_service/${guid}?from-ofs=true`,
-          data: { guid }
-        });
-      }
+      await deleteProductService({
+        urlMethod: 'DELETE',
+        urlParams: `/items/product_and_service?from-ofs=true`,
+        data: { guid: guids }
+      });
       queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] });
       queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] });
       setSelectedItems(new Set());
@@ -710,28 +707,27 @@ export default function LegalEntitiesPage() {
 
       <CreateGroup initialData={editGroup} open={isCreateGroupOpen} setOpen={() => setIsCreateGroupOpen(false)} />
 
-      <CustomModal
-        open={!!itemToDelete}
-        onClose={() => setItemToDelete(null)}
-        title={itemToDelete?.isGroup ? "Удалить группу?" : "Удалить?"}
-      >
-        <div className='flex flex-col gap-4'>
-          <p className='text-sm text-neutral-500'>
+      <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
+        <div className='flex flex-col gap-6 p-2'>
+          <h2 className="text-xl font-bold text-neutral-900 font-sans">
+            Удалить {itemToDelete?.isGroup ? "группу" : "товар"}
+          </h2>
+          <p className='text-sm text-neutral-600 leading-relaxed font-sans'>
             {itemToDelete?.isGroup
-              ? `Вы уверены, что хотите удалить группу "${itemToDelete.name}"? Это действие нельзя будет отменить.`
-              : `Вы уверены, что хотите удалить "${itemToDelete?.name}"? Это действие нельзя будет отменить.`
+              ? `Вы действительно хотите удалить группу «${itemToDelete.name}»? Восстановить её будет невозможно.`
+              : `Вы действительно хотите удалить товар «${itemToDelete?.name}»? Восстановить его будет невозможно.`
             }
           </p>
-          <div className='flex justify-end gap-3'>
+          <div className='flex justify-end items-center gap-6 mt-2'>
             <button
               onClick={() => setItemToDelete(null)}
-              className='px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200'
+              className='text-[#00A389] font-semibold text-sm hover:underline cursor-pointer'
             >
-              Отмена
+              Отменить
             </button>
             <button
               onClick={handleDeleteConfirm}
-              className='px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 flex items-center justify-center min-w-[100px]'
+              className='px-6 py-2.5 text-sm font-semibold text-white bg-[#F04438] rounded-md hover:bg-[#D92D20] transition-colors cursor-pointer min-w-[100px]'
               disabled={isDeletingItem}
             >
               {isDeletingItem ? <Loader size={20} color='white' /> : 'Удалить'}
@@ -740,25 +736,24 @@ export default function LegalEntitiesPage() {
         </div>
       </CustomModal>
 
-      <CustomModal
-        open={isBulkDeleteModalOpen}
-        onClose={() => setIsBulkDeleteModalOpen(false)}
-        title="Удалить выбранные элементы?"
-      >
-        <div className='flex flex-col gap-4'>
-          <p className='text-sm text-neutral-500'>
-            Вы уверены, что хотите удалить {selectedItems.size} {selectedItems.size === 1 ? 'элемент' : 'элементов'}? Это действие нельзя будет отменить.
+      <CustomModal isOpen={isBulkDeleteModalOpen} onClose={() => setIsBulkDeleteModalOpen(false)}>
+        <div className='flex flex-col gap-6 p-2'>
+          <h2 className="text-xl font-bold text-neutral-900 font-sans">
+            Удалить выбранные элементы?
+          </h2>
+          <p className='text-sm text-neutral-600 leading-relaxed font-sans'>
+            Вы действительно хотите удалить {selectedItems.size} {selectedItems.size === 1 ? 'элемент' : 'элементов'}? Восстановить {selectedItems.size === 1 ? 'его' : 'их'} будет невозможно.
           </p>
-          <div className='flex justify-end gap-3'>
+          <div className='flex justify-end items-center gap-6 mt-2'>
             <button
               onClick={() => setIsBulkDeleteModalOpen(false)}
-              className='px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200'
+              className='text-[#00A389] font-semibold text-sm hover:underline cursor-pointer'
             >
-              Отмена
+              Отменить
             </button>
             <button
               onClick={handleBulkDelete}
-              className='px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 flex items-center justify-center min-w-[100px]'
+              className='px-6 py-2.5 text-sm font-semibold text-white bg-[#F04438] rounded-md hover:bg-[#D92D20] transition-colors cursor-pointer min-w-[100px]'
               disabled={isBulkDeleting}
             >
               {isBulkDeleting ? <Loader size={20} color='white' /> : 'Удалить'}

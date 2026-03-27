@@ -17,13 +17,13 @@ const DEFAULT_COLORS = [
 
 const STATUS_API_URL = '/items/sales_status?from-ofs=true'
 
-export default function DealStatus({ 
-  statuses: propsStatuses = [], 
-  currentStatus = null, 
-  onStatusChange, 
-  onStatusEdit, 
+export default function DealStatus({
+  statuses: propsStatuses = [],
+  currentStatus = null,
+  onStatusChange,
+  onStatusEdit,
   onStatusDelete,
-  onStatusCreate 
+  onStatusCreate
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState(null) // { index, x, y }
@@ -79,7 +79,7 @@ export default function DealStatus({
     }
   }, [contextMenu])
 
-  const activeStatus = currentStatus || statuses[0]
+  const activeStatus = statuses.find(status => status.name === currentStatus?.[0])
   const activeColor = activeStatus?.color || '#F79009'
   const activeName = activeStatus?.name || 'Новая'
 
@@ -199,7 +199,7 @@ export default function DealStatus({
           ) : (
             <div className={styles.statusList}>
               {statuses.map((status, index) => {
-                const isActive = status.guid === activeStatus?.guid || status.name === activeName
+                const isActive = status.name === currentStatus?.[0]
                 const isEditing = editingStatus?.index === index
 
                 if (isEditing) {

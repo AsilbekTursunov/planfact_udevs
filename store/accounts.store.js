@@ -32,8 +32,8 @@ class AccountsStore {
     }
   }
 
-  setSearchQuery = (query) => {
-    this.searchQuery = query
+  setSearchQuery = (val) => {
+    this.searchQuery = typeof val === 'object' && val?.target ? val.target.value : val
   }
 
   setSelectedTypes = (types) => {

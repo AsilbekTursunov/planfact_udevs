@@ -62,7 +62,7 @@ const FilterSidebar = observer(() => {
   } 
 
   return (
-    <div className={cn("bg-neutral-100 transition-all duration-300 min-h-dvh border-r border-neutral-200", isOpen ? "w-64 p-3" : " px-2 pt-3")}>
+    <div className={cn("bg-neutral-100 transition-all duration-300 h-screen overflow-hidden border-r border-neutral-200", isOpen ? "w-64 p-3" : " px-2 pt-3")}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <h2 className={cn("text-lg font-bold text-neutral-800", isOpen ? "" : "hidden")}>Фильтры</h2>

@@ -201,7 +201,7 @@ export default observer(function AccountsPage() {
       'nachalьnyy_ostatok',
       'balans',
       "tip",
-      "legal_entity_id", 
+      "legal_entity_id",
     ]
 
     return standardFields
@@ -409,7 +409,8 @@ export default observer(function AccountsPage() {
                 <SingleSelect
                   data={[
                     { value: 'single', label: 'Без группировки' },
-                    { value: 'group', label: 'По группам' }
+                    { value: 'group', label: 'По группам' },
+                    { value: 'account', label: 'По юрлицам' },
                   ]}
                   value={selectedGrouping}
                   withSearch={false}
@@ -418,7 +419,7 @@ export default observer(function AccountsPage() {
                 <Input
                   leftIcon={<Search size={16} />}
                   value={searchQuery}
-                  onChange={setSearchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Поиск по названию"
                   className="bg-white w-56"
                 />
@@ -518,26 +519,26 @@ export default observer(function AccountsPage() {
                         )
                       }
 
-                      // Non-grouped (flat list)
-                      return (
-                        <tr key={item.guid} className="hover:bg-neutral-50 border-b border-gray-100 transition-colors">
-                          <td className="p-3 text-center text-xs text-neutral-400">
-                            {/* Index or checkbox */}
+                    // Non-grouped (flat list)
+                    return (
+                      <tr key={item.guid} className="hover:bg-neutral-50 border-b border-gray-100 transition-colors">
+                        <td className="p-3 text-center text-xs text-neutral-400">
+                          {/* Index or checkbox */}
+                        </td>
+                        {allFields.map((field) => (
+                          <td key={field} className="p-3 text-sm text-[#0f172a]">
+                            {formatFieldValue(item, field)}
                           </td>
-                          {allFields.map((field) => (
-                            <td key={field} className="p-3 text-sm text-[#0f172a]">
-                              {formatFieldValue(item, field)}
-                            </td>
-                          ))}
-                          <td className="p-3 text-end" onClick={(e) => e.stopPropagation()}>
-                            <AccountMenu
-                              onEdit={() => setEditingAccount(item)}
-                              onDelete={() => setDeletingAccount(item)}
-                            />
-                          </td>
-                        </tr>
-                      )
-                    })
+                        ))}
+                        <td className="p-3 text-end" onClick={(e) => e.stopPropagation()}>
+                          <AccountMenu
+                            onEdit={() => setEditingAccount(item)}
+                            onDelete={() => setDeletingAccount(item)}
+                          />
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>

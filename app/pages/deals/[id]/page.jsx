@@ -58,21 +58,7 @@ export default observer(function DealDetailPage() {
 
   const { mutateAsync: updateDeal } = useUcodeRequestMutation()
 
-  const handleUpdateStatus = async (status) => {
-    try {
-      await updateDeal({
-        method: "update_sales_transaction",
-        data: {
-          guid: dealId,
-          name: status?.name,
-          sales_status_id: status?.guid,
-        }
-      })
-      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
-    } catch (error) {
-      console.log(error)
-    }
-  }
+
 
   const summeryCards = useMemo(() => {
     return dealData || null
@@ -85,6 +71,22 @@ export default observer(function DealDetailPage() {
     counterparties_id: summeryCards?.counterparties_id,
     nds: summeryCards?.nds,
     commentary: summeryCards?.commentary
+  }
+
+  const handleUpdateStatus = async (status) => {
+    try {
+      await updateDeal({
+        method: "update_sales_transaction",
+        data: {
+          guid: dealId,
+          name: deal?.name,
+          sales_status_id: status?.guid,
+        }
+      })
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   const [activeTab, setActiveTab] = useState('products');

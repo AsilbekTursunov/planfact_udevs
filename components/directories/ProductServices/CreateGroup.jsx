@@ -9,7 +9,6 @@ import Loader from '../../shared/Loader'
 import { queryClient } from '../../../lib/queryClient'
 
 const CreateGroup = ({ open = true, setOpen, initialData }) => {
-  const [viewMode, setViewMode] = useState('product')
 
   const { mutateAsync: createProductServiceGroup, isPending } = useUcodeDefaultApiMutation({
     mutationKey: "product_service_group"
@@ -68,7 +67,7 @@ const CreateGroup = ({ open = true, setOpen, initialData }) => {
       <div className={styles.groupcontainer}>
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {viewMode === 'product' ? 'Создание товара' : 'Создание услуги'}
+            {initialData?.guid ? 'Редактирование группы' : 'Создание группы'}
           </h2>
 
           <div className={styles.headerActions}>
@@ -81,7 +80,7 @@ const CreateGroup = ({ open = true, setOpen, initialData }) => {
         <div className={styles.body}>
 
           <div className={styles.formRow}>
-            <div className={styles.label}>Название  {viewMode === 'product' ? 'товара' : 'услуги'}</div>
+            <div className={styles.label}>Название группы</div>
             <div className={styles.fieldContainer}>
               <Input
                 placeholder="Например, кафельная плитка"
@@ -98,7 +97,7 @@ const CreateGroup = ({ open = true, setOpen, initialData }) => {
             <div className={styles.label}>Комментарий</div>
             <div className={styles.fieldContainer}>
               <TextArea
-                placeholder="Добавьте комментарий к этому товару"
+                placeholder="Добавьте комментарий к этой группе"
                 className={styles.textArea}
                 rows={4}
                 value={formData.commentary}
@@ -115,7 +114,7 @@ const CreateGroup = ({ open = true, setOpen, initialData }) => {
               Отменить
             </button>
             <button type="button" className={styles.saveButton} onClick={handleSubmit}>
-              {isPending ? <Loader /> : 'Создать'}
+              {isPending ? <Loader /> : initialData?.guid ? 'Сохранить' : 'Создать'}
             </button>
           </div>
         </div>

@@ -201,10 +201,10 @@ export default observer(function DealsPage() {
 
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex h-screen overflow-hidden">
       <FilterSidebar />
-      <main className="p-4 w-full relative">
-        <header className="flex items-center justify-between mb-4">
+      <main className="p-4 w-full relative overflow-y-auto">
+        <header className="flex items-center justify-between mb-4 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2 flex-1">
             <h1 className={styles.title}>Сделки по продажам</h1>
             <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setIsCreateModalOpen(true)}>
