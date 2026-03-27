@@ -107,7 +107,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
     const payload = {
       sale_date: formattedDate,
       name: dealName,
-      counterparties_id: client,
+      counterparties_id: client || null,
       nds: nds === 'true',
       commentary: comment,
       status: ["Новая"]

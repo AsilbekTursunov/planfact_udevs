@@ -155,6 +155,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
       resetForm()
       setOpen(false) // Close modal after successful creation
       queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] })
+      queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] })
     } catch (error) {
       console.error('mutateProductService', error?.message)
     }

@@ -6,10 +6,11 @@ import { useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
 import styles from './style.module.scss'
 import CreateGroup from '../../../../components/directories/ProductServices/CreateGroup'
 import CreateSingle from '../../../../components/directories/ProductServices/CreateSingle'
-import { ChevronDown, ChevronUp, Search, MoreVertical, Download } from 'lucide-react'
+import { ChevronDown, ChevronUp, Search, MoreVertical, Download, ArrowRightLeft, PlusCircle } from 'lucide-react'
 import Select from '../../../../components/common/Select'
 import Input from '../../../../components/shared/Input'
 import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
 
 import { MdOutlineModeEdit } from "react-icons/md";
 import { GoTrash } from "react-icons/go";
@@ -40,6 +41,8 @@ export default function LegalEntitiesPage() {
   const [itemToEdit, setItemToEdit] = useState(null)
   const [isCopying, setIsCopying] = useState(false)
   const [selectedItems, setSelectedItems] = useState(new Set())
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false)
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const menuRef = useRef(null)
   const rowMenuRef = useRef(null)
 
@@ -274,13 +277,48 @@ export default function LegalEntitiesPage() {
       if (isGroup) {
         queryClient.invalidateQueries({ queryKey: ['product-services-grouped'] });
       }
+      queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] });
       setItemToDelete(null);
-    } catch (e) {
-      console.error('delete error', e);
+      showSuccessNotification('Успешно удалено');
+    } catch (error) {
+      console.error('Delete error:', error);
+      showErrorNotification('Ошибка при удалении');
     } finally {
       setIsDeletingItem(false);
     }
   }
+
+  const handleBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    try {
+      const guids = Array.from(selectedItems);
+      // Process deletions. Since there's no batch API, we do them one by one.
+      for (const guid of guids) {
+        await deleteProductService({
+          urlMethod: 'DELETE',
+          urlParams: `/items/product_and_service/${guid}?from-ofs=true`,
+          data: { guid }
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] });
+      queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] });
+      setSelectedItems(new Set());
+      setIsBulkDeleteModalOpen(false);
+      showSuccessNotification('Выбранные элементы успешно удалены');
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      showErrorNotification('Ошибка при массовом удалении');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const totalItemsCount = useMemo(() => {
+    if (filters.group.value === 'group') {
+      return productServicesList.reduce((acc, group) => acc + (group.items?.length || 0), 0)
+    }
+    return productServicesList.length
+  }, [productServicesList, filters.group.value])
 
   // Block body scroll when page is mounted
   useEffect(() => {
@@ -291,20 +329,46 @@ export default function LegalEntitiesPage() {
   }, [])
 
   const handleSelectAll = () => {
-    if (selectedItems.size === productServicesList.length) {
+    let allItemGuids = []
+    if (filters.group.value === 'group') {
+      productServicesList.forEach(group => {
+        group.items?.forEach(item => allItemGuids.push(item.guid))
+      })
+    } else {
+      allItemGuids = productServicesList.map(item => item.guid)
+    }
+
+    if (selectedItems.size === allItemGuids.length && allItemGuids.length > 0) {
       setSelectedItems(new Set())
     } else {
-      setSelectedItems(new Set(productServicesList.map(item => item.guid)))
+      setSelectedItems(new Set(allItemGuids))
     }
   }
 
   const handleSelectChilds = (group) => {
-    const childs = group.items.map(item => item.guid)
-    setSelectedItems(new Set(childs))
+    const childGuids = group.items?.map(item => item.guid) || []
+    setSelectedItems(prev => {
+      const next = new Set(prev)
+      const isAllSelected = childGuids.every(guid => next.has(guid))
+      if (isAllSelected) {
+        childGuids.forEach(guid => next.delete(guid))
+      } else {
+        childGuids.forEach(guid => next.add(guid))
+      }
+      return next
+    })
   }
 
   const handleSelectChild = (child) => {
-    setSelectedItems(new Set([...selectedItems, child.guid]))
+    setSelectedItems(prev => {
+      const next = new Set(prev)
+      if (next.has(child.guid)) {
+        next.delete(child.guid)
+      } else {
+        next.add(child.guid)
+      }
+      return next
+    })
   }
 
   return (
@@ -384,33 +448,67 @@ export default function LegalEntitiesPage() {
         <div id="table-container" className="flex-1 w-full">
           <table className='w-full max-h-[calc(100vh-60px)] overflow-y-auto'>
             <thead className='z-30 sticky top-0'>
-              <tr className='bg-neutral-100 text-neutral-500 font-normal text-xs w-full border-b border-gray-300'>
+              <tr className={cn('bg-neutral-100 text-neutral-500 font-normal py-4 text-xs w-full border-b border-gray-300', selectedItems.size > 0 && 'bg-neutral-50')}>
                 <th className='w-10'>
                   <div className=' flex items-center justify-center'>
-                    <OperationCheckbox checked={selectedItems.size === productServicesList.length} onChange={handleSelectAll} />
+                    <OperationCheckbox
+                      checked={selectedItems.size === totalItemsCount && totalItemsCount > 0}
+                      onChange={handleSelectAll}
+                    />
                   </div>
                 </th>
-                <th className='p-2 text-start'>
-                  <div className="flex items-center gap-2">
-                    {filters?.group?.value === 'group' && (
-                      <button
-                        onClick={toggleExpandAll}
-                        className="p-1 hover:bg-neutral-200 rounded cursor-pointer"
-                      >
-                        {isAllExpanded ? <ExpendClose /> : <ExpendOpen />}
-                      </button>
-                    )}
-                    <span>Наименование</span>
-                  </div>
-                </th>
-                <th className='p-2 text-start'> Тип</th>
-                <th className='p-2 text-start'> Артикул</th>
-                <th className='p-2 text-end'> Цена за ед.</th>
-                <th className='p-2 text-center'> Единица</th>
-                <th className='p-2 text-center'> НДС</th>
-                <th className='p-2 text-end'> Цена с НДС</th>
-                <th className='p-2 text-start'> Комментарий</th>
-                <th className='p-2 text-start w-10'> &nbsp;</th>
+                {selectedItems.size > 0 ? (
+                  <th colSpan={9} className='py-1 px-2'>
+                    <div className='flex items-center gap-6'>
+                      <span className='font-semibold text-sm text-neutral-700'>Выбрано: {selectedItems.size}</span>
+                      <div className='flex items-center gap-4'>
+                        {/* <button className='flex items-center gap-1.5 text-primary-500 hover:text-primary-600 font-medium cursor-pointer'>
+                          <ArrowRightLeft size={16} />
+                          <span>Переместить в группу</span>
+                        </button>
+                        <button className='flex items-center gap-1.5 text-primary-500 hover:text-primary-600 font-medium cursor-pointer'>
+                          <ArrowRightLeft size={16} />
+                          <span>Переместить в услуги</span>
+                        </button>
+                        <button className='flex items-center gap-1.5 text-primary-500 hover:text-primary-600 font-medium cursor-pointer'>
+                          <PlusCircle size={16} />
+                          <span>Добавить в сделку</span>
+                        </button> */}
+                        <button
+                          onClick={() => setIsBulkDeleteModalOpen(true)}
+                          className='flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium cursor-pointer'
+                        >
+                          <GoTrash size={16} />
+                          <span>Удалить</span>
+                        </button>
+                      </div>
+                    </div>
+                  </th>
+                ) : (
+                  <>
+                      <th className='p-2 text-start'>
+                        <div className="flex items-center gap-2">
+                          {filters?.group?.value === 'group' && (
+                            <button
+                              onClick={toggleExpandAll}
+                              className="p-1 hover:bg-neutral-200 rounded cursor-pointer"
+                            >
+                              {isAllExpanded ? <ExpendClose /> : <ExpendOpen />}
+                            </button>
+                          )}
+                          <span>Наименование</span>
+                        </div>
+                      </th>
+                      <th className='p-2 text-start'> Тип</th>
+                      <th className='p-2 text-start'> Артикул</th>
+                      <th className='p-2 text-end'> Цена за ед.</th>
+                      <th className='p-2 text-center'> Единица</th>
+                      <th className='p-2 text-center'> НДС</th>
+                      <th className='p-2 text-end'> Цена с НДС</th>
+                      <th className='p-2 text-start'> Комментарий</th>
+                      <th className='p-2 text-start w-10'> &nbsp;</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className=' flex-1 overflow-y-auto'>
@@ -610,35 +708,60 @@ export default function LegalEntitiesPage() {
 
       <CreateGroup initialData={editGroup} open={isCreateGroupOpen} setOpen={() => setIsCreateGroupOpen(false)} />
 
-      <CustomModal isOpen={!!itemToDelete} onClose={() => setItemToDelete(null)}>
-        <h2 className="mb-3 text-xl font-bold text-neutral-900 font-sans">
-          {itemToDelete?.isGroup ? 'Удалить группу' : 'Удалить товар'}
-        </h2>
-        <div className="mb-7 text-sm text-neutral-600 leading-5 font-sans">
-          {itemToDelete?.isGroup ? (
-            <p>
-              Вы действительно хотите удалить группу «<strong>{itemToDelete?.name}</strong>» с {itemToDelete?.items?.length} {itemToDelete?.items?.length === 1 ? 'элементом' : 'элементами'}? Восстановить её будет невозможно.
-            </p>
-          ) : (
-            <p>
-              Вы действительно хотите удалить товар «<strong>{itemToDelete?.name}</strong>» ?<br />Восстановить его будет невозможно.
-            </p>
-          )}
+      <CustomModal
+        open={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        title={itemToDelete?.isGroup ? "Удалить группу?" : "Удалить?"}
+      >
+        <div className='flex flex-col gap-4'>
+          <p className='text-sm text-neutral-500'>
+            {itemToDelete?.isGroup
+              ? `Вы уверены, что хотите удалить группу "${itemToDelete.name}"? Это действие нельзя будет отменить.`
+              : `Вы уверены, что хотите удалить "${itemToDelete?.name}"? Это действие нельзя будет отменить.`
+            }
+          </p>
+          <div className='flex justify-end gap-3'>
+            <button
+              onClick={() => setItemToDelete(null)}
+              className='px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200'
+            >
+              Отмена
+            </button>
+            <button
+              onClick={handleDeleteConfirm}
+              className='px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 flex items-center justify-center min-w-[100px]'
+              disabled={isDeletingItem}
+            >
+              {isDeletingItem ? <Loader size={20} color='white' /> : 'Удалить'}
+            </button>
+          </div>
         </div>
-        <div className="flex justify-end gap-3">
-          <button
-            onClick={() => setItemToDelete(null)}
-            className="bg-transparent text-[#0c8c9a] font-semibold text-sm px-4 py-2 hover:bg-neutral-50 rounded-md"
-          >
-            Отменить
-          </button>
-          <button
-            disabled={isDeletingItem}
-            onClick={handleDeleteConfirm}
-            className="delete-btn flex items-center justify-center font-semibold text-sm px-5 py-2"
-          >
-            {isDeletingItem ? <Loader /> : 'Удалить'}
-          </button>
+      </CustomModal>
+
+      <CustomModal
+        open={isBulkDeleteModalOpen}
+        onClose={() => setIsBulkDeleteModalOpen(false)}
+        title="Удалить выбранные элементы?"
+      >
+        <div className='flex flex-col gap-4'>
+          <p className='text-sm text-neutral-500'>
+            Вы уверены, что хотите удалить {selectedItems.size} {selectedItems.size === 1 ? 'элемент' : 'элементов'}? Это действие нельзя будет отменить.
+          </p>
+          <div className='flex justify-end gap-3'>
+            <button
+              onClick={() => setIsBulkDeleteModalOpen(false)}
+              className='px-4 py-2 text-sm font-medium text-neutral-700 bg-neutral-100 rounded-lg hover:bg-neutral-200'
+            >
+              Отмена
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              className='px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 flex items-center justify-center min-w-[100px]'
+              disabled={isBulkDeleting}
+            >
+              {isBulkDeleting ? <Loader size={20} color='white' /> : 'Удалить'}
+            </button>
+          </div>
         </div>
       </CustomModal>
 
