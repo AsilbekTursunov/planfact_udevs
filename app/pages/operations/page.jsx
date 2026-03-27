@@ -136,7 +136,7 @@ const OperationsPage = observer(() => {
 			paymentNotConfirmed: dateFilters.nePodtverzhdena,
 			accrualConfirmed: dateStartFilters.podtverzhdena,
 			accrualNotConfirmed: dateStartFilters.nePodtverzhdena,
-			...(deals.length > 0 && { selling_deal_ids: toJS(deals) }),
+			sellingDealId: deals
 		};
 
 		return result;
