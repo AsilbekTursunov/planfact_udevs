@@ -95,25 +95,23 @@ export default function LegalEntitiesPage() {
     }
   })
 
-  const filterProductServiceGroups = useMemo(() => {
-    return {
-      page: 1,
-      limit: 100,
-      search: "",
-      type: filters.type.value,
-      root_only: false
-    }
-  }, [filters])
-  const { data: productServicesGroups, } = useUcodeRequestQuery({
-    method: "list_product_and_service_groups",
-    data: filterProductServiceGroups,
-    querySetting: {
-      select: data => data?.data?.data
-    }
-  })
+  // const filterProductServiceGroups = useMemo(() => {
+  //   return {
+  //     page: 1,
+  //     limit: 100,
+  //     search: "",
+  //     type: filters.type.value,
+  //     root_only: false
+  //   }
+  // }, [filters])
 
-  console.log('productServicesGroups', productServicesGroups)
-
+  // const { data: productServicesGroups, } = useUcodeRequestQuery({
+  //   method: "list_product_and_service_groups",
+  //   data: filterProductServiceGroups,
+  //   querySetting: {
+  //     select: data => data?.data?.data
+  //   }
+  // })
 
 
 

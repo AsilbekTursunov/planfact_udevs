@@ -298,6 +298,30 @@
   @apply text-sm outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border border-gray-ucode-300 px-3 py-1.5 text-neutral-700 hover:bg-gray-50  rounded-md;
 }
 
+.filterTabWrapper{
+  @apply bg-neutral-50 relative rounded-lg gap-2 p-1 mb-4 border border-gray-ucode-200 flex items-center justify-between;
+}
+
+.filterTab{
+  @apply text-base relative outline-none flex-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-medium border-none px-3 py-2 text-neutral-700 hover:bg-gray-50  rounded-sm;
+}
+
+.filterTabActiveBg{
+  @apply bg-white absolute rounded-sm top-0 left-0 w-1/2 h-full text-primary drop-shadow-sm;
+}
+
+.filterTab.active{
+  @apply bg-white text-primary drop-shadow-sm;
+}
+
+.filterTab.inactive{
+  @apply bg-transparent text-neutral-400 ;
+}
+
+.formLabel{
+  @apply text-xs w-[30%] text-slate-500;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

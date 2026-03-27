@@ -18,8 +18,6 @@ import OperationModal from '../../../../../components/operations/OperationModal/
 import { useUcodeRequestQuery } from '../../../../../hooks/useDashboard'
 import { formatDate } from '../../../../../utils/formatDate'
 import OperationTableRow from '../../../../../components/operations/TableRow'
-import { observer } from 'mobx-react-lite'
-import counterpartiesStore from '@/store/counterparties.store'
 import MultiSelectZdelka from '../../../../../components/ReadyComponents/MultiZdelka'
 import operationsDto from '../../../../../lib/dtos/operationsDto'
 import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMyAccounts'
@@ -32,18 +30,19 @@ const calculationOptions = [
   { value: "Calculation", label: 'Учет методом начисления' },
 ]
 
-const KontragentDetailPage = observer(() => {
+const KontragentDetailPage = () => {
   const params = useParams()
   const router = useRouter()
   const counterpartyGuid = params?.id
   const ucodeRequestMutation = useUcodeRequestMutation()
 
-  const filters = counterpartiesStore.filtersingleCounterparty
-  const setFilters = (update) => {
-    counterpartiesStore.setSingleCounterpartyFilters(
-      typeof update === 'function' ? update(counterpartiesStore.filtersingleCounterparty) : update
-    )
-  }
+  const [filters, setFilters] = useState({
+    operationDateStart: "",
+    operationDateEnd: "",
+    calculationMethod: "Cashflow",
+    dateRange: null,
+    deals: []
+  })
 
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -1033,6 +1032,6 @@ const KontragentDetailPage = observer(() => {
       />
     </div>
   )
-})
+}
 
 export default KontragentDetailPage

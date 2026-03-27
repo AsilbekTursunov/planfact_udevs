@@ -14,13 +14,8 @@ class CounterpartiesStore {
     deals: []
   }
 
-  filtersingleCounterparty = {
-    operationDateStart: "",
-    calculationMethod: "Cashflow",
-    dateRange: null,
-    deals: []
-  }
 
+  
   operationFilters = {
     page: 1,
     limit: 50,
@@ -35,7 +30,7 @@ class CounterpartiesStore {
     if (typeof window !== 'undefined') {
       makePersistable(this, {
         name: "counterparties",
-        properties: ["filters", "filtersingleCounterparty"],
+        properties: ["filters"],
         storage: window.localStorage,
         debugMode: true,
       })
@@ -53,9 +48,6 @@ class CounterpartiesStore {
     this.operationFilters = { ...this.operationFilters, ...newFilters }
   }
 
-  setSingleCounterpartyFilters = (newFilters) => {
-    this.filtersingleCounterparty = { ...this.filtersingleCounterparty, ...newFilters }
-  }
 
   resetFilters = () => {
     this.filters = {

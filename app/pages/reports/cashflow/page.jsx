@@ -240,7 +240,9 @@ export default observer(function CashFlowReportPage() {
                   }}
                   placeholder="Способ построения"
                   withSearch={false}
-                  className={styles.groupingSelect}
+                  isClearable={false}
+                  className="bg-white w-44"
+                  dropdownClassName="bg-white"
                 />
                 <button className={styles.moreButton}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

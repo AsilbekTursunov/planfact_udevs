@@ -10,6 +10,7 @@ import SingleSelect from '../../shared/Selects/SingleSelect'
 import CustomModal from '../../shared/CustomModal'
 import Loader from '../../shared/Loader'
 import { returnNumber } from '../../../utils/helpers'
+import SelectMyAccoutGroup from '../../ReadyComponents/SelectMyAccoutGroup'
 
 export default function CreateMyAccountModal({ isOpen, onClose, account = null }) {
   const createMutation = useCreateMyAccount()
@@ -23,13 +24,20 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
     data_sozdaniya: new Date().toISOString().split('T')[0],
     currenies_id: '',
     komentariy: '',
-    legal_entity_id: ""
+    legal_entity_id: "",
+    bik: '',
+    bank: '',
+    rasch_schet: '',
+    korr_schet: '',
+    nomer: '',
+    account_group_id: ''
   })
 
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
 
   // Fetch currencies
   const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
@@ -67,13 +75,22 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           nazvanie: account.nazvanie || '',
           tip: Array.isArray(account.tip) ? account.tip : ['Наличный'],
           nachalьnyy_ostatok: account.nachalьnyy_ostatok || '',
-          data_sozdaniya: account.data_sozdaniya
-            ? new Date(account.data_sozdaniya).toISOString().split('T')[0]
+          data_sozdaniya: account.data_nachalьnogo_ostatka || account.data_sozdaniya
+            ? new Date(account.data_nachalьnogo_ostatka || account.data_sozdaniya).toISOString().split('T')[0]
             : new Date().toISOString().split('T')[0],
           currenies_id: account.currenies_id || '',
           komentariy: account.komentariy || '',
-          legal_entity_id: account.legal_entity_id || ""
+          legal_entity_id: account.legal_entity_id || "",
+          bik: account.bik || '',
+          bank: account.bank_name || account.bank || '',
+          rasch_schet: account.nomer || account.rasch_schet || '',
+          korr_schet: account.kor_schet || account.korr_schet || '',
+          nomer: account.nomer || '',
+          account_group_id: account.account_groups_id || account.account_group_id || account.group_id || ''
         })
+        if (account.bik || account.bank || account.rasch_schet || account.korr_schet) {
+          setShowDetails(true)
+        }
       } else {
         // Creating new account
         setFormData({
@@ -83,8 +100,15 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           data_sozdaniya: new Date().toISOString().split('T')[0],
           currenies_id: '',
           komentariy: '',
-          legal_entity_id: ""
+          legal_entity_id: "",
+          bik: '',
+          bank: '',
+          rasch_schet: '',
+          korr_schet: '',
+          nomer: '',
+          account_group_id: ''
         })
+        setShowDetails(false)
       }
       setErrors({})
     } else {
@@ -111,6 +135,10 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       newErrors.legal_entity_id = 'Выберите юрлицо'
     }
 
+    if (formData.bik || formData.bank || formData.rasch_schet || formData.korr_schet) {
+      if (!formData.rasch_schet) newErrors.rasch_schet = 'Укажите расчетный счет'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -126,11 +154,17 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
         tip: formData.tip,
         ...(formData.nachalьnyy_ostatok && { nachalьnyy_ostatok: Number(formData.nachalьnyy_ostatok) }),
         ...(formData.data_sozdaniya && {
-          data_sozdaniya: formData.data_sozdaniya
+          data_nachalьnogo_ostatka: formData.data_sozdaniya
         }),
         ...(formData.currenies_id && { currenies_id: formData.currenies_id }),
         ...(formData.komentariy && { komentariy: formData.komentariy }),
         ...(formData.legal_entity_id && { legal_entity_id: formData.legal_entity_id }),
+        ...(formData.bik && { bik: formData.bik }),
+        ...(formData.bank && { bank_name: formData.bank }),
+        ...(formData.rasch_schet || formData.nomer ? { nomer: formData.rasch_schet || formData.nomer } : {}),
+        ...(formData.korr_schet && { kor_schet: formData.korr_schet }),
+        ...(formData.account_group_id && { account_groups_id: formData.account_group_id }),
+        ...(!isEdit && { data_sozdaniya: new Date().toISOString() })
       }
 
       if (isEdit && account && account.guid) {
@@ -178,6 +212,21 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
               </div>
             </div>
 
+
+            {/* Группа */}
+            <div className="flex flex-row gap-2">
+              <label className="w-[30%] text-sm text-[#0f172a] flex items-center gap-1">
+                Группа
+              </label>
+              <div className="flex-1 flex flex-col gap-1">
+                <SelectMyAccoutGroup
+                  value={formData.account_group_id}
+                  onChange={(value) => setFormData({ ...formData, account_group_id: value })}
+                  className="bg-white"
+                />
+              </div>
+            </div>
+
             {/* Юрлицо */}
             <div className="flex flex-row gap-2">
               <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">Юрлицо <span className="text-red-500">*</span></label>
@@ -197,11 +246,11 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
             </div>
 
             {/* Тип */}
-            <div className="flex flex-row gap-2">
-              <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">
+            <div className="flex flex-row gap-2 ">
+              <label className="w-[30%] text-sm mb-5  text-[#0f172a] flex items-center gap-1">
                 Выберите тип счета
               </label>
-              <div className="flex-1 flex flex-col gap-1">
+              <div className="flex-1 flex flex-col gap-1 justify-start">
                 <SingleSelect
                   data={accountTypes}
                   value={formData.tip && formData.tip.length > 0 ? formData.tip[0] : ''}
@@ -211,8 +260,97 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   withSearch={false}
                   isClearable={false}
                 />
+                <div className="flex justiyf-start">
+                  {formData.tip && (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') && (
+                    showDetails ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowDetails(!showDetails)}
+                        className="text-xs text-primary hover:text-primary-dark transition-colors cursor-pointer"
+                      >
+                        Скрыть реквизиты
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowDetails(!showDetails)}
+                        className="text-xs text-primary hover:text-primary-dark transition-colors cursor-pointer"
+                      >
+                        Реквизиты
+                      </button>
+                    )
+                  )}
+                </div>
               </div>
             </div>
+
+
+
+            {formData.tip && (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') && (
+              <div className="">
+                {showDetails && (
+                  <div className="flex flex-col gap-3 rounded-md">
+                    <div className="flex  gap-2">
+                      <label className="w-[30%] text-sm  text-[#0f172a] flex items-center">Бик</label>
+                      <div className="flex-1">
+                        <Input
+                          type="text"
+                          value={formData.bik}
+                          onChange={(e) => setFormData({ ...formData, bik: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex  gap-2">
+                      <label className="w-[30%] text-sm  text-[#0f172a] flex items-center">Банк</label>
+                      <div className="flex-1">
+
+                        <Input
+                          type="text"
+                          value={formData.bank}
+                          onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex  gap-2">
+                      <label className="w-[30%] text-sm  text-[#0f172a] flex items-center">Расч. счет №</label>
+                      <div className="flex-1">
+
+                        <Input
+                          type="text"
+                          value={formData.rasch_schet}
+                          onChange={(e) => setFormData({ ...formData, rasch_schet: e.target.value })}
+                          className={cn(errors.rasch_schet && "border-red-500")}
+                        />
+                      </div>
+                      {errors.rasch_schet && <span className="text-mini text-red-500">{errors.rasch_schet}</span>}
+                    </div>
+                    <div className="flex  gap-2">
+                      <label className="w-[30%] text-sm  text-[#0f172a] flex items-center">Кор. счет №</label>
+                      <div className="flex-1">
+                        <Input
+                          type="text"
+                          value={formData.korr_schet}
+                          onChange={(e) => setFormData({ ...formData, korr_schet: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {formData.tip && formData.tip[0] === 'Электронный' && (
+              <div className="flex flex-row gap-2">
+                <label className="w-[30%] text-sm  text-[#0f172a] flex items-center gap-1">Номер</label>
+                <div className="flex-1">
+                  <Input
+                    type="text"
+                    value={formData.nomer}
+                    onChange={(e) => setFormData({ ...formData, nomer: e.target.value })}
+                    placeholder="Номер счета"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Начальный остаток - показываем только при создании */}
             {!isEdit && (
@@ -224,7 +362,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                     value={returnNumber(formData.nachalьnyy_ostatok)}
                     onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: e.target.value })}
                     placeholder="0"
-                    className="flex-1"
+                    className="w-44"
                     onWheel={(e) => e.target.blur()}
                   />
 
@@ -233,7 +371,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                     onChange={(value) => setFormData({ ...formData, data_sozdaniya: value })}
                     placeholder="Выберите дату"
                     format='YYYY-MM-DD'
-                    className="flex-1"
+                    className="w-44"
                   />
                 </div>
               </div>

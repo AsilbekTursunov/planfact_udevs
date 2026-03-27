@@ -210,9 +210,9 @@ export default observer(function DealsPage() {
             <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setIsCreateModalOpen(true)}>
               Создать
             </button>
-            <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setShowCreateStudentModal(true)}>
+            {/* <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setShowCreateStudentModal(true)}>
               Создать студента
-            </button>
+            </button> */}
           </div>
 
           <div className="flex items-center gap-2">

@@ -1,19 +1,27 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { observer } from 'mobx-react-lite'
+import { accountsStore } from '@/store/accounts.store'
 import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
-import { DropdownFilter } from '@/components/directories/DropdownFilter/DropdownFilter'
-import { useDeleteMyAccounts, useBankAccountsPlanFact, useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
+import { useDeleteMyAccounts, useBankAccountsPlanFact } from '@/hooks/useDashboard'
 import CreateMyAccountModal from '@/components/directories/CreateMyAccountModal/CreateMyAccountModal'
 import { AccountMenu } from '@/components/directories/AccountMenu/AccountMenu'
 import { DeleteAccountConfirmModal } from '@/components/directories/DeleteAccountConfirmModal/DeleteAccountConfirmModal'
 import { cn } from '@/app/lib/utils'
 import styles from './accounts.module.scss'
-import { SearchBar } from '../../../../components/directories/SearchBar/SearchBar'
 import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
+import { ChevronDown, ChevronUp, Search } from 'lucide-react'
+import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
+import CreateAccountGroupModal from '@/components/directories/CreateAccountGroupModal/CreateAccountGroupModal'
+import SelectMyAccounts from '../../../../components/ReadyComponents/SelectMyAccounts'
+import SelectLegelEntitties from '../../../../components/ReadyComponents/SelectLegelEntitties'
+import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
+import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import Input from '../../../../components/shared/Input'
 
-export default function AccountsPage() {
+export default observer(function AccountsPage() {
   // Block body scroll for this page only
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -25,10 +33,25 @@ export default function AccountsPage() {
     }
   }, [])
 
-  const [isFilterOpen, setIsFilterOpen] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const {
+    searchQuery, setSearchQuery,
+    selectedTypes, toggleType,
+    selectedEntity, setSelectedEntity,
+    selectedAccounts, setSelectedAccounts,
+    selectedGrouping, setSelectedGrouping,
+    isFilterOpen, setIsFilterOpen
+  } = accountsStore
+
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const menuRef = useRef(null)
   const [editingAccount, setEditingAccount] = useState(null)
   const [deletingAccount, setDeletingAccount] = useState(null)
   const deleteMutation = useDeleteMyAccounts()
@@ -42,51 +65,62 @@ export default function AccountsPage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const [accountingMethod, setAccountingMethod] = useState('cash')
-  const [isMethodDropdownOpen, setIsMethodDropdownOpen] = useState(false)
-  const methodDropdownRef = useRef(null)
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (methodDropdownRef.current && !methodDropdownRef.current.contains(event.target)) {
-        setIsMethodDropdownOpen(false)
-      }
+  const { data: accountGroups } = useUcodeRequestQuery({
+    method: "get_account_groups",
+    data: {
+      page: 1,
+      limit: 100,
+    },
+    querySetting: {
+      select: (response) => response?.data,
     }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const [filters, setFilters] = useState([])
-
-  const [selectedEntity, setSelectedEntity] = useState([])
-  const [selectedAccounts, setSelectedAccounts] = useState([])
-
-  // Fetch legal entities using new invoke_function API
-  const { data: legalEntitiesData, isLoading: isLoadingLegalEntities } = useLegalEntitiesPlanFact({
-    page: 1,
-    limit: 100,
   })
 
-  const legalEntitiesItems = useMemo(() => {
-    const items = legalEntitiesData?.data?.data?.data || []
-    return Array.isArray(items) ? items : []
-  }, [legalEntitiesData])
+  const [expandedGroups, setExpandedGroups] = useState(new Set())
 
+  const toggleGroup = (id) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const isAllExpanded = useMemo(() => {
+    const groupCount = accountGroups?.data?.length || 0
+    return groupCount > 0 && expandedGroups.size === groupCount
+  }, [expandedGroups, accountGroups])
+
+  const toggleExpandAll = () => {
+    if (isAllExpanded) {
+      setExpandedGroups(new Set())
+    } else {
+      const allGroupIds = accountGroups?.data?.data?.map(g => g.guid) || []
+      setExpandedGroups(new Set(allGroupIds))
+    }
+  }
 
   const requestBankAccounts = useMemo(() => {
     return {
       page: 1,
       limit: 100,
       ...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
-      ...(filters.length > 0 && { tip: filters }),
-      ...(selectedAccounts.length > 0 && { my_accounts_ids: selectedAccounts }),
-      ...(selectedEntity.length > 0 && { legal_entity_ids: selectedEntity }),
+      ...(selectedTypes?.length > 0 && { tip: selectedTypes }),
+      ...(selectedAccounts?.length > 0 && { my_accounts_ids: selectedAccounts }),
+      ...(selectedEntity?.length > 0 && { legal_entity_ids: selectedEntity }),
     }
-  }, [debouncedSearchQuery, filters, selectedAccounts, selectedEntity])
+  }, [debouncedSearchQuery, selectedTypes, selectedAccounts, selectedEntity])
 
   // Fetch bank accounts using new invoke_function API
   const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useBankAccountsPlanFact(requestBankAccounts)
 
+  const toggleFilter = (key) => {
+    toggleType(key)
+  }
 
   // Extract bank accounts from response - correct path is data.data.data
   const bankAccountsItems = useMemo(() => {
@@ -96,39 +130,11 @@ export default function AccountsPage() {
 
   const queryClient = useQueryClient()
 
-  // Transform legal entities data for dropdown
-  const entities = useMemo(() => {
-    return legalEntitiesItems.map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия'
-    }))
-  }, [legalEntitiesItems])
-
-  // Transform accounts data for dropdown
-  const accountsOptions = useMemo(() => {
-    if (!bankAccountsItems || bankAccountsItems.length === 0) return []
-    return bankAccountsItems.map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия'
-    }))
-  }, [bankAccountsItems])
-
-  const accountingMethods = [
-    { value: 'cash', label: 'Кассовый метод' },
-    { value: 'accrual', label: 'Метод начисления' }
-  ]
-
-  const toggleFilter = (key) => {
-    setFilters(prev => prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key])
-  }
-
   // Filter bank accounts on frontend based on selected filters
   const filteredBankAccountsItems = useMemo(() => {
     if (!bankAccountsItems || bankAccountsItems.length === 0) return []
 
     return bankAccountsItems.filter(item => {
-      // Note: Search is now handled by API via searchString parameter
-
       // Filter by selected accounts
       if (selectedAccounts.length > 0) {
         if (!selectedAccounts.includes(item.guid)) return false
@@ -136,11 +142,56 @@ export default function AccountsPage() {
 
       // Note: New API doesn't return 'legal_entity_id' field
       // Legal entity filtering is disabled for now
-
       return true
     })
   }, [bankAccountsItems, selectedAccounts])
-  const [selectedRows, setSelectedRows] = useState([])
+
+  const accountsList = useMemo(() => {
+    if (selectedGrouping === 'single') {
+      return filteredBankAccountsItems
+    }
+
+    const groupsMap = new Map()
+
+    // Initialize groups from accountGroups
+    if (accountGroups) {
+      accountGroups?.data?.data?.forEach(group => {
+        groupsMap.set(group.guid, {
+          isGroup: true,
+          guid: group.guid,
+          name: group.name || group.nazvanie || 'Без названия',
+          items: []
+        })
+      })
+    }
+
+    // Add accounts to groups
+    filteredBankAccountsItems.forEach(account => {
+      const groupId = account.account_group_id || account.group_id || 'no-group'
+      if (!groupsMap.has(groupId)) {
+        groupsMap.set(groupId, {
+          isGroup: true,
+          guid: groupId,
+          name: groupId === 'no-group' ? 'Без группы' : 'Неизвестная группа',
+          items: []
+        })
+      }
+      groupsMap.get(groupId).items.push(account)
+    })
+
+    // Filter out groups with no items if they are not in the predefined groups
+    const resultList = Array.from(groupsMap.values()).filter(group => {
+      if (group.guid === 'no-group') return group.items.length > 0
+      return true
+    })
+
+    // Sort: "No group" first, then alphabetically
+    return resultList.sort((a, b) => {
+      if (a.guid === 'no-group') return -1
+      if (b.guid === 'no-group') return 1
+      return (a.name || '').localeCompare(b.name || '')
+    })
+  }, [filteredBankAccountsItems, accountGroups, selectedGrouping])
 
   // Get all field keys from API response - only show needed fields
   const allFields = useMemo(() => {
@@ -150,39 +201,11 @@ export default function AccountsPage() {
       'nachalьnyy_ostatok',
       'balans',
       "tip",
-      "legal_entity_id",
-      'currenies_kod'
+      "legal_entity_id", 
     ]
 
     return standardFields
   }, [])
-
-  const isRowSelected = (id) => selectedRows.includes(id)
-
-  const getAllSelectableIds = () => {
-    return filteredBankAccountsItems.map(item => item.guid)
-  }
-
-  const allSelected = () => {
-    const allIds = getAllSelectableIds()
-    return allIds.length > 0 && allIds.every(id => selectedRows.includes(id))
-  }
-
-  const toggleSelectAll = () => {
-    if (allSelected()) {
-      setSelectedRows([])
-    } else {
-      setSelectedRows(getAllSelectableIds())
-    }
-  }
-
-  const toggleRowSelection = (id) => {
-    if (selectedRows.includes(id)) {
-      setSelectedRows(prev => prev.filter(rid => rid !== id))
-    } else {
-      setSelectedRows(prev => [...prev, id])
-    }
-  }
 
   const handleDeleteConfirm = async () => {
     if (!deletingAccount) return
@@ -260,28 +283,59 @@ export default function AccountsPage() {
     return sum + (balance != null ? Number(balance) : 0)
   }, 0)
 
+  // Handle click outside menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  // Prevent hydration mismatch
+  if (!mounted) return null
+
+  const handleMenuClick = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  const handleCreateSingle = () => {
+    setIsCreateModalOpen(true)
+    setIsMenuOpen(false)
+  }
+
+  const handleCreateGroup = () => {
+    setIsCreateGroupModalOpen(true)
+    setIsMenuOpen(false)
+  }
+
   return (
     <div className={styles.container}>
       <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
         <FilterSection title="Тип">
           <div className="space-y-2.5 flex flex-col items-start">
             <OperationCheckbox
-              checked={filters.includes('Наличный')}
+              checked={selectedTypes.includes('Наличный')}
               onChange={() => toggleFilter('Наличный')}
               label="Наличный"
             />
             <OperationCheckbox
-              checked={filters.includes('Безналичный')}
+              checked={selectedTypes.includes('Безналичный')}
               onChange={() => toggleFilter('Безналичный')}
               label="Безналичный"
             />
             <OperationCheckbox
-              checked={filters.includes('Карта физлица')}
+              checked={selectedTypes.includes('Карта физлица')}
               onChange={() => toggleFilter('Карта физлица')}
               label="Карта физлица"
             />
             <OperationCheckbox
-              checked={filters.includes('Электронный')}
+              checked={selectedTypes.includes('Электронный')}
               onChange={() => toggleFilter('Электронный')}
               label="Электронный"
             />
@@ -290,22 +344,17 @@ export default function AccountsPage() {
 
         <FilterSection title="Параметры">
           <div className="space-y-3">
-            <DropdownFilter
-              label="Мои счета"
-              options={accountsOptions}
-              selectedValues={selectedAccounts}
+            <SelectMyAccounts
+              value={selectedAccounts}
               onChange={setSelectedAccounts}
               placeholder="Выберите счета"
-              disabled={accountsOptions.length === 0}
             />
 
-            <DropdownFilter
-              label="Юрлица"
-              options={entities}
-              selectedValues={selectedEntity}
+            <SelectLegelEntitties
+              value={selectedEntity}
               onChange={setSelectedEntity}
               placeholder="Выберите юрлицо"
-              disabled={entities.length === 0 || isLoadingLegalEntities}
+              multi={true}
             />
           </div>
         </FilterSection>
@@ -327,23 +376,52 @@ export default function AccountsPage() {
           <div className={styles.headerContent}>
             <div className={styles.titleRow}>
               <h1 className={styles.title}>Мои счета</h1>
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className={styles.createButton}
-              >
-                Создать
-              </button>
+              <div ref={menuRef} className="flex items-center gap-2 relative">
+                <button onClick={handleMenuClick} className={cn('primary-btn', "flex items-center gap-2")}>
+                  Создать
+                  {isMenuOpen ? (
+                    <ChevronUp size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
+                </button>
+                {isMenuOpen && (
+                  <div className="absolute top-full w-40 p-2 flex flex-col justify-start items-start left-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <button
+                      className="text-neutral-700 font-normal hover:bg-neutral-100 w-full text-start text-sm p-1 cursor-pointer rounded-sm"
+                      onClick={handleCreateSingle}
+                    >
+                      Создать
+                    </button>
+                    <button
+                      className="text-neutral-700 font-normal hover:bg-neutral-100 w-full text-start text-sm p-1 cursor-pointer rounded-sm"
+                      onClick={handleCreateGroup}
+                    >
+                      Создать группу
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* Search - pushed to the right */}
               <div className={styles.headerActionsRight}>
                 {/* Search */}
-                <div className={styles.searchContainer}>
-                  <SearchBar
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    placeholder="Поиск по названию"
-                  />
-                </div>
+                <SingleSelect
+                  data={[
+                    { value: 'single', label: 'Без группировки' },
+                    { value: 'group', label: 'По группам' }
+                  ]}
+                  value={selectedGrouping}
+                  withSearch={false}
+                  className={'bg-white w-44'}
+                  onChange={setSelectedGrouping} />
+                <Input
+                  leftIcon={<Search size={16} />}
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="Поиск по названию"
+                  className="bg-white w-56"
+                />
               </div>
             </div>
           </div>
@@ -353,67 +431,114 @@ export default function AccountsPage() {
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead className={styles.tableHead}>
-                <tr>
-                  <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>
-                    №
+                <tr className='bg-neutral-100 text-neutral-500 font-normal text-xs w-full border-b border-gray-300'>
+                  <th className='w-12'>
+                    <div className='flex items-center justify-center p-2'>
+                      {/* Checkbox for all selection */}
+                      <OperationCheckbox />
+                    </div>
                   </th>
-                  {allFields.map((field) => (
-                    <th key={field} className={styles.tableHeaderCell}>
-                      <button className={styles.tableHeaderButton}>
-                        {field === 'nazvanie' ? 'Название' :
-                          field === 'nachalьnyy_ostatok' ? 'Начальный остаток' :
-                            field === 'balans' ? 'Текущий остаток' :
-                              field === 'currenies_kod' ? 'Валюта' :
-                                field === 'tip' ? 'Тип' :
-                                  field === 'legal_entity_id' ? 'Юрлицо' :
-                                    field}
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                    </th>
-                  ))}
-                  <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
+                  <th className='p-2 text-start font-medium'>
+                    <div className="flex items-center gap-2">
+                      {selectedGrouping === 'group' && (
+                        <button
+                          onClick={toggleExpandAll}
+                          className="p-1 hover:bg-neutral-200 rounded cursor-pointer transition-colors"
+                        >
+                          {isAllExpanded ? <ExpendClose /> : <ExpendOpen />}
+                        </button>
+                      )}
+                      <span>Название</span>
+                    </div>
+                  </th>
+                  <th className='p-2 text-start font-medium'>Начальный остаток</th>
+                  <th className='p-2 text-start font-medium'>Текущий остаток</th>
+                  <th className='p-2 text-start font-medium'>Тип</th>
+                  <th className='p-2 text-start font-medium'>Юрлицо</th>
+                  <th className='p-2 text-end w-12 pr-4'>&nbsp;</th>
                 </tr>
               </thead>
-              <tbody>
-                {isLoadingBankAccounts ? (
-                  <tr className={styles.emptyRow}>
-                    <td colSpan={allFields.length + 2} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
-                      Загрузка...
-                    </td>
-                  </tr>
-                ) : filteredBankAccountsItems.length === 0 ? (
-                  <tr className={styles.emptyRow}>
-                    <td colSpan={allFields.length + 2} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
+              <tbody className="bg-white">
+                {accountsList.length === 0 ? (
+                  <tr>
+                    <td colSpan={allFields.length + 2} className="p-8 text-center text-neutral-400">
                       Нет данных
                     </td>
                   </tr>
                 ) : (
-                  filteredBankAccountsItems.map((item, index) => (
-                    <tr
-                      key={item.guid}
-                      className={styles.tableRow}
-                    >
-                      <td className={cn(styles.tableCell, styles.tableCellIndex)}>
-                        {index + 1}
-                      </td>
-                      {allFields.map((field) => (
-                        <td key={field} className={cn(styles.tableCell, field === 'komentariy' && styles.commentCell)}>
-                          {formatFieldValue(item, field)}
-                        </td>
-                      ))}
-                      <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
-                        <AccountMenu
-                          account={item}
-                          onEdit={(account) => setEditingAccount(account)}
-                          onDelete={(account) => setDeletingAccount(account)}
-                        />
-                      </td>
-                    </tr>
-                  ))
-                )}
+                    accountsList.map((item) => {
+                      if (item.isGroup) {
+                        const isExpanded = expandedGroups.has(item.guid)
+                        return (
+                          <React.Fragment key={item.guid}>
+                            <tr
+                              className="hover:bg-neutral-50 bg-neutral-50/50 font-medium cursor-pointer border-b border-gray-200"
+                              onClick={() => toggleGroup(item.guid)}
+                            >
+                              <td className="p-3">
+                                <div className="flex items-center justify-center">
+                                  {/* Selection checkbox for group could be added here if needed */}
+                                </div>
+                              </td>
+                              <td colSpan={allFields.length + 1} className="p-3">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid); }}
+                                    className="p-1 hover:bg-neutral-100 rounded transition-colors"
+                                  >
+                                    {isExpanded ? <ExpendClose /> : <ExpendOpen />}
+                                  </button>
+                                  <span className="text-sm font-semibold text-slate-900">{item.name}</span>
+                                  {item.items?.length > 0 && (
+                                    <span className="ml-1 text-xs text-neutral-400 font-normal">({item.items.length})</span>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                            {isExpanded && item.items.map((account) => (
+                              <tr key={account.guid} className="hover:bg-neutral-50 border-b border-gray-100 transition-colors">
+                                <td className="p-3"></td>
+                                <td className="p-3 text-sm text-[#0f172a] pl-10">
+                                  {account.nazvanie}
+                                </td>
+                                {allFields.slice(1).map((field) => (
+                                  <td key={field} className="p-3 text-sm text-[#0f172a]">
+                                    {formatFieldValue(account, field)}
+                                  </td>
+                                ))}
+                                <td className="p-3 text-end" onClick={(e) => e.stopPropagation()}>
+                                  <AccountMenu
+                                    onEdit={() => setEditingAccount(account)}
+                                    onDelete={() => setDeletingAccount(account)}
+                                  />
+                                </td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        )
+                      }
 
+                      // Non-grouped (flat list)
+                      return (
+                        <tr key={item.guid} className="hover:bg-neutral-50 border-b border-gray-100 transition-colors">
+                          <td className="p-3 text-center text-xs text-neutral-400">
+                            {/* Index or checkbox */}
+                          </td>
+                          {allFields.map((field) => (
+                            <td key={field} className="p-3 text-sm text-[#0f172a]">
+                              {formatFieldValue(item, field)}
+                            </td>
+                          ))}
+                          <td className="p-3 text-end" onClick={(e) => e.stopPropagation()}>
+                            <AccountMenu
+                              onEdit={() => setEditingAccount(item)}
+                              onDelete={() => setDeletingAccount(item)}
+                            />
+                          </td>
+                        </tr>
+                      )
+                    })
+                )}
               </tbody>
             </table>
           </div>
@@ -445,19 +570,32 @@ export default function AccountsPage() {
         <CreateMyAccountModal
           isOpen={isCreateModalOpen}
           onClose={() => {
-            setIsCreateModalOpen(false) 
+            setIsCreateModalOpen(false)
             queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
             queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
           }}
         />
       )}
 
+      {/* Create Account Group Modal */}
+      {isCreateGroupModalOpen && (
+        <CreateAccountGroupModal
+          isOpen={isCreateGroupModalOpen}
+          onClose={() => {
+            setIsCreateGroupModalOpen(false)
+            queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
+            queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
+          }}
+        />
+      )}
+
+
       {/* Edit Account Modal */}
       {editingAccount && (
         <CreateMyAccountModal
           isOpen={!!editingAccount}
           onClose={() => {
-            setEditingAccount(null) 
+            setEditingAccount(null)
             queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
             queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
           }}
@@ -477,4 +615,4 @@ export default function AccountsPage() {
       )}
     </div>
   )
-}
+})

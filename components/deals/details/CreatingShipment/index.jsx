@@ -28,6 +28,8 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
   ])
 
+  console.log(initialData)
+
 
   useEffect(() => {
     if (open) {

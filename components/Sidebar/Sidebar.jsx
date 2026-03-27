@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation'
 import { RefreshCw, ClipboardList, Library } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import { UsersIcon, DealIcon } from '@/constants/icons'
-import { IoSettingsOutline } from 'react-icons/io5'
 import { AppLogo } from '../../constants/icons'
 
 import {
@@ -25,8 +24,8 @@ const navItems = [
         href: '/pages/reports',
         hasPage: true,
         submenu: [
-            { label: 'Движение денег (ДД)', href: '/pages/reports/cashflow', hasPage: true },
-            { label: 'Прибыли и убытки (П&У)', href: '/pages/reports/profit-and-loss', hasPage: true },
+            { label: 'Движение денег (ДДС)', href: '/pages/reports/cashflow', hasPage: true },
+            { label: 'Прибыли и убытки (ОПУ)', href: '/pages/reports/profit-and-loss', hasPage: true },
             { label: 'Баланс', href: '/pages/reports/balance', hasPage: true }
         ]
     },
@@ -43,12 +42,12 @@ const navItems = [
             { label: 'Товары & Услуги', href: '/pages/directories/product-service', hasPage: true }
         ]
     },
-    {
-        icon: IoSettingsOutline,
-        label: 'Настройки',
-        href: '/pages/settings',
-        hasPage: true,
-    },
+    // {
+    //     icon: IoSettingsOutline,
+    //     label: 'Настройки',
+    //     href: '/pages/settings',
+    //     hasPage: true,
+    // },
 ]
 
 export function Sidebar() {
