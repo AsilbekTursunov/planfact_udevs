@@ -184,13 +184,13 @@ const IncomeForm = ({
           <SingleCounterParty
             value={formData.counterparty}
             onChange={value => {
-              setFormData({ ...formData, counterparty: value })
+              setFormData(prev => ({ ...prev, counterparty: value }))
               console.log('value', value)
             }}
             placeholder='Не выбран.'
             className='flex-1 bg-white' 
             name='chart_of_accounts_id'
-            returnChartOfAccount={value => setFormData({ ...formData, chartOfAccount: value })}
+            returnChartOfAccount={value => setFormData(prev => ({ ...prev, chartOfAccount: value }))}
           />
         </div>
       )}

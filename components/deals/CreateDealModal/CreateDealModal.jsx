@@ -1,18 +1,17 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './CreateDealModal.module.scss';
 import CustomDatePicker from '@/components/shared/DatePicker';
 import Input from '@/components/shared/Input';
-import TextArea from '../../shared/TextArea';
-import Select from '@/components/common/Select';
-import { TreeSelect } from '@/components/common/TreeSelect/TreeSelect';
-import { useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard';
+import TextArea from '../../shared/TextArea'; 
 import { X } from 'lucide-react';
 import { useUcodeDefaultApiMutation } from '../../../hooks/useDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import Loader from '../../shared/Loader';
 import { formatDate } from '../../../utils/formatDate';
+import SingleCounterParty from '../../ReadyComponents/SingleCounterParty';
+import SingleSelect from '../../shared/Selects/SingleSelect';
 
 const ndsOptions = [
   { value: 'true', label: 'С учетом НДС' },
@@ -23,7 +22,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
   const [dealName, setDealName] = useState('');
   const [dealDate, setDealDate] = useState();
   const [client, setClient] = useState('');
-  const [nds, setNds] = useState('');
+  const [nds, setNds] = useState('true');
   const [comment, setComment] = useState('');
   const [errors, setErrors] = useState({});
   // const router = useRouter();
@@ -44,46 +43,13 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
       setDealName('');
       setDealDate('');
       setClient('');
-      setNds('');
+      setNds('true');
       setComment('');
     }
   }, [isOpen, initialData]);
 
   const { mutateAsync: createDeal, isPending: isCreatingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'create-deal' })
 
-  const { data: counterpartiesGroupsData, isLoading: isLoadingGroups } = useCounterpartiesGroupsPlanFact({
-    page: 1,
-    limit: 100,
-  });
-
-  const counterAgentsTree = useMemo(() => {
-    const groups = counterpartiesGroupsData?.data?.data?.data || [];
-
-    if (groups.length === 0) return [];
-
-    const buildTree = item => {
-      if (item.children && Array.isArray(item.children) && item.children.length > 0) {
-        return {
-          value: item.guid,
-          title: item.nazvanie_gruppy || 'Без названия',
-          selectable: false,
-          children: item.children.map(child => ({
-            value: child.guid,
-            title: child.nazvanie || 'Без названия',
-            selectable: true,
-          }))
-        };
-      }
-
-      return {
-        value: item.guid,
-        title: item.nazvanie_gruppy || item.nazvanie || 'Без названия',
-        selectable: true,
-      };
-    };
-
-    return groups.map(buildTree);
-  }, [counterpartiesGroupsData]);
 
   if (!isOpen) return null;
 
@@ -186,12 +152,12 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
           <div className="grid grid-cols-7">
             <label className=" col-span-2 flex items-center">Клиент</label>
             <div className=" col-span-5">
-              <TreeSelect
-                data={counterAgentsTree}
+              <SingleCounterParty
                 value={client}
                 onChange={value => setClient(value)}
                 placeholder="Укажите кому падаете товар или услугу"
-                loading={isLoadingGroups}
+                className={'bg-white'}
+                isClearable={false}
               />
             </div>
           </div>
@@ -199,12 +165,14 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
           <div className="grid grid-cols-7">
             <label className=" col-span-2 flex items-center"> НДС </label>
             <div className=" col-span-5">
-              <Select
-                instanceId="create-deal-nds-select"
-                options={ndsOptions}
-                value={ndsOptions.find(opt => opt.value === nds) || ''}
-                onChange={(selected) => setNds(selected ? selected.value : '')}
+              <SingleSelect
+                data={ndsOptions}
+                value={nds}
+                onChange={(val) => setNds(val || '')}
+                withSearch={false}
                 placeholder="Выберите опцию"
+                className={'bg-white'}
+                isClearable={false}
               />
             </div>
           </div>

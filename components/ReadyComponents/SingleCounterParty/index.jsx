@@ -10,8 +10,9 @@ const SingleCounterParty = ({
   className,
   disabled,
   dropdownClassName,
-  name = 'chart_of_accounts_id',
-  returnChartOfAccount
+  name = '',
+  returnChartOfAccount,
+  isClearable = true
 }) => {
   const { data: counterpartiesGroupsData, isLoading } = useCounterpartiesGroupsPlanFact({
     page: 1,
@@ -53,7 +54,7 @@ const SingleCounterParty = ({
 
   const handleSelect = (val) => {
     onChange(val)
-    if (returnChartOfAccount && val) {
+    if (name && val) {
       // Find the item in the tree to get its rawData
       const findItem = (nodes) => {
         for (const node of nodes) {
@@ -70,7 +71,7 @@ const SingleCounterParty = ({
       if (node && node.rawData) {
         // Return the chart_of_accounts_id (or id_2) based on the 'name' prop
         const accountId = node.rawData[name]
-        returnChartOfAccount(accountId || null)
+        returnChartOfAccount?.(accountId || null)
 
       }
     }
@@ -84,6 +85,7 @@ const SingleCounterParty = ({
         placeholder={isLoading ? "Загрузка..." : placeholder}
         value={value}
         onChange={handleSelect}
+        isClearable={isClearable}
         className={className}
         dropdownClassName={dropdownClassName}
       />

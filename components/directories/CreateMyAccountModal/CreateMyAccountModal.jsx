@@ -40,7 +40,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
   const [showDetails, setShowDetails] = useState(false)
 
   // Fetch currencies
-  const { data: currenciesData, isLoading: loadingCurrencies } = useCurrencies({ limit: 100 })
+  const { data: currenciesData } = useCurrencies({ limit: 100 })
 
   // Transform currencies data
   const currencies = useMemo(() => {
@@ -51,6 +51,8 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       nazvanie: item.nazvanie || ''
     }))
   }, [currenciesData])
+
+
 
   // Account types
   const accountTypes = [
@@ -98,7 +100,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           tip: ['Наличный'],
           nachalьnyy_ostatok: '',
           data_sozdaniya: new Date().toISOString().split('T')[0],
-          currenies_id: '',
+          currenies_id: currencies?.[0]?.value,
           komentariy: '',
           legal_entity_id: "",
           bik: '',
@@ -133,10 +135,6 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
 
     if (!formData.legal_entity_id) {
       newErrors.legal_entity_id = 'Выберите юрлицо'
-    }
-
-    if (formData.bik || formData.bank || formData.rasch_schet || formData.korr_schet) {
-      if (!formData.rasch_schet) newErrors.rasch_schet = 'Укажите расчетный счет'
     }
 
     setErrors(newErrors)
@@ -323,7 +321,6 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                           className={cn(errors.rasch_schet && "border-red-500")}
                         />
                       </div>
-                      {errors.rasch_schet && <span className="text-mini text-red-500">{errors.rasch_schet}</span>}
                     </div>
                     <div className="flex  gap-2">
                       <label className="w-[30%] text-sm  text-[#0f172a] flex items-center">Кор. счет №</label>
@@ -390,6 +387,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   onChange={(value) => setFormData({ ...formData, currenies_id: value })}
                   placeholder="Выберите валюту"
                   withSearch={false}
+                  isClearable={false}
                   className="flex-1 bg-white"
                 />
               </div>

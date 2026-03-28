@@ -20,6 +20,7 @@ import { observer } from 'mobx-react-lite';
 import { sealDeal } from '../../../store/saleDeal.store';
 import CreateStudentModal from '../../../components/deals/CreateStudentModal';
 import SingleSelect from '../../../components/shared/Selects/SingleSelect';
+import ScreenLoader from '../../../components/shared/ScreenLoader';
 
 export default observer(function DealsPage() {
   const router = useRouter();
@@ -160,7 +161,7 @@ export default observer(function DealsPage() {
       },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['deals'] });
+          queryClient.invalidateQueries({ queryKey: ['get_sales_list_simple'] });
           setSelectedDeals(prev => {
             const next = new Set(prev);
             next.delete(dealToDelete.guid);
@@ -217,6 +218,7 @@ export default observer(function DealsPage() {
                 ]}
                 withSearch={false}
                 value={dealsMethod}
+                isClearable={false}
                 onChange={(value) => sealDeal.setState('dealsMethod', value)}
                 className='bg-white'
               />
@@ -237,11 +239,7 @@ export default observer(function DealsPage() {
         </header>
 
         <div className="relative">
-          {isFetching && (
-            <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          )}
+
           <table className="w-full text-xs">
             <thead className='sticky top-0'>
               <tr className='bg-neutral-100 text-neutral-500  text-xs'>
@@ -272,7 +270,7 @@ export default observer(function DealsPage() {
               {formattedDeals?.map(deal => {
                 const price = dealsMethod === 'accrual_method' ? deal?.accrual_method?.profit : deal?.cash_method?.profit
                 return (
-                  <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 h-10 group cursor-pointer'>
+                  <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 h-12 border-b border-neutral-100 group cursor-pointer'>
                     <td className="w-10" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center">
                         <OperationCheckbox
@@ -341,6 +339,7 @@ export default observer(function DealsPage() {
             </span>
           </div>
         </footer>
+        {isFetching && <ScreenLoader className={'left-0!'} />}
       </main>
 
 
