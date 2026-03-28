@@ -215,6 +215,7 @@ const OperationsPage = observer(() => {
 
 	const operationsList = useMemo(() => {
 		return {
+			future: operationsDto(allOperations, 'future'),
 			today: operationsDto(allOperations, 'today'),
 			before: operationsDto(allOperations, 'before'),
 		}
@@ -585,7 +586,30 @@ const OperationsPage = observer(() => {
 										</td>
 									</tr>
 								) : (
-									<>
+											<>
+
+												{/* future */}
+												{/* {operationsList?.future?.length > 0 && (
+													<tr className={styles.sectionHeader}>
+														<td colSpan='9' className={styles.sectionHeaderCell}>
+															<h3 className={styles.sectionHeaderTitle}>Будущие</h3>
+														</td>
+													</tr>
+												)} */}
+
+												{operationsList?.future?.map(op => (
+													<OperationTableRow
+														key={op.guid}
+														op={op}
+														selectedOperations={selectedOperations}
+														toggleOperation={toggleOperation}
+														openOperationModal={openOperationModal}
+														handleEditOperation={handleEditOperation}
+														handleDeleteOperation={handleDeleteOperation}
+														handleCopyOperation={handleCopyOperation}
+													/>
+												))}
+
 										{/* Сегодня - Section Header */}
 										{operationsList?.today?.length > 0 && (
 											<tr className={styles.sectionHeader}>

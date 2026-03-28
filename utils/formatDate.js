@@ -62,5 +62,21 @@ export const isToday = (dateString) => {
   return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()
 }
 
+export const isFuture = (dateString) => {
+  if (!dateString) return false
+  const date = new Date(dateString)
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
+  return date > today
+}
+
+export const isBefore = (dateString) => {
+  if (!dateString) return false
+  const date = new Date(dateString)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return date < today
+}
+
 
 
