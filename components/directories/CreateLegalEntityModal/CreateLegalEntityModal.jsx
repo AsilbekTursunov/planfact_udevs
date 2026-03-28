@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import { useCreateLegalEntity, useUpdateLegalEntity } from '@/hooks/useDashboard'
@@ -9,7 +9,6 @@ import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import { observer } from 'mobx-react-lite'
 import { authStore } from '../../../store/auth.store'
-import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 
 export default observer(function CreateLegalEntityModal({ isOpen, onClose, legalEntity = null }) {
   const createMutation = useCreateLegalEntity()
@@ -17,19 +16,19 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
   const isEdit = !!legalEntity && !!legalEntity.guid
 
 
-  const { data } = useUcodeRequestQuery({
-    method: "get_legal_entities",
-    querySetting: {
-      select: (response) => response?.data?.data?.data,
-    }
-  })
+  // const { data } = useUcodeRequestQuery({
+  //   method: "get_legal_entities",
+  //   querySetting: {
+  //     select: (response) => response?.data?.data?.data,
+  //   }
+  // })
 
-  const legalEntityData = useMemo(() => {
-    return data?.find((item) => item.id === legalEntity?.id)
-  }, [data, legalEntity])
+  // const legalEntityData = useMemo(() => {
+  //   return data?.find((item) => item.id === legalEntity?.id)
+  // }, [data, legalEntity])
 
-  console.log('legalEntityData', legalEntityData)
-  console.log('legalEntityData', legalEntityData)
+  // console.log('legalEntityData', legalEntityData)
+  // console.log('legalEntityData', legalEntityData)
 
 
   const [formData, setFormData] = useState({

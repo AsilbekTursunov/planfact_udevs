@@ -14,6 +14,7 @@ import SinglSelectStatiya from '@/components/ReadyComponents/SingleSelectStatiya
 import EditCounterpartyGroupModal from '@/components/directories/EditCounterpartyGroupModal/EditCounterpartyGroupModal'
 import { DeleteGroupConfirmModal } from '@/components/directories/DeleteGroupConfirmModal/DeleteGroupConfirmModal'
 import styles from './CreateCounterpartyModal.module.scss'
+import { PlusCircle, PlusSquare, Trash2 } from 'lucide-react'
 
 
 export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGroupId = null }) {
@@ -47,12 +48,12 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
     }
   })
 
-  const { fields: kppFields } = useFieldArray({
+  const { fields: kppFields, append: appendKpp, remove: removeKpp } = useFieldArray({
     control,
     name: "kpp"
   })
 
-  const { fields: accountFields } = useFieldArray({
+  const { fields: accountFields, append: appendAccount, remove: removeAccount } = useFieldArray({
     control,
     name: "nomer_scheta"
   })
@@ -171,6 +172,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
       queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
       handleClose()
+      reset()
     } catch (error) {
       console.error('Error creating counterparty:', error)
       setError('root', { message: error.message || 'Не удалось создать контрагента' })
@@ -310,8 +312,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                   <label className={styles.label}>КПП</label>
                   <div className={styles.multiInputContainer}>
                     {kppFields.map((item, index) => (
-                      <div key={item.id} className={styles.inputWithAction}>
-                        <div className={styles.inputWrapper}>
+                      <div key={item.id} className="flex gap-2 items-center">
                           <Input
                             type="number"
                             placeholder="Укажите КПП"
@@ -319,7 +320,24 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                             onWheel={(e) => e.target.blur()}
                             {...register(`kpp.${index}.value`)}
                           />
-                        </div>
+                        {kppFields.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeKpp(index)}
+                            className="text-neutral-400 hover:text-[#f43f5e] shrink-0 outline-none"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                        {index === kppFields.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => appendKpp({ value: '' })}
+                            className="text-neutral-400 hover:text-[#0e73f6] shrink-0 outline-none"
+                          >
+                            <PlusCircle size={20} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -329,15 +347,31 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                   <label className={styles.label}>Номер счета</label>
                   <div className={styles.multiInputContainer}>
                     {accountFields.map((item, index) => (
-                      <div key={item.id} className={styles.inputWithAction}>
-                        <div className={styles.inputWrapper}>
+                      <div key={item.id} className="flex gap-2 items-center">
                           <Input
                             type="text"
                             placeholder="Укажите номер счета"
                             className={cn(styles.input, styles.requisitesInput)}
                             {...register(`nomer_scheta.${index}.value`)}
                           />
-                        </div>
+                        {accountFields.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeAccount(index)}
+                            className="text-neutral-400 hover:text-[#f43f5e] shrink-0 outline-none"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                        {index === accountFields.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => appendAccount({ value: '' })}
+                            className="text-neutral-400 hover:text-[#0e73f6] shrink-0 outline-none"
+                          >
+                            <PlusCircle size={20} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
