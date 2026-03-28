@@ -116,6 +116,7 @@ export const OperationsFiltersSidebar = observer(({
                         label="Выплата"
                       />
 
+
                       {/* Перемещение */}
                       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
                         <OperationCheckbox
@@ -183,7 +184,12 @@ export const OperationsFiltersSidebar = observer(({
                           />
                         </div>
                       )}
-
+                      {/* Отгрузка */}
+                      <OperationCheckbox
+                        checked={safeSelectedFilters.includes('Отгрузка')}
+                        onChange={() => operationFilterStore.toggleFilter('Отгрузка')}
+                        label="Отгрузка"
+                      />
                     </div>
                   </div>
 
