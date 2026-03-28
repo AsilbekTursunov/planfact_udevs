@@ -1249,7 +1249,7 @@ export const useCashFlowReport = (params = {}) => {
         console.error('useCashFlowReport: Error:', error)
         return { status: 'ERROR', data: { data: { data: null } } }
       }
-    }, 
+    },
     refetchOnMount: 'always',
     staleTime: 0,
     refetchOnWindowFocus: true,
@@ -1260,7 +1260,7 @@ export const useCashFlowReport = (params = {}) => {
 /**
  * Universal useUcodeRequest globally accessible
  */
-export const useUcodeRequestMutation = () => {
+export const useUcodeRequestMutation = ({ mutationSetting = {} } = {}) => {
   return useMutation({
     mutationFn: ({ method, data }) => ucodeRequest({ method, data }),
     onError: (error) => {
@@ -1278,7 +1278,8 @@ export const useUcodeRequestMutation = () => {
       }
 
       showErrorNotification(error.message || error.details?.description || 'Ошибка при выполнении запроса')
-    }
+    },
+    ...mutationSetting
   })
 }
 
@@ -1346,7 +1347,7 @@ export const useUcodeDefaultApiQuery = ({ queryKey = '', urlMethod, urlParams, d
     },
     ...querySetting,
     refetchOnMount: true,
-    refetchOnWindowFocus: true, 
+    refetchOnWindowFocus: true,
   })
 }
 

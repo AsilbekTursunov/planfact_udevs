@@ -460,19 +460,7 @@ export default function LegalEntitiesPage() {
                   <th colSpan={9} className='py-1 px-2'>
                     <div className='flex items-center gap-6'>
                       <span className='font-semibold text-sm text-neutral-700'>Выбрано: {selectedItems.size}</span>
-                      <div className='flex items-center gap-4'>
-                        {/* <button className='flex items-center gap-1.5 text-primary-500 hover:text-primary-600 font-medium cursor-pointer'>
-                          <ArrowRightLeft size={16} />
-                          <span>Переместить в группу</span>
-                        </button>
-                        <button className='flex items-center gap-1.5 text-primary-500 hover:text-primary-600 font-medium cursor-pointer'>
-                          <ArrowRightLeft size={16} />
-                          <span>Переместить в услуги</span>
-                        </button>
-                        <button className='flex items-center gap-1.5 text-primary-500 hover:text-primary-600 font-medium cursor-pointer'>
-                          <PlusCircle size={16} />
-                          <span>Добавить в сделку</span>
-                        </button> */}
+                      <div className='flex items-center gap-4'> 
                         <button
                           onClick={() => setIsBulkDeleteModalOpen(true)}
                           className='flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium cursor-pointer'

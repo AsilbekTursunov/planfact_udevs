@@ -7,7 +7,7 @@ class AccountsStore {
     ["Карта физлица", "Безналичный", "Наличный", "Электронный"]
   selectedEntity = []
   selectedAccounts = []
-  selectedGrouping = 'single'
+  selectedGrouping = 'none'
   accountingMethod = 'cash'
   isFilterOpen = true
 
@@ -73,7 +73,7 @@ class AccountsStore {
     this.selectedTypes = []
     this.selectedEntity = []
     this.selectedAccounts = []
-    this.selectedGrouping = 'single'
+    this.selectedGrouping = 'none'
     this.accountingMethod = 'cash'
   }
 }

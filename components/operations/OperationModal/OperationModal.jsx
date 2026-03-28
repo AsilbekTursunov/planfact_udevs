@@ -22,7 +22,7 @@ import IncomeForm from './Forms/Income'
 import PaymentForm from './Forms/Payment'
 import AccuralForm from './Forms/Accural'
 import { observer } from 'mobx-react-lite'
-import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard'
+import { useUcodeDefaultApiQuery, useUcodeRequestMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import Loader from '../../shared/Loader'
 import CustomModal from '../../shared/CustomModal'
 import { authStore } from '../../../store/auth.store'
@@ -468,6 +468,25 @@ const OperationModal = observer(({
 	})
 
 	const formData = formStates[activeTab] || formStates['income'];
+
+	// const { data: counterpartyData } = useUcodeRequestQuery({
+	// 	method: "get_counterparties",
+	// 	data: {
+	// 		contrAgentId: formData.counterparty
+	// 	},
+	// 	querySetting: {
+	// 		select: (response) => response?.data?.data?.data?.[0],
+	// 		enable: !!formData.counterparty
+	// 	}
+	// })
+
+	// console.log('counterpartyData', counterpartyData)
+
+	// useEffect(() => {
+	// 	if (counterpartyData?.chart_of_accounts_id || counterpartyData?.chart_of_accounts_id_2) {
+	// 		setFormData({ ...formData, chartOfAccount: activeTab === 'income' ? counterpartyData.chart_of_accounts_id : counterpartyData.chart_of_accounts_id_2 })
+	// 	}
+	// }, [counterpartyData, formData])
 
 	const setFormData = useCallback((updater) => {
 		setFormStates(prev => {

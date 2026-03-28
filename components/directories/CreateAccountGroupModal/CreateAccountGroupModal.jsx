@@ -9,7 +9,7 @@ import Loader from '../../shared/Loader'
 import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
 import { queryClient } from '../../../lib/queryClient'
 
-export default function CreateAccountGroupModal({ isOpen, onClose }) {
+export default function CreateAccountGroupModal({ isOpen, onClose, editingGroup }) {
   const [formData, setFormData] = useState({
     nazvanie_gruppy: '',
     opisanie_gruppy: ''
@@ -22,13 +22,20 @@ export default function CreateAccountGroupModal({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        nazvanie_gruppy: '',
-        opisanie_gruppy: ''
-      })
+      if (editingGroup) {
+        setFormData({
+          nazvanie_gruppy: editingGroup.name || editingGroup.nazvanie || '',
+          opisanie_gruppy: editingGroup.description || editingGroup.komentariy || ''
+        })
+      } else {
+        setFormData({
+          nazvanie_gruppy: '',
+          opisanie_gruppy: ''
+        })
+      }
       setErrors({})
     }
-  }, [isOpen])
+  }, [isOpen, editingGroup])
 
   const validateForm = () => {
     const newErrors = {}
@@ -45,13 +52,25 @@ export default function CreateAccountGroupModal({ isOpen, onClose }) {
 
     setIsSubmitting(true)
     try {
-      await createAccountGroup({
-        method: 'create_account_group',
-        data: {
-          name: formData.nazvanie_gruppy,
-          description: formData.opisanie_gruppy
-        }
-      })
+      if (editingGroup) {
+        await createAccountGroup({
+          method: 'update_account_group',
+          data: {
+            guid: editingGroup.guid,
+            name: formData.nazvanie_gruppy,
+            description: formData.opisanie_gruppy
+          }
+        })
+      } else {
+        await createAccountGroup({
+          method: 'create_account_group',
+          data: {
+            name: formData.nazvanie_gruppy,
+            description: formData.opisanie_gruppy
+          }
+        })
+      }
+      queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['get_account_groups'] })
       onClose()
     } catch (error) {
@@ -70,7 +89,7 @@ export default function CreateAccountGroupModal({ isOpen, onClose }) {
     >
       <div className="flex flex-col h-full text-slate-900 bg-white">
         <div className="border-b pb-3 p-4 flex items-center justify-between bg-white sticky top-0 z-10">
-          <h2 className="text-xl font-semibold">Создать группу</h2>
+          <h2 className="text-xl font-semibold">{editingGroup ? 'Редактировать группу' : 'Создать группу'}</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
@@ -125,7 +144,7 @@ export default function CreateAccountGroupModal({ isOpen, onClose }) {
               className="primary-btn px-4! rounded-sm!"
               disabled={isSubmitting}
             >
-              {isSubmitting ? <Loader /> : 'Создать'}
+              {isSubmitting ? <Loader /> : (editingGroup ? 'Сохранить' : 'Создать')}
             </button>
           </div>
         </form>

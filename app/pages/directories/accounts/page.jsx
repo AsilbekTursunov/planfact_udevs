@@ -5,21 +5,24 @@ import { observer } from 'mobx-react-lite'
 import { accountsStore } from '@/store/accounts.store'
 import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
-import { useDeleteMyAccounts, useBankAccountsPlanFact } from '@/hooks/useDashboard'
+import { useDeleteMyAccounts } from '@/hooks/useDashboard'
 import CreateMyAccountModal from '@/components/directories/CreateMyAccountModal/CreateMyAccountModal'
+import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityModal/CreateLegalEntityModal'
 import { AccountMenu } from '@/components/directories/AccountMenu/AccountMenu'
 import { DeleteAccountConfirmModal } from '@/components/directories/DeleteAccountConfirmModal/DeleteAccountConfirmModal'
+import DeleteAccountGroupModal from '@/components/directories/DeleteAccountGroupModal/DeleteAccountGroupModal'
 import { cn } from '@/app/lib/utils'
 import styles from './accounts.module.scss'
 import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
-import { ChevronDown, ChevronUp, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, Loader2, Search } from 'lucide-react'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 import CreateAccountGroupModal from '@/components/directories/CreateAccountGroupModal/CreateAccountGroupModal'
-import SelectMyAccounts from '../../../../components/ReadyComponents/SelectMyAccounts'
 import SelectLegelEntitties from '../../../../components/ReadyComponents/SelectLegelEntitties'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
-import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import Input from '../../../../components/shared/Input'
+import GroupMyAccounts from '../../../../components/ReadyComponents/GroupMyAccouts'
+import ScreenLoader from '../../../../components/shared/ScreenLoader'
 
 export default observer(function AccountsPage() {
   // Block body scroll for this page only
@@ -53,8 +56,12 @@ export default observer(function AccountsPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuRef = useRef(null)
   const [editingAccount, setEditingAccount] = useState(null)
+  const [editingGroup, setEditingGroup] = useState(null)
+  const [editingLegalEntity, setEditingLegalEntity] = useState(null)
+  const [deletingGroup, setDeletingGroup] = useState(null)
   const [deletingAccount, setDeletingAccount] = useState(null)
   const deleteMutation = useDeleteMyAccounts()
+  const queryClient = useQueryClient()
 
   // Debounce search query
   useEffect(() => {
@@ -65,16 +72,7 @@ export default observer(function AccountsPage() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const { data: accountGroups } = useUcodeRequestQuery({
-    method: "get_account_groups",
-    data: {
-      page: 1,
-      limit: 100,
-    },
-    querySetting: {
-      select: (response) => response?.data,
-    }
-  })
+
 
   const [expandedGroups, setExpandedGroups] = useState(new Set())
 
@@ -90,108 +88,108 @@ export default observer(function AccountsPage() {
     })
   }
 
-  const isAllExpanded = useMemo(() => {
-    const groupCount = accountGroups?.data?.length || 0
-    return groupCount > 0 && expandedGroups.size === groupCount
-  }, [expandedGroups, accountGroups])
 
-  const toggleExpandAll = () => {
-    if (isAllExpanded) {
-      setExpandedGroups(new Set())
-    } else {
-      const allGroupIds = accountGroups?.data?.data?.map(g => g.guid) || []
-      setExpandedGroups(new Set(allGroupIds))
-    }
-  }
 
   const requestBankAccounts = useMemo(() => {
     return {
       page: 1,
       limit: 100,
-      ...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
-      ...(selectedTypes?.length > 0 && { tip: selectedTypes }),
-      ...(selectedAccounts?.length > 0 && { my_accounts_ids: selectedAccounts }),
-      ...(selectedEntity?.length > 0 && { legal_entity_ids: selectedEntity }),
+      search: debouncedSearchQuery.toLowerCase() || "",
+      groupBy: selectedGrouping,
+      nalichnye: selectedTypes.length === 0 || selectedTypes.includes('Наличный'),
+      beznalichnye: selectedTypes.length === 0 || selectedTypes.includes('Безналичный'),
+      kartaFizlica: selectedTypes.length === 0 || selectedTypes.includes('Карта физлица'),
+      elektronnye: selectedTypes.length === 0 || selectedTypes.includes('Электронный'),
+      legal_entity_ids: selectedEntity,
+      accounts_and_groups_ids: selectedAccounts,
     }
-  }, [debouncedSearchQuery, selectedTypes, selectedAccounts, selectedEntity])
+  }, [debouncedSearchQuery, selectedGrouping, selectedTypes, selectedEntity, selectedAccounts])
 
   // Fetch bank accounts using new invoke_function API
-  const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useBankAccountsPlanFact(requestBankAccounts)
+  const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useUcodeRequestQuery({
+    method: "get_my_accounts",
+    data: requestBankAccounts,
+    querySetting: {
+      select: (response) => response?.data,
+    }
+  })
+
+  const { mutateAsync: deleteGroupMutate, isPending: isPendingDeleteGroup } = useUcodeRequestMutation({
+    mutationSetting: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
+        queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
+        setDeletingGroup(null)
+        setIsCreateGroupModalOpen(false)
+      }
+    }
+  })
+
+  const handleDeleteGroup = async () => {
+    try {
+      await deleteGroupMutate({
+        method: "delete_account_group",
+        data: {
+          guid: deletingGroup.guid
+        }
+      })
+
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const toggleFilter = (key) => {
     toggleType(key)
   }
 
-  // Extract bank accounts from response - correct path is data.data.data
-  const bankAccountsItems = useMemo(() => {
-    const items = bankAccountsData?.data?.data?.data || []
-    return Array.isArray(items) ? items : []
+  const isAllExpanded = useMemo(() => {
+    const groupCount = bankAccountsData?.data?.length || 0
+    return groupCount > 0 && expandedGroups.size === groupCount
+  }, [expandedGroups, bankAccountsData])
+
+  const toggleExpandAll = () => {
+    if (isAllExpanded) {
+      setExpandedGroups(new Set())
+    } else {
+      const allGroupIds = bankAccountsData?.data?.map(g => g.guid) || []
+      setExpandedGroups(new Set(allGroupIds))
+    }
+  }
+
+  // Unify data extraction from API response
+  const dataArray = useMemo(() => {
+    const rawData = bankAccountsData?.data
+    if (Array.isArray(rawData)) return rawData
+    if (Array.isArray(rawData?.data)) return rawData.data
+    return []
   }, [bankAccountsData])
-
-  const queryClient = useQueryClient()
-
-  // Filter bank accounts on frontend based on selected filters
+  // Filter bank accounts on frontend if needed
   const filteredBankAccountsItems = useMemo(() => {
-    if (!bankAccountsItems || bankAccountsItems.length === 0) return []
+    if (selectedGrouping !== 'none') return dataArray // Grouping handled by backend
 
-    return bankAccountsItems.filter(item => {
+    return dataArray.filter(item => {
       // Filter by selected accounts
       if (selectedAccounts.length > 0) {
         if (!selectedAccounts.includes(item.guid)) return false
       }
-
-      // Note: New API doesn't return 'legal_entity_id' field
-      // Legal entity filtering is disabled for now
       return true
     })
-  }, [bankAccountsItems, selectedAccounts])
+  }, [dataArray, selectedAccounts, selectedGrouping])
 
   const accountsList = useMemo(() => {
-    if (selectedGrouping === 'single') {
+    if (selectedGrouping === 'none') {
       return filteredBankAccountsItems
     }
 
-    const groupsMap = new Map()
-
-    // Initialize groups from accountGroups
-    if (accountGroups) {
-      accountGroups?.data?.data?.forEach(group => {
-        groupsMap.set(group.guid, {
-          isGroup: true,
-          guid: group.guid,
-          name: group.name || group.nazvanie || 'Без названия',
-          items: []
-        })
-      })
-    }
-
-    // Add accounts to groups
-    filteredBankAccountsItems.forEach(account => {
-      const groupId = account.account_group_id || account.group_id || 'no-group'
-      if (!groupsMap.has(groupId)) {
-        groupsMap.set(groupId, {
-          isGroup: true,
-          guid: groupId,
-          name: groupId === 'no-group' ? 'Без группы' : 'Неизвестная группа',
-          items: []
-        })
-      }
-      groupsMap.get(groupId).items.push(account)
-    })
-
-    // Filter out groups with no items if they are not in the predefined groups
-    const resultList = Array.from(groupsMap.values()).filter(group => {
-      if (group.guid === 'no-group') return group.items.length > 0
-      return true
-    })
-
-    // Sort: "No group" first, then alphabetically
-    return resultList.sort((a, b) => {
-      if (a.guid === 'no-group') return -1
-      if (b.guid === 'no-group') return 1
-      return (a.name || '').localeCompare(b.name || '')
-    })
-  }, [filteredBankAccountsItems, accountGroups, selectedGrouping])
+    // For 'groups' or 'legal_entities', the backend returns a hierarchical structure
+    return dataArray.map(group => ({
+      ...group,
+      isGroup: true,
+      guid: group.id || group.guid,
+      name: group.name || group.legal_entity_name || 'Без названия',
+    }))
+  }, [dataArray, filteredBankAccountsItems, selectedGrouping])
 
   // Get all field keys from API response - only show needed fields
   const allFields = useMemo(() => {
@@ -202,6 +200,7 @@ export default observer(function AccountsPage() {
       'balans',
       "tip",
       "legal_entity_id",
+      "requisites",
     ]
 
     return standardFields
@@ -213,9 +212,7 @@ export default observer(function AccountsPage() {
     try {
       await deleteMutation.mutateAsync([deletingAccount.guid])
       setDeletingAccount(null)
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
-      queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
+      queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
     } catch (error) {
       console.error('Error deleting account:', error)
     }
@@ -272,16 +269,34 @@ export default observer(function AccountsPage() {
           return value.replace(/<[^>]*>/g, '').trim() || '–'
         }
         return value || '–'
+      case 'requisites':
+        // Remove HTML tags if present
+        const requisitesValue = (item?.tip?.[0] === "Безналичный" || item?.tip?.[0] === "Карта физлица") ? <div className='flex flex-col'>
+          <span className='text-xs'>{item?.bank_name}</span>
+          <span className='text-xs'>{item?.nomer}</span>
+        </div> : item?.tip?.[0] === 'Электронный' ? <div className='flex flex-col'>
+          <span className='text-xs'>{item?.nomer}</span>
+        </div> : '–'
+        if (typeof requisitesValue === 'string') {
+          return requisitesValue.replace(/<[^>]*>/g, '').trim() || '–'
+        }
+        return requisitesValue || '–'
       default:
         if (value === null || value === undefined) return '–'
         return value
     }
   }
 
-  const totalCurrentBalance = filteredBankAccountsItems.reduce((sum, item) => {
-    const balance = item.current_balance ?? item.balans ?? item.nachalьnyy_ostatok
-    return sum + (balance != null ? Number(balance) : 0)
-  }, 0)
+  const totalCurrentBalance = useMemo(() => {
+    return filteredBankAccountsItems.reduce((sum, item) => {
+      // For grouped data, sum total_balance. For individual items, sum current_balance.
+      if (item.isGroup) {
+        return sum + (item.total_balance != null ? Number(item.total_balance) : 0)
+      }
+      const balance = item.current_balance ?? item.balans ?? item.nachalьnyy_ostatok
+      return sum + (balance != null ? Number(balance) : 0)
+    }, 0)
+  }, [filteredBankAccountsItems])
 
   // Handle click outside menu
   useEffect(() => {
@@ -314,6 +329,10 @@ export default observer(function AccountsPage() {
     setIsMenuOpen(false)
   }
 
+
+  console.log('deletingAccount', deletingAccount)
+  console.log('editingGroup', editingGroup)
+
   return (
     <div className={styles.container}>
       <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
@@ -344,10 +363,11 @@ export default observer(function AccountsPage() {
 
         <FilterSection title="Параметры">
           <div className="space-y-3">
-            <SelectMyAccounts
+            <GroupMyAccounts
               value={selectedAccounts}
               onChange={setSelectedAccounts}
               placeholder="Выберите счета"
+              multi={true}
             />
 
             <SelectLegelEntitties
@@ -408,9 +428,9 @@ export default observer(function AccountsPage() {
                 {/* Search */}
                 <SingleSelect
                   data={[
-                    { value: 'single', label: 'Без группировки' },
-                    { value: 'group', label: 'По группам' },
-                    { value: 'account', label: 'По юрлицам' },
+                    { value: 'none', label: 'Без группировки' },
+                    { value: 'groups', label: 'По группам' },
+                    { value: 'legal_entities', label: 'По юрлицам' },
                   ]}
                   value={selectedGrouping}
                   withSearch={false}
@@ -428,20 +448,20 @@ export default observer(function AccountsPage() {
           </div>
         </div>
 
-        <div className={styles.tableContainer}>
-          <div className={styles.tableWrapper}>
+        <div className="flex-1 overflow-y-auto px-3 relative bg-white pb-20">
+          <div className="z-50">
             <table className={styles.table}>
-              <thead className={styles.tableHead}>
-                <tr className='bg-neutral-100 text-neutral-500 font-normal text-xs w-full border-b border-gray-300'>
+              <thead className="bg-neutral-100 sticky top-0 z-20 text-neutral-500 font-normal text-xs w-full border-b border-gray-300">
+                <tr className=''>
                   <th className='w-12'>
                     <div className='flex items-center justify-center p-2'>
                       {/* Checkbox for all selection */}
-                      <OperationCheckbox />
+                      <OperationCheckbox onChange={() => { }} />
                     </div>
                   </th>
                   <th className='p-2 text-start font-medium'>
                     <div className="flex items-center gap-2">
-                      {selectedGrouping === 'group' && (
+                      {selectedGrouping !== 'none' && (
                         <button
                           onClick={toggleExpandAll}
                           className="p-1 hover:bg-neutral-200 rounded cursor-pointer transition-colors"
@@ -455,7 +475,8 @@ export default observer(function AccountsPage() {
                   <th className='p-2 text-start font-medium'>Начальный остаток</th>
                   <th className='p-2 text-start font-medium'>Текущий остаток</th>
                   <th className='p-2 text-start font-medium'>Тип</th>
-                  <th className='p-2 text-start font-medium'>Юрлицо</th>
+                  <th className='p-2 text-start font-medium text-nowrap'>Юрлицо</th>
+                  <th className='p-2 text-start font-medium'>Реквизиты</th>
                   <th className='p-2 text-end w-12 pr-4'>&nbsp;</th>
                 </tr>
               </thead>
@@ -473,15 +494,15 @@ export default observer(function AccountsPage() {
                         return (
                           <React.Fragment key={item.guid}>
                             <tr
-                              className="hover:bg-neutral-50 bg-neutral-50/50 font-medium cursor-pointer border-b border-gray-200"
+                              className="hover:bg-neutral-50 bg-neutral-50/50 font-medium cursor-pointer border-b border-gray-200 h-12"
                               onClick={() => toggleGroup(item.guid)}
                             >
-                              <td className="p-3">
+                              <td className="p-2 text-center">
                                 <div className="flex items-center justify-center">
-                                  {/* Selection checkbox for group could be added here if needed */}
+                                  <OperationCheckbox onChange={() => { }} />
                                 </div>
                               </td>
-                              <td colSpan={allFields.length + 1} className="p-3">
+                              <td className="p-2">
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid); }}
@@ -489,48 +510,80 @@ export default observer(function AccountsPage() {
                                   >
                                     {isExpanded ? <ExpendClose /> : <ExpendOpen />}
                                   </button>
-                                  <span className="text-sm font-semibold text-slate-900">{item.name}</span>
-                                  {item.items?.length > 0 && (
+                                  <span className="text-sm font-medium text-slate-900">{item.name}</span>
+                                  {item.items_count !== undefined ? (
+                                    <span className="ml-1 text-xs text-neutral-400 font-normal">({item.items_count})</span>
+                                  ) : item.items?.length > 0 && (
                                     <span className="ml-1 text-xs text-neutral-400 font-normal">({item.items.length})</span>
                                   )}
                                 </div>
                               </td>
+                              {/* Group summary columns if needed, else empty */}
+                              <td className="p-2 text-sm text-[#0f172a] font-medium text-nowrap">
+                                {item.total_balance !== undefined ? `${item.total_balance.toLocaleString('ru-RU')} ₽` : ''}
+                              </td>
+                              <td className="p-2 text-sm text-[#0f172a] font-medium text-nowrap">
+                                {item.total_balance !== undefined ? `${item.total_balance.toLocaleString('ru-RU')} ₽` : ''}
+                              </td>
+                              <td className="p-2"></td>
+                              <td className="p-2"></td>
+                              <td className="p-2"></td>
+                              <td className="p-2 text-end" onClick={(e) => e.stopPropagation()}>
+                                <AccountMenu
+                                  onEdit={() => {
+                                    if (selectedGrouping === 'legal_entities') {
+                                      setEditingLegalEntity(item)
+                                    } else {
+                                      setIsCreateGroupModalOpen(true)
+                                      setEditingGroup(item)
+                                    }
+                                  }}
+                                  onDelete={() => { setDeletingGroup(item) }}
+                                  isGroup={true}
+                                />
+                              </td>
                             </tr>
-                            {isExpanded && item.items.map((account) => (
-                              <tr key={account.guid} className="hover:bg-neutral-50 border-b border-gray-100 transition-colors">
-                                <td className="p-3"></td>
-                                <td className="p-3 text-sm text-[#0f172a] pl-10">
+                            {isExpanded && (item.children || []).map((account) => (
+                              <tr key={account.guid} className="hover:bg-neutral-50 border-b border-gray-100 transition-colors h-14">
+                                <td className="p-2">
+                                  <div className="flex items-center justify-center">
+                                    <OperationCheckbox onChange={() => { }} />
+                                  </div>
+                                </td>
+                                <td className="p-2 text-sm text-[#0f172a] pl-10 font-medium">
                                   {account.nazvanie}
                                 </td>
                                 {allFields.slice(1).map((field) => (
-                                  <td key={field} className="p-3 text-sm text-[#0f172a]">
-                                    {formatFieldValue(account, field)}
-                                  </td>
-                                ))}
-                                <td className="p-3 text-end" onClick={(e) => e.stopPropagation()}>
-                                  <AccountMenu
-                                    onEdit={() => setEditingAccount(account)}
-                                    onDelete={() => setDeletingAccount(account)}
-                                  />
+                                <td key={field} className="p-2 text-sm text-[#0f172a]">
+                                  {formatFieldValue(account, field)}
                                 </td>
-                              </tr>
-                            ))}
+                              ))}
+                              <td className="p-2 text-end" onClick={(e) => e.stopPropagation()}>
+                                <AccountMenu
+                                  onEdit={() => setEditMyAccount(account)}
+                                  onDelete={() => setDeletingAccount(account)}
+                                />
+                              </td>
+                            </tr>
+                          ))}
                           </React.Fragment>
                         )
                       }
 
                     // Non-grouped (flat list)
                     return (
-                      <tr key={item.guid} className="hover:bg-neutral-50 border-b border-gray-100 transition-colors">
-                        <td className="p-3 text-center text-xs text-neutral-400">
-                          {/* Index or checkbox */}
+                      <tr key={item.guid} className="hover:bg-neutral-50 border-b  border-gray-100 transition-colors h-14">
+                        <td className="p-2 text-center text-xs text-neutral-400">
+                          <div className="flex items-center justify-center">
+                            <OperationCheckbox onChange={() => { }} />
+                          </div>
                         </td>
                         {allFields.map((field) => (
-                          <td key={field} className="p-3 text-sm text-[#0f172a]">
+                          <td key={field} className="p-2 text-xs text-[#0f172a] ">
                             {formatFieldValue(item, field)}
                           </td>
                         ))}
-                        <td className="p-3 text-end" onClick={(e) => e.stopPropagation()}>
+                        <td className="p-2 text-end" onClick={(e) => e.stopPropagation()}>
                           <AccountMenu
                             onEdit={() => setEditingAccount(item)}
                             onDelete={() => setDeletingAccount(item)}
@@ -564,6 +617,7 @@ export default observer(function AccountsPage() {
             )}
           </div>
         </div>
+        {isLoadingBankAccounts && <ScreenLoader />}
       </div>
 
       {/* Create Account Modal */}
@@ -573,7 +627,7 @@ export default observer(function AccountsPage() {
           onClose={() => {
             setIsCreateModalOpen(false)
             queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
-            queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
+            queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
           }}
         />
       )}
@@ -582,10 +636,12 @@ export default observer(function AccountsPage() {
       {isCreateGroupModalOpen && (
         <CreateAccountGroupModal
           isOpen={isCreateGroupModalOpen}
+          editingGroup={editingGroup}
           onClose={() => {
             setIsCreateGroupModalOpen(false)
+            setEditingGroup(null)
             queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
-            queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
+            queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
           }}
         />
       )}
@@ -598,7 +654,7 @@ export default observer(function AccountsPage() {
           onClose={() => {
             setEditingAccount(null)
             queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
-            queryClient.invalidateQueries({ queryKey: ['myAccountsV2'] })
+            queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
           }}
           account={editingAccount}
         />
@@ -612,6 +668,30 @@ export default observer(function AccountsPage() {
           onConfirm={handleDeleteConfirm}
           onCancel={handleDeleteCancel}
           isDeleting={deleteMutation.isPending}
+        />
+      )}
+      {/* delelet group modal by customModal if children show other modal  */}
+      {deletingGroup && (
+        <DeleteAccountGroupModal
+          isOpen={!!deletingGroup}
+          onClose={() => setDeletingGroup(null)}
+          onConfirm={handleDeleteGroup}
+          groupName={deletingGroup.name}
+          isDeleting={isPendingDeleteGroup}
+        />
+      )}
+
+      {/* Edit Legal Entity Modal */}
+      {editingLegalEntity && (
+        <CreateLegalEntityModal
+          isOpen={!!editingLegalEntity}
+          onClose={() => {
+            setEditingLegalEntity(null)
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
+            queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
+          }}
+          legalEntity={editingLegalEntity}
         />
       )}
     </div>

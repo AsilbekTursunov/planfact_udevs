@@ -26,7 +26,6 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
   const [shipmentToDelete, setShipmentToDelete] = useState(null)
   const queryClient = useQueryClient()
 
-  console.log('shipmentToDelete', shipmentToDelete)
 
   const { data: shipments, isLoading } = useUcodeRequestQuery({
     method: "list_sales_operations",

@@ -145,6 +145,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     }))
   }
 
+
   const totalSum = useMemo(() => {
     return rows.reduce((acc, row) => {
       const sumVal = Number(row.sum?.toString().replace(/\s/g, '')) || 0;
@@ -176,6 +177,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
         data_oplaty: shipmentDate,
         currency_code: "RUB",
         description: "Shipment",
+        chart_of_accounts_id: chartOfAccounts,
         product_and_service_data: rows.filter(row => row.name).map(row => {
           const product = productServicesList.find(p => p.guid === row.name)
           return {
@@ -251,6 +253,8 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
   }
 
   if (!open) return null
+
+  console.log('rows', rows)
 
   return (
     <>
@@ -379,7 +383,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
               <table className="w-full">
                 <thead className='sticky top-0 z-10 bg-neutral-50'>
                   <tr className='bg-neutral-50  text-neutral-600 font-light h-8 text-xs w-full border-b border-gray-200'>
-                    <th className="w-[10px]">
+                    <th className="">
                       <div className='flex items-center justify-center'>
                         <OperationCheckbox type="checkbox" checked={selectedProducts?.size > 0 && selectedProducts?.size === rows?.length} onChange={(e) => {
                           if (e.target.checked) {

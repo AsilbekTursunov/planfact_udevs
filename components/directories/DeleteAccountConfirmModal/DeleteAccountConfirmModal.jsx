@@ -1,58 +1,42 @@
 "use client"
 
-import { cn } from '@/app/lib/utils'
-import styles from './DeleteAccountConfirmModal.module.scss'
+import CustomModal from "../../shared/CustomModal"
+import Loader from "../../shared/Loader"
 
 export function DeleteAccountConfirmModal({ isOpen, account, onConfirm, onCancel, isDeleting = false }) {
-  if (!isOpen) return null
-
   return (
-    <>
-      <div 
-        className={styles.deleteModalOverlay}
-        onClick={onCancel}
-      />
-      <div className={styles.deleteModal}>
-        <div className={styles.deleteModalHeader}>
-          <h3 className={styles.deleteModalTitle}>Подтверждение удаления</h3>
-          <button 
-            className={styles.deleteModalClose}
-            onClick={onCancel}
-          >
-            <svg className={styles.deleteModalCloseIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <CustomModal
+      isOpen={isOpen}
+      onClose={onCancel}
+      className="w-[650px] p-2 overflow-hidden"
+    >
+      <div className="flex flex-col h-full bg-white text-slate-900">
+        <div className="flex items-center justify-between p-3 ">
+          <h3 className="text-lg font-semibold m-0">Подтверждение удаления</h3>
         </div>
-        <div className={styles.deleteModalBody}>
-          <p className={styles.deleteModalText}>
-            Вы уверены, что хотите удалить счет?
+
+        <div className="p-6">
+          <p className="text-sm text-gray-500 m-0 mb-4">
+            Вы действительно хотите удалить счет <strong>«{account.nazvanie || '—'}»</strong>?
           </p>
-          {account && (
-            <div className={styles.deleteModalInfo}>
-              <div className={styles.deleteModalInfoItem}>
-                <span className={styles.deleteModalInfoLabel}>Название:</span>
-                <span className={styles.deleteModalInfoValue}>{account.nazvanie || '—'}</span>
-              </div>
-            </div>
-          )}
         </div>
-        <div className={styles.deleteModalFooter}>
-          <button 
-            className={styles.deleteModalButtonCancel}
+
+        <div className="flex justify-end gap-3 p-3">
+          <button
+            className="px-5 py-2.5 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-md cursor-pointer hover:text-slate-900 hover:border-gray-300 hover:bg-gray-50 transition-all font-sans"
             onClick={onCancel}
           >
             Отмена
           </button>
-          <button 
-            className={styles.deleteModalButtonConfirm}
+          <button
+            className="px-5 py-2.5 text-sm font-medium text-white bg-red-600 border-none rounded-md cursor-pointer hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors font-sans"
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? 'Удаление...' : 'Удалить'}
+            {isDeleting ? <Loader /> : 'Удалить'}
           </button>
         </div>
       </div>
-    </>
+    </CustomModal>
   )
 }

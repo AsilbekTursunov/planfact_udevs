@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import { useCreateLegalEntity, useUpdateLegalEntity } from '@/hooks/useDashboard'
@@ -9,12 +9,29 @@ import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import { observer } from 'mobx-react-lite'
 import { authStore } from '../../../store/auth.store'
+import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 
 export default observer(function CreateLegalEntityModal({ isOpen, onClose, legalEntity = null }) {
   const createMutation = useCreateLegalEntity()
   const updateMutation = useUpdateLegalEntity()
   const isEdit = !!legalEntity && !!legalEntity.guid
-  
+
+
+  const { data } = useUcodeRequestQuery({
+    method: "get_legal_entities",
+    querySetting: {
+      select: (response) => response?.data?.data?.data,
+    }
+  })
+
+  const legalEntityData = useMemo(() => {
+    return data?.find((item) => item.id === legalEntity?.id)
+  }, [data, legalEntity])
+
+  console.log('legalEntityData', legalEntityData)
+  console.log('legalEntityData', legalEntityData)
+
+
   const [formData, setFormData] = useState({
     nazvanie: '',
     polnoe_nazvanie: '',
@@ -22,7 +39,8 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
     kpp: '',
     komentariy: ''
   })
-  
+
+
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
@@ -38,12 +56,12 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
       requestAnimationFrame(() => {
         setIsVisible(true)
       })
-      
+
       // Initialize form data
       if (isEdit && legalEntity && legalEntity.guid) {
         // Editing existing legal entity
         setFormData({
-          nazvanie: legalEntity.nazvanie || '',
+          nazvanie: legalEntity.nazvanie || legalEntity.name || '',
           polnoe_nazvanie: legalEntity.polnoe_nazvanie || '',
           inn: legalEntity.inn?.toString() || '',
           kpp: legalEntity.kpp?.toString() || '',
@@ -75,11 +93,11 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
 
   const validateForm = () => {
     const newErrors = {}
-    
+
     if (!formData.nazvanie.trim()) {
       newErrors.nazvanie = 'Укажите название'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -114,7 +132,7 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
           result = submitData
         }
       }
-      
+
       setIsClosing(true)
       setTimeout(() => {
         setIsVisible(false)
@@ -132,12 +150,12 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
 
   const modalContent = (
     <>
-      <div 
+      <div
         ref={overlayRef}
         className={cn(styles.overlay, isClosing ? styles.closing : styles.opening)}
         onClick={handleClose}
       />
-      <div 
+      <div
         ref={modalRef}
         className={cn(styles.modal, isClosing ? styles.closing : styles.opening)}
         role="dialog"
@@ -148,7 +166,7 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
           <h3 id="modal-title" className={styles.title}>
             {isEdit ? 'Редактирование юрлица' : 'Создание юрлица'}
           </h3>
-          <button 
+          <button
             className={styles.closeButton}
             onClick={handleClose}
             aria-label="Закрыть"
@@ -166,8 +184,8 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
                 Название <span className={styles.required}>*</span>
               </label>
               <div className={styles.inputContainer}>
-                <Input 
-                  type="text" 
+                <Input
+                  type="text"
                   value={formData.nazvanie}
                   onChange={(e) => setFormData({ ...formData, nazvanie: e.target.value })}
                   placeholder="Например: Васильев"
@@ -181,8 +199,8 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
             <div className={styles.formRow}>
               <label className={styles.label}>Полное название</label>
               <div className={styles.inputContainer}>
-                <Input 
-                  type="text" 
+                <Input
+                  type="text"
                   value={formData.polnoe_nazvanie}
                   onChange={(e) => setFormData({ ...formData, polnoe_nazvanie: e.target.value })}
                   placeholder="Например: ООО «Васильев и партнеры»"
@@ -196,8 +214,8 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
               <label className={styles.label}>ИНН/КПП</label>
               <div className={styles.inputContainer}>
                 <div className={styles.innKppContainer}>
-                  <Input 
-                    type="number" 
+                  <Input
+                    type="number"
                     value={formData.inn}
                     onChange={(e) => setFormData({ ...formData, inn: e.target.value })}
                     placeholder=""
@@ -205,8 +223,8 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
                     onWheel={(e) => e.target.blur()}
                   />
                   <span className={styles.slash}>/</span>
-                  <Input 
-                    type="number" 
+                  <Input
+                    type="number"
                     value={formData.kpp}
                     onChange={(e) => setFormData({ ...formData, kpp: e.target.value })}
                     placeholder=""
@@ -221,7 +239,7 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
             <div className={styles.formRow}>
               <label className={styles.label}>Комментарий</label>
               <div className={styles.inputContainer}>
-                <TextArea 
+                <TextArea
                   value={formData.komentariy}
                   onChange={(e) => setFormData({ ...formData, komentariy: e.target.value })}
                   placeholder="Дайте краткое пояснение этому юрлицу, если это необходимо"
@@ -241,7 +259,7 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
           <button className={styles.cancelButton} onClick={handleClose}>
             Отменить
           </button>
-          <button 
+          <button
             className={styles.saveButton}
             onClick={handleSubmit}
             disabled={isSubmitting}

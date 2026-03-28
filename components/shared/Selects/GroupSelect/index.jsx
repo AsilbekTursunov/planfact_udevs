@@ -117,7 +117,7 @@ const GroupSelect = ({
       <button
         ref={buttonRef}
         type="button"
-        className={cn('flex items-center cursor-pointer bg-white font-medium transition-all duration-200 justify-between w-full rounded-md border border-neutral-200 px-3 py-2 outline-none focus:border-teal-500', className)}
+        className={cn('flex items-center cursor-pointer bg-neutral-50 transition-all duration-200 justify-between w-full rounded-md border border-neutral-200 px-3 py-2 outline-none focus:border-teal-500', className)}
         onClick={() => {
           if (!open && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect()
@@ -130,7 +130,7 @@ const GroupSelect = ({
       >
         {/* x button to delete selected */}
 
-        <span className={cn('text-gray-ucode-400 text-start line-clamp-1 text-sm', value.length > 0 && 'text-gray-ucode-800')}>
+        <span className={cn('text-gray-ucode-400 text-start line-clamp-1 text-xs', value.length > 0 && 'text-gray-ucode-800')}>
           {value.length > 0 ? `Выбрано: ${value.length}` : placeholder}
         </span>
         <div className="flex items-center">
