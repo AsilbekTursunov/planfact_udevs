@@ -38,6 +38,7 @@ import { useUcodeDefaultApiMutation } from '@/hooks/useDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import { Pencil, Trash } from 'lucide-react';
 import { useUcodeRequestMutation } from '../../../../hooks/useDashboard';
+import { GlobalCurrency } from '../../../../constants/globalCurrency';
 
 
 export default observer(function DealDetailPage() {
@@ -243,11 +244,12 @@ export default observer(function DealDetailPage() {
       {/* Info Cards */}
       <div className={styles.infoCards}>
         {/* Card 1: Deal Amount */}
-        <div className={styles.infoCard}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardLabel}>
-              Сделка на сумму /
-            </span>
+        <div className={'bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]'}>
+          <div className="flex items-center justify-between">
+            <p className='text-xl flex gap-1 font-semibold text-neutral-800 mt-2'>
+              <span>{formatAmount(dealAmount)}</span>
+              <span>{GlobalCurrency}</span>
+            </p>
             <DealStatus
               currentStatus={summeryCards?.status}
               onStatusChange={(status) => {
@@ -265,9 +267,9 @@ export default observer(function DealDetailPage() {
               }}
             />
           </div>
-          <div className={styles.cardAmount}>{formatAmount(dealAmount)} ₽</div>
 
-          <div className={styles.cardDivider}></div>
+
+          <div className="border-b border-gray-100 my-3"></div>
 
           <div className="grid grid-cols-[100px_1fr] gap-y-2 mt-2 font-sans">
             <span className="text-sm font-normal text-[#8892A3]">Тип</span>
@@ -317,8 +319,8 @@ export default observer(function DealDetailPage() {
             </div>
 
             <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(received)} ₽</div>
-              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(received)} {GlobalCurrency}</div>
+              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} {GlobalCurrency}</div>
             </div>
           </div>
 
@@ -329,7 +331,10 @@ export default observer(function DealDetailPage() {
 
           <div className="flex text-xs flex-1 items-end  gap-2">
             <span className="font-normal  text-gray-ucode-500">Клиент должен:</span>
-            <span className="font-medium  text-[#344054]">{formatAmount(clientDebt)} ₽</span>
+            <p>
+              <span className="font-medium  text-[#344054]">{formatAmount(clientDebt)} </span>
+              <span>{GlobalCurrency}</span>
+            </p>
           </div>
         </div>
 
@@ -348,8 +353,8 @@ export default observer(function DealDetailPage() {
             </div>
 
             <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(shipped)} ₽</div>
-              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} ₽</div>
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(shipped)} {GlobalCurrency}</div>
+              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} {GlobalCurrency}</div>
             </div>
           </div>
 
@@ -360,7 +365,7 @@ export default observer(function DealDetailPage() {
 
           <div className="flex text-xs  gap-2 flex-1 items-end">
             <span className="font-normal  text-gray-ucode-500">Мы должны:</span>
-            <span className="font-medium  text-[#344054]">{formatAmount(remainingShipment)} ₽</span>
+            <span className="font-medium  text-[#344054]">{formatAmount(remainingShipment)} {GlobalCurrency}</span>
           </div>
         </div>
 
@@ -396,7 +401,7 @@ export default observer(function DealDetailPage() {
             </div>
 
             <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(profit)} ₽</div>
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(profit)} {GlobalCurrency}</div>
               <div className="font-normal text-xs text-gray-ucode-500">Рентабельность {profitPercent}%</div>
             </div>
           </div>
@@ -410,12 +415,12 @@ export default observer(function DealDetailPage() {
             <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#12B76A' }}></div>
               <span className="font-normal text-xs text-gray-ucode-500">Доходы</span>
-              <span className="font-medium text-sm text-gray-ucode-800">+{formatAmount(income)} ₽</span>
+              <span className="font-medium text-sm text-gray-ucode-800">+{formatAmount(income)} {GlobalCurrency}</span>
             </div>
             <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#FFC609' }}></div>
               <span className="font-normal text-xs text-gray-ucode-500">Расходы</span>
-              <span className="font-medium text-sm text-gray-ucode-800">-{formatAmount(expenses)} ₽</span>
+              <span className="font-medium text-sm text-gray-ucode-800">-{formatAmount(expenses)} {GlobalCurrency}</span>
             </div>
           </div>
         </div>

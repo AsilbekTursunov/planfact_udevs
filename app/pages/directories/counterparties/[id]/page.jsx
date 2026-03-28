@@ -13,7 +13,7 @@ import { cn } from '@/app/lib/utils'
 import styles from './counterparty-detail.module.scss'
 
 import Select from '@/components/common/Select'
-import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
+import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
 import OperationModal from '../../../../../components/operations/OperationModal/OperationModal'
 import { useUcodeRequestQuery } from '../../../../../hooks/useDashboard'
 import { formatDate } from '../../../../../utils/formatDate'
@@ -23,6 +23,7 @@ import operationsDto from '../../../../../lib/dtos/operationsDto'
 import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMyAccounts'
 import MultiSelectStatiya from '../../../../../components/ReadyComponents/MultiSelectStatiya'
 import { formatAmount } from '../../../../../utils/helpers'
+import { GlobalCurrency } from '../../../../../constants/globalCurrency'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -571,6 +572,7 @@ const KontragentDetailPage = () => {
                   </div>
                   <div className={styles.financialItemValue}>
                     {formatAmount(counterpartyInfo?.income)}
+                    <span className="text-base ml-2">{GlobalCurrency}</span>
                   </div>
                 </div>
 
@@ -581,6 +583,7 @@ const KontragentDetailPage = () => {
                   </div>
                   <div className={styles.financialItemValue}>
                     {formatAmount(counterpartyInfo?.expense)}
+                    <span className="text-base ml-2">{GlobalCurrency}</span>
                   </div>
                 </div>
 
@@ -591,6 +594,7 @@ const KontragentDetailPage = () => {
                   </div>
                   <div className={styles.financialItemValue}>
                     {formatAmount(counterpartyInfo.difference)}
+                    <span className="text-base ml-2">{GlobalCurrency}</span>
                   </div>
                 </div>
               </div>
@@ -919,6 +923,8 @@ const KontragentDetailPage = () => {
           modalType={createModalType}
           isClosing={isCreateModalClosing}
           isOpening={isCreateModalOpening}
+          chart_of_accounts_id={counterparty?.chart_of_accounts_id}
+          chart_of_accounts_id_2={counterparty?.chart_of_accounts_id_2}
           onClose={handleCloseCreateModal}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ['counterpartyById', counterpartyGuid] })}
           preselectedCounterparty={counterpartyGuid}
@@ -1020,15 +1026,15 @@ const KontragentDetailPage = () => {
         </div>
       )}
 
-      {/* Edit Counterparty Modal */}
-      <EditCounterpartyModal
+      {/* Unified Create/Edit Modal */}
+      <CreateCounterpartyModal
         isOpen={isEditCounterpartyModalOpen}
         onClose={() => setIsEditCounterpartyModalOpen(false)}
         onSuccess={() => {
           setIsEditCounterpartyModalOpen(false)
           queryClient.invalidateQueries({ queryKey: ['counterpartyById', counterpartyGuid] })
         }}
-        counterparty={counterparty}
+        counterpartyData={counterparty}
       />
     </div>
   )

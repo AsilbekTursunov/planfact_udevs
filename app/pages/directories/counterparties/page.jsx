@@ -8,7 +8,6 @@ import MultiSelectStatiya from '@/components/ReadyComponents/MultiSelectStatiya'
 import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
 import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
 import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
-import EditCounterpartyModal from '@/components/directories/EditCounterpartyModal/EditCounterpartyModal'
 import EditCounterpartyGroupModal from '@/components/directories/EditCounterpartyGroupModal/EditCounterpartyGroupModal'
 import { CounterpartyMenu } from '@/components/directories/CounterpartyMenu/CounterpartyMenu'
 import { GroupMenu } from '@/components/directories/GroupMenu/GroupMenu'
@@ -17,7 +16,6 @@ import { DeleteGroupConfirmModal } from '@/components/directories/DeleteGroupCon
 import { cn } from '@/app/lib/utils'
 import styles from './counterparties.module.scss'
 import { BsList } from 'react-icons/bs'
-import { TbCurrencyRubel } from 'react-icons/tb'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
 import { LuListTree } from 'react-icons/lu'
 import { ExpendClose, ExpendOpen } from '@/constants/icons'
@@ -37,6 +35,7 @@ import MultiSelectZdelka from '../../../../components/ReadyComponents/MultiZdelk
 import SelectLegelEntitties from '../../../../components/ReadyComponents/SelectLegelEntitties'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import { formatAmount } from '../../../../utils/helpers'
+import { ChevronDown } from 'lucide-react'
 
 const CounterpartiesPage = observer(() => {
 
@@ -340,10 +339,6 @@ const CounterpartiesPage = observer(() => {
     }
   }
 
-  const toggleFilter = (key) => {
-    setFilters(prev => ({ ...prev, [key]: !prev[key] }))
-  }
-
   // Convert counterparties API data to component format with grouping
   const { groupedCounterparties, flatCounterparties } = useMemo(() => {
     // For flat list view - use counterpartiesItems
@@ -425,7 +420,7 @@ const CounterpartiesPage = observer(() => {
       groupedCounterparties: groupedFromAPI,
       flatCounterparties: items
     }
-  }, [counterpartiesItems, counterpartiesGroupsItems])
+  }, [counterpartiesItems, counterpartiesGroupsItems, filters.calculationMethod])
 
   // Create array of only groups for 'groups' view mode
   const counterpartiesGroups = useMemo(() => {
@@ -642,195 +637,96 @@ const CounterpartiesPage = observer(() => {
         </div>
 
         {/* Table Container */}
-        <div className={styles.tableContainer} style={{ position: 'relative' }}>
-          {/* Refetch overlay spinner */}
-
-          <div ref={tableWrapperRef} className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead className={styles.tableHead}>
-                <tr className={styles.tableHeaderRow}>
-                  <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>
-                    №
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={styles.tableHeaderButton}>
-                      Контрагент
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={`${styles.tableHeaderButton} ${styles.groupColumn} ${styles.column}`}>
-                      Группа
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  {filters.calculationMethod !== 'Cashflow' && (
-                    <th className={styles.tableHeaderCell}>
-                      <button className={`${styles.tableHeaderButton} ${styles.innColumn} ${styles.column}`}>
-                        ИНН
-                        <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                    </th>
-                  )}
-                  <th className={styles.tableHeaderCell}>
-                    <button className={`${styles.tableHeaderButton} ${styles.operationsColumn} ${styles.column}`}>
-                      Операций
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={`${styles.tableHeaderButton} ${styles.debitColumn} ${styles.column}`}>
-                      Дебиторка <span className='text-mini'>{GlobalCurrency}</span>
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  <th className={styles.tableHeaderCell}>
-                    <button className={`${styles.tableHeaderButton} ${styles.creditColumn} ${styles.column}`}>
-                      Кредиторка <span className='text-mini'>{GlobalCurrency}</span>
-                      <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </th>
-                  {filters.calculationMethod === 'Cashflow' ? (
-                    <>
-                      <th className={styles.tableHeaderCell}>
-                        <button className={`${styles.tableHeaderButton} ${styles.incomeColumn} ${styles.column}`}>
-                          Поступления <span className='text-mini'>{GlobalCurrency}</span>
-                          <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </th>
-                      <th className={styles.tableHeaderCell}>
-                        <button className={`${styles.tableHeaderButton} ${styles.expensesColumn} ${styles.column}`}>
-                          Выплаты <span className='text-mini'>{GlobalCurrency}</span>
-                          <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </th>
-                      <th className={styles.tableHeaderCell}>
-                        <button className={`${styles.tableHeaderButton} ${styles.profitColumn} ${styles.column}`}>
-                          Разница <span className='text-mini'>{GlobalCurrency}</span>
-                          <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </th>
-                    </>
-                  ) : (
-                    <>
-                      <th className={styles.tableHeaderCell}>
-                          <button className={`${styles.tableHeaderButton} ${styles.incomeColumn} ${styles.column}`}>
-                            Доходы <span className='text-mini'>{GlobalCurrency}</span>
-                          <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </th>
-                      <th className={styles.tableHeaderCell}>
-                          <button className={`${styles.tableHeaderButton} ${styles.expensesColumn} ${styles.column}`}>
-                            Расходы <span className='text-mini'>{GlobalCurrency}</span>
-                          <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </th>
-                      <th className={styles.tableHeaderCell}>
-                          <button className={`${styles.tableHeaderButton} ${styles.profitColumn} ${styles.column}`}>
-                            Прибыль <span className='text-mini'>{GlobalCurrency}</span>
-                          <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </th>
-                    </>
-                  )}
-                  <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
+        <div ref={tableWrapperRef} className="flex-1 overflow-auto relative px-3">
+          <table className="w-full text-xs text-left">
+            <thead className="sticky top-0 bg-neutral-100/95 shadow-[0_1px_2px_rgba(0,0,0,0.05)] z-10 text-neutral-500 font-medium">
+              <tr>
+                <th className="p-2 border-b border-neutral-200 w-10">
+                  <OperationCheckbox checked={allSelected()} onChange={toggleSelectAll} />
+                </th>
+                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">
+                  <button className="flex items-center hover:text-neutral-700">
+                    {viewMode === 'nested' ? 'Группа контрагентов' : 'Контрагент'}
+                    <ChevronDown className='size-4' />
+                  </button>
+                </th>
+                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Тип</th>
+                {viewMode !== 'nested' && (
+                  <th className="p-3 border-b border-neutral-200 whitespace-nowrap">Группа</th>
+                )}
+                {filters.calculationMethod !== 'Cashflow' && (
+                  <th className="p-3 border-b border-neutral-200 whitespace-nowrap">ИНН</th>
+                )}
+                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Операций</th>
+                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Дебиторка, {GlobalCurrency}</th>
+                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Кредиторка, {GlobalCurrency}</th>
+                {filters.calculationMethod === 'Cashflow' ? (
+                  <>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Поступления, {GlobalCurrency}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Выплаты, {GlobalCurrency}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Разница, {GlobalCurrency}</th>
+                  </>
+                ) : (
+                  <>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Доходы, {GlobalCurrency}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Расходы, {GlobalCurrency}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Прибыль, {GlobalCurrency}</th>
+                  </>
+                )}
+                <th className="p-2 border-b border-neutral-200 w-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoadingCounterparties && page === 1 ? (
+                <tr>
+                  <td colSpan={15} className="p-8 text-center text-neutral-500">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary border-t-transparent"></div>
+                      <span>Загрузка...</span>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {isLoadingCounterparties && page === 1 ? (
-                  <tr className={styles.emptyRow}>
-                    <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem' }}>
-                        <div className={styles.loadingSpinner} />
-                        <span>Загрузка...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 ? (
-                  <tr className={styles.emptyRow}>
-                    <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.emptyCell)}>
+              ) : (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 ? (
+                  <tr>
+                    <td colSpan={15} className="p-8 text-center text-neutral-500">
                       Нет данных
                     </td>
                   </tr>
                 ) : (
-                      (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item, itemIndex) => {
+                    (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item, itemIndex) => {
                     if (item.isGroup) {
                       const isExpanded = expandedGroups.has(item.guid)
-                      const styleDifference = item.difference > 0 ? 'textGreen' : item.difference < 0 ? 'textRed' : 'textMuted'
-                      const styleProfit = item.profit > 0 ? 'textGreen' : item.profit < 0 ? 'textRed' : 'textMuted'
+                      const styleDifference = item.difference > 0 ? 'text-emerald-500 font-medium' : item.difference < 0 ? 'text-red-500 font-medium' : 'text-neutral-900 font-medium'
+                      const styleProfit = item.profit > 0 ? 'text-emerald-500 font-medium' : item.profit < 0 ? 'text-red-500 font-medium' : 'text-neutral-900 font-medium'
                       return (
                         <React.Fragment key={item.id}>
-                          <tr className={cn(styles.tableRow, styles.groupRow)} onClick={() => toggleGroup(item.guid)}>
-                            <td className={cn(styles.tableCell, styles.tableCellIndex)}>
-                              {itemIndex + 1}
+                          <tr className="hover:bg-neutral-50 border-b border-neutral-100 group cursor-pointer bg-white" onClick={() => toggleGroup(item.guid)}>
+                            <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                              <OperationCheckbox checked={isRowSelected(item.id)} onChange={(e) => toggleRowSelection(item.id)} />
                             </td>
-                            <td className={cn(styles.tableCell, styles.text)}>
-                              <div className={styles.groupCell}>
-                                <button
-                                  className={styles.expandButton}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    toggleGroup(item.guid)
-                                  }}
-                                >
-                                  {isExpanded ? (
-                                    <ExpendClose />
-                                  ) : (
-                                      <ExpendOpen />
-                                  )}
+                            <td className="p-2">
+                              <div className="flex items-center gap-2 font-medium">
+                                <button className="text-neutral-400 hover:text-neutral-600 outline-none flex items-center justify-center" onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid) }}>
+                                  {isExpanded ? <ExpendClose /> : <ExpendOpen />}
                                 </button>
-                                <span className={styles.groupNameText}>
-                                  {`${item.nazvanie} (${item.items.length})`}
-                                </span>
+                                <span className="text-slate-900">{item.nazvanie} ({item.items?.length || 0})</span>
                               </div>
                             </td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}></td>
+                            <td className="p-2 text-neutral-900 font-medium">{item.rawData?.type_name || item.rawData?.tip_kontragenta || 'Смешанный'}</td>
                             {filters.calculationMethod !== 'Cashflow' && (
-                              <td className={cn(styles.tableCell, styles.textMuted)}>-</td>
+                              <td className="p-2 text-neutral-500">–</td>
                             )}
-                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.operationsCount > 0 ? item.operationsCount.toLocaleString('ru-RU') : '–'}</td>
-                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.debitorka > 0 ? item.debitorka.toLocaleString('ru-RU') : '0'}</td> {/* Дебиторка */}
-                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.kreditorka > 0 ? item.kreditorka.toLocaleString('ru-RU') : '0'}</td> {/* Кредиторка */}
-                            <td className={cn(styles.tableCell, styles.textMuted)}>
-                              {filters.calculationMethod === 'Cashflow' ? (item?.income > 0 ? item?.income.toLocaleString('ru-RU') : '0') : (item?.income?.toLocaleString('ru-RU') || '0')}
-                            </td> {/* Поступления  || Доходы */}
-                            <td className={cn(styles.tableCell, styles.textMuted)}>
-                              {filters.calculationMethod === 'Cashflow' ? (item.expenses > 0 ? item.expenses.toLocaleString('ru-RU') : '0') : (item?.expenses?.toLocaleString('ru-RU') || '0')}
-                            </td> {/* Выплаты || Расходы  */}
-                            {filters.calculationMethod === 'Cashflow' ? (
-                              <td className={cn(styles.tableCell, styles[styleDifference], styles.groupFinal)}>
-                                {item.difference === 0 ? '0' : `${item.difference > 0 ? '+' : ''}${item.difference.toLocaleString('ru-RU') || '0'}`}
-                              </td>
-                            ) : (
-                              <td className={cn(styles.tableCell, styles[styleProfit], styles.groupFinal)}>
-                                {item.profit === 0 ? '0' : `${item.profit > 0 ? '+' : ''}${item.profit.toLocaleString('ru-RU') || '0'}`}
-                              </td>
-                            )} {/* Разница || Прибыль*/}
-                            <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
+                            <td className="p-2 text-neutral-900 font-medium">{item.operationsCount > 0 ? item.operationsCount.toLocaleString('ru-RU') : '0'}</td>
+                            <td className="p-2 text-neutral-900 font-medium">{item.debitorka > 0 ? item.debitorka.toLocaleString('ru-RU') : '0'}</td>
+                            <td className="p-2 text-neutral-900 font-medium">{item.kreditorka > 0 ? item.kreditorka.toLocaleString('ru-RU') : '0'}</td>
+                            <td className="p-2 text-neutral-900 font-medium">{filters.calculationMethod === 'Cashflow' ? (item?.income > 0 ? item?.income.toLocaleString('ru-RU') : '0') : (item?.income?.toLocaleString('ru-RU') || '0')}</td>
+                            <td className="p-2 text-neutral-900 font-medium">{filters.calculationMethod === 'Cashflow' ? (item.expenses > 0 ? item.expenses.toLocaleString('ru-RU') : '0') : (item?.expenses?.toLocaleString('ru-RU') || '0')}</td>
+                            <td className={cn("p-2", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
+                              {filters.calculationMethod === 'Cashflow'
+                                ? (item.difference === 0 ? '0' : item.difference.toLocaleString('ru-RU'))
+                                : (item.profit === 0 ? '0' : item.profit.toLocaleString('ru-RU'))}
+                            </td>
+                            <td className="p-2" onClick={(e) => e.stopPropagation()}>
                               <GroupMenu
                                 group={item}
                                 onEdit={(group) => setEditingGroup(group)}
@@ -842,50 +738,47 @@ const CounterpartiesPage = observer(() => {
                               />
                             </td>
                           </tr>
-                          {isExpanded && item.items.length === 0 && (
-                            <tr className={cn(styles.tableRow, styles.childRow)}>
-                              <td colSpan={10} className={cn(styles.tableCell, styles.textCenter, styles.textMuted)} style={{ padding: '16px' }}>
-                                Нет контрагентов
-                              </td>
+                          {isExpanded && item.items?.length === 0 && (
+                            <tr className="bg-neutral-50/50">
+                              <td colSpan={15} className="p-4 text-center text-neutral-400 text-xs text-medium">Нет контрагентов</td>
                             </tr>
                           )}
-                          {isExpanded && item.items.map((counterparty, childIndex) => {
-                            const styleDifference = counterparty.difference > 0 ? 'textGreen' : counterparty.difference < 0 ? 'textRed' : 'textMuted'
-                            const styleProfit = counterparty.profit > 0 ? 'textGreen' : counterparty.profit < 0 ? 'textRed' : 'textMuted'
+                          {isExpanded && item.items?.map((counterparty, childIndex) => {
+                            const styleDifference = counterparty.difference > 0 ? 'text-emerald-500' : counterparty.difference < 0 ? 'text-red-500' : 'text-neutral-500'
+                            const styleProfit = counterparty.profit > 0 ? 'text-emerald-500' : counterparty.profit < 0 ? 'text-red-500' : 'text-neutral-500'
                             return (
                               <tr
                                 key={counterparty.id}
                                 className={cn(
-                                  styles.tableRow,
-                                  styles.childRow,
-                                  isRowSelected(counterparty.id) && styles.selected
+                                  "hover:bg-neutral-50 border-b border-neutral-100 group cursor-pointer bg-white",
+                                  isRowSelected(counterparty.id) && "bg-blue-50/50"
                                 )}
                                 onClick={() => router.push(`/pages/directories/counterparties/${counterparty.guid}`)}
-                                style={{ cursor: 'pointer' }}
                               >
-                                <td className={cn(styles.tableCell, styles.tableCellIndex)} onClick={(e) => e.stopPropagation()}>
-
+                                <td className="p-2 pl-8" onClick={(e) => e.stopPropagation()}>
+                                  <OperationCheckbox checked={isRowSelected(counterparty.id)} onChange={(e) => toggleRowSelection(counterparty.id)} />
                                 </td>
-                                <td className={cn(styles.tableCell, styles.text)}>{counterparty.nazvanie}</td>
-                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.gruppa || '–'}</td>
+                                <td className="p-2 text-neutral-600">
+                                  <div className="flex flex-col">
+                                    <span className="text-slate-900 font-medium">{counterparty.nazvanie}</span>
+                                    {counterparty.komentariy && <span className="text-neutral-400 text-xs mt-0.5">{counterparty.komentariy}</span>}
+                                  </div>
+                                </td>
+                                <td className="p-2 text-neutral-500">{counterparty.rawData?.type_name || counterparty.rawData?.tip_kontragenta || '–'}</td>
                                 {filters.calculationMethod !== 'Cashflow' && (
-                                  <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.inn || '–'}</td>
+                                  <td className="p-2 text-neutral-500">{counterparty.inn || '–'}</td>
                                 )}
-                                <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.debitorka?.toLocaleString('ru-RU') || '0'}</td>
-                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
-                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.income?.toLocaleString('ru-RU') || '0'}</td>
-                                <td className={cn(styles.tableCell, styles.textMuted)}>{counterparty.expenses?.toLocaleString('ru-RU') || '0'}</td>
-                                {filters.calculationMethod !== 'Cashflow' ? (
-                                  <td className={cn(styles.tableCell, styles[styleDifference])}>
-                                    {counterparty.difference === 0 ? '0' : `${counterparty.difference > 0 ? '+' : ''}${counterparty.difference.toLocaleString('ru-RU') || '0'}`}
-                                  </td>
-                                ) : (
-                                  <td className={cn(styles.tableCell, styles[styleProfit])}>
-                                    {counterparty.profit === 0 ? '0' : `${counterparty.profit > 0 ? '+' : ''}${counterparty.profit.toLocaleString('ru-RU') || '0'}`}
-                                  </td>
-                                )}
-                                <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
+                                <td className="p-2 text-neutral-500">0</td>
+                                <td className="p-2 text-neutral-500">{counterparty.debitorka > 0 ? counterparty.debitorka.toLocaleString('ru-RU') : '0'}</td>
+                                <td className="p-2 text-neutral-500">{counterparty.kreditorka > 0 ? counterparty.kreditorka.toLocaleString('ru-RU') : '0'}</td>
+                                <td className="p-2 text-neutral-500">{counterparty.income > 0 ? counterparty.income.toLocaleString('ru-RU') : '0'}</td>
+                                <td className="p-2 text-neutral-500">{counterparty.expenses > 0 ? counterparty.expenses.toLocaleString('ru-RU') : '0'}</td>
+                                <td className={cn("p-2", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
+                                  {filters.calculationMethod === 'Cashflow'
+                                    ? (counterparty.difference === 0 ? '0' : counterparty.difference.toLocaleString('ru-RU'))
+                                    : (counterparty.profit === 0 ? '0' : counterparty.profit.toLocaleString('ru-RU'))}
+                                </td>
+                                <td className="p-2" onClick={(e) => e.stopPropagation()}>
                                   <CounterpartyMenu
                                     counterparty={counterparty}
                                     onEdit={(cp) => setEditingCounterparty(cp)}
@@ -898,47 +791,42 @@ const CounterpartiesPage = observer(() => {
                         </React.Fragment>
                       )
                     } else {
+                      const styleDifference = item.difference > 0 ? 'text-emerald-500' : item.difference < 0 ? 'text-red-500' : 'text-neutral-500'
+                      const styleProfit = item.profit > 0 ? 'text-emerald-500' : item.profit < 0 ? 'text-red-500' : 'text-neutral-500'
                       return (
                         <tr
                           key={item.id}
                           className={cn(
-                            styles.tableRow,
-                            isRowSelected(item.id) && styles.selected
+                            "hover:bg-neutral-50 border-b border-neutral-100 group cursor-pointer bg-white",
+                            isRowSelected(item.id) && "bg-blue-50/50"
                           )}
                           onClick={() => router.push(`/pages/directories/counterparties/${item.guid}`)}
-                          style={{ cursor: 'pointer' }}
                         >
-                          <td className={cn(styles.tableCell, styles.tableCellIndex)} onClick={(e) => e.stopPropagation()}>
-                            {itemIndex + 1}
+                          <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                            <OperationCheckbox checked={isRowSelected(item.id)} onChange={(e) => toggleRowSelection(item.id)} />
                           </td>
-
-                          <td className={cn(styles.tableCell, styles.text)}>{item.nazvanie}</td>
-
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.gruppa || '–'}</td>
+                          <td className="p-2">
+                            <div className="flex flex-col">
+                              <span className="text-slate-900 font-medium">{item.nazvanie}</span>
+                              {item.komentariy && <span className="text-neutral-400 text-xs mt-0.5">{item.komentariy}</span>}
+                            </div>
+                          </td>
+                          <td className="p-2 text-neutral-500">{item.rawData?.type_name || item.rawData?.tip_kontragenta || 'Плательщик'}</td>
+                          <td className="p-2 text-neutral-500">{item.gruppa || '–'}</td>
                           {filters.calculationMethod !== 'Cashflow' && (
-                            <td className={cn(styles.tableCell, styles.textMuted)}>{item.inn || '–'}</td>
+                            <td className="p-2 text-neutral-500">{item.inn || '–'}</td>
                           )}
-
-                          <td className={cn(styles.tableCell, styles.textMuted)}>–</td>
-
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.debitorka?.toLocaleString('ru-RU') || '0'}</td>
-
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.kreditorka?.toLocaleString('ru-RU') || '0'}</td>
-
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.income?.toLocaleString('ru-RU') || '0'}</td>
-
-                          <td className={cn(styles.tableCell, styles.textMuted)}>{item.expenses?.toLocaleString('ru-RU') || '0'}</td>
-
-                          {filters.calculationMethod !== 'Cashflow' ? (
-                            <td className={cn(styles.tableCell, item.difference > 0 ? styles.textGreen : item.difference < 0 ? styles.textRed : styles.textMuted)}>
-                              {item.difference === 0 ? '0' : `${item.difference > 0 ? '+' : ''}${item.difference?.toLocaleString('ru-RU')}`}
-                            </td>
-                          ) : (
-                              <td className={cn(styles.tableCell, item.profit > 0 ? styles.textGreen : item.profit < 0 ? styles.textRed : styles.textMuted)}>
-                                {item.profit === 0 ? '0' : `${item.profit > 0 ? '+' : ''}${item.profit?.toLocaleString('ru-RU') || '0'}`}
-                              </td>
-                          )}
-                          <td className={cn(styles.tableCell, styles.tableCellActions)} onClick={(e) => e.stopPropagation()}>
+                          <td className="p-2 text-neutral-500">0</td>
+                          <td className="p-2 text-neutral-500">{item.debitorka > 0 ? item.debitorka.toLocaleString('ru-RU') : '0'}</td>
+                          <td className="p-2 text-neutral-500">{item.kreditorka > 0 ? item.kreditorka.toLocaleString('ru-RU') : '0'}</td>
+                          <td className="p-2 text-neutral-500">{item.income > 0 ? item.income.toLocaleString('ru-RU') : '0'}</td>
+                          <td className="p-2 text-neutral-500">{item.expenses > 0 ? item.expenses.toLocaleString('ru-RU') : '0'}</td>
+                          <td className={cn("p-2", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
+                            {filters.calculationMethod === 'Cashflow'
+                              ? (item.difference === 0 ? '0' : item.difference.toLocaleString('ru-RU'))
+                              : (item.profit === 0 ? '0' : item.profit.toLocaleString('ru-RU'))}
+                          </td>
+                          <td className="p-2" onClick={(e) => e.stopPropagation()}>
                             <CounterpartyMenu
                               counterparty={item}
                               onEdit={(cp) => setEditingCounterparty(cp)}
@@ -949,11 +837,10 @@ const CounterpartiesPage = observer(() => {
                       )
                     }
                   })
-                )}
-
-              </tbody>
-            </table>
-          </div>
+              )}
+            </tbody>
+          </table>
+        </div>
 
           {/* Loading indicator */}
           {isFetching && hasMore && page > 1 && (
@@ -985,8 +872,7 @@ const CounterpartiesPage = observer(() => {
                 }
               `}</style>
             </div>
-          )}
-        </div>
+        )}
         {isFetching && !isLoadingCounterparties && (
           <div className={styles.fetchOverlay}>
             <div className={styles.loadingSpinner} style={{ width: 28, height: 28, borderWidth: 3 }} />
@@ -1064,26 +950,19 @@ const CounterpartiesPage = observer(() => {
         </div>
       </div>
 
-      {/* Create Modal */}
+      {/* Unified Create/Edit Modal */}
       <CreateCounterpartyModal
-        isOpen={isCreateModalOpen}
+        isOpen={isCreateModalOpen || !!editingCounterparty}
         onClose={() => {
           setIsCreateModalOpen(false)
+          setEditingCounterparty(null)
           setPreselectedGroupId(null)
           // Invalidate queries to refresh data
           queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
           queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
         }}
         preselectedGroupId={preselectedGroupId}
-      />
-      <EditCounterpartyModal
-        isOpen={!!editingCounterparty}
-        onClose={() => {
-          setEditingCounterparty(null)
-          // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
-        }}
-        counterparty={editingCounterparty}
+        counterpartyData={editingCounterparty}
       />
       <EditCounterpartyGroupModal
         isOpen={!!editingGroup}

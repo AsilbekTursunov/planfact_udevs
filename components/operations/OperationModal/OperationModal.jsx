@@ -244,6 +244,8 @@ const OperationModal = observer(({
 	disableCounterpartySelect = false,
 	defaultDealGuid = null,
 	initialTab = 'income',
+	chart_of_accounts_id = null,
+	chart_of_accounts_id_2 = null
 }) => {
 	const queryClient = useQueryClient()
 	const isNew = operation?.isNew || false
@@ -381,7 +383,21 @@ const OperationModal = observer(({
 		return value.toString().replace(/\s/g, '')
 	}
 
-	console.log('operationData', operationData)
+
+	useEffect(() => {
+		if (activeTab == 'income' && chart_of_accounts_id) {
+			setFormData(prev => ({
+				...prev,
+				chartOfAccount: chart_of_accounts_id
+			}))
+		} if (activeTab == 'payment' && chart_of_accounts_id) {
+			setFormData(prev => ({
+				...prev,
+				chartOfAccount: chart_of_accounts_id_2
+			}))
+		}
+	}, [activeTab])
+
 
 	// Initialize form data from operation or defaults
 	const getInitialFormData = () => {
@@ -432,7 +448,7 @@ const OperationModal = observer(({
 			accountAndLegalEntity: null,
 			amount: '',
 			counterparty: preselectedCounterparty || null,
-			chartOfAccount: null,
+			chartOfAccount: activeTab === 'income' ? chart_of_accounts_id : activeTab === 'payment' ? chart_of_accounts_id_2 : null,
 			project: null,
 			purchaseDeal: null,
 			salesDeal: null,
@@ -469,24 +485,6 @@ const OperationModal = observer(({
 
 	const formData = formStates[activeTab] || formStates['income'];
 
-	// const { data: counterpartyData } = useUcodeRequestQuery({
-	// 	method: "get_counterparties",
-	// 	data: {
-	// 		contrAgentId: formData.counterparty
-	// 	},
-	// 	querySetting: {
-	// 		select: (response) => response?.data?.data?.data?.[0],
-	// 		enable: !!formData.counterparty
-	// 	}
-	// })
-
-	// console.log('counterpartyData', counterpartyData)
-
-	// useEffect(() => {
-	// 	if (counterpartyData?.chart_of_accounts_id || counterpartyData?.chart_of_accounts_id_2) {
-	// 		setFormData({ ...formData, chartOfAccount: activeTab === 'income' ? counterpartyData.chart_of_accounts_id : counterpartyData.chart_of_accounts_id_2 })
-	// 	}
-	// }, [counterpartyData, formData])
 
 	const setFormData = useCallback((updater) => {
 		setFormStates(prev => {

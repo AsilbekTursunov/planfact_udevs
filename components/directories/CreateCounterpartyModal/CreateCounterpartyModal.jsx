@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
-import { useCreateCounterparty, useCreateCounterpartiesGroup, useCounterpartiesGroupsPlanFact, useUpdateCounterpartiesGroup, useDeleteCounterpartiesGroups } from '@/hooks/useDashboard'
+import { useCreateCounterparty, useCreateCounterpartiesGroup, useCounterpartiesGroupsPlanFact, useUpdateCounterpartiesGroup, useDeleteCounterpartiesGroups, useUpdateCounterparty } from '@/hooks/useDashboard'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import SinglSelectStatiya from '@/components/ReadyComponents/SingleSelectStatiya'
@@ -17,9 +17,10 @@ import styles from './CreateCounterpartyModal.module.scss'
 import { PlusCircle, PlusSquare, Trash2 } from 'lucide-react'
 
 
-export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGroupId = null }) {
+export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGroupId = null, counterpartyData = null, onSuccess = null }) {
   const queryClient = useQueryClient()
   const createMutation = useCreateCounterparty()
+  const updateMutation = useUpdateCounterparty()
   const createGroupMutation = useCreateCounterpartiesGroup()
   const deleteGroupMutation = useDeleteCounterpartiesGroups()
   const updateGroupMutation = useUpdateCounterpartiesGroup()
@@ -92,25 +93,68 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
       setIsClosing(false)
       setIsVisible(true)
       setActiveTab('counterparty')
-      reset({
-        nazvanie: '',
-        polnoe_imya: '',
-        counterparties_group_id: preselectedGroupId || '',
-        gruppa: [],
-        inn: '',
-        kpp: [{ value: '' }],
-        nomer_scheta: [{ value: '' }],
-        primenyat_stat_i_po_umolchaniyu: false,
-        chart_of_accounts_id: '',
-        chart_of_accounts_id_2: '',
-        komentariy: ''
-      })
+
+      if (counterpartyData) {
+        const rawData = counterpartyData.rawData || counterpartyData
+
+        // Extraction logic similar to EditCounterpartyModal
+        const getChartOfAccountsId = (field) => {
+          if (rawData[field]) {
+            if (typeof rawData[field] === 'string' && rawData[field].length === 36) return rawData[field]
+            if (rawData[field]?.guid) return rawData[field].guid
+          }
+          const dataField = `${field}_data`
+          if (rawData[dataField]?.guid) return rawData[dataField].guid
+          return ''
+        }
+
+        const getCounterpartiesGroupId = () => {
+          if (rawData.counterparties_group_id) {
+            if (typeof rawData.counterparties_group_id === 'string' && rawData.counterparties_group_id.length === 36) return rawData.counterparties_group_id
+          }
+          if (rawData.counterparties_group_id_data?.guid) return rawData.counterparties_group_id_data.guid
+          return preselectedGroupId || ''
+        }
+
+        reset({
+          nazvanie: rawData.nazvanie || '',
+          polnoe_imya: rawData.polnoe_imya || '',
+          counterparties_group_id: getCounterpartiesGroupId(),
+          gruppa: rawData.gruppa || [],
+          inn: rawData.inn ? String(rawData.inn) : '',
+          kpp: rawData.kpp
+            ? (Array.isArray(rawData.kpp) ? rawData.kpp.map(v => ({ value: String(v) })) : [{ value: String(rawData.kpp) }])
+            : [{ value: '' }],
+          nomer_scheta: rawData.account_number
+            ? (Array.isArray(rawData.account_number) ? rawData.account_number.map(v => ({ value: String(v) })) : [{ value: String(rawData.account_number) }])
+            : [{ value: '' }],
+          primenyat_stat_i_po_umolchaniyu: rawData.primenyat_stat_i_po_umolchaniyu || false,
+          chart_of_accounts_id: getChartOfAccountsId('chart_of_accounts_id'),
+          chart_of_accounts_id_2: getChartOfAccountsId('chart_of_accounts_id_2'),
+          komentariy: rawData.komentariy || ''
+        })
+      } else {
+        reset({
+          nazvanie: '',
+          polnoe_imya: '',
+          counterparties_group_id: preselectedGroupId || '',
+          gruppa: [],
+          inn: '',
+          kpp: [{ value: '' }],
+          nomer_scheta: [{ value: '' }],
+          primenyat_stat_i_po_umolchaniyu: false,
+          chart_of_accounts_id: '',
+          chart_of_accounts_id_2: '',
+          komentariy: ''
+        })
+      }
+
       resetGroup({
         nazvanie_gruppy: '',
         opisanie_gruppy: ''
       })
     }
-  }, [isOpen, preselectedGroupId, reset, resetGroup])
+  }, [isOpen, preselectedGroupId, counterpartyData, reset, resetGroup])
 
   const handleClose = () => {
     setIsClosing(true)
@@ -144,33 +188,48 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
         tip = ['Плательщик']
       } else if (!data.chart_of_accounts_id && data.chart_of_accounts_id_2) {
         tip = ['Получатель']
+      } else if (data.chart_of_accounts_id && data.chart_of_accounts_id_2) {
+        tip = ['Смешанный']
       }
 
       const kppValues = data.kpp.filter(k => k.value && k.value.toString().trim() !== '').map(k => k.value)
-      const validKpp = kppValues.length > 1 ? kppValues.map(Number) : (kppValues.length === 1 ? Number(kppValues[0]) : undefined)
+      const validKpp = kppValues.length > 0 ? kppValues : undefined
 
       const accountValues = data.nomer_scheta.filter(a => a.value && a.value.toString().trim() !== '').map(a => a.value)
-      const validAccount = accountValues.length > 1 ? accountValues.map(Number) : (accountValues.length === 1 ? Number(accountValues[0]) : undefined)
+      const validAccount = accountValues.length > 0 ? accountValues : undefined
+
+      const isEdit = !!counterpartyData
+      const guid = counterpartyData?.guid || counterpartyData?.rawData?.guid
 
       const submitData = {
+        ...(isEdit && { guid }),
         nazvanie: data.nazvanie.trim(),
         ...(data.polnoe_imya && { polnoe_imya: data.polnoe_imya }),
         ...(data.gruppa && data.gruppa.length > 0 && { gruppa: data.gruppa }),
         ...(tip.length > 0 && { tip }),
-        ...(data.inn && { inn: Number(data.inn) }),
+        ...(data.inn && { inn: data.inn }),
         ...(validKpp && { kpp: validKpp }),
         ...(validAccount && { account_number: validAccount }),
         ...(data.counterparties_group_id && { counterparties_group_id: data.counterparties_group_id }),
         primenyat_stat_i_po_umolchaniyu: data.primenyat_stat_i_po_umolchaniyu,
-        ...(data.chart_of_accounts_id && data.primenyat_stat_i_po_umolchaniyu && { chart_of_accounts_id: data.chart_of_accounts_id }),
-        ...(data.chart_of_accounts_id_2 && data.primenyat_stat_i_po_umolchaniyu && { chart_of_accounts_id_2: data.chart_of_accounts_id_2 }),
+        ...(data.chart_of_accounts_id && (data.primenyat_stat_i_po_umolchaniyu || isEdit) && { chart_of_accounts_id: data.chart_of_accounts_id }),
+        ...(data.chart_of_accounts_id_2 && (data.primenyat_stat_i_po_umolchaniyu || isEdit) && { chart_of_accounts_id_2: data.chart_of_accounts_id_2 }),
         ...(data.komentariy && { komentariy: data.komentariy }),
+        ...(isEdit && { data_obnovleniya: new Date().toISOString() }),
+        attributes: {}
       }
 
-      await createMutation.mutateAsync(submitData)
-      queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
+      if (isEdit) {
+        await updateMutation.mutateAsync(submitData)
+      } else {
+        await createMutation.mutateAsync(submitData)
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['get_counterparties'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
+      queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
       queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
+      if (onSuccess) onSuccess()
       handleClose()
       reset()
     } catch (error) {
@@ -193,7 +252,9 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
       >
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {activeTab === 'counterparty' ? 'Создать контрагента' : 'Создать группу контрагентов'}
+            {activeTab === 'group'
+              ? 'Создать группу'
+              : (counterpartyData ? 'Редактировать контрагента' : 'Создать контрагента')}
           </h2>
           <button onClick={handleClose} className={styles.closeButton}>
             <svg className={styles.closeIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -204,29 +265,31 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
 
         <div className={styles.content}>
           {/* Tabs */}
-          <div className={styles.tabsContainer}>
-            <button
-              onClick={() => setActiveTab('counterparty')}
-              className={cn(
-                styles.tab,
-                styles.first,
-                activeTab === 'counterparty' ? styles.active : styles.inactive
-              )}
-            >
-              Создать контрагента
-            </button>
-            <button
-              onClick={() => setActiveTab('group')}
-              className={cn(
-                styles.tab,
-                styles.last,
-                styles.notFirst,
-                activeTab === 'group' ? styles.active : styles.inactive
-              )}
-            >
-              Создать группу
-            </button>
-          </div>
+          {!counterpartyData && (
+            <div className={styles.tabsContainer}>
+              <button
+                onClick={() => setActiveTab('counterparty')}
+                className={cn(
+                  styles.tab,
+                  styles.first,
+                  activeTab === 'counterparty' ? styles.active : styles.inactive
+                )}
+              >
+                Создать контрагента
+              </button>
+              <button
+                onClick={() => setActiveTab('group')}
+                className={cn(
+                  styles.tab,
+                  styles.last,
+                  styles.notFirst,
+                  activeTab === 'group' ? styles.active : styles.inactive
+                )}
+              >
+                Создать группу
+              </button>
+            </div>
+          )}
 
           {/* Form */}
           {activeTab === 'counterparty' ? (
@@ -299,10 +362,10 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                   </label>
                   <div className={styles.inputContainer}>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       placeholder="Укажите ИНН"
                       className={cn(styles.input, styles.requisitesInput)}
-                      onWheel={(e) => e.target.blur()}
                       {...register('inn')}
                     />
                   </div>
@@ -314,10 +377,10 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                     {kppFields.map((item, index) => (
                       <div key={item.id} className="flex gap-2 items-center">
                           <Input
-                            type="number"
+                          type="text"
+                          inputMode="numeric"
                             placeholder="Укажите КПП"
-                            className={cn(styles.input, styles.requisitesInput)}
-                            onWheel={(e) => e.target.blur()}
+                          className={cn(styles.input, styles.requisitesInput)}
                             {...register(`kpp.${index}.value`)}
                           />
                         {kppFields.length > 1 && (
@@ -507,7 +570,9 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
             className="primary-btn"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Создание...' : 'Создать'}
+            {isSubmitting
+              ? (activeTab === 'counterparty' && counterpartyData ? 'Сохранение...' : 'Создание...')
+              : (activeTab === 'counterparty' && counterpartyData ? 'Сохранить' : 'Создать')}
           </button>
         </div>
       </div>

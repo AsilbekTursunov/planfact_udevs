@@ -198,7 +198,7 @@ const GroupSelect = ({
                     <div key={groupName} className='flex flex-col'>
                       {/* Group Header */}
                       <div
-                        className='px-2 py-2 text-xss font-medium text-neutral-900 bg-neutral-50/50 hover:bg-neutral-50 cursor-pointer flex items-center justify-between group'
+                        className='px-2 py-2 text-xs! font-medium text-neutral-900 bg-neutral-50/50 hover:bg-neutral-50 cursor-pointer flex items-center justify-between group'
                         onClick={() => toggleGroup(items)}
                       >
                         <span>{groupName}</span>
