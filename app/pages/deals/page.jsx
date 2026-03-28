@@ -46,6 +46,7 @@ export default observer(function DealsPage() {
   const queryClient = useQueryClient();
   const [selectedDeals, setSelectedDeals] = useState(new Set());
   const filters = sealDeal.filters;
+  const dealsMethod = sealDeal.dealsMethod;
 
   useUcodeRequestQuery({
     method: "get_sales_list",
@@ -70,11 +71,13 @@ export default observer(function DealsPage() {
       amount_to: Number(filters?.amountTo) || null,
       profit_from: Number(filters?.profitFrom) || null,
       profit_to: Number(filters?.profitTo) || null,
-      partners_id: filters?.selectedCounterparties?.length > 0 ? filters.selectedCounterparties : null,
+      counterparty_ids: filters?.selectedCounterparties?.length > 0 ? filters.selectedCounterparties : null,
       status: filters?.status || [],
+      accounting_method: dealsMethod === 'accrual_method' ? 'Метод начисления' : 'Кассовый метод' || null,
       isCalculation: filters?.isCalculation || false,
     }
-  }, [debouncedSearchQuery, filters])
+  }, [debouncedSearchQuery, filters, dealsMethod])
+
 
 
   const { data: deals, isFetching } = useUcodeRequestQuery({
@@ -87,7 +90,11 @@ export default observer(function DealsPage() {
     }
   })
 
-  console.log('deals', deals)
+  const summary = useMemo(() => {
+    return deals?.summary
+  }, [deals])
+
+  const totalProfit = dealsMethod === 'accrual_method' ? summary?.accrual_profit : summary?.cash_profit
 
   const { mutate: deleteDeal, isPending: isDeletingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'delete-deal' });
 
@@ -184,35 +191,20 @@ export default observer(function DealsPage() {
   };
 
 
-  const getStatusColor = (status) => {
-    const statusMap = {
-      'Новая': 'orange',
-      'New': 'orange',
-      'В_работе': 'blue',
-      'in_work': 'blue',
-      'InProgress': 'blue',
-      'Завершена': 'green',
-      'Completed': 'green',
-      'Cancelled': 'gray'
-    }
-    return statusMap[status] || 'gray'
-  }
+
 
 
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex overflow-hidden w-full">
       <FilterSidebar />
-      <main className="p-4 w-full relative overflow-y-auto">
-        <header className="flex items-center justify-between mb-4 sticky top-0 bg-white z-10">
+      <main className="p-4 flex-1 relative overflow-y-auto scroll-smooth">
+        <header className="flex items-center justify-between mb-4 sticky top-[-16px] bg-white z-20 pt-4">
           <div className="flex items-center gap-2 flex-1">
             <h1 className={styles.title}>Сделки по продажам</h1>
             <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setIsCreateModalOpen(true)}>
               Создать
             </button>
-            {/* <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setShowCreateStudentModal(true)}>
-              Создать студента
-            </button> */}
           </div>
 
           <div className="flex items-center gap-2">
@@ -224,7 +216,7 @@ export default observer(function DealsPage() {
                   { value: 'cash_method', label: 'Кассовый метод' },
                 ]}
                 withSearch={false}
-                value={sealDeal.dealsMethod}
+                value={dealsMethod}
                 onChange={(value) => sealDeal.setState('dealsMethod', value)}
                 className='bg-white'
               />
@@ -232,7 +224,7 @@ export default observer(function DealsPage() {
             <div className="w-72">
               <Input
                 type="text"
-                placeholder="Поиск по краткому названию" 
+                placeholder="Поиск по краткому названию"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value)
@@ -250,8 +242,8 @@ export default observer(function DealsPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           )}
-          <table className={styles.table}>
-            <thead>
+          <table className="w-full text-xs">
+            <thead className='sticky top-0'>
               <tr className='bg-neutral-100 text-neutral-500  text-xs'>
                 <th className="w-10">
                   <div className="flex items-center justify-center">
@@ -278,14 +270,16 @@ export default observer(function DealsPage() {
             </thead>
             <tbody>
               {formattedDeals?.map(deal => {
-                const price = sealDeal.dealsMethod === 'accrual_method' ? deal?.accrual_method?.profit : deal?.cash_method?.profit
+                const price = dealsMethod === 'accrual_method' ? deal?.accrual_method?.profit : deal?.cash_method?.profit
                 return (
-                  <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 group cursor-pointer'>
+                  <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 h-10 group cursor-pointer'>
                     <td className="w-10" onClick={(e) => e.stopPropagation()}>
-                      <OperationCheckbox
-                        checked={selectedDeals.has(deal.guid)}
-                        onChange={(e) => handleSelectOne(deal.guid, e)}
-                      />
+                      <div className="flex items-center justify-center">
+                        <OperationCheckbox
+                          checked={selectedDeals.has(deal.guid)}
+                          onChange={(e) => handleSelectOne(deal.guid, e)}
+                        />
+                      </div>
                     </td>
                     <td className='p-0!'>
                       <div className="text-start p-2">
@@ -343,11 +337,13 @@ export default observer(function DealsPage() {
             </span>
             <span className={styles.footerItem}>
               <span className={styles.footerLabel}>Общая прибыль:</span>
-              <span className={styles.footerProfit}>{formatAmount(deals?.summary?.total_profit || 0)}</span>
+              <span className={styles.footerProfit}>{formatAmount(totalProfit)}</span>
             </span>
           </div>
         </footer>
       </main>
+
+
       <CreateStudentModal
         isOpen={showCreateStudentModal}
         onClose={() => setShowCreateStudentModal(false)}

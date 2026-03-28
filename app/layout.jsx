@@ -29,7 +29,7 @@ export default function RootLayout({ children }) {
             {!isLoginPage && <Sidebar />}
             <div className="flex flex-col flex-1 max-h-screen overflow-hidden">
               {!isLoginPage && <Header />}
-              <main className={isLoginPage ? "" : "flex-1 overflow-y-auto bg-white"}>
+              <main className={isLoginPage ? "" : "flex-1 overflow-hidden bg-white"}>
                 {children}
               </main>
             </div>

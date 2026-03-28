@@ -81,6 +81,7 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
       })
       queryClient.invalidateQueries({ queryKey: ["list_sales_operations"] })
       queryClient.invalidateQueries({ queryKey: ["get_sales_transaction"] })
+      queryClient.invalidateQueries({ queryKey: ["get_sales_transaction_by_guid"] })
       setShowDeleteModal(false)
       setShipmentToDelete(null)
     } catch (error) {

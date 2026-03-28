@@ -15,7 +15,7 @@ const SingleCounterParty = ({
 }) => {
   const { data: counterpartiesGroupsData, isLoading } = useCounterpartiesGroupsPlanFact({
     page: 1,
-    limit: 100,
+    limit: 1000,
   })
 
   const result = useMemo(() => {
@@ -55,7 +55,6 @@ const SingleCounterParty = ({
     onChange(val)
     if (returnChartOfAccount && val) {
       // Find the item in the tree to get its rawData
-
       const findItem = (nodes) => {
         for (const node of nodes) {
           if (node.value === val) return node

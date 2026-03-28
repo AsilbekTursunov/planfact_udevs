@@ -28,8 +28,11 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
   ])
 
-  console.log(initialData)
+  // ac1a364d-840c-40cb-bf4c-ab68fa994304
+  // 2ce12ace-7b97-425e-a978-6a550dec4027
 
+
+  //0358a957-fa6b-43c7-b860-f32fb795fe6e
 
   useEffect(() => {
     if (open) {
@@ -159,6 +162,9 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     if (!legalEntity) newErrors.legalEntity = 'Выберите юрлицо'
     if (!client) newErrors.client = 'Выберите клиента'
 
+    const productData = rows.filter(row => row.name)
+    if (productData.length === 0) newErrors.products = 'Добавьте хотя бы одну позицию'
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
@@ -178,7 +184,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
         currency_code: "RUB",
         description: "Shipment",
         chart_of_accounts_id: chartOfAccounts,
-        product_and_service_data: rows.filter(row => row.name).map(row => {
+        product_and_service_data: productData.map(row => {
           const product = productServicesList.find(p => p.guid === row.name)
           return {
             guid: product?.guid || undefined,
@@ -213,7 +219,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
       setSelectedProducts(new Set())
       setErrors({})
 
-      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid', { guid: dealGuid }] })
       queryClient.invalidateQueries({ queryKey: ['list_sales_operations'] })
       queryClient.invalidateQueries({ queryKey: ['find_operations'] })
       onClose()
@@ -370,7 +376,10 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
           {/* Products Table */}
           <div className={styles.productsSection}>
             <div className={styles.productsSectionHeader}>
-              <span className={styles.productsTitle}>Товары/услуги для отгрузки</span>
+              <div className='flex flex-col gap-1'>
+                <span className={styles.productsTitle}>Товары/услуги для отгрузки</span>
+                {errors.products && <span className='text-[10px] text-red-500 font-medium'>{errors.products}</span>}
+              </div>
               <button
                 className={styles.fillFromDeal}
                 onClick={() => setShowChartOfAccounts(!showChartOfAccounts)}
@@ -383,7 +392,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
               <table className="w-full">
                 <thead className='sticky top-0 z-10 bg-neutral-50'>
                   <tr className='bg-neutral-50  text-neutral-600 font-light h-8 text-xs w-full border-b border-gray-200'>
-                    <th className="">
+                    <th className="w-10">
                       <div className='flex items-center justify-center'>
                         <OperationCheckbox type="checkbox" checked={selectedProducts?.size > 0 && selectedProducts?.size === rows?.length} onChange={(e) => {
                           if (e.target.checked) {

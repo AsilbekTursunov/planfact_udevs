@@ -183,7 +183,10 @@ const IncomeForm = ({
           <label className={styles.label}>Контрагент</label>
           <SingleCounterParty
             value={formData.counterparty}
-            onChange={value => setFormData({ ...formData, counterparty: value })}
+            onChange={value => {
+              setFormData({ ...formData, counterparty: value })
+              console.log('value', value)
+            }}
             placeholder='Не выбран.'
             className='flex-1 bg-white' 
             name='chart_of_accounts_id'
