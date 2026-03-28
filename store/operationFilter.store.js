@@ -95,28 +95,55 @@ class OperationFilterStore {
     const arr = [...this.selectedFilters];
     const shouldAdd = forceValue !== undefined ? forceValue : !arr.includes(key);
 
-    if (shouldAdd) {
-      if (!arr.includes(key)) {
-        this.selectedFilters = [...arr, key];
-      }
-    } else {
-      this.selectedFilters = arr.filter(v => v !== key);
+    let nextFilters = shouldAdd
+      ? (arr.includes(key) ? arr : [...arr, key])
+      : arr.filter(v => v !== key);
+
+    // Child to Parent logic - only run if not a complex (forced) toggle to avoid jitter
+    if (forceValue === undefined) {
+      const relationships = [
+        { parent: 'Перемещение', children: ['Списание', 'Зачисление'] },
+        { parent: 'Начисление', children: ['Дебет', 'Кредит'] }
+      ];
+
+      relationships.forEach(({ parent, children }) => {
+        if (children.includes(key)) {
+          const currentChildrenState = children.map(child =>
+            child === key ? shouldAdd : nextFilters.includes(child)
+          );
+
+          const anyChildrenChecked = currentChildrenState.some(Boolean);
+          const allChildrenUnchecked = currentChildrenState.every(v => v === false);
+
+          if (anyChildrenChecked) {
+            if (!nextFilters.includes(parent)) nextFilters = [...nextFilters, parent];
+          } else if (allChildrenUnchecked) {
+            if (nextFilters.includes(parent)) nextFilters = nextFilters.filter(v => v !== parent);
+          }
+        }
+      });
     }
+
+    this.selectedFilters = nextFilters;
   }
 
   toggleComplexFilter(type) {
     const isCurrentlySelected = this.selectedFilters.includes(type);
     const shouldAdd = !isCurrentlySelected;
 
-    this.toggleFilter(type);
+    // First toggle all children to the same state
+    const relationships = {
+      'Перемещение': ['Списание', 'Зачисление'],
+      'Начисление': ['Дебет', 'Кредит']
+    };
 
-    if (type === 'Перемещение') {
-      this.toggleFilter('Списание', shouldAdd);
-      this.toggleFilter('Зачисление', shouldAdd);
-    } else if (type === 'Начисление') {
-      this.toggleFilter('Дебет', shouldAdd);
-      this.toggleFilter('Кредит', shouldAdd);
-    }
+    const children = relationships[type] || [];
+    children.forEach(child => {
+      this.toggleFilter(child, shouldAdd);
+    });
+
+    // Then toggle parent itself
+    this.toggleFilter(type, shouldAdd);
   }
 
   setAmountRange(updater) {

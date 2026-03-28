@@ -5,8 +5,10 @@ import PriceStatus from '@/components/operations/PriceStatus'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
 import { OperationMenu } from '@/components/operations/OperationsTable/OperationMenu'
 import { ExpendClose, ExpendOpen, TypeIncomeIcon, TypeExpenseIcon, TypeTransferIcon, ShipmentIcon } from '../../../constants/icons'
+import { observer } from 'mobx-react-lite'
+import { operationFilterStore } from '../../../store/operationFilter.store'
 
-const OperationTableRow = ({
+const OperationTableRow = observer(({
   op,
   selectedOperations,
   toggleOperation,
@@ -20,11 +22,13 @@ const OperationTableRow = ({
   const [open, setOpen] = useState(false)
   const children = new Set()
   const chartofaccounts = new Set()
+  const isSpinasiya = !operationFilterStore?.selectedFilters?.includes('Списание')
+  const isZachisleniya = !operationFilterStore?.selectedFilters?.includes('Зачисление')
 
   op.operationParts?.forEach(part => {
     children.add(part?.counterparties_id)
     chartofaccounts.add(part?.chart_of_accounts_id)
-  }) 
+  })
 
   const titleContragent = useMemo(() => {
     if (children.size === 1 && children.has(counterpartyGuid)) {
@@ -86,7 +90,7 @@ const OperationTableRow = ({
         </td>
         <td className={cn(styles.tableCell, styles.accountCell, isActive && styles.activeRow)}>
           {op?.tip == "Перемещение" ? <>
-            <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
+            <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
               <span>{op.my_account_name}</span>
               <span>{op.my_account_name2}</span>
             </div>
@@ -110,9 +114,9 @@ const OperationTableRow = ({
           {titleContragent}
         </td>
         <td className={cn(styles.tableCell, styles.statusCell, isActive && styles.activeRow)}>
-          {op?.tip == "Перемещение" ? <div className={`${styles.doubleAccount} ${!op.paymentConfirmed && styles.confirmed}`}>
-            <span>[Перемещение - списание]</span>
-            <span>[Перемещение - зачисление]</span>
+          {op?.tip == "Перемещение" ? <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+            <span className={`${isSpinasiya ? 'opacity-50' : ''}`}>[Перемещение - списание]</span>
+            <span className={`${isZachisleniya ? 'opacity-50' : ''}`}>[Перемещение - зачисление]</span>
           </div> : titleChartOfAccounts || ''}
         </td>
         {/* <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td> */}
@@ -209,6 +213,6 @@ const OperationTableRow = ({
         })}
     </>
   )
-}
+})
 
 export default OperationTableRow

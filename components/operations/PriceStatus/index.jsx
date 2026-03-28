@@ -1,4 +1,3 @@
-import React from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './style.module.scss'
 import { BsCurrencyDollar } from 'react-icons/bs'
@@ -6,8 +5,12 @@ import { TbCurrencyRubel } from 'react-icons/tb'
 import { PiCurrencyKztDuotone } from 'react-icons/pi'
 import { CreditIcon, DebitIcon } from '../../../constants/icons'
 import { formatAmount } from '../../../utils/helpers'
+import { operationFilterStore } from '../../../store/operationFilter.store'
+import { observer } from 'mobx-react-lite'
 
-const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency, dealId, percent }) => {
+const PriceStatus = observer(({ amount, type, tab, confirmed, accrual, currency, dealId, percent }) => {
+  const isSpinasiya = !operationFilterStore.selectedFilters?.includes('Списание')
+  const isZachisleniya = !operationFilterStore.selectedFilters?.includes('Зачисление')
   return (
     <div
       className={cn(
@@ -34,9 +37,9 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency, dealId, 
       <div className={styles.amountText}>
         {tab == "Перемещение" ? <>
           <div className={`${styles.doubleAccount} flex flex-col `}>
-            <span className='flex items-center gap-1'>-{formatAmount(amount)} <span className={styles.currency}>{
+            <span className={`flex items-center gap-1 text-neutral-500 ${isSpinasiya ? 'opacity-50' : ''}`}>-{formatAmount(amount)} <span className=" text-neutral-500">{
               currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
-            <span className='flex items-center gap-1'>+{formatAmount(amount)} <span className={styles.currency}>{
+            <span className={`flex items-center gap-1 text-neutral-500 ${isZachisleniya ? 'opacity-50' : ''}`}>+{formatAmount(amount)} <span className=" text-neutral-500">{
               currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
           </div>
           {/* Отгрузка */}
@@ -48,6 +51,6 @@ const PriceStatus = ({ amount, type, tab, confirmed, accrual, currency, dealId, 
 
     </div>
   )
-}
+})
 
 export default PriceStatus
