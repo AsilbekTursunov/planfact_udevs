@@ -157,7 +157,7 @@ const PaymentForm = ({
             onChange={value => {
               const pickDate = Number(value?.slice(-2))
               const isFuture = pickDate > todayDate
-              setFormData({ ...formData, accrualDate: value, confirmAccrual: isFuture ? false : true })
+              setFormData(prev => ({ ...prev, accrualDate: value, confirmAccrual: isFuture ? false : true }))
               if (errors.accrualDate) setErrors({ ...errors, accrualDate: null })
             }}
             placeholder='Выберите дату'
@@ -182,14 +182,18 @@ const PaymentForm = ({
           <label className={styles.label}>Контрагент</label>
           <SingleCounterParty
             value={formData.counterparty}
-            onChange={value => setFormData({ ...formData, counterparty: value })}
+            onChange={value => setFormData(prev => ({ ...prev, counterparty: value }))}
             placeholder='Выберите контрагента...'
             className='flex-1 bg-white'
             name='chart_of_accounts_id_2'
-            returnChartOfAccount={value => setFormData({ ...formData, chartOfAccount: value })}
+            returnChartOfAccount={value => setFormData(prev => ({ ...prev, chartOfAccount: value }))}
           />
         </div>
       )}
+      {/* 
+      chart_of_accounts_id: "cff60bc0-b5be-4cee-b7b8-14580f9f4b7e"
+      chart_of_accounts_id_2: "69044372-8e2c-4ab0-9385-91ced02ed439"
+      */}
 
       {/* Статья */}
       {!showStatya && (

@@ -190,10 +190,14 @@ const IncomeForm = ({
             placeholder='Не выбран.'
             className='flex-1 bg-white' 
             name='chart_of_accounts_id'
-            returnChartOfAccount={value => setFormData(prev => ({ ...prev, chartOfAccount: value }))}
+            returnChartOfAccount={value => {
+              setFormData(prev => ({ ...prev, chartOfAccount: value }))
+              console.log('chart_of_accounts_id', value)
+            }}
           />
         </div>
       )}
+      {/* //  a8e5efb8-99eb-469c-85f2-641cfff8de62 */}
 
       {/* Статья */}
       {!showStatya && (

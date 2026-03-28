@@ -157,7 +157,6 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
                 onChange={value => setClient(value)}
                 placeholder="Укажите кому падаете товар или услугу"
                 className={'bg-white'}
-                isClearable={false}
               />
             </div>
           </div>

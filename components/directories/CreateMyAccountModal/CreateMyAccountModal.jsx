@@ -100,7 +100,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           tip: ['Наличный'],
           nachalьnyy_ostatok: '',
           data_sozdaniya: new Date().toISOString().split('T')[0],
-          currenies_id: currencies?.[0]?.value,
+          currenies_id: currencies?.[2]?.value,
           komentariy: '',
           legal_entity_id: "",
           bik: '',
