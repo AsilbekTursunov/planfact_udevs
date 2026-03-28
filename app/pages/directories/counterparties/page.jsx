@@ -34,6 +34,7 @@ const calculationOptions = [
 import counterpartiesStore from '@/store/counterparties.store'
 import { observer } from 'mobx-react-lite'
 import MultiSelectZdelka from '../../../../components/ReadyComponents/MultiZdelka'
+import SelectLegelEntitties from '../../../../components/ReadyComponents/SelectLegelEntitties'
 
 const CounterpartiesPage = observer(() => {
 
@@ -112,6 +113,10 @@ const CounterpartiesPage = observer(() => {
       apiFilters.sellingDealId = filters.deals
     }
 
+    if (filters.selectedLegalEntities && filters.selectedLegalEntities.length > 0) {
+      apiFilters.legal_entities_ids = filters.selectedLegalEntities
+    }
+
     return apiFilters
   }, [filters])
 
@@ -127,6 +132,7 @@ const CounterpartiesPage = observer(() => {
     contrAgentId: filters.selectedCounterparties,
     operationCategoryId: filters.selectedChartOfAccounts,
     sellingDealId: filters.deals,
+    legalEntitiesId: filters.selectedLegalEntities,
     searchString: viewMode === 'list' ? debouncedSearchQuery : '',
   }, true) // Always enable the query
 
@@ -492,6 +498,12 @@ const CounterpartiesPage = observer(() => {
               value={filters.deals}
               onChange={(values) => setFilters(prev => ({ ...prev, deals: values }))}
               dropdownClassName="w-64"
+            />
+            <SelectLegelEntitties
+              value={filters.selectedLegalEntities}
+              onChange={(values) => setFilters(prev => ({ ...prev, selectedLegalEntities: values }))}
+              placeholder="Выберите юрлицо"
+              multi={true}
             />
           </div>
         </FilterSection>

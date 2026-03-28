@@ -19,7 +19,7 @@ const GroupMyAccounts = ({
       page: 1,
       limit: 100,
       search: "",
-      groupBy: "groups",
+      groupBy: "legal_entities",
       nalichnye: true,
       beznalichnye: true,
       kartaFizlica: true,

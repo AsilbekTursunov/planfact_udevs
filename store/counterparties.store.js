@@ -11,7 +11,8 @@ class CounterpartiesStore {
     operationDateStart: "",
     calculationMethod: "Cashflow",
     dateRange: null,
-    deals: []
+    deals: [],
+    selectedLegalEntities: []
   }
 
 
@@ -60,7 +61,8 @@ class CounterpartiesStore {
       operationDateEnd: "",
       calculationMethod: "Cashflow",
       dateRange: null,
-      deals: []
+      deals: [],
+      selectedLegalEntities: []
     }
   }
 
@@ -73,6 +75,7 @@ class CounterpartiesStore {
     if (this.filters.selectedChartOfAccounts && this.filters.selectedChartOfAccounts.length > 0) count++
     if (this.filters.operationDateStart || this.filters.operationDateEnd || this.filters.dateRange) count++
     if (this.filters.calculationMethod !== 'Cashflow') count++
+    if (this.filters.selectedLegalEntities && this.filters.selectedLegalEntities.length > 0) count++
     return count
   }
 }
