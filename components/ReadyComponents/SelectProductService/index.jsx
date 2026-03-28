@@ -12,7 +12,8 @@ const SelectProductService = ({
   dropdownClassName, 
   multi = false, 
   selected,
-  sellingDealId
+  sellingDealId,
+  hasError
 }) => {
 
   const { data: productsData, isLoading } = useUcodeRequestQuery({
@@ -53,6 +54,7 @@ const SelectProductService = ({
       placeholder={placeholder}
       className={className}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

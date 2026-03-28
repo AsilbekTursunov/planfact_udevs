@@ -8,7 +8,8 @@ const MultiSelectZdelka = ({
   onChange = () => { },
   placeholder = 'Выберите сделки',
   className,
-  dropdownClassName
+  dropdownClassName,
+  hasError
 }) => {
   const { data: deals, isLoading } = useUcodeRequestQuery({
     method: "get_sales_list_simple",
@@ -38,6 +39,7 @@ const MultiSelectZdelka = ({
       placeholder={isLoading ? "Загрузка..." : placeholder}
       className={className}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

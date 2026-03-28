@@ -10,7 +10,8 @@ const GroupMyAccounts = ({
   className,
   dropdownClassName,
   multi = true,
-  disabled = false
+  disabled = false,
+  hasError
 }) => {
 
   const { data: accountsData, isLoading } = useUcodeRequestQuery({
@@ -60,6 +61,7 @@ const GroupMyAccounts = ({
         placeholder={placeholder}
         className={className}
         dropdownClassName={dropdownClassName}
+        hasError={hasError}
       />
     )
   }
@@ -74,6 +76,7 @@ const GroupMyAccounts = ({
       dropdownClassName={dropdownClassName}
       groupBy="group" // Tell GroupedSelect to group by the 'group' property
       disabled={disabled}
+      hasError={hasError}
     />
   )
 }

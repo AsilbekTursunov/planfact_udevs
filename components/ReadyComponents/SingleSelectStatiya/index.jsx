@@ -22,26 +22,29 @@ const NOT_SELECTABLE = new Set([
 ])
 
 
-const mapNode = (item, type) => {
+const mapNode = (item, type, hiddenValue) => {
   const isDisabled = NOT_SELECTABLE.has(item.nazvanie)
+  const idValue = item.guid || item.chart_of_accounts_id_2 || item.id || `fallback-key-${Math.random().toString(36).substring(2, 9)}`
 
-  return item?.nazvanie === type ? null : {
-    value: item.guid || item.chart_of_accounts_id_2 || item.id || `fallback-key-${Math.random().toString(36).substring(2, 9)}`,
+  if (item?.nazvanie === type || idValue === hiddenValue) return null
+
+  return {
+    value: idValue,
     label: item.nazvanie,
     bold: isDisabled,
     isSelectable: !isDisabled,
-    children: item.children?.map(child => mapNode(child, type)).filter(Boolean) || []
+    children: item.children?.map(child => mapNode(child, type, hiddenValue)).filter(Boolean) || []
   }
 }
 
-const mapTree = (data, type) => {
+const mapTree = (data, type, hiddenValue) => {
   return data
     ?.filter(item => item.nazvanie !== type) // 👈 filter root
-    .map(item => mapNode(item, type))
+    .map(item => mapNode(item, type, hiddenValue))
     .filter(Boolean)
 }
 
-const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'Выберите статью', className, type = "Расходы", dropdownClassName }) => {
+const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'Выберите статью', className, type = "Расходы", dropdownClassName, parent, returnIsChild, hiddenValue, hasError }) => {
 
   const { data: chartOfAccountsData } = useUcodeRequestQuery({
     method: "get_chart_of_accounts",
@@ -55,19 +58,44 @@ const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'В
   })
 
   const result = useMemo(() => {
-    return mapTree(chartOfAccountsData, type)
-  }, [chartOfAccountsData, type])
+    return mapTree(chartOfAccountsData, type, hiddenValue)
+  }, [chartOfAccountsData, type, hiddenValue])
 
+  // Flattened map to track ancestry by value
+  const flattenedAncestry = useMemo(() => {
+    const flat = {};
+    const traverse = (nodes, ancestors = []) => {
+      nodes.forEach(node => {
+        const id = node.guid || node.chart_of_accounts_id_2 || node.id || node.value;
+        const currentAncestors = [...ancestors, node.label || node.nazvanie];
+        flat[id] = currentAncestors;
+        if (node.children) traverse(node.children, currentAncestors);
+      });
+    };
+    if (result) traverse(result);
+    return flat;
+  }, [result]);
 
+  const handleSelect = (val) => {
+    setSelectedValue?.(val);
+    if (parent && returnIsChild) {
+      const ancestors = flattenedAncestry[val] || [];
+      const parentArray = Array.isArray(parent) ? parent : [parent];
+      // Check if any ancestor matches any of the parent names
+      const isDescendant = ancestors.some(name => parentArray.includes(name));
+      returnIsChild(isDescendant);
+    }
+  }
 
   return <TreeSelect
     data={result}
     multi={false}
     placeholder={placeholder}
     value={selectedValue}
-    onChange={setSelectedValue}
+    onChange={handleSelect}
     className={className}
     dropdownClassName={dropdownClassName}
+    hasError={hasError}
   />
 }
 

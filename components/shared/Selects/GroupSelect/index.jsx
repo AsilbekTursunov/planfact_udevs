@@ -10,7 +10,8 @@ const GroupSelect = ({
   placeholder = "Выберите",
   isClearable = true,
   dropdownClassName,
-  className
+  className,
+  hasError
 }) => {
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -117,7 +118,11 @@ const GroupSelect = ({
       <button
         ref={buttonRef}
         type="button"
-        className={cn('flex items-center cursor-pointer bg-neutral-50 transition-all duration-200 justify-between w-full rounded-md border border-neutral-200 px-3 py-2 outline-none focus:border-teal-500', className)}
+        className={cn(
+          'flex items-center cursor-pointer bg-neutral-50 transition-all duration-200 justify-between w-full rounded-md  px-3 py-2 outline-none focus:border-teal-500',
+          className,
+          hasError ? 'border-red-ucode! border-2!' : "border border-neutral-200"
+        )}
         onClick={() => {
           if (!open && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect()

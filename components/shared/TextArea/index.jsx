@@ -4,15 +4,17 @@ import styles from './style.module.scss'
 
 const TextArea = forwardRef(({ 
   className, 
-  error, 
+  hasError, 
   ...props 
 }, ref) => {
   return (
     <textarea
       ref={ref}
       className={cn(
-        styles.textarea,
-        error && styles.error,
+        "w-full px-3 py-2 text-[13px] text-slate-900 border border-gray-ucode-200 shadow-none rounded-lg!  resize-none! bg-white transition-all duration-200",
+        "placeholder:text-gray-400 outline-none",
+        "disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed min-h-[100px]",
+        hasError && "border-red-ucode! border-2! focus:ring-red-ucode! focus:border-red-ucode!",
         className
       )}
       {...props}

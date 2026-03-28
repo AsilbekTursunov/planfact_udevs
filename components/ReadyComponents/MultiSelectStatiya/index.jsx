@@ -39,7 +39,7 @@ const mapTree = (data, type) => {
     .filter(Boolean)
 }
 
-const MultiSelectStatiya = ({ value = [], onChange, placeholder = 'Выберите статьи', className, type = "", dropdownClassName }) => {
+const MultiSelectStatiya = ({ value = [], onChange, placeholder = 'Выберите статьи', className, type = "", dropdownClassName, hasError }) => {
 
   const { data: chartOfAccountsData } = useUcodeRequestQuery({
     method: "get_chart_of_accounts",
@@ -65,6 +65,7 @@ const MultiSelectStatiya = ({ value = [], onChange, placeholder = 'Выбери�
       onChange={onChange}
       className={className}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

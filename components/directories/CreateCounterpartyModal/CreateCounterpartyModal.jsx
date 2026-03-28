@@ -443,6 +443,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                     placeholder="Пояснение к контрагенту"
                     className={styles.textarea}
                     rows={4}
+                    hasError={!!errors.komentariy}
                     {...register('komentariy')}
                   />
                 </div>
@@ -478,6 +479,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                       placeholder="Пояснение к группе контрагентов"
                       className={styles.textarea}
                       rows={4}
+                      hasError={!!groupErrors.opisanie_gruppy}
                       {...registerGroup('opisanie_gruppy')}
                     />
                   </div>

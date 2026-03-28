@@ -10,7 +10,8 @@ const SingleZdelka = ({
   placeholder = 'Выберите сделку',
   className,
   dropdownClassName,
-  hasError
+  hasError,
+  withSearch = true
 }) => {
   const { data: deals, isLoading } = useUcodeRequestQuery({
     method: "get_sales_list_simple",
@@ -35,11 +36,13 @@ const SingleZdelka = ({
   return (
     <SingleSelect
       data={options}
+      withSearch={withSearch}
       value={value}
       onChange={onChange}
       placeholder={isLoading ? "Загрузка..." : placeholder}
-      className={cn(className, hasError && 'border-red-500!')}
+      className={className}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

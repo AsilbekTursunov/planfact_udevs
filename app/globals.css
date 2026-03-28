@@ -222,6 +222,8 @@
   --color-gray-ucode-500: #667085; 
   --color-gray-ucode-600: #475467;  
   --color-gray-ucode-800: #1D2939;  
+  
+  --color-red-ucode: #FF564A;  
 
   --color-primary: #0E73F6;
   --color-primary-dark: #0b5fd4;
@@ -283,11 +285,11 @@
 }
 
 .primary-btn{
-  @apply text-sm border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-primary px-3 py-1.5 text-white hover:bg-primary-dark  rounded-md;
+  @apply text-sm border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-primary px-3 py-1.5 text-white hover:bg-primary-dark  rounded-sm;
 }
 
 .secondary-btn {
-  @apply text-sm  border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-gray-ucode-25 px-3 py-1.5 text-neutral-700 hover:bg-gray-50  rounded-md;
+  @apply text-sm  border-none outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-gray-ucode-25 px-3 py-1.5 text-neutral-700 hover:bg-gray-100  rounded-sm;
 }
 
 .delete-btn {

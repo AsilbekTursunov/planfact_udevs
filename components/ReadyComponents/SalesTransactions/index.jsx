@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import MultiSelect from '@/components/shared/Selects/MultiSelect'
 import { useUcodeDefaultApiQuery } from '@/hooks/useDashboard'
 
-const SalesTransactions = ({ value = [], onChange, placeholder = "Выберите сделки", dropdownClassName }) => {
+const SalesTransactions = ({ value = [], onChange, placeholder = "Выберите сделки", dropdownClassName, hasError }) => {
   const { data: dealsData, isLoading } = useUcodeDefaultApiQuery({
     queryKey: 'deals',
     urlMethod: 'GET',
@@ -24,6 +24,7 @@ const SalesTransactions = ({ value = [], onChange, placeholder = "Выберит
       onChange={onChange}
       placeholder={isLoading ? "Загрузка..." : placeholder}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

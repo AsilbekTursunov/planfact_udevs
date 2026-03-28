@@ -566,6 +566,7 @@ export default function EditCounterpartyModal({ isOpen, onClose, counterparty, o
                   placeholder="Пояснение к контрагенту"
                   // className={styles.textarea}
                   rows={4}
+                  hasError={!!errors.komentariy}
                 />
               </div>
             </div>

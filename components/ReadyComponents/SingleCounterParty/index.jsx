@@ -12,7 +12,8 @@ const SingleCounterParty = ({
   dropdownClassName,
   name = '',
   returnChartOfAccount,
-  isClearable = true
+  isClearable = true,
+  hasError
 }) => {
   const { data: counterpartiesGroupsData, isLoading } = useCounterpartiesGroupsPlanFact({
     page: 1,
@@ -88,6 +89,7 @@ const SingleCounterParty = ({
         isClearable={isClearable}
         className={className}
         dropdownClassName={dropdownClassName}
+        hasError={hasError}
       />
     </div>
   )

@@ -271,7 +271,7 @@ const IncomeForm = ({
             }}
             placeholder='Назначение платежа'
             rows={3}
-            error={errors.purpose}
+            hasError={!!errors.purpose}
           />
           {errors.purpose && <span className={styles.errorText}>{errors.purpose}</span>}
         </div>

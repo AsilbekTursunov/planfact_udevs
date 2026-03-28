@@ -102,6 +102,7 @@ const CreateGroup = ({ open = true, setOpen, initialData }) => {
                 rows={4}
                 value={formData.commentary}
                 onChange={e => handleFieldChange('commentary', e.target.value)}
+                hasError={false}
               />
             </div>
           </div>

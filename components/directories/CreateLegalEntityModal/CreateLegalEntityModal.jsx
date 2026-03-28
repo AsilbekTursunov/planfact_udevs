@@ -244,6 +244,7 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
                   placeholder="Дайте краткое пояснение этому юрлицу, если это необходимо"
                   className={styles.textarea}
                   rows={4}
+                  hasError={!!errors.komentariy}
                 />
               </div>
             </div>

@@ -4,7 +4,7 @@ import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import { formatAmount } from '../../../utils/helpers'
 
-const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите счет", className, dropdownClassName, multi = true, type, selected }) => {
+const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите счет", className, dropdownClassName, multi = true, type, selected, hasError }) => {
 
   const { data: accountsData, isLoading } = useUcodeRequestQuery({
     method: "get_my_accounts",
@@ -41,6 +41,7 @@ const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите с�
       placeholder={placeholder}
       className={className}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

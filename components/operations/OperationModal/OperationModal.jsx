@@ -1047,7 +1047,7 @@ const OperationModal = observer(({
 			>
 				<div className="flex flex-col flex-1 overflow-hidden h-full max-h-dvh min-h-0">
 					{/* Header */}
-					<div className="w-full pr-5 pt-5 pl-5">
+					<div className="w-full pr-4 pt-4 pl-4">
 						<div className={styles.headerTop}>
 							<div className={styles.headerLeft}>
 								<h2 className={styles.title}>
@@ -1119,308 +1119,309 @@ const OperationModal = observer(({
 
 
 					{/* Form */}
-					<div className={styles.body}>
-						<div className={styles.form}>
-							{/* Поступление */}
-							{activeTab === 'income' && (
-								<IncomeForm
-									formData={formData}
-									setFormData={setFormData}
-									errors={errors}
-									setErrors={setErrors}
-									isDebit={isDebit}
-									isCredit={isCredit}
-									showDate={showDate}
-									showAgent={showAgent}
-									showStatya={showStatya}
-									bankAccounts={bankAccounts}
-									counterAgentsTree={counterAgentsTree}
-									chartOfAccountsTree={chartOfAccountsTree}
-									formattedDeals={formattedDeals}
-									counterAgents={counterAgents}
-									loadingBankAccounts={loadingBankAccounts}
-									isLoadingGroups={isLoadingGroups}
-									loadingChartOfAccounts={loadingChartOfAccounts}
-									rows={rows}
-									dispatch={dispatch}
-									selectedSplits={selectedSplits}
-									handleUpdateSplit={handleUpdateSplit}
-									setdivivedAmounts={setdivivedAmounts}
-									operationData={operationData}
-									preselectedCounterparty={preselectedCounterparty}
-									disableCounterpartySelect={disableCounterpartySelect}
-									formatAmount={formatAmount}
-									parseAmount={parseAmount}
-									getAccountCurrency={getAccountCurrency}
-									todayDate={todayDate}
-									setTempSalesDeal={setTempSalesDeal}
-									setIsDateModalOpen={setIsDateModalOpen}
+					{activeTab !== 'accrual' && <>
+						<div className={styles.body}>
+							<div className={styles.form}>
+								{/* Поступление */}
+								{activeTab === 'income' && (
+									<IncomeForm
+										formData={formData}
+										setFormData={setFormData}
+										errors={errors}
+										setErrors={setErrors}
+										isDebit={isDebit}
+										isCredit={isCredit}
+										showDate={showDate}
+										showAgent={showAgent}
+										showStatya={showStatya}
+										bankAccounts={bankAccounts}
+										counterAgentsTree={counterAgentsTree}
+										chartOfAccountsTree={chartOfAccountsTree}
+										formattedDeals={formattedDeals}
+										counterAgents={counterAgents}
+										loadingBankAccounts={loadingBankAccounts}
+										isLoadingGroups={isLoadingGroups}
+										loadingChartOfAccounts={loadingChartOfAccounts}
+										rows={rows}
+										dispatch={dispatch}
+										selectedSplits={selectedSplits}
+										handleUpdateSplit={handleUpdateSplit}
+										setdivivedAmounts={setdivivedAmounts}
+										operationData={operationData}
+										preselectedCounterparty={preselectedCounterparty}
+										disableCounterpartySelect={disableCounterpartySelect}
+										formatAmount={formatAmount}
+										parseAmount={parseAmount}
+										getAccountCurrency={getAccountCurrency}
+										todayDate={todayDate}
+										setTempSalesDeal={setTempSalesDeal}
+										setIsDateModalOpen={setIsDateModalOpen}
 
-								/>
-							)}
+									/>
+								)}
 
-							{/* Выплата */}
-							{activeTab === 'payment' && (
-								<PaymentForm
-									formData={formData}
-									setFormData={setFormData}
-									errors={errors}
-									setErrors={setErrors}
-									isDebit={isDebit}
-									isCredit={isCredit}
-									showDate={showDate}
-									showAgent={showAgent}
-									showStatya={showStatya}
-									bankAccounts={bankAccounts}
-									counterAgentsTree={counterAgentsTree}
-									chartOfAccountsTree={chartOfAccountsTree}
-									formattedDeals={formattedDeals}
-									counterAgents={counterAgents}
-									loadingBankAccounts={loadingBankAccounts}
-									isLoadingGroups={isLoadingGroups}
-									loadingChartOfAccounts={loadingChartOfAccounts}
-									rows={rows}
-									dispatch={dispatch}
-									selectedSplits={selectedSplits}
-									handleUpdateSplit={handleUpdateSplit}
-									setdivivedAmounts={setdivivedAmounts}
-									operationData={operationData}
-									preselectedCounterparty={preselectedCounterparty}
-									disableCounterpartySelect={disableCounterpartySelect}
-									formatAmount={formatAmount}
-									parseAmount={parseAmount}
-									getAccountCurrency={getAccountCurrency}
-									todayDate={todayDate}
-									setTempSalesDeal={setTempSalesDeal}
-									setIsDateModalOpen={setIsDateModalOpen}
-								/>
-							)}
+								{/* Выплата */}
+								{activeTab === 'payment' && (
+									<PaymentForm
+										formData={formData}
+										setFormData={setFormData}
+										errors={errors}
+										setErrors={setErrors}
+										isDebit={isDebit}
+										isCredit={isCredit}
+										showDate={showDate}
+										showAgent={showAgent}
+										showStatya={showStatya}
+										bankAccounts={bankAccounts}
+										counterAgentsTree={counterAgentsTree}
+										chartOfAccountsTree={chartOfAccountsTree}
+										formattedDeals={formattedDeals}
+										counterAgents={counterAgents}
+										loadingBankAccounts={loadingBankAccounts}
+										isLoadingGroups={isLoadingGroups}
+										loadingChartOfAccounts={loadingChartOfAccounts}
+										rows={rows}
+										dispatch={dispatch}
+										selectedSplits={selectedSplits}
+										handleUpdateSplit={handleUpdateSplit}
+										setdivivedAmounts={setdivivedAmounts}
+										operationData={operationData}
+										preselectedCounterparty={preselectedCounterparty}
+										disableCounterpartySelect={disableCounterpartySelect}
+										formatAmount={formatAmount}
+										parseAmount={parseAmount}
+										getAccountCurrency={getAccountCurrency}
+										todayDate={todayDate}
+										setTempSalesDeal={setTempSalesDeal}
+										setIsDateModalOpen={setIsDateModalOpen}
+									/>
+								)}
 
-							{/* Перемещение */}
-							{activeTab === 'transfer' && (
-								<>
-									{/* Секция ОТКУДА */}
-									<div className={styles.formSection}>
-										<div className="flex items-center gap-2">
-											<div className="w-full h-px bg-gray-200"></div>
-											<h3 className="text-neutral-400 text-xs font-medium">ОТКУДА</h3>
-											<div className="w-full h-px bg-gray-200"></div>
-										</div>
+								{/* Перемещение */}
+								{activeTab === 'transfer' && (
+									<>
+										{/* Секция ОТКУДА */}
+										<div className={styles.formSection}>
+											<div className="flex items-center gap-2">
+												<div className="w-full h-px bg-gray-200"></div>
+												<h3 className="text-neutral-400 text-xs font-medium">ОТКУДА</h3>
+												<div className="w-full h-px bg-gray-200"></div>
+											</div>
 
-										{/* Дата оплаты */}
-										<div className="flex items-center">
-											<label htmlFor="" className="w-40 text-neutral-700 text-sm">
-												Дата оплаты
-											</label>
-											<div className="flex items-center gap-2 flex-1">
-												<div className='w-44'>
-													<CustomDatePicker
-														value={formData.fromDate}
-														onChange={value => {
-															setFormData({ ...formData, fromDate: value })
-															if (errors.fromDate) {
-																setErrors({ ...errors, fromDate: null })
-															}
-														}}
-														format='YYYY-MM-DD'
-														placeholder='Выберите дату'
+											{/* Дата оплаты */}
+											<div className="flex items-center">
+												<label htmlFor="" className="w-40 text-neutral-700 text-sm">
+													Дата оплаты
+												</label>
+												<div className="flex items-center gap-2 flex-1">
+													<div className='w-44'>
+														<CustomDatePicker
+															value={formData.fromDate}
+															onChange={value => {
+																setFormData({ ...formData, fromDate: value })
+																if (errors.fromDate) {
+																	setErrors({ ...errors, fromDate: null })
+																}
+															}}
+															format='YYYY-MM-DD'
+															placeholder='Выберите дату'
+														/>
+													</div>
+													<OperationCheckbox
+														checked={formData.confirmPayment}
+														onChange={event => setFormData({ ...formData, confirmPayment: event.target.checked })}
+														label="Подтвердить оплату"
 													/>
 												</div>
-												<OperationCheckbox
-													checked={formData.confirmPayment}
-													onChange={event => setFormData({ ...formData, confirmPayment: event.target.checked })}
-													label="Подтвердить оплату"
-												/>
 											</div>
-										</div>
-										{/* Счет и юрлицо */}
-										<div className="flex items-center flex-1">
-											<label className="w-40 text-neutral-700 text-sm">
-												Счет и юрлицо <span className="text-red-500">*</span>
-											</label>
-											<div className="flex-1">
-												<SelectMyAccounts
-													multi={false}
-													type="show"
-													value={formData.fromAccount}
-													selected={formData.toAccount}
-													onChange={value => {
-														setFormData({ ...formData, fromAccount: value })
-														if (errors.fromAccount) {
-															setErrors({ ...errors, fromAccount: null })
-														}
-													}}
-													placeholder="Юрлица и счета"
-													className={"bg-white"}
-												/>
-												{errors.fromAccount && (
-													<span className="text-red-500 text-sm">{errors.fromAccount}</span>
-												)}
-											</div>
-										</div>
-
-										{/* Сумма списания */}
-										<div className="flex items-center flex-1">
-											<label className="w-40 text-neutral-700 text-sm">
-												Сумма списания
-											</label>
-											<div className="flex-1">
-												<div className="flex items-center gap-2">
-													<Input
-														type='text'
-														value={formatAmount(formData.fromAmount)}
-														onChange={e => {
-															setFormData({ ...formData, fromAmount: parseAmount(e.target.value) })
-
-														}}
-														placeholder='0'
-														className={cn(styles.input)}
-													/>
-													{getAccountCurrency(formData.fromAccount) && <div className={styles.currencyDisplay}>
-														{getAccountCurrency(formData.fromAccount)}
-													</div>}
-												</div>
-											</div>
-										</div>
-									</div>
-
-									{/* Секция КУДА */}
-									<div className={styles.formSection}>
-										<div className="flex items-center gap-2">
-											<div className="w-full h-px bg-gray-200"></div>
-											<h3 className="text-neutral-400 text-xs font-medium">КУДА</h3>
-											<div className="w-full h-px bg-gray-200"></div>
-										</div>
-
-										{/* Дата */}
-										<div className="flex items-center flex-1">
-											<label className="w-40 text-neutral-700 text-sm">
-												Дата
-											</label>
-											<div className="w-44">
-												<CustomDatePicker
-													value={formData.toDate}
-													onChange={value => {
-														setFormData({ ...formData, toDate: value })
-														if (errors.toDate) {
-															setErrors({ ...errors, toDate: null })
-														}
-													}}
-													format='YYYY-MM-DD'
-													placeholder='Выберите дату'
-												/>
-												{errors.toDate && <span className="text-red-500 text-sm">{errors.toDate}</span>}
-											</div>
-										</div>
-
-										{/* Счет и юрлицо */}
-										<div className="flex items-center flex-1">
-											<label className="w-40 text-neutral-700 text-sm">
-												Счет и юрлицо <span className="text-red-500">*</span>
-											</label>
-											<div className="flex-1">
-												<SelectMyAccounts
-													multi={false}
-													type="show"
-													value={formData.toAccount}
-													selected={formData.fromAccount}
-													onChange={value => {
-														setFormData({ ...formData, toAccount: value })
-														if (errors.toAccount) {
-															setErrors({ ...errors, toAccount: null })
-														}
-													}}
-													placeholder="Юрлица и счета"
-													className={"bg-white"}
-												/>
-												{errors.toAccount && (
-													<span className="text-red-500 text-sm">{errors.toAccount}</span>
-												)}
-											</div>
-										</div>
-
-										{/* Сумма зачисления */}
-										{!isSameCurrency && (
+											{/* Счет и юрлицо */}
 											<div className="flex items-center flex-1">
 												<label className="w-40 text-neutral-700 text-sm">
-													Сумма зачисления <span className="text-red-500">*</span>
+													Счет и юрлицо <span className="text-red-500">*</span>
+												</label>
+												<div className="flex-1">
+													<SelectMyAccounts
+														multi={false}
+														type="show"
+														value={formData.fromAccount}
+														selected={formData.toAccount}
+														onChange={value => {
+															setFormData({ ...formData, fromAccount: value })
+															if (errors.fromAccount) {
+																setErrors({ ...errors, fromAccount: null })
+															}
+														}}
+														placeholder="Юрлица и счета"
+														className={"bg-white"}
+													/>
+													{errors.fromAccount && (
+														<span className="text-red-500 text-sm">{errors.fromAccount}</span>
+													)}
+												</div>
+											</div>
+
+											{/* Сумма списания */}
+											<div className="flex items-center flex-1">
+												<label className="w-40 text-neutral-700 text-sm">
+													Сумма списания
 												</label>
 												<div className="flex-1">
 													<div className="flex items-center gap-2">
 														<Input
 															type='text'
-															value={formatAmount(formData.toAmount)}
+															value={formatAmount(formData.fromAmount)}
 															onChange={e => {
-																setFormData({ ...formData, toAmount: parseAmount(e.target.value) })
-																if (errors.toAmount) {
-																	setErrors({ ...errors, toAmount: null })
-																}
+																setFormData({ ...formData, fromAmount: parseAmount(e.target.value) })
+
 															}}
 															placeholder='0'
-															className={cn(styles.input, errors.toAmount && styles.error)}
+															className={cn(styles.input)}
 														/>
-														{getAccountCurrency(formData.toAccount) && <div className={styles.currencyDisplay}>
-															{getAccountCurrency(formData.toAccount)}
+														{getAccountCurrency(formData.fromAccount) && <div className={styles.currencyDisplay}>
+															{getAccountCurrency(formData.fromAccount)}
 														</div>}
 													</div>
-													{errors.toAmount && (
-														<span className="text-red-500 text-sm">{errors.toAmount}</span>
+												</div>
+											</div>
+										</div>
+
+										{/* Секция КУДА */}
+										<div className={styles.formSection}>
+											<div className="flex items-center gap-2">
+												<div className="w-full h-px bg-gray-200"></div>
+												<h3 className="text-neutral-400 text-xs font-medium">КУДА</h3>
+												<div className="w-full h-px bg-gray-200"></div>
+											</div>
+
+											{/* Дата */}
+											<div className="flex items-center flex-1">
+												<label className="w-40 text-neutral-700 text-sm">
+													Дата
+												</label>
+												<div className="w-44">
+													<CustomDatePicker
+														value={formData.toDate}
+														onChange={value => {
+															setFormData({ ...formData, toDate: value })
+															if (errors.toDate) {
+																setErrors({ ...errors, toDate: null })
+															}
+														}}
+														format='YYYY-MM-DD'
+														placeholder='Выберите дату'
+													/>
+													{errors.toDate && <span className="text-red-500 text-sm">{errors.toDate}</span>}
+												</div>
+											</div>
+
+											{/* Счет и юрлицо */}
+											<div className="flex items-center flex-1">
+												<label className="w-40 text-neutral-700 text-sm">
+													Счет и юрлицо <span className="text-red-500">*</span>
+												</label>
+												<div className="flex-1">
+													<SelectMyAccounts
+														multi={false}
+														type="show"
+														value={formData.toAccount}
+														selected={formData.fromAccount}
+														onChange={value => {
+															setFormData({ ...formData, toAccount: value })
+															if (errors.toAccount) {
+																setErrors({ ...errors, toAccount: null })
+															}
+														}}
+														placeholder="Юрлица и счета"
+														className={"bg-white"}
+													/>
+													{errors.toAccount && (
+														<span className="text-red-500 text-sm">{errors.toAccount}</span>
 													)}
 												</div>
 											</div>
-										)}
 
-										{/* Назначение платежа */}
-										<div className="flex items-start flex-1">
-											<label className="w-40 text-neutral-700 text-sm" style={{ paddingTop: '0.5rem' }}>
-												Назначение платежа <span className="text-red-500">*</span>
-											</label>
-											<div className="flex-1">
-												<TextArea
-													value={formData.purpose}
-													onChange={e => {
-														setFormData({ ...formData, purpose: e.target.value })
-														if (errors.purpose) {
-															setErrors({ ...errors, purpose: null })
-														}
-													}}
-													placeholder='Назначение платежа'
-													rows={3}
-													className={cn(styles.textarea, errors.purpose && styles.error)}
-												/>
-												{errors.purpose && (
-													<span className="text-red-500 text-sm">{errors.purpose}</span>
-												)}
+											{/* Сумма зачисления */}
+											{!isSameCurrency && (
+												<div className="flex items-center flex-1">
+													<label className="w-40 text-neutral-700 text-sm">
+														Сумма зачисления <span className="text-red-500">*</span>
+													</label>
+													<div className="flex-1">
+														<div className="flex items-center gap-2">
+															<Input
+																type='text'
+																value={formatAmount(formData.toAmount)}
+																onChange={e => {
+																	setFormData({ ...formData, toAmount: parseAmount(e.target.value) })
+																	if (errors.toAmount) {
+																		setErrors({ ...errors, toAmount: null })
+																	}
+																}}
+																placeholder='0'
+																className={cn(styles.input, errors.toAmount && styles.error)}
+															/>
+															{getAccountCurrency(formData.toAccount) && <div className={styles.currencyDisplay}>
+																{getAccountCurrency(formData.toAccount)}
+															</div>}
+														</div>
+														{errors.toAmount && (
+															<span className="text-red-500 text-sm">{errors.toAmount}</span>
+														)}
+													</div>
+												</div>
+											)}
+
+											{/* Назначение платежа */}
+											<div className="flex items-start flex-1">
+												<label className="w-40 text-neutral-700 text-sm" style={{ paddingTop: '0.5rem' }}>
+													Назначение платежа <span className="text-red-500">*</span>
+												</label>
+												<div className="flex-1">
+													<TextArea
+														value={formData.purpose}
+														onChange={e => {
+															setFormData({ ...formData, purpose: e.target.value })
+															if (errors.purpose) {
+																setErrors({ ...errors, purpose: null })
+															}
+														}}
+														placeholder='Назначение платежа'
+														rows={3}
+														className={styles.textarea}
+														hasError={!!errors.purpose}
+													/>
+													{errors.purpose && (
+														<span className="text-red-500 text-sm">{errors.purpose}</span>
+													)}
+												</div>
 											</div>
 										</div>
-									</div>
-								</>
-							)}
+									</>
+								)}
 
-							{/* Начисление */}
-
+							</div>
 						</div>
-					</div>
 
-					{/* Footer */}
-					<div className={styles.footer}>
-						<button className='secondary-btn' onClick={onClose}>
-							Отмена
-						</button>
-						<button className='primary-btn' onClick={handleSubmit} disabled={isSubmitting}>
-							{isSubmitting ? <Loader /> : isNew ? 'Создать' : 'Сохранить'}
-						</button>
-					</div>
+						{/* Footer */}
+						<div className={styles.footer}>
+							<button className='secondary-btn' onClick={onClose}>
+								Отмена
+							</button>
+							<button className='primary-btn' onClick={handleSubmit} disabled={isSubmitting}>
+								{isSubmitting ? <Loader /> : isNew ? 'Создать' : 'Сохранить'}
+							</button>
+						</div>
+					</>}
 
+					{activeTab === 'accrual' && (
+						<AccuralForm
+							onCancel={onClose}
+							onSuccess={() => {
+								onClose();
+							}}
+						/>
+					)}
 				</div>
-				{activeTab === 'accrual' && (
-					<AccuralForm
-						onCancel={onClose}
-						onSuccess={() => {
-							onClose();
-						}}
-					/>
-				)}
 				{isAttachmentsOpen && <div className={cn(styles.messageContent, isAttachmentsOpen && styles.open)}>
 					<div className={styles.filesAttachWrap}>
 						<div className={styles.filesAttachCollapseWrp}>

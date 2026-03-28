@@ -122,6 +122,7 @@ export default function CreateAccountGroupModal({ isOpen, onClose, editingGroup 
                   onChange={(e) => setFormData({ ...formData, opisanie_gruppy: e.target.value })}
                   placeholder="Введите описание группы"
                   rows={4}
+                  hasError={!!errors.opisanie_gruppy}
                 />
               </div>
             </div>

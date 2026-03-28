@@ -325,6 +325,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
                 className={styles.textArea}
                 rows={4}
                 value={formData.comment}
+                hasError={false}
                 onChange={e => handleFieldChange('comment', e.target.value)}
               />
             </div>

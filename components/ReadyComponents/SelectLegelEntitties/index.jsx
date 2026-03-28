@@ -3,7 +3,7 @@ import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 
-const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите юрлицо", className, dropdownClassName, multi = false }) => {
+const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите юрлицо", className, dropdownClassName, multi = false, hasError }) => {
 
   const { data: legalEntitiesData, isLoading } = useUcodeRequestQuery({
     method: "get_legal_entities",
@@ -33,6 +33,7 @@ const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите
       placeholder={placeholder}
       className={className}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

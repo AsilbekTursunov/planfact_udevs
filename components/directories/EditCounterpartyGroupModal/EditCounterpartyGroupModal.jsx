@@ -132,6 +132,7 @@ export default function EditCounterpartyGroupModal({ isOpen, onClose, group }) {
                   placeholder="Введите описание группы"
                   className={styles.textarea}
                   rows={4}
+                  hasError={!!errors.opisanie_gruppy}
                 />
               </div>
             </div>

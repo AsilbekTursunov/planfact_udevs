@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import MultiSelect from '@/components/shared/Selects/MultiSelect'
 import { useCounterpartiesPlanFact } from '@/hooks/useDashboard'
 
-const SelectCounterParties = ({ value = [], onChange, placeholder = "Выберите контрагентов", dropdownClassName, className }) => {
+const SelectCounterParties = ({ value = [], onChange, placeholder = "Выберите контрагентов", dropdownClassName, className, hasError }) => {
   const { data: counterpartiesFilterData, isLoading } = useCounterpartiesPlanFact({
     page: 1,
     limit: 1000,
@@ -27,6 +27,7 @@ const SelectCounterParties = ({ value = [], onChange, placeholder = "Выбер�
       className={className}
       placeholder={actualPlaceholder}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

@@ -4,6 +4,7 @@ import { cn } from '@/app/lib/utils'
 const Input = forwardRef(({
   className,
   error,
+  hasError,
   type = 'text',
   action = 'default',
   leftIcon,
@@ -25,7 +26,7 @@ const Input = forwardRef(({
           "placeholder:text-gray-400 placeholder:opacity-100",
           "focus:outline-none focus:border-gray-400",
           "disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed",
-          error && "border-red-500 focus:ring-1 focus:ring-red-500 focus:border-red-500",
+          (error || hasError) && "border-red-ucode! border-2!",
           action === 'filter' && "bg-slate-50",
           leftIcon && "pl-9",
           rightIcon && "pr-9",

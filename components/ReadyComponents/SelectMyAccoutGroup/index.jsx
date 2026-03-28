@@ -3,7 +3,7 @@ import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 
-const SelectMyAccoutGroup = ({ value, onChange, placeholder = "Выберите группу", className, dropdownClassName, multi = false }) => {
+const SelectMyAccoutGroup = ({ value, onChange, placeholder = "Выберите группу", className, dropdownClassName, multi = false, hasError }) => {
 
   const { data: groupsData, isLoading } = useUcodeRequestQuery({
     method: "get_account_groups",
@@ -37,6 +37,7 @@ const SelectMyAccoutGroup = ({ value, onChange, placeholder = "Выберите 
       placeholder={placeholder}
       className={className}
       dropdownClassName={dropdownClassName}
+      hasError={hasError}
     />
   )
 }

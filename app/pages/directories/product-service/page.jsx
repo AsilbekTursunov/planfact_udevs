@@ -404,10 +404,10 @@ export default function LegalEntitiesPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 ">
-            <button className="outline-btn flex items-center gap-2 bg-white p-2 ">
+            {/* <button className="outline-btn flex items-center gap-2 bg-white p-2 ">
               <Download size={16} />
               <span>.xls</span>
-            </button>
+            </button> */}
             <div className="w-32 h-10">
               <Select
                 instanceId="product-service-type-filter"

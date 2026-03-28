@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useCounterpartiesGroupsPlanFact } from '../../../hooks/useDashboard'
 import TreeSelect from '../../shared/Selects/TreeSelect'
 
-const SingleSelectTreeCounterparties = ({ selectedValue, setSelectedValue, placeholder = 'Выберите контрагента...', className, dropdownClassName }) => {
+const SingleSelectTreeCounterparties = ({ selectedValue, setSelectedValue, placeholder = 'Выберите контрагента...', className, dropdownClassName, hasError }) => {
 
   const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
     page: 1,
@@ -49,6 +49,7 @@ const SingleSelectTreeCounterparties = ({ selectedValue, setSelectedValue, place
     onChange={setSelectedValue}
     className={className}
     dropdownClassName={dropdownClassName}
+    hasError={hasError}
   />
 }
 
