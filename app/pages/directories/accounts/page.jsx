@@ -114,6 +114,7 @@ export default observer(function AccountsPage() {
     }
   })
 
+
   const { mutateAsync: deleteGroupMutate, isPending: isPendingDeleteGroup } = useUcodeRequestMutation({
     mutationSetting: {
       onSuccess: () => {
@@ -164,6 +165,8 @@ export default observer(function AccountsPage() {
     if (Array.isArray(rawData?.data)) return rawData.data
     return []
   }, [bankAccountsData])
+
+
   // Filter bank accounts on frontend if needed
   const filteredBankAccountsItems = useMemo(() => {
     if (selectedGrouping !== 'none') return dataArray // Grouping handled by backend
@@ -330,8 +333,6 @@ export default observer(function AccountsPage() {
   }
 
 
-  console.log('deletingAccount', deletingAccount)
-  console.log('editingGroup', editingGroup)
 
   return (
     <div className={styles.container}>
@@ -434,6 +435,7 @@ export default observer(function AccountsPage() {
                   ]}
                   value={selectedGrouping}
                   withSearch={false}
+                  isClearable={false}
                   className={'bg-white w-44'}
                   onChange={setSelectedGrouping} />
                 <Input
@@ -602,7 +604,7 @@ export default observer(function AccountsPage() {
         <div className={cn(styles.footer, isFilterOpen && styles.footerWithFilter)}>
           <div className={styles.footerText}>
             <span className={styles.footerTextBold}>
-              {filteredBankAccountsItems.length} {filteredBankAccountsItems.length === 1 ? 'счет' : filteredBankAccountsItems.length < 5 ? 'счета' : 'счетов'}
+              {bankAccountsData?.data?.total} {'счетов'}
             </span>
           </div>
           <div className={styles.footerTextMuted}>

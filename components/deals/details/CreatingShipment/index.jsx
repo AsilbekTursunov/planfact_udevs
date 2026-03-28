@@ -260,7 +260,6 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
 
   if (!open) return null
 
-  console.log('rows', rows)
 
   return (
     <>
