@@ -11,8 +11,8 @@ const TreeNode = ({ node, level = 0, selectedValue, onSelect, multi }) => {
     <div className='flex flex-col w-full'>
       <div
         className={cn(
-          "w-full px-4 py-2 hover:bg-neutral-50 flex items-center justify-between text-xs transition-colors",
-          isSelectable ? "cursor-pointer text-xs" : "cursor-default text-neutral-700",
+          "w-full px-4 py-2 hover:bg-neutral-50 flex items-center justify-between text-xss transition-colors",
+          isSelectable ? "cursor-pointer" : "cursor-default text-neutral-700",
           node.bold && "font-bold",
           isSelected && "bg-neutral-100/60"
         )}
@@ -194,7 +194,7 @@ const TreeSelect = ({
           setOpen(!open)
         }}
       >
-        <span className={cn('text-gray-ucode-400 text-start line-clamp-1 font-normal text-xs', (multi && value?.length > 0) || (!multi && value) && 'text-gray-ucode-800', isPlaceholder && 'text-gray-ucode-400')}>{getSelectedLabel()}</span>
+        <span className={cn('text-gray-ucode-400 text-start line-clamp-1 font-normal text-xss!', (multi && value?.length > 0) || (!multi && value) && 'text-gray-ucode-800', isPlaceholder && 'text-gray-ucode-400')}>{getSelectedLabel()}</span>
         <div className="flex items-center">
           {isClearable && ((multi && value?.length > 0) || (!multi && value)) && (
             <div

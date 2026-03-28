@@ -103,7 +103,7 @@ const MultiSelect = ({
           setOpen(!open)
         }}
       >
-        <span className={cn('text-gray-ucode-400 text-start line-clamp-1 font-normal text-xs', value.length > 0 && 'text-gray-ucode-800')}>{getSelectedLabel()}</span>
+        <span className={cn('text-gray-ucode-400 text-start line-clamp-1 font-normal text-xss', value.length > 0 && 'text-gray-ucode-800')}>{getSelectedLabel()}</span>
         <div className="flex items-center">
           {isClearable && value?.length > 0 && (
             <div
@@ -164,7 +164,7 @@ const MultiSelect = ({
                     <div
                       key={node.value}
                       className={cn(
-                        "w-full px-4 py-2 hover:bg-neutral-50 flex items-center justify-between text-xs transition-colors cursor-pointer",
+                        "w-full px-4 py-2 hover:bg-neutral-50 flex items-center justify-between text-xss transition-colors cursor-pointer",
                         isSelected && "bg-neutral-100/60"
                       )}
                       onClick={(e) => {

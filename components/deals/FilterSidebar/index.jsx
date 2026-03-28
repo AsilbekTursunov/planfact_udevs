@@ -17,8 +17,13 @@ const statusOptions = [
   { value: 'Завершена', label: 'Завершена' }
 ]
 
-const FilterSidebar = observer(() => {
+const FilterSidebar = observer(({ onOpenChange }) => {
   const [isOpen, setIsOpen] = useState(true)
+
+  const toggleOpen = (val) => {
+    setIsOpen(val)
+    onOpenChange?.(val)
+  }
 
 
   const filters = sealDeal.filters
@@ -81,7 +86,7 @@ const FilterSidebar = observer(() => {
             </div>
           )}
         </div>
-        <button onClick={() => setIsOpen(!isOpen)} className={cn("text-neutral-600 cursor-pointer hover:text-neutral-900", isOpen ? "" : "transform rotate-180 transition-all duration-300")}>
+        <button onClick={() => toggleOpen(!isOpen)} className={cn("text-neutral-600 cursor-pointer hover:text-neutral-900", isOpen ? "" : "transform rotate-180 transition-all duration-300")}>
           <ArrowLeftToLine size={18} className="text-primary" />
         </button>
       </div>

@@ -22,6 +22,7 @@ import OperationCheckbox from '../../../components/shared/Checkbox/operationChec
 import { useQueryClient } from '@tanstack/react-query'
 import operationsDto from '../../../lib/dtos/operationsDto'
 import { OperationsFooter } from '../../../components/operations/OperationsFooter/OperationsFooter'
+import ScreenLoader from '../../../components/shared/ScreenLoader'
 
 const OperationsPage = observer(() => {
 	const [isModalClosing, setIsModalClosing] = useState(false)
@@ -162,7 +163,6 @@ const OperationsPage = observer(() => {
 		hasNextPage,
 		isFetchingNextPage,
 		isLoading: isLoadingOperations,
-		isFetching
 	} = useUcodeRequestInfinite({
 		method: 'find_operations',
 		data: requestOperationFilters,
@@ -470,24 +470,8 @@ const OperationsPage = observer(() => {
 
 				{/* Table */}
 				<div className={styles.tableArea} style={{ position: 'relative' }}>
-					{/* Refetch overlay spinner */}
-					{isFetching && !isLoadingOperations && (
-						<div style={{
-							position: 'absolute',
-							top: 0,
-							left: 0,
-							right: 0,
-							bottom: 0,
-							background: 'rgba(255,255,255,0.55)',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							zIndex: 30,
-							borderRadius: '4px',
-						}}>
-							<div className={styles.loadingSpinner} style={{ width: 28, height: 28, borderWidth: 3 }} />
-						</div>
-					)}
+					{/* Refetch overlay spinner isLoadingOperations */}
+					{isLoadingOperations && <ScreenLoader className={'left-0!'} />}
 					{/* Selection Bar */}
 					{selectedOperations.length > 0 && (
 						<div className={styles.selectionBar}>
@@ -570,45 +554,27 @@ const OperationsPage = observer(() => {
 								</tr>
 							</thead>
 							<tbody style={{ backgroundColor: 'white' }}>
-								{isLoadingOperations ? (
-									<tr className={styles.emptyRow}>
-										<td colSpan='9' className={styles.emptyCell}>
-											<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem' }}>
-												<div className={styles.loadingSpinner} />
-												<span>Загрузка данных...</span>
-											</div>
-										</td>
-									</tr>
-								) : allOperations.length === 0 ? (
+								{allOperations.length === 0 && !isLoadingOperations ? (
 									<tr className={styles.emptyRow}>
 										<td colSpan='9' className={styles.emptyCell}>
 											Нет данных
 										</td>
 									</tr>
 								) : (
-											<>
+										<>
 
-												{/* future */}
-												{/* {operationsList?.future?.length > 0 && (
-													<tr className={styles.sectionHeader}>
-														<td colSpan='9' className={styles.sectionHeaderCell}>
-															<h3 className={styles.sectionHeaderTitle}>Будущие</h3>
-														</td>
-													</tr>
-												)} */}
-
-												{operationsList?.future?.map(op => (
-													<OperationTableRow
-														key={op.guid}
-														op={op}
-														selectedOperations={selectedOperations}
-														toggleOperation={toggleOperation}
-														openOperationModal={openOperationModal}
-														handleEditOperation={handleEditOperation}
-														handleDeleteOperation={handleDeleteOperation}
-														handleCopyOperation={handleCopyOperation}
-													/>
-												))}
+											{operationsList?.future?.map(op => (
+												<OperationTableRow
+													key={op.guid}
+													op={op}
+													selectedOperations={selectedOperations}
+													toggleOperation={toggleOperation}
+													openOperationModal={openOperationModal}
+													handleEditOperation={handleEditOperation}
+													handleDeleteOperation={handleDeleteOperation}
+													handleCopyOperation={handleCopyOperation}
+												/>
+											))}
 
 										{/* Сегодня - Section Header */}
 										{operationsList?.today?.length > 0 && (

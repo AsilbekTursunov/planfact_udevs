@@ -23,6 +23,7 @@ import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks
 import Input from '../../../../components/shared/Input'
 import GroupMyAccounts from '../../../../components/ReadyComponents/GroupMyAccouts'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
+import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 export default observer(function AccountsPage() {
   // Block body scroll for this page only
@@ -496,7 +497,7 @@ export default observer(function AccountsPage() {
                         return (
                           <React.Fragment key={item.guid}>
                             <tr
-                              className="hover:bg-neutral-50 bg-neutral-50/50 font-medium cursor-pointer border-b border-gray-200 h-12"
+                              className="hover:bg-neutral-50 bg-neutral-50/50  font-medium text-xs! cursor-pointer border-b border-gray-200 h-12"
                               onClick={() => toggleGroup(item.guid)}
                             >
                               <td className="p-2 text-center">
@@ -512,20 +513,20 @@ export default observer(function AccountsPage() {
                                   >
                                     {isExpanded ? <ExpendClose /> : <ExpendOpen />}
                                   </button>
-                                  <span className="text-sm font-medium text-slate-900">{item.name}</span>
+                                  <span className=" text-slate-900">{item.name}</span>
                                   {item.items_count !== undefined ? (
-                                    <span className="ml-1 text-xs text-neutral-400 font-normal">({item.items_count})</span>
+                                    <span className="ml-1  text-neutral-400">({item.items_count})</span>
                                   ) : item.items?.length > 0 && (
-                                    <span className="ml-1 text-xs text-neutral-400 font-normal">({item.items.length})</span>
+                                    <span className="ml-1  text-neutral-400 ">({item.items.length})</span>
                                   )}
                                 </div>
                               </td>
                               {/* Group summary columns if needed, else empty */}
-                              <td className="p-2 text-sm text-[#0f172a] font-medium text-nowrap">
-                                {item.total_balance !== undefined ? `${item.total_balance.toLocaleString('ru-RU')} ₽` : ''}
+                              <td className="p-2 text-nowrap">
+                                {item.total_balance !== undefined ? `${item.total_balance.toLocaleString('ru-RU')}  ${GlobalCurrency}` : ''}
                               </td>
-                              <td className="p-2 text-sm text-[#0f172a] font-medium text-nowrap">
-                                {item.total_balance !== undefined ? `${item.total_balance.toLocaleString('ru-RU')} ₽` : ''}
+                              <td className="p-2 text-nowrap">
+                                {item.total_balance !== undefined ? `${item.total_balance.toLocaleString('ru-RU')}  ${GlobalCurrency}` : ''}
                               </td>
                               <td className="p-2"></td>
                               <td className="p-2"></td>
@@ -611,11 +612,15 @@ export default observer(function AccountsPage() {
             {isLoadingBankAccounts ? (
               'Загрузка...'
             ) : (
-              <>
-                Текущий остаток: <span className={styles.footerTextBold}>
+                <div className='flex items-center gap-1 text-xs'>
+                  <p>Текущий остаток:</p>
+                  <span className={styles.footerTextBold}>
                   {totalCurrentBalance.toLocaleString('ru-RU')}
                 </span>
-              </>
+                  <span>
+                    {GlobalCurrency}
+                  </span>
+                </div>
             )}
           </div>
         </div>

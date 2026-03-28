@@ -4,22 +4,30 @@ import { makePersistable } from "mobx-persist-store";
 
 class AppStore {
   isPayment = false
+  currency = {
+    name: 'UZS',
+    guid: ''
+  }
 
   constructor() {
-    makeAutoObservable(this); 
+    makeAutoObservable(this);
     if (typeof window !== 'undefined') {
       makePersistable(this, {
         name: "plan_fact_app",
-        properties: ["isPayment"],
+        properties: ["isPayment", "currency"],
         storage: window.localStorage,
         debugMode: true,
       });
-      
+
     }
   }
 
   setIsPayment(value) {
     this.isPayment = value;
+  }
+
+  setCurrency(value) {
+    this.currency = value;
   }
 
 

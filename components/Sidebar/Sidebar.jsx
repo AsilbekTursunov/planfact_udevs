@@ -13,6 +13,7 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import { IoSettingsOutline } from 'react-icons/io5'
 
 const navItems = [
     { icon: RefreshCw, label: 'Операции', href: '/pages/operations', hasPage: true },
@@ -42,12 +43,12 @@ const navItems = [
             { label: 'Товары & Услуги', href: '/pages/directories/product-service', hasPage: true }
         ]
     },
-    // {
-    //     icon: IoSettingsOutline,
-    //     label: 'Настройки',
-    //     href: '/pages/settings',
-    //     hasPage: true,
-    // },
+    {
+        icon: IoSettingsOutline,
+        label: 'Настройки',
+        href: '/pages/settings',
+        hasPage: true,
+    },
 ]
 
 export function Sidebar() {

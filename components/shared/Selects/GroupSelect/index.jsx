@@ -135,7 +135,7 @@ const GroupSelect = ({
       >
         {/* x button to delete selected */}
 
-        <span className={cn('text-gray-ucode-400 text-start line-clamp-1 text-xs', value.length > 0 && 'text-gray-ucode-800')}>
+        <span className={cn('text-gray-ucode-400 text-start line-clamp-1 text-xss', value.length > 0 && 'text-gray-ucode-800')}>
           {value.length > 0 ? `Выбрано: ${value.length}` : placeholder}
         </span>
         <div className="flex items-center">
@@ -198,7 +198,7 @@ const GroupSelect = ({
                     <div key={groupName} className='flex flex-col'>
                       {/* Group Header */}
                       <div
-                        className='px-2 py-2 text-sm font-medium text-neutral-900 bg-neutral-50/50 hover:bg-neutral-50 cursor-pointer flex items-center justify-between group'
+                        className='px-2 py-2 text-xss font-medium text-neutral-900 bg-neutral-50/50 hover:bg-neutral-50 cursor-pointer flex items-center justify-between group'
                         onClick={() => toggleGroup(items)}
                       >
                         <span>{groupName}</span>
@@ -212,7 +212,7 @@ const GroupSelect = ({
                           return (
                             <div
                               key={item.value}
-                              className='pl-8 pr-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 cursor-pointer flex items-center justify-between'
+                              className='pl-8 pr-4 py-2 text-xs text-neutral-700 hover:bg-neutral-100 cursor-pointer flex items-center justify-between'
                               onClick={() => toggleItem(item.value)}
                             >
                               <span>{item.label}</span>

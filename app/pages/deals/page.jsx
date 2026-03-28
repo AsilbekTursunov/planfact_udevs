@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import debounce from 'lodash/debounce';
+import { cn } from '@/app/lib/utils';
 import styles from './deals.module.scss';
 import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
 import { useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard';
@@ -21,6 +22,7 @@ import { sealDeal } from '../../../store/saleDeal.store';
 import CreateStudentModal from '../../../components/deals/CreateStudentModal';
 import SingleSelect from '../../../components/shared/Selects/SingleSelect';
 import ScreenLoader from '../../../components/shared/ScreenLoader';
+import { GlobalCurrency } from '../../../constants/globalCurrency';
 
 export default observer(function DealsPage() {
   const router = useRouter();
@@ -43,6 +45,7 @@ export default observer(function DealsPage() {
   const [dealToEdit, setDealToEdit] = useState(null);
   const [dealToCopy, setDealToCopy] = useState(null);
   const [showCreateStudentModal, setShowCreateStudentModal] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(true);
 
   const queryClient = useQueryClient();
   const [selectedDeals, setSelectedDeals] = useState(new Set());
@@ -198,7 +201,7 @@ export default observer(function DealsPage() {
 
   return (
     <div className="flex overflow-hidden w-full">
-      <FilterSidebar />
+      <FilterSidebar onOpenChange={setIsFilterOpen} />
       <main className="p-4 flex-1 relative overflow-y-auto scroll-smooth">
         <header className="flex items-center justify-between mb-4 sticky top-[-16px] bg-white z-20 pt-4">
           <div className="flex items-center gap-2 flex-1">
@@ -260,17 +263,27 @@ export default observer(function DealsPage() {
                 <th className='px-2 text-start'>Название</th>
                 <th className='px-2 text-start'>Клиент</th>
                 <th className='px-2 text-start'>Статус</th>
-                <th className='px-2 text-start'>Сумма сделки</th>
+                <th className='px-2 text-start'>
+                  <div className='flex items-center gap-1'>
+                    <p>Сумма сделки</p>
+                    <p>{GlobalCurrency}</p>
+                  </div>
+                </th>
                 <th className='px-2 text-start'>Поступило</th>
                 <th className='px-2 text-start'>Отгружено</th>
-                <th className='px-2  text-end w-44'>Прибыль</th>
+                <th className='px-2  text-end w-44'>
+                  <div className='flex items-center gap-1'>
+                    <p>Прибыль</p>
+                    <p>{GlobalCurrency}</p>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
               {formattedDeals?.map(deal => {
                 const price = dealsMethod === 'accrual_method' ? deal?.accrual_method?.profit : deal?.cash_method?.profit
                 return (
-                  <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 h-12 border-b border-neutral-100 group cursor-pointer'>
+                  <tr key={deal.guid} onClick={(e) => handleRowClick(deal, e)} className='hover:bg-neutral-50 h-12 border-b border-neutral-100 group cursor-pointer text-xs!'>
                     <td className="w-10" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center">
                         <OperationCheckbox
@@ -287,8 +300,8 @@ export default observer(function DealsPage() {
                     </td>
                     <td>
                       <div className="flex flex-col">
-                        <p>{deal.nazvanie}</p>
-                        <p className='text-xs text-neutral-400'>{deal.comment}</p>
+                        <p className=''>{deal.nazvanie}</p>
+                        <p className='text-neutral-400'>{deal.comment}</p>
                       </div>
                     </td>
                     <td>{deal?.partner_name || '-'}</td>
@@ -327,20 +340,30 @@ export default observer(function DealsPage() {
           </table>
         </div>
 
-        <footer className={[styles.footer]}>
-          <div className={styles.footerContent}>
-            <span className={styles.footerItem}>
-              <span className={styles.footerLabel}>{deals?.summary?.count || 0} сделок на сумму:</span>
-              <span className={styles.footerAmount}>{formatAmount(deals?.summary?.total_deals_sum || 0)}</span>
-            </span>
-            <span className={styles.footerItem}>
-              <span className={styles.footerLabel}>Общая прибыль:</span>
-              <span className={styles.footerProfit}>{formatAmount(totalProfit)}</span>
-            </span>
-          </div>
-        </footer>
         {isFetching && <ScreenLoader className={'left-0!'} />}
       </main>
+
+      {/* Fixed Footer */}
+      <footer className={cn(
+        'fixed bottom-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex items-center gap-6 z-10 transition-[left] duration-300',
+        isFilterOpen ? 'left-[338px]' : 'left-[123px]'
+      )}>
+        <span className="flex items-center gap-1.5">
+          <span className="text-[11px] text-gray-500 font-medium">{deals?.summary?.count || 0} сделок на сумму:</span>
+          <span className="text-xs font-semibold text-slate-900">{formatAmount(deals?.summary?.total_deals_sum || 0)}</span>
+          <span className="text-xs font-semibold text-slate-900">{GlobalCurrency}</span>
+        </span>
+        <div className="w-px h-5 bg-gray-200 shrink-0" />
+        <span className="flex items-center gap-1.5">
+          <span className="text-[11px] text-gray-500 font-medium">Общая прибыль:</span>
+          <span className={cn(
+            'text-xs font-semibold',
+            totalProfit > 0 ? 'text-emerald-500' : totalProfit < 0 ? 'text-red-500' : 'text-slate-900'
+          )}>{formatAmount(totalProfit)}</span>
+          <span className="text-xs font-semibold text-slate-900">{GlobalCurrency}</span>
+        </span>
+      </footer>
+
 
 
       <CreateStudentModal

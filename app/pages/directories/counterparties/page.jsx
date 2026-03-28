@@ -35,6 +35,8 @@ import counterpartiesStore from '@/store/counterparties.store'
 import { observer } from 'mobx-react-lite'
 import MultiSelectZdelka from '../../../../components/ReadyComponents/MultiZdelka'
 import SelectLegelEntitties from '../../../../components/ReadyComponents/SelectLegelEntitties'
+import { GlobalCurrency } from '../../../../constants/globalCurrency'
+import { formatAmount } from '../../../../utils/helpers'
 
 const CounterpartiesPage = observer(() => {
 
@@ -135,6 +137,13 @@ const CounterpartiesPage = observer(() => {
     legalEntitiesId: filters.selectedLegalEntities,
     searchString: viewMode === 'list' ? debouncedSearchQuery : '',
   }, true) // Always enable the query
+
+  const SummaryTotal = useMemo(() => {
+    if (!counterpartiesData?.data?.data?.data) return {}
+    return counterpartiesData.data.data.summary
+  }, [counterpartiesData])
+
+  console.log('SummaryTotal', SummaryTotal)
 
   // Update counterparties when new data arrives
   useEffect(() => {
@@ -433,24 +442,6 @@ const CounterpartiesPage = observer(() => {
 
 
 
-  // Calculate totals for footer
-  const { totalReceivables, totalPayables, totalIncome, totalExpenses, totalDifference } = useMemo(() => {
-    return flatCounterparties.reduce((acc, item) => {
-      acc.totalReceivables += (item.receivables || 0)
-      acc.totalPayables += (item.payables || 0)
-      acc.totalIncome += (item.debitorka || 0)
-      acc.totalExpenses += (item.kreditorka || 0)
-      return acc
-    }, {
-      totalReceivables: 0,
-      totalPayables: 0,
-      totalIncome: 0,
-      totalExpenses: 0
-    })
-  }, [flatCounterparties])
-
-  const difference = totalIncome - totalExpenses
-
   const [expandedGroups, setExpandedGroups] = useState(new Set())
   const [editingCounterparty, setEditingCounterparty] = useState(null)
   const [deletingCounterparty, setDeletingCounterparty] = useState(null)
@@ -564,25 +555,6 @@ const CounterpartiesPage = observer(() => {
           </div>
         </FilterSection>
 
-        {/* <FilterSection title="Группы контрагентов">
-          <div className="space-y-2.5 flex flex-col items-start">
-            {counterpartiesGroupsItems.map((group) => (
-              <OperationCheckbox
-                key={group.guid}
-                checked={filters.selectedGroups.includes(group.guid)}
-                onChange={() => {
-                  setFilters(prev => {
-                    const newGroups = prev.selectedGroups.includes(group.guid)
-                      ? prev.selectedGroups.filter(g => g !== group.guid)
-                      : [...prev.selectedGroups, group.guid]
-                    return { ...prev, selectedGroups: newGroups }
-                  })
-                }}
-                label={group.nazvanie_gruppy || 'Без названия'}
-              />
-            ))}
-          </div>
-        </FilterSection> */}
       </FilterSidebar>
 
       {/* Filter Toggle Bar */}
@@ -716,7 +688,7 @@ const CounterpartiesPage = observer(() => {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={`${styles.tableHeaderButton} ${styles.debitColumn} ${styles.column}`}>
-                      Дебиторка ₽
+                      Дебиторка <span className='text-mini'>{GlobalCurrency}</span>
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -724,7 +696,7 @@ const CounterpartiesPage = observer(() => {
                   </th>
                   <th className={styles.tableHeaderCell}>
                     <button className={`${styles.tableHeaderButton} ${styles.creditColumn} ${styles.column}`}>
-                      Кредиторка ₽
+                      Кредиторка <span className='text-mini'>{GlobalCurrency}</span>
                       <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -734,7 +706,7 @@ const CounterpartiesPage = observer(() => {
                     <>
                       <th className={styles.tableHeaderCell}>
                         <button className={`${styles.tableHeaderButton} ${styles.incomeColumn} ${styles.column}`}>
-                          Поступления ₽
+                          Поступления <span className='text-mini'>{GlobalCurrency}</span>
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
@@ -742,7 +714,7 @@ const CounterpartiesPage = observer(() => {
                       </th>
                       <th className={styles.tableHeaderCell}>
                         <button className={`${styles.tableHeaderButton} ${styles.expensesColumn} ${styles.column}`}>
-                          Выплаты ₽
+                          Выплаты <span className='text-mini'>{GlobalCurrency}</span>
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
@@ -750,7 +722,7 @@ const CounterpartiesPage = observer(() => {
                       </th>
                       <th className={styles.tableHeaderCell}>
                         <button className={`${styles.tableHeaderButton} ${styles.profitColumn} ${styles.column}`}>
-                          Разница ₽
+                          Разница <span className='text-mini'>{GlobalCurrency}</span>
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
@@ -761,7 +733,7 @@ const CounterpartiesPage = observer(() => {
                     <>
                       <th className={styles.tableHeaderCell}>
                           <button className={`${styles.tableHeaderButton} ${styles.incomeColumn} ${styles.column}`}>
-                          Доходы ₽
+                            Доходы <span className='text-mini'>{GlobalCurrency}</span>
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
@@ -769,7 +741,7 @@ const CounterpartiesPage = observer(() => {
                       </th>
                       <th className={styles.tableHeaderCell}>
                           <button className={`${styles.tableHeaderButton} ${styles.expensesColumn} ${styles.column}`}>
-                          Расходы ₽
+                            Расходы <span className='text-mini'>{GlobalCurrency}</span>
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
@@ -777,7 +749,7 @@ const CounterpartiesPage = observer(() => {
                       </th>
                       <th className={styles.tableHeaderCell}>
                           <button className={`${styles.tableHeaderButton} ${styles.profitColumn} ${styles.column}`}>
-                          Прибыль ₽
+                            Прибыль <span className='text-mini'>{GlobalCurrency}</span>
                           <svg className={styles.tableHeaderIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
@@ -1022,62 +994,71 @@ const CounterpartiesPage = observer(() => {
         )}
 
         {/* Footer */}
-        <div className={cn(styles.footer, isFilterOpen && styles.footerWithFilter)}>
-          <div className={styles.footerText}>
-            <span className={styles.footerTextBold}>
+        <div className={cn(
+          'fixed bottom-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex items-center gap-8 shrink-0 z-10  transition-[left] duration-300',
+          isFilterOpen ? 'left-[313px]' : 'left-[83px]'
+        )}>
+          <div className="text-sm text-slate-900">
+            <span className="font-semibold text-slate-900 whitespace-nowrap">
               {totalFromAPI} {totalFromAPI === 1 ? 'контрагент' : totalFromAPI < 5 ? 'контрагента' : 'контрагентов'}
             </span>
           </div>
 
-          <div className={styles.footerDivider} />
+          <div className="w-px h-6 bg-gray-200 shrink-0" />
 
-          <div className={styles.footerItem}>
-            <span className={styles.footerLabel}>Дебиторка</span>
-            <div className={styles.footerValueContainer}>
-              <span className={styles.footerValue}>{totalReceivables.toLocaleString('ru-RU')}</span>
-              <TbCurrencyRubel className={styles.footerCurrencyIcon} />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-gray-500 font-medium">Дебиторка</span>
+            <div className="flex items-center gap-0.5">
+              <span className="text-xs font-semibold text-slate-900">{formatAmount(SummaryTotal?.receivables)}</span>
+              <span className="text-xs text-gray-400">{GlobalCurrency}</span>
             </div>
           </div>
 
-          <div className={styles.footerDivider} />
+          <div className="w-px h-6 bg-gray-200 shrink-0" />
 
-          <div className={styles.footerItem}>
-            <span className={styles.footerLabel}>Кредиторка</span>
-            <div className={styles.footerValueContainer}>
-              <span className={styles.footerValue}>{totalPayables.toLocaleString('ru-RU')}</span>
-              <TbCurrencyRubel className={styles.footerCurrencyIcon} />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-gray-500 font-medium">Кредиторка</span>
+            <div className="flex items-center gap-0.5">
+              <span className="text-xs font-semibold text-slate-900">{formatAmount(SummaryTotal?.payables)}</span>
+              <span className="text-xs text-gray-400">{GlobalCurrency}</span>
             </div>
           </div>
 
-          <div className={styles.footerDivider} />
+          <div className="w-px h-6 bg-gray-200 shrink-0" />
 
-          <div className={styles.footerItem}>
-            <span className={styles.footerLabel}>Поступления</span>
-            <div className={styles.footerValueContainer}>
-              <span className={styles.footerValue}>{totalIncome.toLocaleString('ru-RU')}</span>
-              <TbCurrencyRubel className={styles.footerCurrencyIcon} />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-gray-500 font-medium">Поступления</span>
+            <div className="flex items-center gap-0.5">
+              <span className="text-xs font-semibold text-slate-900">{formatAmount(SummaryTotal?.income)}</span>
+              <span className="text-xs text-gray-400">{GlobalCurrency}</span>
             </div>
           </div>
 
-          <div className={styles.footerDivider} />
+          <div className="w-px h-6 bg-gray-200 shrink-0" />
 
-          <div className={styles.footerItem}>
-            <span className={styles.footerLabel}>Выплаты</span>
-            <div className={styles.footerValueContainer}>
-              <span className={styles.footerValue}>{totalExpenses.toLocaleString('ru-RU')}</span>
-              <TbCurrencyRubel className={styles.footerCurrencyIcon} />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-gray-500 font-medium">Выплаты</span>
+            <div className="flex items-center gap-0.5">
+              <span className="text-xs font-semibold text-slate-900">{formatAmount(SummaryTotal?.expense)}</span>
+              <span className="text-xs text-gray-400">{GlobalCurrency}</span>
             </div>
           </div>
 
-          <div className={styles.footerDivider} />
+          <div className="w-px h-6 bg-gray-200 shrink-0" />
 
-          <div className={styles.footerItem}>
-            <span className={styles.footerLabel}>Разница</span>
-            <div className={styles.footerValueContainer}>
-              <span className={cn(styles.footerValue, difference > 0 ? styles.positive : difference < 0 ? styles.negative : '')}>
-                {difference === 0 ? '0' : `${difference > 0 ? '+' : ''}${difference.toLocaleString('ru-RU')}`}
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-gray-500 font-medium">Разница</span>
+            <div className="flex items-center gap-0.5">
+              <span className={cn(
+                'text-xs font-semibold',
+                SummaryTotal?.difference > 0 ? 'text-emerald-500' : SummaryTotal?.difference < 0 ? 'text-red-500' : 'text-slate-900'
+              )}>
+                {SummaryTotal?.difference === 0 ? '0' : `${SummaryTotal?.difference > 0 ? '+' : ''}${formatAmount(SummaryTotal?.difference)}`}
               </span>
-              <TbCurrencyRubel className={cn(styles.footerCurrencyIcon, difference > 0 ? styles.positive : difference < 0 ? styles.negative : '')} />
+              <span className={cn(
+                'text-xs',
+                SummaryTotal?.difference > 0 ? 'text-emerald-500' : SummaryTotal?.difference < 0 ? 'text-red-500' : 'text-gray-400'
+              )}>{GlobalCurrency}</span>
             </div>
           </div>
         </div>

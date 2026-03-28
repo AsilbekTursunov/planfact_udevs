@@ -7,6 +7,7 @@ import styles from '../Header.module.scss'
 import { formatDateTime } from '../../../utils/formatDate'
 import { useMyAccountsBoard } from '../../../hooks/useDashboard'
 import { formatAmount } from '../../../utils/helpers'
+import { GlobalCurrency } from '../../../constants/globalCurrency'
 
 const TotalPrice = () => {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false)
@@ -115,7 +116,7 @@ const TotalPrice = () => {
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div className={styles.balanceDot}></div>
-                            <span className={styles.balanceText}>На счетах {formatAmount(totalBalance)} <span className={styles.balanceCurrency}>₽</span></span>
+                            <span className={styles.balanceText}>На счетах {formatAmount(totalBalance)} <span className={styles.balanceCurrency}>{GlobalCurrency}</span></span>
                             <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
                         </div>
                         <div className={styles.balanceSubtext} style={{ marginLeft: '17px', color: '#fbbf24' }}>

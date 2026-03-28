@@ -1,31 +1,48 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { appStore } from '../../../store/app.store'
 import { observer } from 'mobx-react-lite'
-import { ChevronDown } from 'lucide-react'
 import styles from './settings.module.scss'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
+import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
+import SingleSelect from '../../../components/shared/Selects/SingleSelect'
 
 /* ─── currency options ────────────────────────────────── */
-const currencies = [
-  { value: 'RUB', label: 'RUB (Российский рубль)' },
-  { value: 'USD', label: 'USD (Доллар США)' },
-  { value: 'EUR', label: 'EUR (Евро)' },
-  { value: 'UZS', label: 'UZS (Узбекский сум)' },
-]
-
 const SettingsPage = observer(() => {
   /* ── general form state ──────────────────────────── */
-  const [currency, setCurrency] = useState('RUB')
-  const [currencyOpen, setCurrencyOpen] = useState(false)
   const [purposeOptional, setPurposeOptional] = useState(false)
+
+
+  const { data: currencies } = useUcodeRequestQuery({
+    method: 'get_currencies',
+    querySetting: {
+      select: (response) => response?.data?.data?.data
+    }
+  })
+
+  useEffect(() => {
+    if (currencies) {
+      const currency = currencies.find(c => c.kod === 'UZS')
+      appStore.setCurrency({ name: currency?.kod, guid: currency?.guid })
+    }
+  }, [currencies])
+
+  const currenciesList = useMemo(() => {
+    return currencies?.map(c => ({
+      value: c.guid,
+      label: `${c.kod} (${c.nazvanie})`
+    }))
+  }, [currencies])
 
   function handleSwitchPayment() {
     appStore.setIsPayment(!appStore.isPayment);
   }
 
-  const selected = currencies.find(c => c.value === currency)
+  const handleSelectCurrency = (value) => {
+    const name = currencies.find(c => c.guid === value)?.kod
+    appStore.setCurrency({ name: name, guid: value })
+  }
 
   return (
     <div className={styles.mainContent}>
@@ -38,27 +55,15 @@ const SettingsPage = observer(() => {
         <div className={styles.fieldGroup}>
           <label className={styles.fieldLabel}>Основная валюта</label>
           <div className={styles.selectWrap}>
-            <button
-              className={styles.select}
-              onClick={() => setCurrencyOpen(prev => !prev)}
-              type='button'
-            >
-              <span>{selected?.label}</span>
-              <ChevronDown size={16} className={currencyOpen ? styles.chevronOpen : ''} />
-            </button>
-            {currencyOpen && (
-              <ul className={styles.selectDropdown}>
-                {currencies.map(c => (
-                  <li
-                    key={c.value}
-                    className={`${styles.selectOption} ${c.value === currency ? styles.selectOptionActive : ''}`}
-                    onClick={() => { setCurrency(c.value); setCurrencyOpen(false) }}
-                  >
-                    {c.label}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <SingleSelect
+              data={currenciesList}
+              value={appStore?.currency?.guid}
+              onChange={handleSelectCurrency}
+              placeholder='Выберите валюту'
+              withSearch={false}
+              isClearable={false}
+              className="bg-white text-neutral-700"
+            />
           </div>
         </div>
       </section>
