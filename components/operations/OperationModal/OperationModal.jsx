@@ -22,7 +22,7 @@ import IncomeForm from './Forms/Income'
 import PaymentForm from './Forms/Payment'
 import AccuralForm from './Forms/Accural'
 import { observer } from 'mobx-react-lite'
-import { useUcodeDefaultApiQuery, useUcodeRequestMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard'
+import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard'
 import Loader from '../../shared/Loader'
 import CustomModal from '../../shared/CustomModal'
 import { authStore } from '../../../store/auth.store'
@@ -385,6 +385,8 @@ const OperationModal = observer(({
 
 
 	useEffect(() => {
+		console.log('chart_of_accounts_id', chart_of_accounts_id)
+		console.log('chart_of_accounts_id_2', chart_of_accounts_id_2)
 		if (activeTab == 'income' && chart_of_accounts_id) {
 			setFormData(prev => ({
 				...prev,
@@ -398,6 +400,7 @@ const OperationModal = observer(({
 		}
 	}, [activeTab])
 
+	console.log('operationData', operationData)
 
 	// Initialize form data from operation or defaults
 	const getInitialFormData = () => {
@@ -417,7 +420,7 @@ const OperationModal = observer(({
 				accountAndLegalEntity: raw.my_accounts_id || raw.bank_accounts_id || null,
 				amount: raw.summa ? formatAmount(Math.abs(raw.summa)) : '',
 				counterparty: raw.counterparties_id || null,
-				chartOfAccount: raw.chart_of_accounts_id || null,
+				chartOfAccount: activeTab === 'payment' ? raw.chart_of_accounts_id : activeTab === 'income' ? chart_of_accounts_id : null,
 				project: null,
 				purchaseDeal: null,
 				salesDeal: raw.selling_deal_id || null,

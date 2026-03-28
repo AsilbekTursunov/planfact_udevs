@@ -24,6 +24,7 @@ import Input from '../../../../components/shared/Input'
 import GroupMyAccounts from '../../../../components/ReadyComponents/GroupMyAccouts'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
+import { formatAmount } from '../../../../utils/helpers'
 
 export default observer(function AccountsPage() {
   // Block body scroll for this page only
@@ -200,8 +201,8 @@ export default observer(function AccountsPage() {
     // Define only the fields we want to display
     const standardFields = [
       'nazvanie',
-      'nachalьnyy_ostatok',
-      'balans',
+      'nachalьnyy_ostatok_val',
+      'current_balance_val',
       "tip",
       "legal_entity_id",
       "requisites",
@@ -229,26 +230,15 @@ export default observer(function AccountsPage() {
   const formatFieldValue = (item, field) => {
     const value = item[field]
 
-
     switch (field) {
       case 'nazvanie':
         return value || '–'
       case 'nomer_scheta':
         return value || '–'
-      case 'balans':
-        // Use current_balance from API, but if it's 0 and nachalьnyy_ostatok exists, use that
-        const currentBalance = item.current_balance
-        const initialBalance = item.nachalьnyy_ostatok
-
-        // If current_balance is 0 or null/undefined, fallback to initial balance
-        const balance = (currentBalance !== null && currentBalance !== undefined && currentBalance !== 0)
-          ? currentBalance
-          : (initialBalance ?? 0)
-
-        return typeof balance === 'number' ? balance.toLocaleString('ru-RU') : '–'
-      case 'nachalьnyy_ostatok':
-        // Display initial balance from nachalьnyy_ostatok field
-        return typeof value === 'number' ? value.toLocaleString('ru-RU') : '–'
+      case 'current_balance_val':
+        return typeof value === 'number' ? formatAmount(value) : '–'
+      case 'nachalьnyy_ostatok_val':
+        return formatAmount(value)
       case 'currenies_kod':
         return value || '–'
       case 'tip':
@@ -494,6 +484,7 @@ export default observer(function AccountsPage() {
                     accountsList.map((item) => {
                       if (item.isGroup) {
                         const isExpanded = expandedGroups.has(item.guid)
+                        console.log(item)
                         return (
                           <React.Fragment key={item.guid}>
                             <tr
@@ -523,10 +514,10 @@ export default observer(function AccountsPage() {
                               </td>
                               {/* Group summary columns if needed, else empty */}
                               <td className="p-2 text-nowrap">
-                                {item.total_balance !== undefined ? `${item.total_balance.toLocaleString('ru-RU')}  ${GlobalCurrency}` : ''}
+                                {item.nachalьnyy_ostatok_val !== undefined ? `${formatAmount(item.nachalьnyy_ostatok_val)}  ${GlobalCurrency}` : ''}
                               </td>
                               <td className="p-2 text-nowrap">
-                                {item.total_balance !== undefined ? `${item.total_balance.toLocaleString('ru-RU')}  ${GlobalCurrency}` : ''}
+                                {item.current_balance_val !== undefined ? `${formatAmount(item.current_balance_val)}  ${GlobalCurrency}` : ''}
                               </td>
                               <td className="p-2"></td>
                               <td className="p-2"></td>

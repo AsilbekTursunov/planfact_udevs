@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/app/lib/utils'
 import { useQueryClient } from '@tanstack/react-query'
@@ -33,7 +33,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
   const [editingGroup, setEditingGroup] = useState(null)
   const [deletingGroup, setDeletingGroup] = useState(null)
 
-  const { register, handleSubmit, control, watch, reset, setError, formState: { errors, isSubmitting: isSubmittingCounterparty } } = useForm({
+  const { register, handleSubmit, control, watch, reset, setError, formState: { errors, isSubmitting: isSubmittingCounterparty, } } = useForm({
     defaultValues: {
       nazvanie: '',
       polnoe_imya: '',
@@ -88,72 +88,82 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
     }))
   }, [counterpartiesGroups])
 
+  const lastInitializedGuidRef = useRef(null)
+
   useEffect(() => {
-    if (isOpen) {
-      setIsClosing(false)
-      setIsVisible(true)
-      setActiveTab('counterparty')
+    if (!isOpen) {
+      lastInitializedGuidRef.current = null
+      return
+    }
 
-      if (counterpartyData) {
-        const rawData = counterpartyData.rawData || counterpartyData
+    const currentGuid = counterpartyData?.guid || counterpartyData?.rawData?.guid || 'new'
+    if (lastInitializedGuidRef.current === currentGuid) return
 
-        // Extraction logic similar to EditCounterpartyModal
-        const getChartOfAccountsId = (field) => {
-          if (rawData[field]) {
-            if (typeof rawData[field] === 'string' && rawData[field].length === 36) return rawData[field]
-            if (rawData[field]?.guid) return rawData[field].guid
-          }
-          const dataField = `${field}_data`
-          if (rawData[dataField]?.guid) return rawData[dataField].guid
-          return ''
+    setIsClosing(false)
+    setIsVisible(true)
+    setActiveTab('counterparty')
+
+    if (counterpartyData) {
+      const rawData = counterpartyData.rawData || counterpartyData
+
+      // Extraction logic similar to EditCounterpartyModal
+      const getChartOfAccountsId = (field) => {
+        if (rawData[field]) {
+          if (typeof rawData[field] === 'string' && rawData[field].length === 36) return rawData[field]
+          if (rawData[field]?.guid) return rawData[field].guid
         }
-
-        const getCounterpartiesGroupId = () => {
-          if (rawData.counterparties_group_id) {
-            if (typeof rawData.counterparties_group_id === 'string' && rawData.counterparties_group_id.length === 36) return rawData.counterparties_group_id
-          }
-          if (rawData.counterparties_group_id_data?.guid) return rawData.counterparties_group_id_data.guid
-          return preselectedGroupId || ''
-        }
-
-        reset({
-          nazvanie: rawData.nazvanie || '',
-          polnoe_imya: rawData.polnoe_imya || '',
-          counterparties_group_id: getCounterpartiesGroupId(),
-          gruppa: rawData.gruppa || [],
-          inn: rawData.inn ? String(rawData.inn) : '',
-          kpp: rawData.kpp
-            ? (Array.isArray(rawData.kpp) ? rawData.kpp.map(v => ({ value: String(v) })) : [{ value: String(rawData.kpp) }])
-            : [{ value: '' }],
-          nomer_scheta: rawData.account_number
-            ? (Array.isArray(rawData.account_number) ? rawData.account_number.map(v => ({ value: String(v) })) : [{ value: String(rawData.account_number) }])
-            : [{ value: '' }],
-          primenyat_stat_i_po_umolchaniyu: rawData.primenyat_stat_i_po_umolchaniyu || false,
-          chart_of_accounts_id: getChartOfAccountsId('chart_of_accounts_id'),
-          chart_of_accounts_id_2: getChartOfAccountsId('chart_of_accounts_id_2'),
-          komentariy: rawData.komentariy || ''
-        })
-      } else {
-        reset({
-          nazvanie: '',
-          polnoe_imya: '',
-          counterparties_group_id: preselectedGroupId || '',
-          gruppa: [],
-          inn: '',
-          kpp: [{ value: '' }],
-          nomer_scheta: [{ value: '' }],
-          primenyat_stat_i_po_umolchaniyu: false,
-          chart_of_accounts_id: '',
-          chart_of_accounts_id_2: '',
-          komentariy: ''
-        })
+        const dataField = `${field}_data`
+        if (rawData[dataField]?.guid) return rawData[dataField].guid
+        return ''
       }
 
-      resetGroup({
-        nazvanie_gruppy: '',
-        opisanie_gruppy: ''
+      const getCounterpartiesGroupId = () => {
+        if (rawData.counterparties_group_id) {
+          if (typeof rawData.counterparties_group_id === 'string' && rawData.counterparties_group_id.length === 36) return rawData.counterparties_group_id
+        }
+        if (rawData.counterparties_group_id_data?.guid) return rawData.counterparties_group_id_data.guid
+        return preselectedGroupId || ''
+      }
+
+      reset({
+        nazvanie: rawData.nazvanie || '',
+        polnoe_imya: rawData.polnoe_imya || '',
+        counterparties_group_id: getCounterpartiesGroupId(),
+        gruppa: rawData.gruppa || [],
+        inn: rawData.inn ? String(rawData.inn) : '',
+        kpp: rawData.kpp
+          ? (Array.isArray(rawData.kpp) ? rawData.kpp.map(v => ({ value: String(v) })) : [{ value: String(rawData.kpp) }])
+          : [{ value: '' }],
+        nomer_scheta: rawData.account_number
+          ? (Array.isArray(rawData.account_number) ? rawData.account_number.map(v => ({ value: String(v) })) : [{ value: String(rawData.account_number) }])
+          : [{ value: '' }],
+        primenyat_stat_i_po_umolchaniyu: rawData.primenyat_stat_i_po_umolchaniyu || false,
+        chart_of_accounts_id: getChartOfAccountsId('chart_of_accounts_id'),
+        chart_of_accounts_id_2: getChartOfAccountsId('chart_of_accounts_id_2'),
+        komentariy: rawData.komentariy || ''
+      })
+    } else {
+      reset({
+        nazvanie: '',
+        polnoe_imya: '',
+        counterparties_group_id: preselectedGroupId || '',
+        gruppa: [],
+        inn: '',
+        kpp: [{ value: '' }],
+        nomer_scheta: [{ value: '' }],
+        primenyat_stat_i_po_umolchaniyu: false,
+        chart_of_accounts_id: '',
+        chart_of_accounts_id_2: '',
+        komentariy: ''
       })
     }
+
+    resetGroup({
+      nazvanie_gruppy: '',
+      opisanie_gruppy: ''
+    })
+
+    lastInitializedGuidRef.current = currentGuid
   }, [isOpen, preselectedGroupId, counterpartyData, reset, resetGroup])
 
   const handleClose = () => {
@@ -183,38 +193,47 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
 
   const onSubmitCounterparty = async (data) => {
     try {
-      let tip = []
-      if (data.chart_of_accounts_id && !data.chart_of_accounts_id_2) {
-        tip = ['Плательщик']
-      } else if (!data.chart_of_accounts_id && data.chart_of_accounts_id_2) {
-        tip = ['Получатель']
-      } else if (data.chart_of_accounts_id && data.chart_of_accounts_id_2) {
-        tip = ['Смешанный']
+      // let tip = []
+      // if (data.chart_of_accounts_id && !data.chart_of_accounts_id_2) {
+      //   tip = ['Плательщик']
+      // } else if (!data.chart_of_accounts_id && data.chart_of_accounts_id_2) {
+      //   tip = ['Получатель']
+      // } else if (data.chart_of_accounts_id && data.chart_of_accounts_id_2) {
+      //   tip = ['Смешанный']
+      // }
+      console.log('--- Submission Flow Started ---')
+      console.log('Raw Form Data (data):', data)
+
+      const processDynamicField = (fieldArray) => {
+        if (!fieldArray) return null
+        const values = fieldArray
+          .map(item => item.value?.toString().trim())
+          .filter(v => !!v)
+        
+        if (values.length === 0) return null
+        return values.length > 1 ? values : values[0]
       }
 
-      const kppValues = data.kpp.filter(k => k.value && k.value.toString().trim() !== '').map(k => k.value)
-      const validKpp = kppValues.length > 0 ? kppValues : undefined
-
-      const accountValues = data.nomer_scheta.filter(a => a.value && a.value.toString().trim() !== '').map(a => a.value)
-      const validAccount = accountValues.length > 0 ? accountValues : undefined
+      const validKpp = processDynamicField(data.kpp)
+      const validAccount = processDynamicField(data.nomer_scheta)
 
       const isEdit = !!counterpartyData
       const guid = counterpartyData?.guid || counterpartyData?.rawData?.guid
 
+      // ...(tip.length > 0 && { tip }),
       const submitData = {
         ...(isEdit && { guid }),
         nazvanie: data.nazvanie.trim(),
-        ...(data.polnoe_imya && { polnoe_imya: data.polnoe_imya }),
-        ...(data.gruppa && data.gruppa.length > 0 && { gruppa: data.gruppa }),
-        ...(tip.length > 0 && { tip }),
-        ...(data.inn && { inn: data.inn }),
-        ...(validKpp && { kpp: validKpp }),
-        ...(validAccount && { account_number: validAccount }),
-        ...(data.counterparties_group_id && { counterparties_group_id: data.counterparties_group_id }),
+        polnoe_imya: data.polnoe_imya || null,
+        gruppa: data.gruppa || [],
+        inn: data.inn || null,
+        kpp: validKpp,
+        account_number: validAccount,
+        counterparties_group_id: data.counterparties_group_id,
         primenyat_stat_i_po_umolchaniyu: data.primenyat_stat_i_po_umolchaniyu,
-        ...(data.chart_of_accounts_id && (data.primenyat_stat_i_po_umolchaniyu || isEdit) && { chart_of_accounts_id: data.chart_of_accounts_id }),
-        ...(data.chart_of_accounts_id_2 && (data.primenyat_stat_i_po_umolchaniyu || isEdit) && { chart_of_accounts_id_2: data.chart_of_accounts_id_2 }),
-        ...(data.komentariy && { komentariy: data.komentariy }),
+        chart_of_accounts_id: data.chart_of_accounts_id || null,
+        chart_of_accounts_id_2: data.chart_of_accounts_id_2 || null,
+        komentariy: data.komentariy || null,
         ...(isEdit && { data_obnovleniya: new Date().toISOString() }),
         attributes: {}
       }
@@ -364,6 +383,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                     <Input
                       type="text"
                       inputMode="numeric"
+                      autoComplete="off"
                       placeholder="Укажите ИНН"
                       className={cn(styles.input, styles.requisitesInput)}
                       {...register('inn')}
@@ -377,8 +397,10 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                     {kppFields.map((item, index) => (
                       <div key={item.id} className="flex gap-2 items-center">
                           <Input
+                          key={item.id}
                           type="text"
                           inputMode="numeric"
+                          autoComplete="off"
                             placeholder="Укажите КПП"
                           className={cn(styles.input, styles.requisitesInput)}
                             {...register(`kpp.${index}.value`)}
@@ -412,7 +434,9 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
                     {accountFields.map((item, index) => (
                       <div key={item.id} className="flex gap-2 items-center">
                           <Input
+                          key={item.id}
                             type="text"
+                          autoComplete="off"
                             placeholder="Укажите номер счета"
                             className={cn(styles.input, styles.requisitesInput)}
                             {...register(`nomer_scheta.${index}.value`)}

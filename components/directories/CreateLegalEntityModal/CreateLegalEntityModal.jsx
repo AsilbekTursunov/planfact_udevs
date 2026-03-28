@@ -107,12 +107,14 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
     try {
       const submitData = {
         nazvanie: formData.nazvanie.trim(),
-        ...(formData.polnoe_nazvanie && { polnoe_nazvanie: formData.polnoe_nazvanie.trim() }),
-        ...(formData.inn && { inn: formData.inn }),
-        ...(formData.kpp && { kpp: formData.kpp }),
-        ...(formData.komentariy && { komentariy: formData.komentariy.trim() }),
+        polnoe_nazvanie: formData.polnoe_nazvanie?.trim() || null,
+        inn: formData.inn || null,
+        kpp: formData.kpp || null,
+        komentariy: formData.komentariy?.trim() || null,
         legal_entity_id: authStore.userData?.legal_entity_id || null
       }
+
+      console.log('LegalEntity submitData', submitData)
 
       let result = null
       if (isEdit) {

@@ -11,6 +11,7 @@ import CustomModal from '../../shared/CustomModal'
 import Loader from '../../shared/Loader'
 import { returnNumber } from '../../../utils/helpers'
 import SelectMyAccoutGroup from '../../ReadyComponents/SelectMyAccoutGroup'
+import { queryClient } from '../../../lib/queryClient'
 
 export default function CreateMyAccountModal({ isOpen, onClose, account = null }) {
   const createMutation = useCreateMyAccount()
@@ -151,20 +152,19 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       const submitData = {
         nazvanie: formData.nazvanie.trim(),
         tip: formData.tip,
-        ...(formData.nachalьnyy_ostatok && { nachalьnyy_ostatok: Number(formData.nachalьnyy_ostatok.replace(/\s/g, '').replace(/,/g, '.')) }),
-        ...(formData.data_sozdaniya && {
-          data_nachalьnogo_ostatka: formData.data_sozdaniya
-        }),
-        ...(formData.currenies_id && { currenies_id: formData.currenies_id }),
-        ...(formData.komentariy && { komentariy: formData.komentariy }),
-        ...(formData.legal_entity_id && { legal_entity_id: formData.legal_entity_id }),
-        ...(formData.bik && { bik: formData.bik }),
-        ...(formData.bank && { bank_name: formData.bank }),
-        ...(formData.rasch_schet || formData.nomer ? { nomer: formData.rasch_schet || formData.nomer } : {}),
-        ...(formData.korr_schet && { kor_schet: formData.korr_schet }),
-        ...(formData.account_group_id && { account_groups_id: formData.account_group_id }),
+        nachalьnyy_ostatok: formData.nachalьnyy_ostatok ? Number(formData.nachalьnyy_ostatok.toString().replace(/\s/g, '').replace(/,/g, '.')) : null,
+        data_nachalьnogo_ostatka: formData.data_sozdaniya || null,
+        currenies_id: formData.currenies_id || null,
+        komentariy: formData.komentariy || null,
+        legal_entity_id: formData.legal_entity_id || null,
+        bik: (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') ? formData.bik || null : null,
+        bank_name: (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') ? formData.bank || null : null,
+        nomer: (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') ? formData.rasch_schet ? formData.tip[0] === 'Электронный' ? formData.nomer : null : null : null,
+        kor_schet: (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') ? formData.korr_schet || null : null,
+        account_groups_id: formData.account_group_id || null,
         ...(!isEdit && { data_sozdaniya: new Date().toISOString() })
       }
+
 
       if (isEdit && account && account.guid) {
         submitData.guid = account.guid
@@ -172,6 +172,8 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       } else {
         await createMutation.mutateAsync(submitData)
       }
+
+      queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
 
       handleClose()
     } catch (error) {

@@ -131,7 +131,6 @@ const KontragentDetailPage = () => {
 
 
 
-
   // console.log('single countepary', operationsList)
 
 
@@ -153,6 +152,8 @@ const KontragentDetailPage = () => {
       before: operationsDto(counterpartyOperations || [], 'before'),
     }
   }, [counterpartyOperations])
+
+  console.log('cuounterpartu', counterparty)
 
 
   // Format counterparty info - DECLARE FIRST
@@ -939,6 +940,8 @@ const KontragentDetailPage = () => {
           modalType={editingOperation.typeCategory === 'in' ? 'income' : editingOperation.typeCategory === 'out' ? 'payment' : 'transfer'}
           isClosing={isEditModalClosing}
           isOpening={isEditModalOpening}
+          chart_of_accounts_id={counterparty?.chart_of_accounts_id}
+          chart_of_accounts_id_2={counterparty?.chart_of_accounts_id_2}
           onClose={handleCloseEditModal}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ['counterpartyById', counterpartyGuid] })}
           preselectedCounterparty={counterpartyGuid}
