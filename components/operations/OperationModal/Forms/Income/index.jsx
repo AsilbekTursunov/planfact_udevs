@@ -185,8 +185,9 @@ const IncomeForm = ({
             value={formData.counterparty}
             onChange={value => setFormData({ ...formData, counterparty: value })}
             placeholder='Не выбран.'
-            className='flex-1 bg-white'
-            // disabled={disableCounterpartySelect}
+            className='flex-1 bg-white' 
+            name='chart_of_accounts_id'
+            returnChartOfAccount={value => setFormData({ ...formData, chartOfAccount: value })}
           />
         </div>
       )}

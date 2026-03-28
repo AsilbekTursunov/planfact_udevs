@@ -9,7 +9,9 @@ const SingleCounterParty = ({
   placeholder = 'Выберите контрагента',
   className,
   disabled,
-  dropdownClassName
+  dropdownClassName,
+  name = 'chart_of_accounts_id',
+  returnChartOfAccount
 }) => {
   const { data: counterpartiesGroupsData, isLoading } = useCounterpartiesGroupsPlanFact({
     page: 1,
@@ -32,6 +34,7 @@ const SingleCounterParty = ({
             value: child.guid,
             label: child.nazvanie || 'Без названия',
             isSelectable: true,
+            rawData: child // Store raw data for lookup
           }))
         }
       }
@@ -41,11 +44,38 @@ const SingleCounterParty = ({
         value: item.guid,
         label: item.nazvanie_gruppy || item.nazvanie || 'Без названия',
         isSelectable: true,
+        rawData: item // Store raw data for lookup
       }
     }
 
     return groups.map(buildTree)
   }, [counterpartiesGroupsData])
+
+  const handleSelect = (val) => {
+    onChange(val)
+    if (returnChartOfAccount && val) {
+      // Find the item in the tree to get its rawData
+
+      const findItem = (nodes) => {
+        for (const node of nodes) {
+          if (node.value === val) return node
+          if (node.children) {
+            const found = findItem(node.children)
+            if (found) return found
+          }
+        }
+        return null
+      }
+
+      const node = findItem(result)
+      if (node && node.rawData) {
+        // Return the chart_of_accounts_id (or id_2) based on the 'name' prop
+        const accountId = node.rawData[name]
+        returnChartOfAccount(accountId || null)
+
+      }
+    }
+  }
 
   return (
     <div className={disabled ? 'opacity-50 pointer-events-none w-full' : 'w-full'}>
@@ -54,7 +84,7 @@ const SingleCounterParty = ({
         multi={false}
         placeholder={isLoading ? "Загрузка..." : placeholder}
         value={value}
-        onChange={onChange}
+        onChange={handleSelect}
         className={className}
         dropdownClassName={dropdownClassName}
       />

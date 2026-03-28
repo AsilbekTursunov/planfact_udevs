@@ -185,7 +185,8 @@ const PaymentForm = ({
             onChange={value => setFormData({ ...formData, counterparty: value })}
             placeholder='Выберите контрагента...'
             className='flex-1 bg-white'
-            // disabled={disableCounterpartySelect}
+            name='chart_of_accounts_id_2'
+            returnChartOfAccount={value => setFormData({ ...formData, chartOfAccount: value })}
           />
         </div>
       )}
