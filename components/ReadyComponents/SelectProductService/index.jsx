@@ -3,14 +3,15 @@ import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import { productServiceDto } from '../../../lib/dtos/productServiceDto'
+import { keepPreviousData } from '@tanstack/react-query'
 
-const SelectProductService = ({ 
-  value, 
-  onChange, 
-  placeholder = "Выберите товар или услугу", 
-  className, 
-  dropdownClassName, 
-  multi = false, 
+const SelectProductService = ({
+  value,
+  onChange,
+  placeholder = "Выберите товар или услугу",
+  className,
+  dropdownClassName,
+  multi = false,
   selected,
   sellingDealId,
   hasError
@@ -22,7 +23,9 @@ const SelectProductService = ({
       sales_transaction_id: sellingDealId,
     },
     querySetting: {
-      select: (response) => productServiceDto(response?.data?.data?.data) || []
+      select: (response) => productServiceDto(response?.data?.data?.data) || [],
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
     }
   })
 

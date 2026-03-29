@@ -372,7 +372,7 @@ export default function LegalEntitiesPage() {
 
   return (
     <>
-      <div className="flex flex-col flex-1 w-full h-full p-3 gap-4">
+      <div className="flex fixed left-[80px] top-[60px] flex-col flex-1 w-[calc(100%-80px)] h-[calc(100%-60px)] p-3 gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="h1 text-xl text-neutral-700 font-semibold">Товары & Услуги</h1>
@@ -460,7 +460,7 @@ export default function LegalEntitiesPage() {
                   <th colSpan={9} className='py-1 px-2'>
                     <div className='flex items-center gap-6'>
                       <span className='font-semibold text-sm text-neutral-700'>Выбрано: {selectedItems.size}</span>
-                      <div className='flex items-center gap-4'> 
+                      <div className='flex items-center gap-4'>
                         <button
                           onClick={() => setIsBulkDeleteModalOpen(true)}
                           className='flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium cursor-pointer'
@@ -682,6 +682,7 @@ export default function LegalEntitiesPage() {
           </span>
         </div>
       </div>
+
       <CreateSingle
         open={isCreateSingleOpen}
         setOpen={(open) => {

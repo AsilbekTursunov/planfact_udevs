@@ -2,13 +2,16 @@ import React, { useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите юрлицо", className, dropdownClassName, multi = false, hasError }) => {
 
   const { data: legalEntitiesData, isLoading } = useUcodeRequestQuery({
     method: "get_legal_entities",
     querySetting: {
-      select: (response) => response?.data?.data?.data || []
+      select: (response) => response?.data?.data?.data || [],
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
     }
   })
 

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import TreeSelect from '../../shared/Selects/TreeSelect'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const NOT_SELECTABLE = new Set([
   'Доходы',
@@ -53,7 +54,9 @@ const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'В
       limit: 100,
     },
     querySetting: {
-      select: (res) => res?.data?.data?.data
+      select: (res) => res?.data?.data?.data,
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
     }
   })
 

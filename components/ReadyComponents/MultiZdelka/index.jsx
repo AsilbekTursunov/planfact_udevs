@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react'
 import { useUcodeRequestQuery } from '@/hooks/useDashboard'
 import MultiSelect from '../../shared/Selects/MultiSelect'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const MultiSelectZdelka = ({
   value = [],
@@ -13,12 +14,14 @@ const MultiSelectZdelka = ({
 }) => {
   const { data: deals, isLoading } = useUcodeRequestQuery({
     method: "get_sales_list_simple",
-    data: {
+    data: { 
       page: 1,
       limit: 100,
     },
     querySetting: {
-      select: (response) => response?.data?.data?.data
+      select: (response) => response?.data?.data?.data,
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
     }
   })
 

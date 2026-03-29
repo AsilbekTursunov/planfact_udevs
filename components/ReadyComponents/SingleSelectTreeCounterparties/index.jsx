@@ -7,6 +7,7 @@ const SingleSelectTreeCounterparties = ({ selectedValue, setSelectedValue, place
   const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
     page: 1,
     limit: 100,
+    
   })
 
   const result = useMemo(() => {

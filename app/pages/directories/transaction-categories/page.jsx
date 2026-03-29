@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { cn } from '@/app/lib/utils'
 import { useDeleteChartOfAccounts } from '@/hooks/useDashboard'
 import CreateChartOfAccountsModal from '@/components/directories/CreateChartOfAccountsModal/CreateChartOfAccountsModal'
@@ -8,8 +8,37 @@ import EditChartOfAccountsModal from '@/components/directories/EditChartOfAccoun
 import { CategoryMenu } from '@/components/directories/CategoryMenu/CategoryMenu'
 import { DeleteCategoryConfirmModal } from '@/components/directories/DeleteCategoryConfirmModal/DeleteCategoryConfirmModal'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
-import styles from './transaction-categories.module.scss'
 import { useChartOfAccountsPlanFact } from '../../../../hooks/useDashboard'
+
+// Map tab keys to root category names from API
+const TABS_TO_ROOT_NAME = {
+	income: 'Доходы',
+	expense: 'Расходы',
+	assets: 'Актив',
+	liabilities: 'Обязательства',
+	capital: 'Капитал',
+}
+
+// Recursively convert API structure to display format
+const convertToCategory = (node, level = 0) => {
+	const isStatic = node.static === true
+
+	return {
+		id: node.guid || `temp-${node.nazvanie}-${level}`,
+		guid: node.guid,
+		name: node.nazvanie,
+		hasMenu: !!node.guid, // Only show menu if item has guid
+		hasLock: isStatic,
+		isStatic: isStatic,
+		children: node.children ? node.children.map(child => convertToCategory(child, level + 1)) : undefined,
+		balans: node.balans,
+		komentariy: node.komentariy,
+		tip: node.tip,
+		tip_operatsii: node.tip_operatsii,
+		chart_of_accounts_id_2: node.chart_of_accounts_id_2,
+		level: level,
+	}
+}
 
 // Recursive component for rendering category tree
 function CategoryTreeItem({
@@ -24,8 +53,6 @@ function CategoryTreeItem({
 	onEditCategory,
 	onDeleteCategory,
 	onAddChild,
-	styles,
-	cn,
 	isLast = false,
 	parentPath = '',
 }) {
@@ -33,34 +60,23 @@ function CategoryTreeItem({
 	const isExpanded = expandedCategories.includes(category.id)
 	const isClosing = closingCategories.includes(category.id)
 	const isSelected = selectedCategory === category.id
-	
+
 	// Create unique path for this item
 	const currentPath = parentPath ? `${parentPath}/${category.id}` : category.id
-
-	// Debug: log category data for children
-	// if (level > 0) {
-	// 	console.log(`CategoryTreeItem level ${level}:`, {
-	// 		name: category.name,
-	// 		guid: category.guid,
-	// 		id: category.id,
-	// 		hasMenu: category.hasMenu,
-	// 		hasChildren,
-	// 	})
-	// }
 
 	return (
 		<div
 			className={cn(
-				level === 0 ? styles.categoryItem : styles.childItem,
-				isLast && level === 0 && styles.lastCategoryItem,
+				level === 0 ? 'mb-2 overflow-visible' : 'mb-2 overflow-visible',
+				isLast && level === 0 && 'mb-4',
 			)}
 		>
 			<div
 				data-category-card
 				className={cn(
-					styles.categoryCard,
-					isSelected && styles.selected,
-					category.isStatic && styles.staticCard,
+					'flex items-center gap-3 p-3 px-4 border border-slate-200 rounded bg-white cursor-pointer transition-all hover:border-slate-300',
+					isSelected && 'border-primary bg-slate-50',
+					category.isStatic && 'bg-slate-50 border-slate-200 cursor-default hover:bg-slate-50',
 				)}
 				onClick={e => {
 					// Don't trigger if click was on menu container or menu button
@@ -77,7 +93,6 @@ function CategoryTreeItem({
 					}
 				}}
 				onMouseDown={e => {
-					// Prevent event bubbling for menu interactions
 					const menuContainer = e.target.closest('[data-menu-container]')
 					const menuButton = e.target.closest('button[class*="menuButton"]')
 					if (menuContainer || menuButton) {
@@ -87,19 +102,19 @@ function CategoryTreeItem({
 				style={
 					level === 0
 						? {
-								'--category-animation': `fadeSlideUp 0.3s ease-out ${categoryIndex * 0.06}s backwards`,
-							}
+							animation: `fadeSlideUp 0.3s ease-out ${categoryIndex * 0.06}s backwards`,
+						}
 						: {
-								'--child-animation': isClosing
-									? `fadeSlideOut 0.15s ease-in ${categoryIndex * 0.03}s backwards`
-									: `fadeSlideUp 0.2s ease-out ${categoryIndex * 0.05}s backwards`,
-							}
+							animation: isClosing
+								? `fadeSlideOut 0.15s ease-in ${categoryIndex * 0.03}s backwards`
+								: `fadeSlideUp 0.2s ease-out ${categoryIndex * 0.05}s backwards`,
+						}
 				}
 			>
 				{hasChildren && (
-					<div className={styles.expandIcon}>
+					<div className="text-slate-400 shrink-0 w-4 h-4 flex items-center justify-center relative">
 						<svg
-							className={styles.expandIconHorizontal}
+							className="w-4 h-4 absolute"
 							fill='none'
 							viewBox='0 0 24 24'
 							stroke='currentColor'
@@ -109,8 +124,8 @@ function CategoryTreeItem({
 						</svg>
 						<svg
 							className={cn(
-								styles.expandIconVertical,
-								isExpanded ? styles.expanded : styles.collapsed,
+								'w-4 h-4 absolute transition-all duration-300 ease-in-out',
+								isExpanded ? 'rotate-90 opacity-0' : 'rotate-0 opacity-100',
 							)}
 							fill='none'
 							viewBox='0 0 24 24'
@@ -123,20 +138,22 @@ function CategoryTreeItem({
 				)}
 
 				{!hasChildren && level > 0 && (
-					<span style={{ width: '0.75rem', display: 'inline-block' }} />
+					<span className="w-3 inline-block" />
 				)}
 
-				<span className={styles.categoryName}>{category.name}</span>
+				<span className={cn('text-[15px] flex-1', category.isStatic ? 'text-slate-400' : 'text-slate-800')}>
+					{category.name}
+				</span>
 
 				{category.badge && (
-					<span className={level === 0 ? styles.categoryBadge : styles.categoryBadgeColored}>
+					<span className={level === 0 ? 'px-2 py-0.5 text-[11px] font-normal text-slate-400' : 'px-2 py-0.5 text-[11px] bg-slate-400 text-white rounded font-medium'}>
 						{category.badge}
 					</span>
 				)}
 
 				{category.hasLock && (
 					<svg
-						className={styles.lockIcon}
+						className="w-[18px] h-[18px] text-slate-400 shrink-0"
 						fill='none'
 						viewBox='0 0 24 24'
 						stroke='currentColor'
@@ -151,7 +168,7 @@ function CategoryTreeItem({
 				)}
 
 				{category.hasMenu && (
-					<div data-menu-container style={{ marginLeft: 'auto', flexShrink: 0 }}>
+					<div data-menu-container className="ml-auto shrink-0">
 						<CategoryMenu
 							category={category}
 							onEdit={onEditCategory}
@@ -165,9 +182,12 @@ function CategoryTreeItem({
 			{/* Children - recursively render */}
 			{hasChildren && (isExpanded || isClosing) && (
 				<div
-					className={cn(styles.childrenContainer, isClosing ? styles.collapsing : styles.expanding)}
+					className={cn(
+						'block overflow-visible',
+						isClosing ? 'animate-[collapseUp_0.25s_ease-in-out_forwards]' : 'animate-[expandDown_0.3s_ease-out_forwards]'
+					)}
 				>
-					<div className={styles.childrenInner}>
+					<div className="ml-8 mt-2">
 						{category.children.map((child, childIndex) => (
 							<CategoryTreeItem
 								key={`${currentPath}/${childIndex}/${child.id}`}
@@ -182,8 +202,6 @@ function CategoryTreeItem({
 								onEditCategory={onEditCategory}
 								onDeleteCategory={onDeleteCategory}
 								onAddChild={onAddChild}
-								styles={styles}
-								cn={cn}
 								isLast={childIndex === category.children.length - 1 && !child.children}
 								parentPath={currentPath}
 							/>
@@ -207,60 +225,6 @@ export default function TransactionCategoriesPage() {
 	const [categoryToDelete, setCategoryToDelete] = useState(null)
 	const [searchQuery, setSearchQuery] = useState('')
 
-	const deleteMutation = useDeleteChartOfAccounts()
-
-	const toggleCategory = id => {
-		if (expandedCategories.includes(id)) {
-			// Find all children that are also expanded
-			const findAllChildren = parentId => {
-				const children = []
-				const parent = categories.find(c => c.id === parentId)
-				if (parent?.children) {
-					parent.children.forEach(child => {
-						if (expandedCategories.includes(child.id)) {
-							children.push(child.id)
-							if (child.children) {
-								children.push(...findAllChildren(child.id))
-							}
-						}
-					})
-				}
-				return children
-			}
-
-			const allToClose = [id, ...findAllChildren(id)]
-
-			// Start closing animation for parent and all children
-			setClosingCategories(prev => [...prev, ...allToClose])
-			setTimeout(() => {
-				setExpandedCategories(prev => prev.filter(cid => !allToClose.includes(cid)))
-				setClosingCategories(prev => prev.filter(cid => !allToClose.includes(cid)))
-			}, 250) // Match animation duration (0.25s)
-		} else {
-			setExpandedCategories(prev => [...prev, id])
-		}
-	}
-
-	const tabs = [
-		{ key: 'income', label: 'Доходы' },
-		{ key: 'expense', label: 'Расходы' },
-		{ key: 'assets', label: 'Актив' },
-		{ key: 'liabilities', label: 'Обязательства' },
-		{ key: 'capital', label: 'Капитал' },
-	]
-
-	// Map tab keys to root category names from API
-	const tabToRootNameMap = useMemo(
-		() => ({
-			income: 'Доходы',
-			expense: 'Расходы',
-			assets: 'Актив',
-			liabilities: 'Обязательства',
-			capital: 'Капитал',
-		}),
-		[],
-	)
-
 	const {
 		data: chartOfAccountsData,
 		isLoading: isLoadingChartOfAccounts,
@@ -268,23 +232,21 @@ export default function TransactionCategoriesPage() {
 	} = useChartOfAccountsPlanFact({
 		page: 1,
 		limit: 100,
-		search: searchQuery.trim() || undefined, // Передаем search только если есть значение
+		search: searchQuery.trim() || undefined,
 	})
 
 	const isLoadingChartOfAccountsV2 = isLoadingChartOfAccounts
 	const chartOfAccountsErrorV2 = chartOfAccountsError
- 
-	const chartOfAccountsTree = useMemo(() => {
-		return chartOfAccountsData?.data?.data?.data || []
-	}, [chartOfAccountsData])
+
+	const chartOfAccountsTree = chartOfAccountsData?.data?.data?.data || []
 
 	// Get the root node for active tab and convert its children to display format
-	const categories = useMemo(() => {
+	const categories = (() => {
 		if (!Array.isArray(chartOfAccountsTree) || chartOfAccountsTree.length === 0) {
 			return []
 		}
 
-		const rootName = tabToRootNameMap[activeTab]
+		const rootName = TABS_TO_ROOT_NAME[activeTab]
 		if (!rootName) return []
 
 		// Find the root node for this tab (e.g., "Доходы", "Расходы")
@@ -293,32 +255,54 @@ export default function TransactionCategoriesPage() {
 			return []
 		}
 
-		// Recursively convert API structure to display format
-		const convertToCategory = (node, level = 0) => {
-			const isStatic = node.static === true
-			
-			const category = {
-				id: node.guid || `temp-${node.nazvanie}-${level}`,
-				guid: node.guid,
-				name: node.nazvanie,
-				hasMenu: !!node.guid, // Only show menu if item has guid
-				hasLock: isStatic,
-				isStatic: isStatic,
-				children: node.children ? node.children.map(child => convertToCategory(child, level + 1)) : undefined,
-				balans: node.balans,
-				komentariy: node.komentariy,
-				tip: node.tip,
-				tip_operatsii: node.tip_operatsii,
-				chart_of_accounts_id_2: node.chart_of_accounts_id_2,
-				level: level,
-			}
-
-			return category
-		}
-
 		// Return children of root node (hide root itself as per documentation)
 		return rootNode.children.map(child => convertToCategory(child, 0))
-	}, [chartOfAccountsTree, activeTab, tabToRootNameMap])
+	})()
+
+	const deleteMutation = useDeleteChartOfAccounts()
+
+	const toggleCategory = useCallback(
+		id => {
+			if (expandedCategories.includes(id)) {
+				// Find all children that are also expanded
+				const findAllChildren = parentId => {
+					const children = []
+					const parent = categories.find(c => c.id === parentId)
+					if (parent?.children) {
+						parent.children.forEach(child => {
+							if (expandedCategories.includes(child.id)) {
+								children.push(child.id)
+								if (child.children) {
+									children.push(...findAllChildren(child.id))
+								}
+							}
+						})
+					}
+					return children
+				}
+
+				const allToClose = [id, ...findAllChildren(id)]
+
+				// Start closing animation for parent and all children
+				setClosingCategories(prev => [...prev, ...allToClose])
+				setTimeout(() => {
+					setExpandedCategories(prev => prev.filter(cid => !allToClose.includes(cid)))
+					setClosingCategories(prev => prev.filter(cid => !allToClose.includes(cid)))
+				}, 250) // Match animation duration (0.25s)
+			} else {
+				setExpandedCategories(prev => [...prev, id])
+			}
+		},
+		[expandedCategories, categories],
+	)
+
+	const tabs = [
+		{ key: 'income', label: 'Доходы' },
+		{ key: 'expense', label: 'Расходы' },
+		{ key: 'assets', label: 'Актив' },
+		{ key: 'liabilities', label: 'Обязательства' },
+		{ key: 'capital', label: 'Капитал' },
+	]
 
 	const handleTabChange = tabKey => {
 		setActiveTab(tabKey)
@@ -329,338 +313,330 @@ export default function TransactionCategoriesPage() {
 	}
 
 	return (
-		<div className={styles.container}>
-			<div className={styles.content}>
-				{/* Header */}
-				<div className={styles.header}>
-					<div className={styles.headerTop}>
-						<div className={styles.headerLeft}>
-							<h1 className={styles.title}>Учетные статьи</h1>
-							<button onClick={() => setIsCreateModalOpen(true)} className={styles.createButton}>
-								Создать
-							</button>
-						</div>
-						<div className={styles.searchContainer}>
-							<input 
-								type='text' 
-								placeholder='Поиск по названию' 
-								className={styles.searchInput}
-								value={searchQuery}
-								onChange={(e) => setSearchQuery(e.target.value)}
-							/>
-							<svg
-								className={styles.searchIcon}
-								fill='none'
-								viewBox='0 0 24 24'
-								stroke='currentColor'
-							>
-								<circle cx='11' cy='11' r='8'></circle>
-								<path d='m21 21-4.35-4.35'></path>
-							</svg>
-						</div>
-					</div>
+		<div className="flex overflow-y-auto flex-col bg-slate-50  fixed left-[80px] top-[60px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
 
-					<div className={styles.tabsContainer}>
-						{tabs.map((tab, index) => (
-							<button
-								key={tab.key}
-								onClick={() => handleTabChange(tab.key)}
-								className={cn(
-									styles.tab,
-									index === 0 && styles.first,
-									index === tabs.length - 1 && styles.last,
-									index > 0 && styles.notFirst,
-									activeTab === tab.key ? styles.active : styles.inactive,
-								)}
-							>
-								{tab.label}
-							</button>
-						))}
+			{/* Header */}
+			<div className="bg-white h-[120px] border-b sticky top-0 z-50 border-gray-200 p-4 px-6 shrink-0">
+				<div className="flex items-center justify-between mb-4">
+					<div className="flex items-center gap-4">
+						<h1 className="text-xl font-semibold text-slate-900">Учетные статьи</h1>
+						<button onClick={() => setIsCreateModalOpen(true)} className="primary-btn px-5 py-2 text-sm font-medium">
+							Создать
+						</button>
+					</div>
+					<div className="relative">
+						<input
+							type='text'
+							placeholder='Поиск по названию'
+							className="w-[280px] pl-9 pr-4 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+						/>
+						<svg
+							className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+							fill='none'
+							viewBox='0 0 24 24'
+							stroke='currentColor'
+						>
+							<circle cx='11' cy='11' r='8'></circle>
+							<path d='m21 21-4.35-4.35'></path>
+						</svg>
 					</div>
 				</div>
 
-				{/* Content */}
-				<div className={styles.contentArea}>
-					{/* Left Sidebar - Category Tree */}
-					<div className={styles.sidebar}>
-						<div className={styles.sidebarContent} key={activeTab}>
-							{isLoadingChartOfAccountsV2 && (
-								<div style={{ padding: '20px', textAlign: 'center' }}>Загрузка...</div>
+				<div className="flex items-center">
+					{tabs.map((tab, index) => (
+						<button
+							key={tab.key}
+							onClick={() => handleTabChange(tab.key)}
+							className={cn(
+								"px-4 py-2 text-xs border bg-white transition-colors",
+								index === 0 && "rounded-l",
+								index === tabs.length - 1 && "rounded-r -ml-px",
+								index > 0 && "-ml-px",
+								activeTab === tab.key ? "text-primary border-primary z-10" : "text-slate-600 border-gray-300 hover:text-slate-900",
 							)}
-							{chartOfAccountsErrorV2 && (
-								<div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
-									Ошибка: {chartOfAccountsErrorV2.message || 'Не удалось загрузить данные'}
-								</div>
-							)}
-							{!isLoadingChartOfAccountsV2 &&
-								!chartOfAccountsErrorV2 &&
-								categories.length === 0 && (
-									<div className={styles.emptyState}>
-										{searchQuery ? 'Ничего не найдено' : 'Нет данных для отображения'}
-									</div>
-								)}
-							{categories.map((category, categoryIndex) => (
-								<CategoryTreeItem
-									key={`${activeTab}/${categoryIndex}/${category.id}`}
-									category={category}
-									level={0}
-									categoryIndex={categoryIndex}
-									expandedCategories={expandedCategories}
-									closingCategories={closingCategories}
-									selectedCategory={selectedCategory}
-									onToggleCategory={toggleCategory}
-									onSelectCategory={setSelectedCategory}
-									onEditCategory={cat => {
-										setCategoryToEdit(cat)
-										setIsEditModalOpen(true)
-									}}
-									onDeleteCategory={cat => {
-										setCategoryToDelete(cat)
-										setIsDeleteModalOpen(true)
-									}}
-									onAddChild={cat => {
-										setCategoryToEdit(cat)
-										setIsCreateModalOpen(true)
-									}}
-									styles={styles}
-									cn={cn}
-									isLast={categoryIndex === categories.length - 1}
-									parentPath={activeTab}
-								/>
-							))}
+						>
+							{tab.label}
+						</button>
+					))}
+				</div>
+			</div>
+
+			{/* Content */}
+			<div className="flex-1 flex">
+				{/* Left Sidebar - Category Tree */}
+				<div className=" w-1/2 h-full stiky top-[120px] bg-white border-r border-gray-200 p-4 pb-6 " key={activeTab}>
+					{isLoadingChartOfAccountsV2 && (
+						<div style={{ padding: '20px', textAlign: 'center' }}>Загрузка...</div>
+					)}
+					{chartOfAccountsErrorV2 && (
+						<div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
+							Ошибка: {chartOfAccountsErrorV2.message || 'Не удалось загрузить данные'}
 						</div>
-					</div>
+					)}
+					{!isLoadingChartOfAccountsV2 &&
+						!chartOfAccountsErrorV2 &&
+						categories.length === 0 && (
+							<div className="p-8 text-center bg-gray-100 text-slate-400 pointer-events-none select-none rounded-md my-4">
+								{searchQuery ? 'Ничего не найдено' : 'Нет данных для отображения'}
+							</div>
+						)}
+					{categories.map((category, categoryIndex) => (
+						<CategoryTreeItem
+							key={`${activeTab}/${categoryIndex}/${category.id}`}
+							category={category}
+							level={0}
+							categoryIndex={categoryIndex}
+							expandedCategories={expandedCategories}
+							closingCategories={closingCategories}
+							selectedCategory={selectedCategory}
+							onToggleCategory={toggleCategory}
+							onSelectCategory={setSelectedCategory}
+							onEditCategory={cat => {
+								setCategoryToEdit(cat)
+								setIsEditModalOpen(true)
+							}}
+							onDeleteCategory={cat => {
+								setCategoryToDelete(cat)
+								setIsDeleteModalOpen(true)
+							}}
+							onAddChild={cat => {
+								setCategoryToEdit(cat)
+								setIsCreateModalOpen(true)
+							}}
+							isLast={categoryIndex === categories.length - 1}
+							parentPath={activeTab}
+						/>
+					))}
+				</div>
 
-					{/* Right Content - Cards */}
-					<div className={styles.rightContent}>
-						<div className={styles.rightContentInner}>
-							<p className={styles.description}>
-								Эта схема наглядно показывает, как статьи участвуют в формировании отчета Баланс
-							</p>
+				{/* Right Content - Cards */}
+				<div className="w-1/2 px-6 pt-6 mx-auto">
+					<p className="text-sm text-slate-500 mb-6 text-center">
+						Эта схема наглядно показывает, как статьи участвуют в формировании отчета Баланс
+					</p>
 
-							<div className={styles.cardsGrid}>
-								{/* Left Column - 2 cards vertically */}
-								<div className={styles.leftColumn}>
-									<div className={styles.cardsSpacing}>
-										{/* Движение денег */}
-										<div className={styles.card}>
-											<h3 className={styles.cardHeader}>Движение денег</h3>
+					<div className="flex gap-4">
+						{/* Left Column - 2 cards vertically */}
+						<div className="flex-1">
+							<div className="flex flex-col gap-4">
+								{/* Движение денег */}
+								<div className="bg-white rounded-lg border border-primary p-4">
+									<h3 className="text-lg font-bold text-slate-900 mb-3 pb-3 border-b border-gray-200">Движение денег</h3>
 
-											<div className={styles.cardContent}>
-												<div className={styles.section}>
-													<div className={styles.sectionHeader}>Операционный поток</div>
-													<div className={styles.sectionItems}>
-														<div className={styles.sectionItem}>Поступления</div>
-														<div className={styles.sectionItem}>Выплаты</div>
-													</div>
-												</div>
-
-												<div className={cn(styles.section, styles.sectionDivider)}>
-													<div className={styles.sectionHeader}>Инвестиционный поток</div>
-													<div className={styles.sectionItems}>
-														<div className={styles.sectionItem}>Поступления</div>
-														<div className={styles.sectionItem}>Выплаты</div>
-													</div>
-												</div>
-
-												<div className={cn(styles.section, styles.sectionDivider)}>
-													<div className={styles.sectionHeader}>Финансовый поток</div>
-													<div className={styles.sectionItems}>
-														<div className={styles.sectionItem}>Поступления</div>
-														<div className={styles.sectionItem}>Выплаты</div>
-													</div>
-												</div>
-
-												<div className={cn(styles.section, styles.sectionDividerBold)}>
-													<div className={styles.sectionTotal}>ОБЩИЙ ДЕНЕЖНЫЙ ПОТОК</div>
-												</div>
+									<div className="flex flex-col gap-3">
+										<div className="flex flex-col">
+											<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">Операционный поток</div>
+											<div className="flex flex-col gap-0.5 ml-4">
+												<div className="text-sm text-slate-700">Поступления</div>
+												<div className="text-sm text-slate-700">Выплаты</div>
 											</div>
 										</div>
 
-										{/* Прибыли и убытки */}
-										<div className={styles.card}>
-											<h3 className={styles.cardHeader}>Прибыли и убытки</h3>
-
-											<div className={styles.cardContent}>
-												<div className={styles.section}>
-													<div className={styles.sectionHeader}>
-														<span>Доходы</span>
-														<span className={styles.badge}>0</span>
-													</div>
-													<div className={styles.sectionItems}>
-														<div className={styles.sectionItem}>Продажа товаров</div>
-														<div className={styles.sectionItem}>Оказание услуг</div>
-														<div className={styles.sectionItem}>Прочие доходы</div>
-													</div>
-												</div>
-
-												<div className={cn(styles.section, styles.sectionDivider)}>
-													<div className={styles.sectionHeader}>
-														<div className={styles.sectionHeaderWithIcon}>
-															<span className={styles.sectionHeaderText}>минус</span>
-															<span>Расходы</span>
-														</div>
-														<span className={styles.badge}>0</span>
-													</div>
-													<div className={styles.sectionItems}>
-														<div className={styles.sectionItem}>Производственный персонал</div>
-														<div className={styles.sectionItem}>Покупка товаров</div>
-														<div className={styles.sectionItem}>Административный персонал</div>
-														<div className={styles.sectionItem}>Аренда</div>
-														<div className={styles.sectionItem}>Прочие расходы</div>
-														<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-															Банковские услуги
-														</div>
-														<div
-															className={cn(
-																styles.sectionItem,
-																styles.sectionItemNested,
-																styles.sectionItemWithBadge,
-															)}
-														>
-															<span className={styles.badgeSoon}>скоро</span>
-															<span>Курсовая разница минус</span>
-														</div>
-														<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-															Амортизация
-														</div>
-														<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-															Проценты
-														</div>
-														<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-															Налог на прибыль (доходы)
-														</div>
-													</div>
-												</div>
-
-												<div className={cn(styles.section, styles.sectionDividerBold)}>
-													<div className={styles.sectionTotal}>НЕРАСПРЕДЕЛЕННАЯ ПРИБЫЛЬ</div>
-												</div>
+										<div className="flex flex-col pt-2 border-t border-gray-200">
+											<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">Инвестиционный поток</div>
+											<div className="flex flex-col gap-0.5 ml-4">
+												<div className="text-sm text-slate-700">Поступления</div>
+												<div className="text-sm text-slate-700">Выплаты</div>
 											</div>
+										</div>
+
+										<div className="flex flex-col pt-2 border-t border-gray-200">
+											<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">Финансовый поток</div>
+											<div className="flex flex-col gap-0.5 ml-4">
+												<div className="text-sm text-slate-700">Поступления</div>
+												<div className="text-sm text-slate-700">Выплаты</div>
+											</div>
+										</div>
+
+										<div className="flex flex-col pt-3 border-t border-gray-300">
+											<div className="text-[15px] font-bold text-slate-900">ОБЩИЙ ДЕНЕЖНЫЙ ПОТОК</div>
 										</div>
 									</div>
 								</div>
 
-								{/* Right Column - 1 big card */}
-								<div className={styles.rightColumn}>
-									{/* Баланс */}
-									<div className={cn(styles.card, styles.cardFullHeight)}>
-										<h3 className={styles.cardHeader}>Баланс</h3>
+								{/* Прибыли и убытки */}
+								<div className="bg-white rounded-lg border border-primary p-4">
+									<h3 className="text-lg font-bold text-slate-900 mb-3 pb-3 border-b border-gray-200">Прибыли и убытки</h3>
 
-										<div className={styles.cardContent}>
-											<div className={styles.section}>
-												<div className={styles.sectionHeader}>
-													<span>Оборотные активы</span>
-													<span className={styles.badge}>0</span>
+									<div className="flex flex-col gap-3">
+										<div className="flex flex-col">
+											<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">
+												<span>Доходы</span>
+												<span className="px-2 py-0.5 text-[11px] bg-slate-200 text-slate-700 rounded font-medium">0</span>
+											</div>
+											<div className="flex flex-col gap-0.5 ml-4">
+												<div className="text-sm text-slate-700">Продажа товаров</div>
+												<div className="text-sm text-slate-700">Оказание услуг</div>
+												<div className="text-sm text-slate-700">Прочие доходы</div>
+											</div>
+										</div>
+
+										<div className="flex flex-col pt-2 border-t border-gray-200">
+											<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">
+												<div className="flex items-center gap-2">
+													<span className="text-xs text-red-500">минус</span>
+													<span>Расходы</span>
 												</div>
-												<div className={styles.sectionItems}>
-													<div className={styles.sectionItem}>Дебиторская задолженность</div>
-													<div className={styles.sectionItem}>Денежные средства</div>
-													<div className={styles.sectionItem}>Запасы</div>
-													<div className={styles.sectionItem}>Другие оборотные</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-														Заготовые платежи
-													</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-														Выданные займы (до 1 года)
-													</div>
+												<span className="px-2 py-0.5 text-[11px] bg-slate-200 text-slate-700 rounded font-medium">0</span>
+											</div>
+											<div className="flex flex-col gap-0.5 ml-4">
+												<div className="text-sm text-slate-700">Производственный персонал</div>
+												<div className="text-sm text-slate-700">Покупка товаров</div>
+												<div className="text-sm text-slate-700">Административный персонал</div>
+												<div className="text-sm text-slate-700">Аренда</div>
+												<div className="text-sm text-slate-700">Прочие расходы</div>
+												<div className="text-sm text-slate-700 ml-4">
+													Банковские услуги
+												</div>
+												<div
+													className="text-sm text-slate-700 ml-4 flex items-center gap-2"
+												>
+													<span className="px-2 py-0.5 text-[10px] bg-slate-400 text-white rounded">скоро</span>
+													<span>Курсовая разница минус</span>
+												</div>
+												<div className="text-sm text-slate-700 ml-4">
+													Амортизация
+												</div>
+												<div className="text-sm text-slate-700 ml-4">
+													Проценты
+												</div>
+												<div className="text-sm text-slate-700 ml-4">
+													Налог на прибыль (доходы)
 												</div>
 											</div>
+										</div>
 
-											<div className={cn(styles.section, styles.sectionDivider)}>
-												<div className={styles.sectionHeader}>
-													<div className={styles.sectionHeaderWithIcon}>
-														<span>Внеоборотные активы</span>
-														<span className={styles.badgeDark}>И</span>
-													</div>
-												</div>
-												<div className={styles.sectionItems}>
-													<div className={styles.sectionItem}>Основные средства</div>
-													<div className={styles.sectionItem}>Оборудование</div>
-													<div className={styles.sectionItem}>Транспорт</div>
-													<div className={styles.sectionItem}>Другие внеоборотные</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-														Выданные займы (от 1 года)
-													</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-														Финансовые вложения
-													</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-														Нематериальные активы
-													</div>
-												</div>
-											</div>
-
-											<div className={cn(styles.section, styles.sectionDividerBold)}>
-												<div className={styles.sectionTotal}>ИТОГО АКТИВЫ</div>
-											</div>
-
-											<div className={cn(styles.section, styles.sectionDivider)}>
-												<div className={styles.sectionHeader}>
-													<span>Краткосрочные обязательства</span>
-													<span className={styles.badge}>0</span>
-												</div>
-												<div className={styles.sectionItems}>
-													<div className={styles.sectionItem}>Кредиторская задолженность</div>
-													<div className={styles.sectionItem}>Другие краткосрочные</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-														Платежи третьим лицам
-													</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-														Полученные займы (до 1 года)
-													</div>
-												</div>
-											</div>
-
-											<div className={cn(styles.section, styles.sectionDivider)}>
-												<div className={styles.sectionHeader}>
-													<div className={styles.sectionHeaderWithIcon}>
-														<span>Долгосрочные обязательства</span>
-														<span className={styles.badgePrimary}>Ф</span>
-													</div>
-												</div>
-												<div className={styles.sectionItems}>
-													<div className={styles.sectionItem}>Кредиты</div>
-													<div className={styles.sectionItem}>Другие долгосрочные</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemNested)}>
-														Полученные займы (от 1 года)
-													</div>
-												</div>
-											</div>
-
-											<div className={cn(styles.section, styles.sectionDividerBold)}>
-												<div className={styles.sectionTotal}>ИТОГО ОБЯЗАТЕЛЬСТВА</div>
-											</div>
-
-											<div className={cn(styles.section, styles.sectionDivider)}>
-												<div className={styles.sectionHeader}>
-													<div className={styles.sectionHeaderWithIcon}>
-														<span>Капитал</span>
-														<span className={styles.badgePrimary}>Ф</span>
-													</div>
-												</div>
-												<div className={styles.sectionItems}>
-													<div className={styles.sectionItem}>Вложения учредителей</div>
-													<div className={cn(styles.sectionItem, styles.sectionItemWithBadge)}>
-														<span className={styles.sectionTotalTextGreen}>плюс</span>
-														<span>Нераспределенная прибыль</span>
-													</div>
-												</div>
-											</div>
-
-											<div className={cn(styles.section, styles.sectionDividerBold)}>
-												<div className={styles.sectionTotal}>ИТОГО КАПИТАЛ</div>
-											</div>
-
-											<div className={cn(styles.section, styles.sectionDividerExtraBold)}>
-												<div className={styles.sectionTotal}>АКТИВЫ = ОБЯЗАТЕЛЬСТВА + КАПИТАЛ</div>
-											</div>
+										<div className="flex flex-col pt-3 border-t border-gray-300">
+											<div className="text-[15px] font-bold text-slate-900">НЕРАСПРЕДЕЛЕННАЯ ПРИБЫЛЬ</div>
 										</div>
 									</div>
 								</div>
 							</div>
 						</div>
+
+						{/* Right Column - 1 big card */}
+						<div className="flex-1">
+							{/* Баланс */}
+							<div className="bg-white rounded-lg border border-primary p-4 h-full">
+								<h3 className="text-lg font-bold text-slate-900 mb-3 pb-3 border-b border-gray-200">Баланс</h3>
+
+								<div className="flex flex-col gap-3">
+									<div className="flex flex-col">
+										<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">
+											<span>Оборотные активы</span>
+											<span className="px-2 py-0.5 text-[11px] bg-slate-200 text-slate-700 rounded font-medium">0</span>
+										</div>
+										<div className="flex flex-col gap-0.5 ml-4">
+											<div className="text-sm text-slate-700">Дебиторская задолженность</div>
+											<div className="text-sm text-slate-700">Денежные средства</div>
+											<div className="text-sm text-slate-700">Запасы</div>
+											<div className="text-sm text-slate-700">Другие оборотные</div>
+											<div className="text-sm text-slate-700 ml-4">
+												Заготовые платежи
+											</div>
+											<div className="text-sm text-slate-700 ml-4">
+												Выданные займы (до 1 года)
+											</div>
+										</div>
+									</div>
+
+									<div className="flex flex-col pt-2 border-t border-gray-200">
+										<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">
+											<div className="flex items-center gap-2">
+												<span>Внеоборотные активы</span>
+												<span className="px-2 py-0.5 text-[11px] bg-slate-600 text-white rounded font-medium">И</span>
+											</div>
+										</div>
+										<div className="flex flex-col gap-0.5 ml-4">
+											<div className="text-sm text-slate-700">Основные средства</div>
+											<div className="text-sm text-slate-700">Оборудование</div>
+											<div className="text-sm text-slate-700">Транспорт</div>
+											<div className="text-sm text-slate-700">Другие внеоборотные</div>
+											<div className="text-sm text-slate-700 ml-4">
+												Выданные займы (от 1 года)
+											</div>
+											<div className="text-sm text-slate-700 ml-4">
+												Финансовые вложения
+											</div>
+											<div className="text-sm text-slate-700 ml-4">
+												Нематериальные активы
+											</div>
+										</div>
+									</div>
+
+									<div className="flex flex-col pt-3 border-t border-gray-300">
+										<div className="text-[15px] font-bold text-slate-900">ИТОГО АКТИВЫ</div>
+									</div>
+
+									<div className="flex flex-col pt-2 border-t border-gray-200">
+										<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">
+											<span>Краткосрочные обязательства</span>
+											<span className="px-2 py-0.5 text-[11px] bg-slate-200 text-slate-700 rounded font-medium">0</span>
+										</div>
+										<div className="flex flex-col gap-0.5 ml-4">
+											<div className="text-sm text-slate-700">Кредиторская задолженность</div>
+											<div className="text-sm text-slate-700">Другие краткосрочные</div>
+											<div className="text-sm text-slate-700 ml-4">
+												Платежи третьим лицам
+											</div>
+											<div className="text-sm text-slate-700 ml-4">
+												Полученные займы (до 1 года)
+											</div>
+										</div>
+									</div>
+
+									<div className="flex flex-col pt-2 border-t border-gray-200">
+										<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">
+											<div className="flex items-center gap-2">
+												<span>Долгосрочные обязательства</span>
+												<span className="px-2 py-0.5 text-[11px] bg-primary text-white rounded font-medium">Ф</span>
+											</div>
+										</div>
+										<div className="flex flex-col gap-0.5 ml-4">
+											<div className="text-sm text-slate-700">Кредиты</div>
+											<div className="text-sm text-slate-700">Другие долгосрочные</div>
+											<div className="text-sm text-slate-700 ml-4">
+												Полученные займы (от 1 года)
+											</div>
+										</div>
+									</div>
+
+									<div className="flex flex-col pt-3 border-t border-gray-300">
+										<div className="text-[15px] font-bold text-slate-900">ИТОГО ОБЯЗАТЕЛЬСТВА</div>
+									</div>
+
+									<div className="flex flex-col pt-2 border-t border-gray-200">
+										<div className="text-[15px] font-semibold text-slate-900 mb-1.5 flex items-center justify-between">
+											<div className="flex items-center gap-2">
+												<span>Капитал</span>
+												<span className="px-2 py-0.5 text-[11px] bg-primary text-white rounded font-medium">Ф</span>
+											</div>
+										</div>
+										<div className="flex flex-col gap-0.5 ml-4">
+											<div className="text-sm text-slate-700">Вложения учредителей</div>
+											<div className="text-sm text-slate-700 flex items-center gap-2">
+												<span className="text-xs text-green-500">плюс</span>
+												<span>Нераспределенная прибыль</span>
+											</div>
+										</div>
+									</div>
+
+									<div className="flex flex-col pt-3 border-t border-gray-300">
+										<div className="text-[15px] font-bold text-slate-900">ИТОГО КАПИТАЛ</div>
+									</div>
+
+									<div className="flex flex-col pt-3 border-t-2 border-slate-900">
+										<div className="text-[15px] font-bold text-slate-900">АКТИВЫ = ОБЯЗАТЕЛЬСТВА + КАПИТАЛ</div>
+									</div>
+								</div>
+							</div>
+
+						</div>
+
 					</div>
+					Lorem ipsum dolor, sit amet consectetur adipisicing elit. Molestiae autem sed ab? Illum, fuga porro minima iusto eveniet sapiente maiores maxime explicabo consequuntur! Praesentium doloremque debitis quos explicabo nostrum ipsa? Nostrum dolorum molestias aliquid id sit omnis, quo unde nam doloremque? Facere explicabo id alias quidem iure, earum rem. Hic facere dolor dicta quibusdam soluta! Molestiae sequi dicta obcaecati omnis. Id ad ex animi nam laudantium aspernatur incidunt asperiores impedit facilis maiores laboriosam numquam esse, nemo sunt neque, sapiente repudiandae odio! Molestiae labore et consequatur quaerat ipsam libero voluptates pariatur at, deleniti sit, ducimus facilis. Sed numquam possimus enim perspiciatis soluta, mollitia minima ea ratione doloremque totam molestiae neque, ducimus, ad ipsa nemo porro voluptatum dicta unde? Sapiente inventore nihil amet eum! Voluptatum exercitationem aliquam at cumque recusandae cupiditate iure quaerat expedita corrupti, quasi animi. Ad nihil mollitia voluptatibus beatae rem quidem est eum ea quam cumque libero, voluptates modi ratione eligendi perferendis ipsa possimus, officiis corporis odit reprehenderit eos omnis? Quod pariatur odit nesciunt laborum tenetur non nulla magnam minima enim, aliquam dolor iusto dolores modi accusamus ab tempore sequi totam deleniti sint itaque cum, ducimus eveniet. Inventore, rem odit incidunt debitis ipsum saepe omnis officiis rerum praesentium dignissimos cum molestiae? In dicta eius, quibusdam quidem excepturi quae veritatis, beatae, quasi doloribus quisquam quod atque impedit iure nihil sint sequi incidunt itaque qui fugit praesentium cupiditate soluta. Ipsam expedita ullam autem repudiandae fugiat adipisci possimus odio vero doloremque! Molestias aperiam odit nisi placeat aut voluptas quisquam harum asperiores ad, fugit expedita quis eos labore veniam nulla voluptatum, dicta distinctio impedit minus eveniet ab natus sequi, repellat voluptatibus. Nostrum quae eveniet accusamus ex, aspernatur necessitatibus labore accusantium expedita quaerat quas laboriosam libero tempora eius eum! Asperiores iure quisquam, repellat numquam sunt quis tempora enim quam dolor nisi ratione commodi! Veniam!
 				</div>
 			</div>
 
@@ -699,7 +675,7 @@ export default function TransactionCategoriesPage() {
 							// Close modal first
 							setIsDeleteModalOpen(false)
 							setCategoryToDelete(null)
-							
+
 							// Extract error message from API response
 							let errorMessage = 'Не удалось удалить учетную статью'
 							if (error.response?.data?.data) {
@@ -707,7 +683,7 @@ export default function TransactionCategoriesPage() {
 							} else if (error.message) {
 								errorMessage = error.message
 							}
-							
+
 							// Show error notification at top center
 							showErrorNotification(errorMessage, { position: 'top-center' })
 						}

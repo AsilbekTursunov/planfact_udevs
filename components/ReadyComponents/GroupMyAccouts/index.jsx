@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import GroupSelect from '../../shared/Selects/GroupSelect'
 import { GroupedSelect } from '../../common/GroupedSelect/GroupedSelect'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const GroupMyAccounts = ({
   value,
@@ -27,7 +28,9 @@ const GroupMyAccounts = ({
       elektronnye: true,
     },
     querySetting: {
-      select: (response) => response?.data?.data?.data || []
+      select: (response) => response?.data?.data?.data || [],
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
     }
   })
 

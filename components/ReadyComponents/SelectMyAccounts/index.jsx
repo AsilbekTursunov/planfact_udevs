@@ -3,13 +3,16 @@ import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import { formatAmount } from '../../../utils/helpers'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите счет", className, dropdownClassName, multi = true, type, selected, hasError }) => {
 
   const { data: accountsData, isLoading } = useUcodeRequestQuery({
     method: "get_my_accounts",
     querySetting: {
-      select: (response) => response?.data?.data?.data || []
+      select: (response) => response?.data?.data?.data || [],
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
     }
   })
 

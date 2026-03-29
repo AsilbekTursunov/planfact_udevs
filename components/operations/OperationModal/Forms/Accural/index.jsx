@@ -11,6 +11,7 @@ import { cn } from '@/app/lib/utils'
 import { useState } from 'react'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
+import CustomDatePicker from '../../../../shared/DatePicker'
 
 const AccuralForm = ({ onCancel, onSuccess }) => {
   const [isFromRasxodChild, setIsFromRasxodChild] = useState(false)
@@ -30,35 +31,48 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
   })
 
   const { mutateAsync: createAccural, isPending } = useUcodeRequestMutation({
+
     mutationSetting: {}
   })
 
-  // tip = Начисление
+
 
   const onSubmit = async (data) => {
-    const requestData = {
-      tip: ['Начисление'],
-      data_operatsii: data.accuralDate,
-      payment_confirm: data.confirmAccrual,
-      my_accounts_id: data.legalEntity,
-      chartOfAccountWriteOff: data.chartOfAccountWriteOff,
-      summa: data.summa,
-      canAllowOpiu: data.canAllowOpiu,
-      chartOfAccountEnrollment: data.chartOfAccountEnrollment,
-      sellingDealId: data.sellingDealId,
-      opisanie: data.comment
-    }
     try {
-      await createAccural(requestData)
+      const requestData = {
+        tip: ['Начисление'],
+        data_nachisleniya: data.accuralDate,
+        payment_confirmed: data.confirmAccrual,
+        currenies_id: data.legalEntity,
+        chart_of_accounts_id: data.chartOfAccountWriteOff,
+        chart_of_accounts_id_2: data.chartOfAccountEnrollment,
+        sales_transactions_id: data.sellingDealId,
+        sales_transactions_id_2: data.sellingDealId,
+        project_id: data.legalEntity,
+        counterparties_id: data.legalEntity,
+        include_in_profit_and_loss_cash_method: data.canAllowOpiu,
+        repeat_enabled: data.repeatEnabled,
+        repeat_every: data.repeatEvery,
+        repeat_unit: data.repeatUnit,
+        repeat_until: data.repeatUntil,
+        repeat_count: data.repeatCount,
+        comment: data.comment
+      }
+
+      console.log('requestData', requestData)
+      // await createAccural({
+      //   method: 'create_operation',
+      //   data: requestData
+      // })
       onSuccess?.(data)
     } catch (error) {
-      console.log(error)
+      console.error('Error in AccuralForm handleSubmit:', error)
     }
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col h-full overflow-hidden text-slate-900">
-      <div className="flex-1 overflow-y-auto  p-4 flex flex-col gap-5">
+      <div className="flex-1 overflow-y-auto  py-4 flex flex-col gap-5">
         {/* SECTION: ОТКУДА */}
         <div className="flex flex-col gap-5">
           <div className="flex items-center gap-3 mb-2">
@@ -69,17 +83,18 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
 
           {/* Дата начисления */}
           <div className="flex items-center gap-4">
-            <label className="w-[150px] text-[13px]">Дата начисления</label>
-            <div className="flex-1 flex  gap-1 max-w-[600px]">
+            <label className="w-[150px] text-xss!">Дата начисления</label>
+            <div className="flex-1 flex  gap-2 max-w-[600px]">
               <Controller
                 name="accuralDate"
                 control={control}
                 render={({ field }) => (
-                  <DatePicker
+                  <CustomDatePicker
                     value={field.value}
                     onChange={field.onChange}
                     placeholder="Выберите дату"
-                    className={cn("w-[230px]", errors.accuralDate && "border-red-500")}
+                    format='YYYY-MM-DD'
+                    className={cn("w-[180px]!", errors.accuralDate && "border-red-500")}
                   />
                 )}
               />
@@ -215,7 +230,7 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
 
           {/* Статья зачисления */}
           <div className="flex items-center gap-4">
-            <label className="w-[150px] text-[13px]">Статья по кредиту <span className="text-red-500 ml-0.5">*</span></label>
+            <label className="w-[150px] text-xss!">Статья по кредиту <span className="text-red-500 ml-0.5">*</span></label>
             <div className="flex-1 flex flex-col gap-1 max-w-[600px]">
               <Controller
                 name="chartOfAccountEnrollment"
@@ -239,7 +254,7 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
             </div>
           </div>
           {isToRasxodChild && <div className="flex items-center gap-4">
-            <label className="w-[150px] text-[13px]">Сделка продажи</label>
+            <label className="w-[150px] text-xss!">Сделка продажи</label>
             <div className="flex-1 flex flex-col gap-1 max-w-[600px]">
               <Controller
                 name="sellingDealId"
@@ -283,7 +298,7 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
       </div>
 
       {/* Footer Actions */}
-      <div className="flex border-t justify-end gap-2 p-3 pt-3 mt-auto bg-white">
+      <div className="flex border-t justify-end gap-2 px-3 pt-3 mt-auto bg-white">
         <button type="button" onClick={onCancel} className="secondary-btn py-2!">Отмена</button>
         <button type="submit" className="primary-btn py-2!">Сохранить</button>
       </div>

@@ -38,7 +38,7 @@ const CommentChat = ({ dealGuid }) => {
   };
 
   return (
-    <div className="flex flex-col bg-white rounded-lg shadow-[0_8px_18px_rgba(118,164,172,0.1)] h-full border border-gray-100/50">
+    <div className="flex flex-col bg-white rounded-lg shadow-[0_8px_18px_rgba(118,164,172,0.1)] max-h-[500px] border border-gray-100/50">
       {/* Header */}
       <div className="p-5 border-b border-gray-100 inline-flex items-center justify-between">
         <h3 className="text-sm font-bold text-gray-800 tracking-wider">ФАЙЛЫ И КОММЕНТАРИИ</h3>

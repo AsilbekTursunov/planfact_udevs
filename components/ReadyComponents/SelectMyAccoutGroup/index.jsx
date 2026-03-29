@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const SelectMyAccoutGroup = ({ value, onChange, placeholder = "Выберите группу", className, dropdownClassName, multi = false, hasError }) => {
 
@@ -12,7 +13,9 @@ const SelectMyAccoutGroup = ({ value, onChange, placeholder = "Выберите 
       limit: 100,
     },
     querySetting: {
-      select: (response) => response?.data?.data?.data || []
+      select: (response) => response?.data?.data?.data || [],
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
     }
   })
 

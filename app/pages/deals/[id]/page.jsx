@@ -196,9 +196,9 @@ export default observer(function DealDetailPage() {
   }
 
   return (
-    <div className={styles.container}>
+    <div className="flex overflow-hidden flex-col space-y-4 fixed left-[80px] top-[60px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
       {/* Breadcrumbs */}
-      <div className={styles.breadcrumbs}>
+      <div className="px-3 py-2 bg-white/90">
         <button onClick={() => router.push('/pages/deals')} className={styles.breadcrumbLink}>
           Сделки по продажам
         </button>
@@ -207,7 +207,7 @@ export default observer(function DealDetailPage() {
       </div>
 
       {/* Header */}
-      <div className='flex items-center justify-between '>
+      <div className='flex items-center justify-between px-3 '>
         <div className={styles.header}>
           <h1 className={styles.title}>{deal?.name || 'Без названия'}</h1>
         </div>
@@ -242,7 +242,7 @@ export default observer(function DealDetailPage() {
       </div>
 
       {/* Info Cards */}
-      <div className={styles.infoCards}>
+      <div className="grid grid-cols-[minmax(340px,1fr)_minmax(250px,310px)_minmax(250px,310px)_minmax(250px,310px)] gap-4 px-3">
         {/* Card 1: Deal Amount */}
         <div className={'bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]'}>
           <div className="flex items-center justify-between">
@@ -370,7 +370,7 @@ export default observer(function DealDetailPage() {
         </div>
 
         {/* Card 4: Profit */}
-        <div className={styles.infoCard}>
+        <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
           <div className="flex items-center justify-between mb-4">
             <span className="font-semibold text-base text-gray-ucode-800">Прибыль сделки</span>
             <Popover open={showAccounting} onOpenChange={setShowAccounting}>
@@ -427,9 +427,9 @@ export default observer(function DealDetailPage() {
       </div>
 
       {/* Main Content Layout */}
-      <div className={styles.mainContentLayout}>
+      <div className="grid grid-cols-[1fr_310px] gap-4 px-3 flex-1">
         {/* Left side - Tabs and content */}
-        <div className={styles.leftSection}>
+        <div className="">
           {/* Tabs */}
           <div className="flex bg-white border-b border-neutral-200 rounded-t-xl overflow-hidden mb-0">
             <button

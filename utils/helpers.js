@@ -55,3 +55,13 @@ export const returnNumber = (text) => {
   if (isNaN(num)) return ''
   return (num || '').toLocaleString('ru-RU')
 }
+
+
+
+export const StringtoNumber = (text) => {
+  if (!text) return ''
+  const raw = String(text).replace(/\s/g, '').replace(/[^0-9.]/g, '');
+  const num = parseFloat(raw);
+  if (isNaN(num)) return ''
+  return num
+}

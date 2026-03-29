@@ -57,10 +57,10 @@ export function Sidebar() {
 
 
     return (
-        <aside className="bg-blue-950 w-[80px] h-screen" ref={sidebarRef}>
-            <div className="flex items-center justify-center h-[60px] pl-1 pt-1">
-                <AppLogo size={44} strokeWidth={1.5} />
-            </div>
+        <aside className="bg-blue-950 w-[80px] flex flex-col gap-2 h-screen items-center justify-start fixed left-0 z-1000" ref={sidebarRef}>
+            {/* <div className="flex items-center justify-center h-[60px] pl-1 pt-1"> */}
+            <AppLogo size={44} strokeWidth={1.5} className='mt-2' />
+            {/* </div> */}
 
             <nav className="flex flex-col gap-2 p-2 w-full">
                 {navItems
@@ -78,7 +78,7 @@ export function Sidebar() {
                                 <div className="mb-1">
                                     <item.icon size={22} strokeWidth={1.5} />
                                 </div>
-                                <span className="text-[10px] text-center font-medium leading-tight">
+                                <span className="text-mini text-center font-medium leading-tight">
                                     {item.label}
                                 </span>
                             </div>

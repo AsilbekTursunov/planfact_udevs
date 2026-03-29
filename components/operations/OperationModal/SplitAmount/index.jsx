@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import './style.scss'
-import MultipleSelect from '../../../shared/MultipleSelect'
+import MultipleSelect from '../../../shared/Selects/MultiSelect'
 import { CalendarCellIcon, CalendarIcon, CreditIcon, DebitIcon, MergeArrowsIcon, SortArrow } from '../../../../constants/icons'
 import { formatAmount, formatDateRu } from '../../../../utils/helpers'
 import CustomCalendar from '../../../shared/Calendar'
@@ -9,6 +9,13 @@ import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import CustomModal from '../../../shared/CustomModal'
 import SingleCounterParty from '../../../ReadyComponents/SingleCounterParty'
 import SinglSelectStatiya from '../../../ReadyComponents/SingleSelectStatiya'
+
+
+const defaultOptions = [
+  { value: 'Начисление', label: 'Начисление' },
+  { value: 'Контрагент', label: 'Контрагент' },
+  { value: 'Статья', label: 'Статья' },
+]
 
 const today = new Date().getDate()
 
@@ -131,19 +138,24 @@ const SplitAmount = ({ amount, onChange, rows,
 
 
   return (
-    <div className="split-wrapper">
+    <div className="w-full overflow-x-auto">
       <button
         type="button"
-        className="split-title"
+        className="text-primary-dark text-xs cursor-pointer"
         onClick={handleToggleSplit}
       >
         {open ? 'Отменить разбиение' : 'Разбить сумму'}
       </button>
 
       {open && (
-        <>
-          <div className="split-select-wrap">
-            <MultipleSelect value={selectedSplits} onChange={setSelectedSplits} />
+        <div className='w-full overflow-x-auto space-y-2'>
+          <div className="relative z-50">
+            <MultipleSelect
+              data={defaultOptions}
+              value={selectedSplits}
+              withSearch={false}
+              onChange={setSelectedSplits}
+            />
           </div>
 
           {selectedSplits?.length > 0 && <div className="split-table-wrap">
@@ -327,7 +339,7 @@ const SplitAmount = ({ amount, onChange, rows,
               </table>
             </div>
           </div>}
-        </>
+        </div>
       )}
 
       <CustomModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} >

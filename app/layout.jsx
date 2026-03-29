@@ -1,6 +1,6 @@
 "use client"
 
-import { Geist, Geist_Mono, Roboto } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar/Sidebar";
 import { Header } from "@/components/Header/Header";

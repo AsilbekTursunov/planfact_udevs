@@ -1,12 +1,17 @@
 import React, { useMemo } from 'react'
 import MultiSelect from '@/components/shared/Selects/MultiSelect'
 import { useUcodeDefaultApiQuery } from '@/hooks/useDashboard'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const SalesTransactions = ({ value = [], onChange, placeholder = "Выберите сделки", dropdownClassName, hasError }) => {
   const { data: dealsData, isLoading } = useUcodeDefaultApiQuery({
     queryKey: 'deals',
     urlMethod: 'GET',
-    urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=100'
+    urlParams: '/items/sales_transactions?from-ofs=true&offset=0&limit=100',
+    querySetting: {
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
+    }
   });
 
   const formattedDeals = useMemo(() => {

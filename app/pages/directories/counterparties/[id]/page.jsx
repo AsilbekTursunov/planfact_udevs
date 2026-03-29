@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontal, PenLine, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, MoreHorizontal, PenLine, Trash2 } from 'lucide-react'
 import { useUcodeRequestMutation } from '@/hooks/useDashboard'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
@@ -24,6 +24,7 @@ import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMy
 import MultiSelectStatiya from '../../../../../components/ReadyComponents/MultiSelectStatiya'
 import { formatAmount } from '../../../../../utils/helpers'
 import { GlobalCurrency } from '../../../../../constants/globalCurrency'
+import ScreenLoader from '../../../../../components/shared/ScreenLoader'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -477,22 +478,22 @@ const KontragentDetailPage = () => {
 
 
   return (
-    <div className={styles.container}>
+    <div className="fixed h-[calc(100vh-60px)]  top-[60px] left-[80px] right-0 bottom-0 overflow-y-auto">
       {isDeletingCounterparty && (
         <div className={styles.deleteOverlay}>
           <div className={styles.deleteSpinner}></div>
           <span className={styles.deleteSpinnerText}>Удаление...</span>
         </div>
       )}
-      <div className={styles.content}>
+      <div className="flex-1 h-full flex flex-col">
         {/* Breadcrumbs */}
-        <div className={styles.breadcrumbs}>
-          <div className={styles.breadcrumbsContent}>
+        <div className=" flex items-center px-3 bg-white border-b border-gray-200 sticky top-0 z-30">
+          <div className="flex items-center  text-xs h-10!">
             <Link href="/pages/directories/counterparties" className={styles.breadcrumbLink}>
               Список контрагентов
             </Link>
-            <span className={styles.breadcrumbSeparator}>›</span>
-            <span className={styles.breadcrumbCurrent}>{counterpartyInfo?.name || 'Контрагент'}</span>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-neutral-900 text-sm">{counterpartyInfo?.name || 'Контрагент'}</span>
           </div>
         </div>
 
@@ -673,13 +674,13 @@ const KontragentDetailPage = () => {
         </div>
 
         {/* Operations Section */}
-        <div className={styles.operationsSection}>
-          <div className={styles.operationsContent}>
-            <div className={cn(styles.operationsHeader, isFiltersOpen && styles.filtersOpen)}>
-              <div className={styles.operationsHeaderLeft}>
-                <h2 className={styles.operationsTitle}>Операции по контрагенту</h2>
+        <div className="flex-1 bg-white">
+          <div className="p-4">
+            <div id='operation_filter_section' className={"mb-3 sticky min-h-14  max-h-28 top-10 z-20 bg-white "}>
+              <div className="flex py-3 items-center gap-3">
+                <h2 className="text-xl font-medium">Операции по контрагенту</h2>
                 <button
-                  className="bg-primary px-2 py-1 rounded-md text-white text-sm hover:bg-primary-dark cursor-pointer"
+                  className="primary-btn"
                   onClick={() => {
                     setCreatingOperation({ isNew: true })
                     setCreateModalType('income')
@@ -694,143 +695,71 @@ const KontragentDetailPage = () => {
                   Создать
                 </button>
                 <button
-                  className={styles.filtersButton}
+                  className="secondary-btn flex items-center gap-2 text-primary!"
                   onClick={() => setIsFiltersOpen(!isFiltersOpen)}
                 >
                   Фильтры
-                  <svg
-                    className={cn(styles.filtersIcon, isFiltersOpen && styles.filtersIconOpen)}
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <ChevronDown className='w-4 h-4' />
                 </button>
               </div>
+              {/* Filters Panel */}
+              {isFiltersOpen && (
+                <div className='flex items-center gap-3 mb-3 pb-2'>
+                  <div className="w-48">
+                    <SelectMyAccounts
+                      value={selectedLegalEntities}
+                      onChange={setSelectedLegalEntities}
+                      placeholder="Юрлица и счета"
+                      className={'bg-white'}
+                      dropdownClassName={'w-64'}
+                    />
+                  </div>
+                  <div className="w-48 flex items-center">
+                    <MultiSelectStatiya
+                      value={selectedChartOfAccounts}
+                      onChange={setSelectedChartOfAccounts}
+                      placeholder="Статьи"
+                      className={'bg-white'}
+                      dropdownClassName={'w-64'}
+                    />
+                  </div>
+                  <div className="w-48 flex items-center">
+                    <MultiSelectZdelka
+                      value={filters.deals}
+                      onChange={(values) => setFilters(prev => ({ ...prev, deals: values }))}
+                      placeholder="Сделки"
+                      className={'bg-white'}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Filters Panel */}
-            {isFiltersOpen && (
-              <div className='flex items-center gap-3 my-3'>
-                <div className="w-48">
-                  <SelectMyAccounts
-                    value={selectedLegalEntities}
-                    onChange={setSelectedLegalEntities}
-                    placeholder="Юрлица и счета"
-                    className={'bg-white'}
-                    dropdownClassName={'w-64'}
-                  />
-                </div>
-                <div className="w-48 flex items-center">
-                  <MultiSelectStatiya
-                    value={selectedChartOfAccounts}
-                    onChange={setSelectedChartOfAccounts}
-                    placeholder="Статьи"
-                    className={'bg-white'}
-                    dropdownClassName={'w-64'}
-                  />
-                </div>
-                <div className="w-48 flex items-center">
-                  <MultiSelectZdelka
-                    value={filters.deals}
-                    onChange={(values) => setFilters(prev => ({ ...prev, deals: values }))}
-                    placeholder="Сделки"
-                    className={'bg-white'}
-                  />
-                </div>
-              </div>
-            )}
 
-            {(isLoadingOperations && !operationsListData) ? (
-              <div className={styles.tableWrapper}>
-                <table className={styles.operationsTable}>
-                  <thead className={styles.tableHeader}>
-                    <tr>
-                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>№</th>
-                      <th className={styles.tableHeaderCell}>Дата</th>
-                      <th className={styles.tableHeaderCell}>Счет</th>
-                      <th className={styles.tableHeaderCell}>Тип</th>
-                      <th className={styles.tableHeaderCell}>Контрагент</th>
-                      <th className={styles.tableHeaderCell}>Статья</th>
-                      <th className={styles.tableHeaderCell}>Проект</th>
-                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
-                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
-                    </tr>
-                  </thead>
-                  <tbody className={styles.tableBody}>
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <tr key={i} className={styles.tableRow}>
-                        <td className={cn(styles.tableCell, styles.tableCellIndex)}>
-                          <div className={styles.skeleton} style={{ width: '20px', height: '12px', margin: '0 auto' }}></div>
-                        </td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.skeleton} style={{ width: '80px', height: '12px' }}></div>
-                        </td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.skeleton} style={{ width: '100px', height: '12px' }}></div>
-                        </td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.skeleton} style={{ width: '24px', height: '24px' }}></div>
-                        </td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.skeleton} style={{ width: '120px', height: '12px' }}></div>
-                        </td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.skeleton} style={{ width: '100px', height: '12px' }}></div>
-                        </td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.skeleton} style={{ width: '60px', height: '12px' }}></div>
-                        </td>
-                        <td className={cn(styles.tableCell, styles.amountCell)}>
-                          <div className={styles.skeleton} style={{ width: '80px', height: '12px', marginLeft: 'auto' }}></div>
-                        </td>
-                        <td className={cn(styles.tableCell, styles.tableCellActions)}>
-                          <div className={styles.skeleton} style={{ width: '20px', height: '20px', margin: '0 auto' }}></div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : counterpartyInfo?.operationsCount === 0 ? (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateIcon}>
-                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.35-4.35"></path>
-                    <line x1="8" y1="8" x2="16" y2="16" strokeWidth="2"></line>
-                  </svg>
-                </div>
-                <div className={styles.emptyStateText}>
-                  <div className={styles.emptyStateTitle}>Создайте операции с контрагентом</div>
-                  <div className={styles.emptyStateSubtitle}>
-                    Добавляйте платежи и учитывайте предоплаты или отсрочки.
+
+            {!isLoadingOperations && operations.length === 0 ? (
+              <div className="">
+                <div className="">
+                  <div className="text-center">
+                    <div className="text-2xl font-medium">Создайте операции с контрагентом</div>
+                    <div className="text-lg text-gray-500">Добавляйте платежи и учитывайте предоплаты или отсрочки.</div>
                   </div>
                 </div>
               </div>
-            ) : operations.length === 0 ? (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyStateText}>
-                  <div className={styles.emptyStateTitle}>По заданным фильтрам ничего не найдено</div>
-                </div>
-              </div>
             ) : (
-              <div className={styles.tableWrapper}>
-                <table className={styles.operationsTable}>
-                  <thead className={styles.tableHeader}>
+                <div className="pb-56">
+                  <table className="w-full">
+                    <thead className={`bg-neutral-100 text-neutral-600 text-sm h-9 sticky ${isFiltersOpen ? 'top-[140px]' : 'top-[96px]'} z-10 font-normal`}>
                     <tr>
-                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>№</th>
-                      <th className={styles.tableHeaderCell}>Дата</th>
-                      <th className={styles.tableHeaderCell}>Счет</th>
-                      <th className={styles.tableHeaderCell}>Тип</th>
-                      <th className={styles.tableHeaderCell}>Контрагент</th>
-                      <th className={styles.tableHeaderCell}>Статья</th>
-                      <th className={styles.tableHeaderCell}>Сделка</th>
-                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
-                      <th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
+                        <th className={""}>№</th>
+                        <th className={""}>Дата</th>
+                        <th className={""}>Счет</th>
+                        <th className={""}>Тип</th>
+                        <th className={""}>Контрагент</th>
+                        <th className={""}>Статья</th>
+                        <th className={""}>Сделка</th>
+                        <th className={""}>Сумма</th>
+                        <th className={""}></th>
                     </tr>
                   </thead>
                   <tbody className={styles.tableBody}>
@@ -843,12 +772,12 @@ const KontragentDetailPage = () => {
                       </tr>
                     )}
 
-                    {operationsList?.today?.map(op => (
+                      {operationsList?.today?.map((op, index) => (
                       <OperationTableRow
                         key={op.guid}
                         op={op}
+                        showIndex={index + 1}
                         selectedOperations={selectedOperations}
-                        toggleOperation={toggleOperation}
                         openOperationModal={handleEditOperation}
                         counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
@@ -864,12 +793,12 @@ const KontragentDetailPage = () => {
                         </td>
                       </tr>
                     )}
-                    {operationsList?.before?.map(op => (
+                      {operationsList?.before?.map((op, index) => (
                       <OperationTableRow
                         key={op.guid}
                         op={op}
+                        showIndex={index + 1}
                         selectedOperations={selectedOperations}
-                        toggleOperation={toggleOperation}
                         openOperationModal={handleEditOperation}
                         counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
@@ -885,37 +814,31 @@ const KontragentDetailPage = () => {
         </div>
 
         {/* Fixed Footer */}
-        <div className={styles.footer}>
-          <div className={styles.footerContent}>
-            <div className={styles.footerStats}>
+        <div className="fixed bottom-0 w-full h-10 bg-neutral-100 border-t border-gray-200 flex items-center justify-start px-6">
+          <div className="flex items-center gap-4 text-xss">
+            <span className={styles.footerText}>
+              <span className={styles.footerTextBold}>{summary?.total}</span> {summary?.total === 1 ? 'операция' : summary?.total < 5 ? 'операции' : 'операций'}
+            </span>
+            {stats.receiptsCount > 0 && (
               <span className={styles.footerText}>
-                <span className={styles.footerTextBold}>{summary?.total}</span> {summary?.total === 1 ? 'операция' : summary?.total < 5 ? 'операции' : 'операций'}
+                {stats.receiptsCount} {stats.receiptsCount === 1 ? 'поступление' : stats.receiptsCount < 5 ? 'поступления' : 'поступлений'}: <span className={styles.footerTextBold}>{formatAmount(summary?.incoming)}</span>
               </span>
-              {stats.receiptsCount > 0 && (
-                <span className={styles.footerText}>
-                  {stats.receiptsCount} {stats.receiptsCount === 1 ? 'поступление' : stats.receiptsCount < 5 ? 'поступления' : 'поступлений'}: <span className={styles.footerTextBold}>{formatAmount(summary?.incoming)}</span>
-                </span>
-              )}
-              {stats.paymentsCount > 0 && (
-                <span className={styles.footerText}>
-                  {stats.paymentsCount} {counterparty?.expense === 1 ? 'выплата' : counterparty?.expense < 5 ? 'выплаты' : 'выплат'}: <span className={styles.footerTextBold}>{formatAmount(summary?.outgoing)}</span>
-                </span>
-              )}
+            )}
+            {stats.paymentsCount > 0 && (
               <span className={styles.footerText}>
-                Итого: <span className={cn(styles.footerTextBold, summary.profit >= 0 ? styles.footerTextGreen : styles.footerTextRed)}>
-                  {summary.profit >= 0 ? '+' : ''}{formatAmount(summary.profit)}
-                </span>
+                {stats.paymentsCount} {counterparty?.expense === 1 ? 'выплата' : counterparty?.expense < 5 ? 'выплаты' : 'выплат'}: <span className={styles.footerTextBold}>{formatAmount(summary?.outgoing)}</span>
               </span>
-            </div>
+            )}
+            <span className={styles.footerText}>
+              Итого: <span className={cn(styles.footerTextBold, summary.profit >= 0 ? styles.footerTextGreen : styles.footerTextRed)}>
+                {summary.profit >= 0 ? '+' : ''}{formatAmount(summary.profit)}
+              </span>
+            </span>
           </div>
         </div>
       </div>
 
-      {/* "difference": -9496457,
-                    "incoming": 503666,
-                    "outgoing": 10000123,
-                    "profit": -9496457,
-                    "total": 6 */}
+
 
       {/* Create Operation Modal */}
       {isCreateOperationModalOpen && (

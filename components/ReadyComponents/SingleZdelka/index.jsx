@@ -3,6 +3,7 @@ import React, { useMemo } from 'react'
 import { useUcodeRequestQuery } from '@/hooks/useDashboard'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import { cn } from '@/lib/utils'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const SingleZdelka = ({
   value,
@@ -20,7 +21,9 @@ const SingleZdelka = ({
       limit: 100,
     },
     querySetting: {
-      select: (response) => response?.data?.data?.data
+      select: (response) => response?.data?.data?.data,
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      placeholder: keepPreviousData
     }
   })
 

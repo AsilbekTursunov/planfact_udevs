@@ -200,13 +200,13 @@ export default observer(function DealsPage() {
 
 
   return (
-    <div className="flex overflow-hidden w-full">
+    <div className="flex overflow-hidden fixed left-[80px] top-[60px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
       <FilterSidebar onOpenChange={setIsFilterOpen} />
-      <main className="p-4 flex-1 relative overflow-y-auto scroll-smooth">
-        <header className="flex items-center justify-between mb-4 sticky top-[-16px] bg-white z-20 pt-4">
+      <main className=" w-full relative  overflow-y-auto scroll-smooth bg-white">
+        <header className="flex items-center justify-between  px-3 h-[60px] sticky top-0  bg-white z-20 ">
           <div className="flex items-center gap-2 flex-1">
             <h1 className={styles.title}>Сделки по продажам</h1>
-            <button className='primary-btn py-1! text-sm px-2! rounded-sm!' onClick={() => setIsCreateModalOpen(true)}>
+            <button className='primary-btn  text-sm  rounded-sm!' onClick={() => setIsCreateModalOpen(true)}>
               Создать
             </button>
           </div>
@@ -241,10 +241,9 @@ export default observer(function DealsPage() {
           </div>
         </header>
 
-        <div className="relative">
-
-          <table className="w-full text-xs">
-            <thead className='sticky top-0'>
+        <div className="px-3 flex-1 pb-15">
+          <table className="w-full text-xs flex-1 px-3!">
+            <thead className='sticky z-10 top-[60px]'>
               <tr className='bg-neutral-100 text-neutral-500  text-xs'>
                 <th className="w-10">
                   <div className="flex items-center justify-center">
@@ -346,7 +345,7 @@ export default observer(function DealsPage() {
       {/* Fixed Footer */}
       <footer className={cn(
         'fixed bottom-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex items-center gap-6 z-10 transition-[left] duration-300',
-        isFilterOpen ? 'left-[338px]' : 'left-[123px]'
+        isFilterOpen ? 'left-[304px]' : 'left-[116px]'
       )}>
         <span className="flex items-center gap-1.5">
           <span className="text-[11px] text-gray-500 font-medium">{deals?.summary?.count || 0} сделок на сумму:</span>
