@@ -45,7 +45,7 @@ export default observer(function AccountsPage() {
 
   const {
     searchQuery, setSearchQuery,
-    selectedTypes, toggleType,
+    isCash, isNonCash, isCard, isElectronic, toggleType,
     selectedEntity, setSelectedEntity,
     selectedAccounts, setSelectedAccounts,
     selectedGrouping, setSelectedGrouping,
@@ -98,14 +98,14 @@ export default observer(function AccountsPage() {
       limit: 100,
       search: debouncedSearchQuery.toLowerCase() || "",
       groupBy: selectedGrouping,
-      nalichnye: selectedTypes.length === 0 || selectedTypes.includes('Наличный'),
-      beznalichnye: selectedTypes.length === 0 || selectedTypes.includes('Безналичный'),
-      kartaFizlica: selectedTypes.length === 0 || selectedTypes.includes('Карта физлица'),
-      elektronnye: selectedTypes.length === 0 || selectedTypes.includes('Электронный'),
+      nalichnye: isCash,
+      beznalichnye: isNonCash,
+      kartaFizlica: isCard,
+      elektronnye: isElectronic,
       legal_entity_ids: selectedEntity,
       accounts_and_groups_ids: selectedAccounts,
     }
-  }, [debouncedSearchQuery, selectedGrouping, selectedTypes, selectedEntity, selectedAccounts])
+  }, [debouncedSearchQuery, selectedGrouping, isCash, isNonCash, isCard, isElectronic, selectedEntity, selectedAccounts])
 
   // Fetch bank accounts using new invoke_function API
   const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useUcodeRequestQuery({
@@ -331,22 +331,22 @@ export default observer(function AccountsPage() {
         <FilterSection title="Тип">
           <div className="space-y-2.5 flex flex-col items-start">
             <OperationCheckbox
-              checked={selectedTypes.includes('Наличный')}
+              checked={isCash}
               onChange={() => toggleFilter('Наличный')}
               label="Наличный"
             />
             <OperationCheckbox
-              checked={selectedTypes.includes('Безналичный')}
+              checked={isNonCash}
               onChange={() => toggleFilter('Безналичный')}
               label="Безналичный"
             />
             <OperationCheckbox
-              checked={selectedTypes.includes('Карта физлица')}
+              checked={isCard}
               onChange={() => toggleFilter('Карта физлица')}
               label="Карта физлица"
             />
             <OperationCheckbox
-              checked={selectedTypes.includes('Электронный')}
+              checked={isElectronic}
               onChange={() => toggleFilter('Электронный')}
               label="Электронный"
             />
@@ -484,7 +484,6 @@ export default observer(function AccountsPage() {
                     accountsList.map((item) => {
                       if (item.isGroup) {
                         const isExpanded = expandedGroups.has(item.guid)
-                        console.log(item)
                         return (
                           <React.Fragment key={item.guid}>
                             <tr
@@ -514,10 +513,10 @@ export default observer(function AccountsPage() {
                               </td>
                               {/* Group summary columns if needed, else empty */}
                               <td className="p-2 text-nowrap">
-                                {item.nachalьnyy_ostatok_val !== undefined ? `${formatAmount(item.nachalьnyy_ostatok_val)}  ${GlobalCurrency}` : ''}
+                                {item.nachalьnyy_ostatok_val !== undefined ? `${formatAmount(item.nachalьnyy_ostatok_val)}  ${GlobalCurrency.name}` : ''}
                               </td>
                               <td className="p-2 text-nowrap">
-                                {item.current_balance_val !== undefined ? `${formatAmount(item.current_balance_val)}  ${GlobalCurrency}` : ''}
+                                {item.current_balance_val !== undefined ? `${formatAmount(item.current_balance_val)}  ${GlobalCurrency.name}` : ''}
                               </td>
                               <td className="p-2"></td>
                               <td className="p-2"></td>
@@ -537,7 +536,8 @@ export default observer(function AccountsPage() {
                                 />
                               </td>
                             </tr>
-                            {isExpanded && (item.children || []).map((account) => (
+                            {isExpanded && (item.children || []).map((account) => {
+                              return (
                               <tr key={account.guid} className="hover:bg-neutral-50 border-b border-gray-100 transition-colors h-14">
                                 <td className="p-2">
                                   <div className="flex items-center justify-center">
@@ -548,21 +548,24 @@ export default observer(function AccountsPage() {
                                   {account.nazvanie}
                                 </td>
                                 {allFields.slice(1).map((field) => (
-                                <td key={field} className="p-2 text-sm text-[#0f172a]">
-                                  {formatFieldValue(account, field)}
-                                </td>
-                              ))}
-                              <td className="p-2 text-end" onClick={(e) => e.stopPropagation()}>
-                                <AccountMenu
-                                  onEdit={() => setEditMyAccount(account)}
-                                  onDelete={() => setDeletingAccount(account)}
-                                />
-                              </td>
-                            </tr>
-                          ))}
+                                  <td key={field} className="p-2 text-sm text-[#0f172a]">
+                                    {formatFieldValue(account, field)}
+                                  </td>
+                                ))}
+                                  <td className="p-2 text-end" onClick={(e) => e.stopPropagation()}>
+                                    <AccountMenu
+                                      onEdit={() => setEditingAccount(account)}
+                                      onDelete={() => setDeletingAccount(account)}
+                                    />
+                                  </td>
+                                </tr>
+                              )
+                            })}
                           </React.Fragment>
                         )
                       }
+
+                      console.log('item', item)
 
                     // Non-grouped (flat list)
                     return (
@@ -609,7 +612,7 @@ export default observer(function AccountsPage() {
                   {totalCurrentBalance.toLocaleString('ru-RU')}
                 </span>
                   <span>
-                    {GlobalCurrency}
+                    {GlobalCurrency.name}
                   </span>
                 </div>
             )}
@@ -635,6 +638,7 @@ export default observer(function AccountsPage() {
         <CreateAccountGroupModal
           isOpen={isCreateGroupModalOpen}
           editingGroup={editingGroup}
+          editId={editingGroup?.id}
           onClose={() => {
             setIsCreateGroupModalOpen(false)
             setEditingGroup(null)
@@ -690,6 +694,7 @@ export default observer(function AccountsPage() {
             queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
           }}
           legalEntity={editingLegalEntity}
+          legalEntityId={editingLegalEntity.legal_entity_id}
         />
       )}
     </div>

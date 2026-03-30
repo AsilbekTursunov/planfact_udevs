@@ -9,6 +9,7 @@ import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import CustomModal from '../../../shared/CustomModal'
 import SingleCounterParty from '../../../ReadyComponents/SingleCounterParty'
 import SinglSelectStatiya from '../../../ReadyComponents/SingleSelectStatiya'
+import CustomMultipleSelect from '../../../shared/Selects/MultipleSelect'
 
 
 const defaultOptions = [
@@ -150,11 +151,12 @@ const SplitAmount = ({ amount, onChange, rows,
       {open && (
         <div className='w-full overflow-x-auto space-y-2'>
           <div className="relative z-50">
-            <MultipleSelect
+            <CustomMultipleSelect
               data={defaultOptions}
               value={selectedSplits}
               withSearch={false}
               onChange={setSelectedSplits}
+              className={'bg-white'}
             />
           </div>
 

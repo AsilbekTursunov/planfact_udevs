@@ -385,6 +385,7 @@ const IncomeForm = observer(({
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
       queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
       queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+      queryClient.invalidateQueries({ queryKey: ['legal_entities'] })
       queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
       onClose?.()
     } catch (error) {
@@ -632,14 +633,7 @@ const IncomeForm = observer(({
                   render={({ field }) => (
                     <SingleZdelka
                       value={field.value}
-                      onChange={(val) => {
-                        if (val && !showDate && (watchConfirmAccrual || watchPaymentDate !== watchAccrualDate)) {
-                          setTempSalesDeal(val)
-                          setIsDateModalOpen(true)
-                        } else {
-                          field.onChange(val)
-                        }
-                      }}
+                      onChange={field.onChange}
                       placeholder='Выберите сделку...'
                       className='bg-white border rounded-md'
                       hasError={!!errors.salesDeal}
@@ -683,7 +677,7 @@ const IncomeForm = observer(({
         </div>
       </form>
 
-      <CustomModal
+      {/* <CustomModal
         isOpen={isDateModalOpen}
         onClose={() => {
           setIsDateModalOpen(false)
@@ -713,7 +707,7 @@ const IncomeForm = observer(({
             </button>
           </div>
         </div>
-      </CustomModal>
+      </CustomModal> */}
     </>
   )
 })

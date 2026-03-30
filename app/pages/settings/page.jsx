@@ -5,8 +5,9 @@ import { appStore } from '../../../store/app.store'
 import { observer } from 'mobx-react-lite'
 import styles from './settings.module.scss'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
-import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
+import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import SingleSelect from '../../../components/shared/Selects/SingleSelect'
+import { queryClient } from '../../../lib/queryClient'
 
 /* ─── currency options ────────────────────────────────── */
 const SettingsPage = observer(() => {
@@ -20,13 +21,32 @@ const SettingsPage = observer(() => {
       select: (response) => response?.data?.data?.data
     }
   })
+  const { data } = useUcodeRequestQuery({
+    method: 'get_general_settings',
+    querySetting: {
+      select: (response) => response?.data?.data?.data
+    }
+  })
+
+  console.log('data', data)
+
+  const { mutateAsync: updateSettings } = useUcodeRequestMutation({
+    querySetting: {
+      onSuccess: () => {
+        // successToast('Настройки успешно обновлены')
+      }
+    }
+  })
 
   useEffect(() => {
-    if (currencies) {
-      const currency = currencies.find(c => c.kod === 'UZS')
+    if (data) {
+      // const currency = currencies.find(c => c.kod === 'UZS')
+      appStore.setCurrency({ name: data?.default_currency_code, guid: data?.default_currency_id })
+    } else {
+      const currency = currencies?.find(c => c.kod === 'UZS')
       appStore.setCurrency({ name: currency?.kod, guid: currency?.guid })
     }
-  }, [currencies])
+  }, [data, currencies])
 
   const currenciesList = useMemo(() => {
     return currencies?.map(c => ({
@@ -39,13 +59,27 @@ const SettingsPage = observer(() => {
     appStore.setIsPayment(!appStore.isPayment);
   }
 
-  const handleSelectCurrency = (value) => {
+  const handleSelectCurrency = async (value) => {
     const name = currencies.find(c => c.guid === value)?.kod
-    appStore.setCurrency({ name: name, guid: value })
+    await updateSettings({
+      method: 'update_general_settings',
+      data: {
+        "default_currency_id": value,
+        "default_currency_code": name,
+      }
+    }).then((data) => {
+      // successToast('Настройки успешно обновлены')
+      const response = data?.data?.data?.data
+      console.log('response', response)
+      appStore.setCurrency({ name: response?.default_currency_code, guid: response?.default_currency_id })
+      queryClient.invalidateQueries({ queryKey: ['get_general_settings'] })
+    }).catch(() => {
+      // errorToast('Ошибка при обновлении настроек')
+    })
   }
 
   return (
-    <div className={styles.mainContent}>
+    <div className=" p-3">
       <h1 className={styles.pageTitle}>Общие настройки</h1>
 
       {/* ── Настройки аккаунта ─────────────── */}

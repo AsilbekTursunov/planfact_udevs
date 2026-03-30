@@ -85,7 +85,7 @@ const OperationTableRow = observer(({
             </div>
           </> : <div className='flex flex-col items-start'>
             <span className=''>{op?.operationDate}</span>
-            {isDifferentDate && <span className="text-[10px] text-neutral-400">{op?.accrualDate}</span>}
+              {isDifferentDate && <span className="text-mini text-neutral-400">{op?.accrualDate}</span>}
           </div>}
         </td>
         <td className={cn(styles.tableCell, styles.accountCell, isActive && styles.activeRow)}>

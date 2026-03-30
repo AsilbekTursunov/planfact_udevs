@@ -20,6 +20,7 @@ const OperationModal = observer(({
 	preselectedCounterparty = null,
 	defaultDealGuid = null,
 	initialTab = 'income',
+	modalType = null,
 	chart_of_accounts_id = null
 }) => {
 	const isNew = operation?.isNew || false
@@ -59,8 +60,8 @@ const OperationModal = observer(({
 		if (op?.tip === 'Поступление') return 'income'
 		if (op?.tip === 'Перемещение') return 'transfer'
 		if (op?.tip === 'Выплата') return 'payment'
-		return initialTab || 'income'
-	}, [initialTab])
+		return modalType || initialTab || 'income'
+	}, [initialTab, modalType])
 
 	const [activeTab, setActiveTab] = useState(() => getTabType(operationData))
 
@@ -93,8 +94,8 @@ const OperationModal = observer(({
 	return (
 		<>
 			{/* Overlay and Modal Container */}
-			<div className={cn('fixed  w-full flex h-full bg-black/50 z-1000 left-[80px] transition-opacity duration-300', isClosing ? 'opacity-0' : 'opacity-100')}>
-				<div className="w-[600px] h-full bg-white p-4 flex flex-col pb-18 transition-transform duration-300">
+			<div className={cn('fixed top-[60px] left-[80px] w-[calc(100%-80px)] h-[calc(100%-60px)] right-0 bottom-0 flex bg-black/50 z-1000 transition-opacity duration-300', isClosing ? 'opacity-0' : 'opacity-100')}>
+				<div className="w-[600px] h-full bg-white p-4 flex flex-col transition-transform duration-300">
 					<div className="flex items-center justify-between mb-2">
 						<div className="flex items-center gap-2">
 							<h2 className="text-lg font-bold text-neutral-900">

@@ -248,7 +248,7 @@ export default observer(function DealDetailPage() {
           <div className="flex items-center justify-between">
             <p className='text-xl flex gap-1 font-semibold text-neutral-800 mt-2'>
               <span>{formatAmount(dealAmount)}</span>
-              <span>{GlobalCurrency}</span>
+              <span>{GlobalCurrency.name}</span>
             </p>
             <DealStatus
               currentStatus={summeryCards?.status}
@@ -319,8 +319,8 @@ export default observer(function DealDetailPage() {
             </div>
 
             <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(received)} {GlobalCurrency}</div>
-              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} {GlobalCurrency}</div>
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(received)} {GlobalCurrency.name}</div>
+              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} {GlobalCurrency.name}</div>
             </div>
           </div>
 
@@ -333,7 +333,7 @@ export default observer(function DealDetailPage() {
             <span className="font-normal  text-gray-ucode-500">Клиент должен:</span>
             <p>
               <span className="font-medium  text-[#344054]">{formatAmount(clientDebt)} </span>
-              <span>{GlobalCurrency}</span>
+              <span>{GlobalCurrency.name}</span>
             </p>
           </div>
         </div>
@@ -353,8 +353,8 @@ export default observer(function DealDetailPage() {
             </div>
 
             <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(shipped)} {GlobalCurrency}</div>
-              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} {GlobalCurrency}</div>
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(shipped)} {GlobalCurrency.name}</div>
+              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} {GlobalCurrency.name}</div>
             </div>
           </div>
 
@@ -365,7 +365,7 @@ export default observer(function DealDetailPage() {
 
           <div className="flex text-xs  gap-2 flex-1 items-end">
             <span className="font-normal  text-gray-ucode-500">Мы должны:</span>
-            <span className="font-medium  text-[#344054]">{formatAmount(remainingShipment)} {GlobalCurrency}</span>
+            <span className="font-medium  text-[#344054]">{formatAmount(remainingShipment)} {GlobalCurrency.name}</span>
           </div>
         </div>
 
@@ -401,7 +401,7 @@ export default observer(function DealDetailPage() {
             </div>
 
             <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(profit)} {GlobalCurrency}</div>
+              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(profit)} {GlobalCurrency.name}</div>
               <div className="font-normal text-xs text-gray-ucode-500">Рентабельность {profitPercent}%</div>
             </div>
           </div>
@@ -415,12 +415,12 @@ export default observer(function DealDetailPage() {
             <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#12B76A' }}></div>
               <span className="font-normal text-xs text-gray-ucode-500">Доходы</span>
-              <span className="font-medium text-sm text-gray-ucode-800">+{formatAmount(income)} {GlobalCurrency}</span>
+              <span className="font-medium text-sm text-gray-ucode-800">+{formatAmount(income)} {GlobalCurrency.name}</span>
             </div>
             <div className="flex flex-col flex-1">
               <div className={styles.profitBarDot} style={{ backgroundColor: '#FFC609' }}></div>
               <span className="font-normal text-xs text-gray-ucode-500">Расходы</span>
-              <span className="font-medium text-sm text-gray-ucode-800">-{formatAmount(expenses)} {GlobalCurrency}</span>
+              <span className="font-medium text-sm text-gray-ucode-800">-{formatAmount(expenses)} {GlobalCurrency.name}</span>
             </div>
           </div>
         </div>

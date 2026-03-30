@@ -5,7 +5,7 @@ import { makePersistable } from "mobx-persist-store";
 class AppStore {
   isPayment = false
   currency = {
-    name: 'UZS',
+    name: '',
     guid: ''
   }
 

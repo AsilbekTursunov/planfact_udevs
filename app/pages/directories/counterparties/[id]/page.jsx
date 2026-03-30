@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
+import { observer } from 'mobx-react-lite'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
@@ -24,7 +25,6 @@ import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMy
 import MultiSelectStatiya from '../../../../../components/ReadyComponents/MultiSelectStatiya'
 import { formatAmount } from '../../../../../utils/helpers'
 import { GlobalCurrency } from '../../../../../constants/globalCurrency'
-import ScreenLoader from '../../../../../components/shared/ScreenLoader'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -32,7 +32,7 @@ const calculationOptions = [
   { value: "Calculation", label: 'Учет методом начисления' },
 ]
 
-const KontragentDetailPage = () => {
+const KontragentDetailPage = observer(() => {
   const params = useParams()
   const router = useRouter()
   const counterpartyGuid = params?.id
@@ -49,7 +49,7 @@ const KontragentDetailPage = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
-  const [page, setPage] = useState(1)
+
 
   const [activePopover, setActivePopover] = useState(null)
   const [isRequisitesModalOpen, setIsRequisitesModalOpen] = useState(false)
@@ -94,9 +94,9 @@ const KontragentDetailPage = () => {
       legalEntityId: selectedLegalEntities,
       chartOfAccountId: selectedChartOfAccounts,
       sellingDealId: filters.deals,
-      page
+      page: 1
     }
-  }, [counterpartyGuid, page, filters.operationDateStart, filters.operationDateEnd, filters.calculationMethod, selectedLegalEntities, selectedChartOfAccounts, filters.deals])
+  }, [counterpartyGuid, filters.operationDateStart, filters.operationDateEnd, filters.calculationMethod, selectedLegalEntities, selectedChartOfAccounts, filters.deals])
 
   // Fetch counterparty data by GUID using get_counterparty_by_id
   const { data: counterpartyData, isPending: isLoadingCounterparty } = useUcodeRequestQuery({
@@ -107,33 +107,6 @@ const KontragentDetailPage = () => {
       refetchOnWindowFocus: false
     }
   })
-
-  const filterCounterpartyOperations = useMemo(() => {
-    return {
-      counterparties_ids: [counterpartyGuid],
-      chart_of_accounts_ids: selectedChartOfAccounts,
-      my_accounts_ids: selectedLegalEntities,
-      selling_deals_ids: filters.deals,
-      sales: [],
-      page: 1,
-      limit: 1000,
-    }
-  }, [selectedChartOfAccounts, selectedLegalEntities, filters.deals, counterpartyGuid])
-
-  const { data: operationsListData, isLoading: isLoadingOperations } = useUcodeRequestQuery({
-    method: 'find_operations',
-    data: filterCounterpartyOperations,
-    skip: !counterpartyGuid,
-    querySetting: {
-      refetchOnWindowFocus: true,
-      select: response => response?.data?.data?.data
-    }
-  })
-
-
-
-  // console.log('single countepary', operationsList)
-
 
   // Response structure: { data: { data: { data: { counterparty: {...}, operations: [...] } } } }
   const responseData = counterpartyData?.data?.data?.data
@@ -153,8 +126,6 @@ const KontragentDetailPage = () => {
       before: operationsDto(counterpartyOperations || [], 'before'),
     }
   }, [counterpartyOperations])
-
-  console.log('cuounterpartu', counterparty)
 
 
   // Format counterparty info - DECLARE FIRST
@@ -286,12 +257,14 @@ const KontragentDetailPage = () => {
     })
 
     let modalType = 'payment'
-    if (operation.typeCategory === 'transfer') {
-      modalType = 'accrual'
-    } else if (operation.typeCategory === 'out') {
+    if (operation.tip === 'Перемещение') {
+      modalType = 'transfer'
+    } else if (operation.tip === 'Выплата') {
       modalType = 'payment'
-    } else if (operation.typeCategory === 'in') {
+    } else if (operation.tip === 'Поступление') {
       modalType = 'income'
+    } else if (operation.tip === 'Начисление') {
+      modalType = 'accrual'
     }
 
     setCreateModalType(modalType)
@@ -574,7 +547,7 @@ const KontragentDetailPage = () => {
                   </div>
                   <div className={styles.financialItemValue}>
                     {formatAmount(counterpartyInfo?.income)}
-                    <span className="text-base ml-2">{GlobalCurrency}</span>
+                    <span className="text-base ml-2">{GlobalCurrency.name}</span>
                   </div>
                 </div>
 
@@ -585,7 +558,7 @@ const KontragentDetailPage = () => {
                   </div>
                   <div className={styles.financialItemValue}>
                     {formatAmount(counterpartyInfo?.expense)}
-                    <span className="text-base ml-2">{GlobalCurrency}</span>
+                    <span className="text-base ml-2">{GlobalCurrency.name}</span>
                   </div>
                 </div>
 
@@ -596,7 +569,7 @@ const KontragentDetailPage = () => {
                   </div>
                   <div className={styles.financialItemValue}>
                     {formatAmount(counterpartyInfo.difference)}
-                    <span className="text-base ml-2">{GlobalCurrency}</span>
+                    <span className="text-base ml-2">{GlobalCurrency.name}</span>
                   </div>
                 </div>
               </div>
@@ -737,7 +710,7 @@ const KontragentDetailPage = () => {
 
 
 
-            {!isLoadingOperations && operations.length === 0 ? (
+            {!isLoadingCounterparty && operations.length === 0 ? (
               <div className="">
                 <div className="">
                   <div className="text-center">
@@ -752,13 +725,13 @@ const KontragentDetailPage = () => {
                     <thead className={`bg-neutral-100 text-neutral-600 text-sm h-9 sticky ${isFiltersOpen ? 'top-[140px]' : 'top-[96px]'} z-10 font-normal`}>
                     <tr>
                         <th className={""}>№</th>
-                        <th className={""}>Дата</th>
-                        <th className={""}>Счет</th>
-                        <th className={""}>Тип</th>
-                        <th className={""}>Контрагент</th>
-                        <th className={""}>Статья</th>
-                        <th className={""}>Сделка</th>
-                        <th className={""}>Сумма</th>
+                        <th className={"text-start px-2"}>Дата</th>
+                        <th className={"text-start px-2"}>Счет</th>
+                        <th className={"text-start px-2"}>Тип</th>
+                        <th className={"text-start px-2"}>Контрагент</th>
+                        <th className={"text-start px-2"}>Статья</th>
+                        <th className={"text-start px-2"}>Сделка</th>
+                        <th className={" text-end"}>Сумма</th>
                         <th className={""}></th>
                     </tr>
                   </thead>
@@ -780,6 +753,7 @@ const KontragentDetailPage = () => {
                         selectedOperations={selectedOperations}
                         openOperationModal={handleEditOperation}
                         counterpartyGuid={counterpartyInfo?.guid}
+                          toggleOperation={toggleOperation}
                         handleEditOperation={handleEditOperation}
                         handleDeleteOperation={handleDeleteOperation}
                         handleCopyOperation={handleCopyOperation}
@@ -801,6 +775,7 @@ const KontragentDetailPage = () => {
                         selectedOperations={selectedOperations}
                         openOperationModal={handleEditOperation}
                         counterpartyGuid={counterpartyInfo?.guid}
+                          toggleOperation={toggleOperation}
                         handleEditOperation={handleEditOperation}
                         handleDeleteOperation={handleDeleteOperation}
                         handleCopyOperation={handleCopyOperation}
@@ -844,7 +819,7 @@ const KontragentDetailPage = () => {
       {isCreateOperationModalOpen && (
         <OperationModal
           operation={creatingOperation}
-          modalType={createModalType}
+          initialTab={createModalType}
           isClosing={isCreateModalClosing}
           isOpening={isCreateModalOpening}
           chart_of_accounts_id={counterparty?.chart_of_accounts_id}
@@ -860,7 +835,7 @@ const KontragentDetailPage = () => {
       {editingOperation && (
         <OperationModal
           operation={editingOperation}
-          modalType={editingOperation.typeCategory === 'in' ? 'income' : editingOperation.typeCategory === 'out' ? 'payment' : 'transfer'}
+          initialTab={editingOperation?.tip === 'Поступление' ? 'income' : editingOperation?.tip === 'Выплата' ? 'payment' : editingOperation?.tip === 'Перемещение' ? 'transfer' : 'accrual'}
           isClosing={isEditModalClosing}
           isOpening={isEditModalOpening}
           chart_of_accounts_id={counterparty?.chart_of_accounts_id}
@@ -964,6 +939,6 @@ const KontragentDetailPage = () => {
       />
     </div>
   )
-}
+})
 
 export default KontragentDetailPage

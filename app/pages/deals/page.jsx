@@ -265,15 +265,15 @@ export default observer(function DealsPage() {
                 <th className='px-2 text-start'>
                   <div className='flex items-center gap-1'>
                     <p>Сумма сделки</p>
-                    <p>{GlobalCurrency}</p>
+                    <p>{GlobalCurrency.name}</p>
                   </div>
                 </th>
                 <th className='px-2 text-start'>Поступило</th>
                 <th className='px-2 text-start'>Отгружено</th>
                 <th className='px-2  text-end w-44'>
-                  <div className='flex items-center gap-1'>
+                  <div className='flex items-center justify-end gap-1'>
                     <p>Прибыль</p>
-                    <p>{GlobalCurrency}</p>
+                    <p>{GlobalCurrency.name}</p>
                   </div>
                 </th>
               </tr>
@@ -298,21 +298,25 @@ export default observer(function DealsPage() {
                       </div>
                     </td>
                     <td>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col p-2">
                         <p className=''>{deal.nazvanie}</p>
                         <p className='text-neutral-400'>{deal.comment}</p>
                       </div>
                     </td>
-                    <td>{deal?.partner_name || '-'}</td>
-                    <td>
+                    <td className='p-0!'>
+                      <div className="text-start p-2">
+                        {deal?.partner_name || '-'}
+                      </div>
+                    </td>
+                    <td className='p-0!'>
                       <span className={`${styles.status} ${styles[`status_${deal.status}`]}`}>
                         {deal?.status || '-'}
                       </span>
                     </td>
-                    <td>{formatAmount(deal.summa_sdelki)}</td>
-                    <td>{deal.postupilo || '0%'}</td>
-                    <td>{deal.otgruzheno || '0%'}</td>
-                    <td className='relative  text-end'>
+                    <td className='p-2'>{formatAmount(deal.summa_sdelki)}</td>
+                    <td className='p-2'>{deal.postupilo || '0%'}</td>
+                    <td className='p-2'>{deal.otgruzheno || '0%'}</td>
+                    <td className='relative  text-end p-2'>
                       <div className='group-hover:hidden'>
                         <p className={`${price < 0 ? 'text-red-600' : 'text-green-600'}`}>
                           {formatAmount(price)}
@@ -350,7 +354,7 @@ export default observer(function DealsPage() {
         <span className="flex items-center gap-1.5">
           <span className="text-[11px] text-gray-500 font-medium">{deals?.summary?.count || 0} сделок на сумму:</span>
           <span className="text-xs font-semibold text-slate-900">{formatAmount(deals?.summary?.total_deals_sum || 0)}</span>
-          <span className="text-xs font-semibold text-slate-900">{GlobalCurrency}</span>
+          <span className="text-xs font-semibold text-slate-900">{GlobalCurrency.name}</span>
         </span>
         <div className="w-px h-5 bg-gray-200 shrink-0" />
         <span className="flex items-center gap-1.5">
@@ -359,7 +363,7 @@ export default observer(function DealsPage() {
             'text-xs font-semibold',
             totalProfit > 0 ? 'text-emerald-500' : totalProfit < 0 ? 'text-red-500' : 'text-slate-900'
           )}>{formatAmount(totalProfit)}</span>
-          <span className="text-xs font-semibold text-slate-900">{GlobalCurrency}</span>
+          <span className="text-xs font-semibold text-slate-900">{GlobalCurrency.name}</span>
         </span>
       </footer>
 

@@ -55,30 +55,29 @@ const GroupMyAccounts = ({
   }
 
   // Choose component based on multi prop
-  if (multi) {
-    return (
-      <GroupSelect
-        data={mappedData}
-        value={Array.isArray(value) ? value : []}
-        onChange={onChange}
-        placeholder={placeholder}
-        className={className}
-        dropdownClassName={dropdownClassName}
-        hasError={hasError}
-      />
-    )
-  }
+  // if (multi) {
+  //   return (
+  //     <GroupSelect
+  //       data={mappedData}
+  //       value={Array.isArray(value) ? value : []}
+  //       onChange={onChange}
+  //       placeholder={placeholder}
+  //       className={className}
+  //       dropdownClassName={dropdownClassName}
+  //       hasError={hasError}
+  //     />
+  //   )
+  // }
 
   return (
-    <GroupedSelect
+    <GroupSelect
       data={mappedData}
-      value={value}
+      value={Array.isArray(value) ? value : []}
       onChange={onChange}
+      multi={multi}
       placeholder={placeholder}
       className={className}
       dropdownClassName={dropdownClassName}
-      groupBy="group" // Tell GroupedSelect to group by the 'group' property
-      disabled={disabled}
       hasError={hasError}
     />
   )

@@ -3,8 +3,10 @@ import { makePersistable } from 'mobx-persist-store'
 
 class AccountsStore {
   searchQuery = ''
-  selectedTypes =
-    ["Карта физлица", "Безналичный", "Наличный", "Электронный"]
+  isCash = true
+  isNonCash = true
+  isCard = true
+  isElectronic = true
   selectedEntity = []
   selectedAccounts = []
   selectedGrouping = 'none'
@@ -19,7 +21,10 @@ class AccountsStore {
         name: "accounts_filters",
         properties: [
           "searchQuery",
-          "selectedTypes",
+          "isCash",
+          "isNonCash",
+          "isCard",
+          "isElectronic",
           "selectedEntity",
           "selectedAccounts",
           "selectedGrouping",
@@ -36,15 +41,17 @@ class AccountsStore {
     this.searchQuery = typeof val === 'object' && val?.target ? val.target.value : val
   }
 
-  setSelectedTypes = (types) => {
-    this.selectedTypes = types
-  }
+  setIsCash = (val) => { this.isCash = val }
+  setIsNonCash = (val) => { this.isNonCash = val }
+  setIsCard = (val) => { this.isCard = val }
+  setIsElectronic = (val) => { this.isElectronic = val }
 
   toggleType = (type) => {
-    if (this.selectedTypes.includes(type)) {
-      this.selectedTypes = this.selectedTypes.filter(t => t !== type)
-    } else {
-      this.selectedTypes.push(type)
+    switch (type) {
+      case 'Наличный': this.isCash = !this.isCash; break;
+      case 'Безналичный': this.isNonCash = !this.isNonCash; break;
+      case 'Карта физлица': this.isCard = !this.isCard; break;
+      case 'Электронный': this.isElectronic = !this.isElectronic; break;
     }
   }
 
@@ -70,7 +77,10 @@ class AccountsStore {
 
   resetFilters = () => {
     this.searchQuery = ''
-    this.selectedTypes = []
+    this.isCash = true
+    this.isNonCash = true
+    this.isCard = true
+    this.isElectronic = true
     this.selectedEntity = []
     this.selectedAccounts = []
     this.selectedGrouping = 'none'

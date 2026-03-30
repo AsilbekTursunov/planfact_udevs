@@ -29,6 +29,12 @@ const calculationOptions = [
   { value: "Calculation", label: 'Учет методом начисления' },
 ]
 
+const tipOptions = [
+  { value: "Плательщик", label: 'Плательщик' },
+  { value: "Получатель", label: 'Получатель' },
+  { value: "Смешанный", label: 'Смешанный' },
+]
+
 import counterpartiesStore from '@/store/counterparties.store'
 import { observer } from 'mobx-react-lite'
 import MultiSelectZdelka from '../../../../components/ReadyComponents/MultiZdelka'
@@ -36,6 +42,7 @@ import SelectLegelEntitties from '../../../../components/ReadyComponents/SelectL
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import { formatAmount } from '../../../../utils/helpers'
 import { ChevronDown } from 'lucide-react'
+import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
 
 const CounterpartiesPage = observer(() => {
 
@@ -469,6 +476,7 @@ const CounterpartiesPage = observer(() => {
       >
         <FilterSection title="Параметры">
           <div className="space-y-2.5">
+            <SingleSelect data={tipOptions} />
             <SelectCounterParties
               value={filters.selectedCounterparties}
               onChange={(values) => setFilters(prev => ({ ...prev, selectedCounterparties: values }))}
@@ -658,19 +666,19 @@ const CounterpartiesPage = observer(() => {
                   <th className="p-3 border-b border-neutral-200 whitespace-nowrap">ИНН</th>
                 )}
                 <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Операций</th>
-                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Дебиторка, {GlobalCurrency}</th>
-                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Кредиторка, {GlobalCurrency}</th>
+                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Дебиторка, {GlobalCurrency.name}</th>
+                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Кредиторка, {GlobalCurrency.name}</th>
                 {filters.calculationMethod === 'Cashflow' ? (
                   <>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Поступления, {GlobalCurrency}</th>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Выплаты, {GlobalCurrency}</th>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Разница, {GlobalCurrency}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Поступления, {GlobalCurrency.name}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Выплаты, {GlobalCurrency.name}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Разница, {GlobalCurrency.name}</th>
                   </>
                 ) : (
                   <>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Доходы, {GlobalCurrency}</th>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Расходы, {GlobalCurrency}</th>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Прибыль, {GlobalCurrency}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Доходы, {GlobalCurrency.name}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Расходы, {GlobalCurrency.name}</th>
+                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Прибыль, {GlobalCurrency.name}</th>
                   </>
                 )}
                 <th className="p-2 border-b border-neutral-200 w-2"></th>
@@ -842,36 +850,36 @@ const CounterpartiesPage = observer(() => {
           </table>
         </div>
 
-          {/* Loading indicator */}
-          {isFetching && hasMore && page > 1 && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '20px',
-              color: '#6b7280'
-            }}>
-              <svg
-                style={{ animation: 'spin 1s linear infinite' }}
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <circle cx="12" cy="12" r="10" strokeWidth="3" stroke="#e5e7eb" />
-                <path
-                  d="M12 2a10 10 0 0 1 10 10"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <style jsx>{`
+        {/* Loading indicator */}
+        {isFetching && hasMore && page > 1 && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '20px',
+            color: '#6b7280'
+          }}>
+            <svg
+              style={{ animation: 'spin 1s linear infinite' }}
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              <circle cx="12" cy="12" r="10" strokeWidth="3" stroke="#e5e7eb" />
+              <path
+                d="M12 2a10 10 0 0 1 10 10"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+            <style jsx>{`
                 @keyframes spin {
                   from { transform: rotate(0deg); }
                   to { transform: rotate(360deg); }
                 }
               `}</style>
-            </div>
+          </div>
         )}
         {isFetching && !isLoadingCounterparties && (
           <div className={styles.fetchOverlay}>
@@ -896,7 +904,7 @@ const CounterpartiesPage = observer(() => {
             <span className="text-xs text-gray-500 font-medium">Дебиторка</span>
             <div className="flex items-center gap-0.5">
               <span className="text-xs font-semibold text-slate-900">{formatAmount(SummaryTotal?.receivables)}</span>
-              <span className="text-xs text-gray-400">{GlobalCurrency}</span>
+              <span className="text-xs text-gray-400">{GlobalCurrency.name}</span>
             </div>
           </div>
 
@@ -906,7 +914,7 @@ const CounterpartiesPage = observer(() => {
             <span className="text-xs text-gray-500 font-medium">Кредиторка</span>
             <div className="flex items-center gap-0.5">
               <span className="text-xs font-semibold text-slate-900">{formatAmount(SummaryTotal?.payables)}</span>
-              <span className="text-xs text-gray-400">{GlobalCurrency}</span>
+              <span className="text-xs text-gray-400">{GlobalCurrency.name}</span>
             </div>
           </div>
 
@@ -916,7 +924,7 @@ const CounterpartiesPage = observer(() => {
             <span className="text-xs text-gray-500 font-medium">Поступления</span>
             <div className="flex items-center gap-0.5">
               <span className="text-xs font-semibold text-slate-900">{formatAmount(SummaryTotal?.income)}</span>
-              <span className="text-xs text-gray-400">{GlobalCurrency}</span>
+              <span className="text-xs text-gray-400">{GlobalCurrency.name}</span>
             </div>
           </div>
 
@@ -926,7 +934,7 @@ const CounterpartiesPage = observer(() => {
             <span className="text-xs text-gray-500 font-medium">Выплаты</span>
             <div className="flex items-center gap-0.5">
               <span className="text-xs font-semibold text-slate-900">{formatAmount(SummaryTotal?.expense)}</span>
-              <span className="text-xs text-gray-400">{GlobalCurrency}</span>
+              <span className="text-xs text-gray-400">{GlobalCurrency.name}</span>
             </div>
           </div>
 
@@ -944,7 +952,7 @@ const CounterpartiesPage = observer(() => {
               <span className={cn(
                 'text-xs',
                 SummaryTotal?.difference > 0 ? 'text-emerald-500' : SummaryTotal?.difference < 0 ? 'text-red-500' : 'text-gray-400'
-              )}>{GlobalCurrency}</span>
+              )}>{GlobalCurrency.name}</span>
             </div>
           </div>
         </div>

@@ -301,7 +301,7 @@ const PaymentForm = observer(({
   useEffect(() => {
     if (initialData && (!isNew || initialData.isCopy) && initialData.operationParts?.length > 0) {
       const parts = initialData.operationParts
-      
+
       const newSplits = []
       if (parts.some(p => p.data_nachisleniya)) newSplits.push({ value: 'Начисление', label: 'Начисление' })
       if (parts.some(p => p.counterparties_id)) newSplits.push({ value: 'Контрагент', label: 'Контрагент' })
@@ -336,8 +336,8 @@ const PaymentForm = observer(({
   const watchConfirmAccrual = watch('confirmAccrual')
 
   // Derived flags
-  const isDebit = (!showDate && !watchConfirmPayment && watchConfirmAccrual && !watchSalesDeal)
-  const isCredit = (!showDate && watchConfirmPayment && !watchConfirmAccrual && !watchSalesDeal)
+  const isDebit = (!showDate && watchConfirmPayment && !watchConfirmAccrual)
+  const isCredit = (!showDate && !watchConfirmPayment && watchConfirmAccrual)
 
   const onSubmit = async (data) => {
 
@@ -382,6 +382,7 @@ const PaymentForm = observer(({
       queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
       queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
+      queryClient.invalidateQueries({ queryKey: ['legal_entities'] })
       queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
       onClose?.()
@@ -512,7 +513,7 @@ const PaymentForm = observer(({
           <div className="flex flex-col gap-5 mt-4">
 
             {!showDate && (
-              <div className={cn("flex items-center gap-4", watchSalesDeal && "opacity-50")}>
+              <div className={cn("flex items-center gap-4")}>
                 <label className="w-[150px] text-xss!">Дата начисления</label>
                 <div className="flex-1 flex gap-2 max-w-[600px]">
                   <Controller
@@ -520,10 +521,8 @@ const PaymentForm = observer(({
                     control={control}
                     render={({ field }) => (
                       <CustomDatePicker
-                        value={watchSalesDeal ? null : field.value}
-                        disabled={!!watchSalesDeal}
+                        value={field.value}
                         onChange={(val) => {
-                          if (watchSalesDeal) return
                           field.onChange(val)
                           setValue('confirmAccrual', !isFuture(val))
                         }}
@@ -538,11 +537,10 @@ const PaymentForm = observer(({
                     control={control}
                     render={({ field }) => (
                       <OperationCheckbox
-                        checked={watchSalesDeal ? false : field.value}
-                        disabled={!!watchSalesDeal}
+                        checked={field.value}
                         label="Подтвердить начисление"
                         onChange={(e) => {
-                          if (watchSalesDeal || isFuture(watchAccrualDate)) return
+                          if (isFuture(watchAccrualDate)) return
                           field.onChange(e.target.checked)
                         }}
                       />
@@ -630,14 +628,7 @@ const PaymentForm = observer(({
                   render={({ field }) => (
                     <SingleZdelka
                       value={field.value}
-                      onChange={(val) => {
-                        if (val && !showDate && (watchConfirmAccrual || watchPaymentDate !== watchAccrualDate)) {
-                          setTempSalesDeal(val)
-                          setIsDateModalOpen(true)
-                        } else {
-                          field.onChange(val)
-                        }
-                      }}
+                      onChange={field.onChange}
                       placeholder='Выберите сделку...'
                       className='bg-white border rounded-md'
                       hasError={!!errors.salesDeal}
@@ -681,7 +672,7 @@ const PaymentForm = observer(({
         </div>
       </form>
 
-      <CustomModal
+      {/* <CustomModal
         isOpen={isDateModalOpen}
         onClose={() => {
           setIsDateModalOpen(false)
@@ -711,7 +702,7 @@ const PaymentForm = observer(({
             </button>
           </div>
         </div>
-      </CustomModal>
+      </CustomModal> */}
     </>
   )
 })

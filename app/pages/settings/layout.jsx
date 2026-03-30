@@ -18,9 +18,8 @@ export default function SettingLayouts({ children }) {
   const pathname = usePathname()
 
   return (
-    <div className={styles.container}>
-      {/* Left sidebar */}
-      <aside className={styles.sidebar}>
+    <div className="fixed top-[60px] flex left-[80px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
+      <aside className=" w-56 bg-white p-3">
         <h2 className={styles.sidebarTitle}>Настройки</h2>
         <nav className={styles.sidebarNav}>
           {sidebarItems.map(item => {
@@ -41,7 +40,9 @@ export default function SettingLayouts({ children }) {
       </aside>
 
       {/* Main content child */}
-      {children}
+      <div className="flex flex-1 overflow-y-auto ">
+        {children}
+      </div>
     </div>
   )
 }

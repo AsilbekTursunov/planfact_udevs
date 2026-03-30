@@ -12,6 +12,7 @@ import Loader from '../../shared/Loader'
 import { returnNumber } from '../../../utils/helpers'
 import SelectMyAccoutGroup from '../../ReadyComponents/SelectMyAccoutGroup'
 import { queryClient } from '../../../lib/queryClient'
+import { appStore } from '../../../store/app.store'
 
 export default function CreateMyAccountModal({ isOpen, onClose, account = null }) {
   const createMutation = useCreateMyAccount()
@@ -54,7 +55,6 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
   }, [currenciesData])
 
 
-
   // Account types
   const accountTypes = [
     { value: 'Наличный', label: 'Наличный' },
@@ -86,7 +86,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           legal_entity_id: account.legal_entity_id || "",
           bik: account.bik || '',
           bank: account.bank_name || account.bank || '',
-          rasch_schet: account.nomer || account.rasch_schet || '',
+          rasch_schet: account.nomer_scheta || '',
           korr_schet: account.kor_schet || account.korr_schet || '',
           nomer: account.nomer || '',
           account_group_id: account.account_groups_id || account.account_group_id || account.group_id || ''
@@ -101,7 +101,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
           tip: ['Наличный'],
           nachalьnyy_ostatok: '',
           data_sozdaniya: new Date().toISOString().split('T')[0],
-          currenies_id: currencies?.[2]?.value,
+          currenies_id: appStore?.currency?.guid,
           komentariy: '',
           legal_entity_id: "",
           bik: '',
@@ -145,9 +145,8 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
   const handleSubmit = async () => {
     if (!validateForm()) return
 
-    setIsSubmitting(true)
-
-
+    setIsSubmitting(true) 
+    console.log('data', formData)
     try {
       const submitData = {
         nazvanie: formData.nazvanie.trim(),
@@ -157,10 +156,11 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
         currenies_id: formData.currenies_id || null,
         komentariy: formData.komentariy || null,
         legal_entity_id: formData.legal_entity_id || null,
-        bik: (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') ? formData.bik || null : null,
-        bank_name: (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') ? formData.bank || null : null,
-        nomer: (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') ? formData.rasch_schet ? formData.tip[0] === 'Электронный' ? formData.nomer : null : null : null,
-        kor_schet: (formData.tip[0] === 'Безналичный' || formData.tip[0] === 'Карта физлица') ? formData.korr_schet || null : null,
+        bik: formData.bik || null,
+        bank_name: formData.bank || null,
+        nomer: formData.nomer,
+        nomer_scheta: formData.rasch_schet,
+        kor_schet: formData.korr_schet || null,
         account_groups_id: formData.account_group_id || null,
         ...(!isEdit && { data_sozdaniya: new Date().toISOString() })
       }
@@ -174,6 +174,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       }
 
       queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
+      queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
 
       handleClose()
     } catch (error) {
@@ -186,7 +187,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
   if (!isVisible && !isOpen) return null
 
   return (
-    <CustomModal className="w-[600px] p-0 overflow-hidden" isOpen={isOpen} onClose={handleClose}>
+    <CustomModal className="w-[600px] p-0" isOpen={isOpen} onClose={handleClose}>
       <div className="flex flex-col h-full text-slate-900">
         <div className="border-b pb-3 mb-3 p-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">{isEdit ? 'Редактирование счета' : 'Создание счета'}</h2>
@@ -241,7 +242,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                 />
 
                 {errors.legal_entity_id && (
-                  <div className="text-[12px] text-red-500 mt-1">{errors.legal_entity_id}</div>
+                  <div className="text-xs text-red-500 mt-1">{errors.legal_entity_id}</div>
                 )}
               </div>
             </div>
@@ -315,7 +316,6 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                     <div className="flex  gap-2">
                       <label className="w-[30%] text-sm  text-[#0f172a] flex items-center">Расч. счет №</label>
                       <div className="flex-1">
-
                         <Input
                           type="text"
                           value={formData.rasch_schet}
@@ -351,6 +351,19 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                 </div>
               </div>
             )}
+
+            {/* {isEdit && <div className="flex  gap-2">
+              <label className="w-[30%] text-sm  text-[#0f172a] flex items-center">Расч. счет №</label>
+              <div className="flex-1">
+
+                <Input
+                  type="text"
+                  value={formData.rasch_schet}
+                  onChange={(e) => setFormData({ ...formData, rasch_schet: e.target.value })}
+                  className={cn(errors.rasch_schet && "border-red-500")}
+                />
+              </div>
+            </div>} */}
 
             {/* Начальный остаток - показываем только при создании */}
             {!isEdit && (

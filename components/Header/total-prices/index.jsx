@@ -8,8 +8,9 @@ import { formatDateTime } from '../../../utils/formatDate'
 import { useMyAccountsBoard } from '../../../hooks/useDashboard'
 import { formatAmount } from '../../../utils/helpers'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
+import { observer } from 'mobx-react-lite'
 
-const TotalPrice = () => {
+const TotalPrice = observer(() => {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false)
 
     const [expandedGroups, setExpandedGroups] = useState(['unallocated'])
@@ -19,6 +20,7 @@ const TotalPrice = () => {
 
     const balanceRef = useRef(null)
     const groupMenuRef = useRef(null)
+
 
     // Set date only on client side to avoid hydration mismatch
     useEffect(() => {
@@ -116,7 +118,7 @@ const TotalPrice = () => {
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div className={styles.balanceDot}></div>
-                            <span className={styles.balanceText}>На счетах {formatAmount(totalBalance)} <span className={styles.balanceCurrency}>{GlobalCurrency}</span></span>
+                            <span className={styles.balanceText}>На счетах {formatAmount(totalBalance)} <span className={styles.balanceCurrency}>{GlobalCurrency.name}</span></span>
                             <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
                         </div>
                         <div className={styles.balanceSubtext} style={{ marginLeft: '17px', color: '#fbbf24' }}>
@@ -300,6 +302,6 @@ const TotalPrice = () => {
             )}
         </div>
     )
-}
+})
 
 export default TotalPrice

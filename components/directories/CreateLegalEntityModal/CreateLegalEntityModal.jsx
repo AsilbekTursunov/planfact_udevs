@@ -9,34 +9,32 @@ import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import { observer } from 'mobx-react-lite'
 import { authStore } from '../../../store/auth.store'
+import { useUcodeDefaultApiQuery } from '../../../hooks/useDashboard'
+import { queryClient } from '../../../lib/queryClient'
 
-export default observer(function CreateLegalEntityModal({ isOpen, onClose, legalEntity = null }) {
+export default observer(function CreateLegalEntityModal({ isOpen, onClose, legalEntity = null, legalEntityId }) {
   const createMutation = useCreateLegalEntity()
   const updateMutation = useUpdateLegalEntity()
   const isEdit = !!legalEntity && !!legalEntity.guid
 
 
-  // const { data } = useUcodeRequestQuery({
-  //   method: "get_legal_entities",
-  //   querySetting: {
-  //     select: (response) => response?.data?.data?.data,
-  //   }
-  // })
-
-  // const legalEntityData = useMemo(() => {
-  //   return data?.find((item) => item.id === legalEntity?.id)
-  // }, [data, legalEntity])
-
-  // console.log('legalEntityData', legalEntityData)
-  // console.log('legalEntityData', legalEntityData)
+  const { data } = useUcodeDefaultApiQuery({
+    queryKey: "get_legal_entities",
+    urlMethod: "GET",
+    urlParams: `/items/legal_entity/${legalEntityId}`,
+    querySetting: {
+      select: (response) => response?.data?.data?.response,
+      enabled: !!legalEntityId
+    }
+  })
 
 
   const [formData, setFormData] = useState({
-    nazvanie: '',
-    polnoe_nazvanie: '',
-    inn: '',
-    kpp: '',
-    komentariy: ''
+    nazvanie: data?.nazvanie || '',
+    polnoe_nazvanie: data?.polnoe_nazvanie || '',
+    inn: data?.inn || '',
+    kpp: data?.kpp || '',
+    komentariy: data?.komentariy || ''
   })
 
 
@@ -56,7 +54,7 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
         setIsVisible(true)
       })
 
-      // Initialize form data
+      // Initialize form data from props first
       if (isEdit && legalEntity && legalEntity.guid) {
         // Editing existing legal entity
         setFormData({
@@ -81,6 +79,19 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
       setIsVisible(false)
     }
   }, [isOpen, legalEntity, isEdit])
+
+  // Update form data when async data arrives from API
+  useEffect(() => {
+    if (data && isEdit) {
+      setFormData({
+        nazvanie: data.nazvanie || '',
+        polnoe_nazvanie: data.polnoe_nazvanie || '',
+        inn: data.inn?.toString() || '',
+        kpp: data.kpp?.toString() || '',
+        komentariy: data.komentariy || ''
+      })
+    }
+  }, [data, isEdit])
 
   const handleClose = () => {
     setIsClosing(true)
@@ -114,8 +125,6 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
         legal_entity_id: authStore.userData?.legal_entity_id || null
       }
 
-      console.log('LegalEntity submitData', submitData)
-
       let result = null
       if (isEdit) {
         await updateMutation.mutateAsync({ ...submitData, guid: legalEntity.guid })
@@ -133,6 +142,9 @@ export default observer(function CreateLegalEntityModal({ isOpen, onClose, legal
           result = submitData
         }
       }
+
+      queryClient.invalidateQueries({ queryKey: ['get_legal_entities'] })
+      queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
 
       setIsClosing(true)
       setTimeout(() => {

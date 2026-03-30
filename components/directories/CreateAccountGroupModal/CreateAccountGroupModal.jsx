@@ -6,14 +6,15 @@ import CustomModal from '../../shared/CustomModal'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import Loader from '../../shared/Loader'
-import { useUcodeRequestMutation } from '../../../hooks/useDashboard'
+import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard'
 import { queryClient } from '../../../lib/queryClient'
 
-export default function CreateAccountGroupModal({ isOpen, onClose, editingGroup }) {
+export default function CreateAccountGroupModal({ isOpen, onClose, editingGroup, editId }) {
   const [formData, setFormData] = useState({
     nazvanie_gruppy: '',
     opisanie_gruppy: ''
   })
+
 
   const { mutateAsync: createAccountGroup } = useUcodeRequestMutation()
 
@@ -72,6 +73,7 @@ export default function CreateAccountGroupModal({ isOpen, onClose, editingGroup 
       }
       queryClient.invalidateQueries({ queryKey: ['bankAccountsPlanFact'] })
       queryClient.invalidateQueries({ queryKey: ['get_account_groups'] })
+      queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
       onClose()
     } catch (error) {
       console.error('Error creating group:', error)

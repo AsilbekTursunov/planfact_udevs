@@ -6,12 +6,14 @@ import CustomDatePicker from '@/components/shared/DatePicker';
 import Input from '@/components/shared/Input';
 import TextArea from '../../shared/TextArea'; 
 import { X } from 'lucide-react';
-import { useUcodeDefaultApiMutation } from '../../../hooks/useDashboard';
+import { useUcodeDefaultApiMutation, useUcodeRequestMutation } from '../../../hooks/useDashboard';
 import { useQueryClient } from '@tanstack/react-query';
 import Loader from '../../shared/Loader';
 import { formatDate } from '../../../utils/formatDate';
 import SingleCounterParty from '../../ReadyComponents/SingleCounterParty';
 import SingleSelect from '../../shared/Selects/SingleSelect';
+import { authStore } from '../../../store/auth.store';
+import { appStore } from '../../../store/app.store';
 
 const ndsOptions = [
   { value: 'true', label: 'С учетом НДС' },
@@ -48,7 +50,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
     }
   }, [isOpen, initialData]);
 
-  const { mutateAsync: createDeal, isPending: isCreatingDeal } = useUcodeDefaultApiMutation({ mutationKey: 'create-deal' })
+  const { mutateAsync: createDeal, isPending: isCreatingDeal } = useUcodeRequestMutation()
 
 
   if (!isOpen) return null;
@@ -71,12 +73,13 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
     let formattedDate = dealDate || formatDate(today);
 
     const payload = {
-      sale_date: formattedDate,
+      deal_date: formattedDate,
       name: dealName,
       counterparties_id: client || null,
       nds: nds === 'true',
       commentary: comment,
-      status: ["Новая"]
+      currenies_id: appStore?.currency?.guid,
+      // status: ["Новая"]
     };
 
     if (isEditing && initialData?.guid) {
@@ -85,8 +88,7 @@ export function CreateDealModal({ isOpen, onClose, initialData, isEditing }) {
 
     try {
       await createDeal({
-        urlMethod: isEditing ? 'PUT' : 'POST',
-        urlParams: '/items/sales_transactions?from-ofs=true',
+        method: isEditing ? 'update_sales_transaction' : 'create_sales_transaction', 
         data: payload
       });
       queryClient.invalidateQueries({ queryKey: ['deals'] });
