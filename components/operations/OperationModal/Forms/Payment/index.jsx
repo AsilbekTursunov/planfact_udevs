@@ -1,14 +1,11 @@
 'use client'
-import React, { useReducer, useState, useMemo, useCallback } from 'react'
+import React, { useReducer, useState, useMemo, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { cn } from '@/app/lib/utils'
 import { appStore } from '../../../../../store/app.store'
 
 // Hooks
 import {
-  useBankAccountsPlanFact,
-  useLegalEntitiesPlanFact,
-  useCurrencies,
 } from '@/hooks/useDashboard'
 
 // Helpers
@@ -283,7 +280,7 @@ const PaymentForm = observer(({
       salesDeal: null,
       purpose: ''
     }
-  }, [initialData, isNew])
+  }, [initialData, isNew, chart_of_accounts_id, preselectedCounterparty, defaultDealGuid])
 
   const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues
@@ -299,6 +296,29 @@ const PaymentForm = observer(({
   const [divivedAmounts, setdivivedAmounts] = useState([])
   const [tempSalesDeal, setTempSalesDeal] = useState(null)
   const [isDateModalOpen, setIsDateModalOpen] = useState(false)
+
+  // Initialize splits and rows if editing existing operation
+  useEffect(() => {
+    if (initialData && (!isNew || initialData.isCopy) && initialData.operationParts?.length > 0) {
+      const parts = initialData.operationParts
+      
+      const newSplits = []
+      if (parts.some(p => p.data_nachisleniya)) newSplits.push({ value: 'Начисление', label: 'Начисление' })
+      if (parts.some(p => p.counterparties_id)) newSplits.push({ value: 'Контрагент', label: 'Контрагент' })
+      if (parts.some(p => p.chart_of_accounts_id)) newSplits.push({ value: 'Статья', label: 'Статья' })
+      setSelectedSplits(newSplits)
+
+      const mappedRows = parts.map(p => ({
+        calculationDate: p.data_nachisleniya ? formatDate(p.data_nachisleniya) : today,
+        isCalculationCommitted: p.payment_accrual ?? true,
+        contrAgentId: p.counterparties_id || '',
+        operationCategoryId: p.chart_of_accounts_id || '',
+        value: String(Math.abs(p.summa || 0)),
+        percent: String(p.percent || '')
+      }))
+      dispatch({ type: 'SET_ROWS', payload: mappedRows })
+    }
+  }, [initialData, isNew])
 
 
   const has = (label) => selectedSplits.some(s => s.value === label)
