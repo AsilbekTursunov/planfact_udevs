@@ -263,7 +263,8 @@ const PaymentForm = observer(({
         chartOfAccount: raw.chart_of_accounts_id || chart_of_accounts_id || null, // Simplified logic
         paymentType: 'transfer',
         salesDeal: raw.selling_deal_id || defaultDealGuid || null,
-        purpose: raw.opisanie || ''
+        purpose: raw.opisanie || '',
+        currency: raw.currenies_id || 'RUB',
       }
     }
 
@@ -278,7 +279,8 @@ const PaymentForm = observer(({
       chartOfAccount: null,
       paymentType: 'transfer',
       salesDeal: null,
-      purpose: ''
+      purpose: '',
+      currency: '',
     }
   }, [initialData, isNew, chart_of_accounts_id, preselectedCounterparty, defaultDealGuid])
 
@@ -356,6 +358,7 @@ const PaymentForm = observer(({
       sales_transactions_id: watchSalesDeal,
       counterparties_id: data?.counterparty,
       comment: watch('purpose'),
+      currenies_id: data?.currency,
     }
 
     if (divivedAmounts.length > 0) {
@@ -449,6 +452,10 @@ const PaymentForm = observer(({
                       onChange={field.onChange}
                       multi={false}
                       type="show"
+                      extraValue="currenies_id"
+                      returnValue={(value) => {
+                        setValue('currency', value)
+                      }}
                       placeholder="Юрлица и счета"
                       className="bg-white border rounded-md"
                       hasError={errors.accountAndLegalEntity}

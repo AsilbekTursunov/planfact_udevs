@@ -7,6 +7,7 @@ import { Header } from "@/components/Header/Header";
 import { usePathname } from "next/navigation";
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
+import AppProvider from "../providers/AppProvider";
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -25,15 +26,17 @@ export default function RootLayout({ children }) {
         className={` ${roboto.className} antialiased bg-slate-50 text-slate-900`}
       >
         <QueryClientProvider client={queryClient}>
-          <div className="flex max-h-screen overflow-hidden max-w-dvw">
-            {!isLoginPage && <Sidebar />}
-            <div className="flex flex-col flex-1 max-h-screen overflow-hidden">
-              {!isLoginPage && <Header />}
-              <main className={isLoginPage ? "" : "flex-1 overflow-hidden bg-white"}>
-                {children}
-              </main>
+          <AppProvider>
+            <div className="flex max-h-screen overflow-hidden max-w-dvw">
+              {!isLoginPage && <Sidebar />}
+              <div className="flex flex-col flex-1 max-h-screen overflow-hidden">
+                {!isLoginPage && <Header />}
+                <main className={isLoginPage ? "" : "flex-1 overflow-hidden bg-white"}>
+                  {children}
+                </main>
+              </div>
             </div>
-          </div>
+          </AppProvider>
         </QueryClientProvider>
       </body>
     </html>

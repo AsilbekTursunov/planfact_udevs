@@ -142,7 +142,7 @@ const TotalPrice = observer(() => {
                                     <div className={styles.balanceModalFullTitle}>
                                         <div className={styles.balanceModalFullTitleDot} />
                                         <div className={styles.balanceModalFullTitleContent}>
-                                            <h2 className={styles.balanceModalFullTitleValue}>{totalBalance.toLocaleString('ru-RU')} ₽</h2>
+                                            <h2 className={styles.balanceModalFullTitleValue}>{totalBalance.toLocaleString('ru-RU')} {GlobalCurrency?.name}</h2>
                                             <p className={styles.balanceModalFullTitleDate}>{today}</p>
                                         </div>
                                     </div>
@@ -207,7 +207,7 @@ const TotalPrice = observer(() => {
                                 <div className={styles.balanceModalFullTitle}>
                                     <div className={styles.balanceModalFullTitleDot} />
                                     <div className={styles.balanceModalFullTitleContent}>
-                                        <h2 className={styles.balanceModalFullTitleValue}>{totalBalance.toLocaleString('ru-RU')} ₽</h2>
+                                        <h2 className={styles.balanceModalFullTitleValue}>{totalBalance.toLocaleString('ru-RU')} {GlobalCurrency?.name}</h2>
                                         <p className={styles.balanceModalFullTitleDate}>{today}</p>
                                     </div>
                                 </div>
@@ -242,7 +242,7 @@ const TotalPrice = observer(() => {
                                             <div className={styles.balanceGroupHeaderInner}>
                                                 <span className={styles.balanceGroupName}>{group?.name} ({group?.total_items})</span>
                                                 <div className={styles.balanceGroupValue}>
-                                                    <span className={styles.balanceGroupValueText}>{formatAmount(group?.balance)} <span className={styles.balanceGroupValueCurrency}>₽</span></span>
+                                                    <span className={styles.balanceGroupValueText}>{formatAmount(group?.balance)} <span className={styles.balanceGroupValueCurrency}>{GlobalCurrency?.name}</span></span>
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();

@@ -43,7 +43,9 @@ const TransferForm = observer(({ initialData, onClose }) => {
         toDate,
         toAccount: raw.my_accounts_id_2 || raw.bank_accounts_id_2 || null,
         toAmount: raw.summa_2 || (raw.summa ? Math.abs(raw.summa) : 0),
-        purpose: raw.opisanie || raw.comment || ''
+        purpose: raw.opisanie || raw.comment || '',
+        currency_1: raw.currenies_id || null,
+        currency_2: raw.to_currenies_id || null,
       }
     }
 
@@ -55,7 +57,9 @@ const TransferForm = observer(({ initialData, onClose }) => {
       toDate: formatDate(new Date()),
       toAccount: null,
       toAmount: 0,
-      purpose: ''
+      purpose: '',
+      currency_1: null,
+      currency_2: null,
     }
   }, [initialData, isNew])
 
@@ -69,7 +73,8 @@ const TransferForm = observer(({ initialData, onClose }) => {
   const watchToAccount = watch('toAccount')
   const watchFromAmount = watch('fromAmount')
   const watchFromDate = watch('fromDate')
-
+  const watchCurrency1 = watch('currency_1')
+  const watchCurrency2 = watch('currency_2')
   const isSameCurrency = useMemo(() => {
     if (!watchFromAccount || !watchToAccount || bankAccounts.length === 0) return true
     const fromAcc = bankAccounts.find(a => a.guid === watchFromAccount)
@@ -88,7 +93,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
   const onSubmit = async (data) => {
     const payload = {
       tip: ['Перемещение'],
-      from_amount: StringtoNumber(data.fromAmount),
+      summa: StringtoNumber(data.fromAmount),
       data_operatsii: data.fromDate,
       data_nachisleniya: data.toDate,
       payment_confirmed: data.confirmPayment,
@@ -98,9 +103,12 @@ const TransferForm = observer(({ initialData, onClose }) => {
       opisanie: data.purpose,
       comment: data.purpose,
       legal_entity_id: authStore.userData?.legal_entity_id || null,
-      currenies_id: appStore?.currency?.guid,
-      to_amount: null,
+      to_amount: data?.toAmount,
+      currenies_id: watchCurrency1,
+      to_currenies_id: watchCurrency2
     }
+
+    // console.log('payload', payload)
 
     if (!isSameCurrency) {
       payload.to_amount = StringtoNumber(data.toAmount)
@@ -184,6 +192,10 @@ const TransferForm = observer(({ initialData, onClose }) => {
                     onChange={field.onChange}
                     multi={false}
                     type="show"
+                    extraValue="currenies_id"
+                    returnValue={(value) => {
+                      setValue('currency_1', value)
+                    }}
                     placeholder="Юрлица и счета"
                     className="bg-white border rounded-md"
                     hasError={errors.fromAccount}
@@ -255,6 +267,10 @@ const TransferForm = observer(({ initialData, onClose }) => {
                     onChange={field.onChange}
                     multi={false}
                     type="show"
+                    extraValue="currenies_id"
+                    returnValue={(value) => {
+                      setValue('currency_2', value)
+                    }}
                     placeholder="Юрлица и счета"
                     className="bg-white border rounded-md"
                     hasError={errors.toAccount}

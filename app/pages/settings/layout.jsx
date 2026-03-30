@@ -6,19 +6,21 @@ import { usePathname } from 'next/navigation'
 import {
   Settings as SettingsIcon,
   GitBranch,
+  Banknote,
 } from 'lucide-react'
 import styles from './settings.module.scss'
 
 const sidebarItems = [
   { id: 'general', label: 'Общие настройки', icon: SettingsIcon, href: '/pages/settings' },
   { id: 'branches', label: 'Филиалы', icon: GitBranch, href: '/pages/settings/branches' },
+  { id: 'currencies', label: 'Валюты', icon: Banknote, href: '/pages/settings/currencies' },
 ]
 
 export default function SettingLayouts({ children }) {
   const pathname = usePathname()
 
   return (
-    <div className="fixed top-[60px] flex left-[80px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
+    <div className="fixed  top-[60px] flex left-[80px] w-[calc(100%-80px)] h-[calc(100%-60px)] ">
       <aside className=" w-56 bg-white p-3">
         <h2 className={styles.sidebarTitle}>Настройки</h2>
         <nav className={styles.sidebarNav}>
@@ -40,7 +42,7 @@ export default function SettingLayouts({ children }) {
       </aside>
 
       {/* Main content child */}
-      <div className="flex flex-1 overflow-y-auto ">
+      <div className="flex flex-1 ">
         {children}
       </div>
     </div>

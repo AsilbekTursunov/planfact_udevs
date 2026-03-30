@@ -14,15 +14,14 @@ import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import CustomDatePicker from '../../../../shared/DatePicker'
 import { isFuture } from '../../../../../utils/formatDate'
 import SelectLegelEntitties from '../../../../ReadyComponents/SelectLegelEntitties'
-import { formatAmount } from '../../../../../utils/helpers'
-import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
+import { formatAmount, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
-import { GlobalCurrency } from '../../../../../constants/globalCurrency'
+import MyAccountCurrensies from '../../../../ReadyComponents/MyAccountCurrensies'
 
 const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
   const [isFromRasxodChild, setIsFromRasxodChild] = useState(false)
   const [isToRasxodChild, setIsToRasxodChild] = useState(false)
-  const { getValues, control, handleSubmit, setValue, formState: { errors, } } = useForm({
+  const { getValues, control, handleSubmit, setValue, watch, formState: { errors, } } = useForm({
     defaultValues: {
       accuralDate: formatDate(new Date()),
       confirmAccrual: true,
@@ -38,6 +37,7 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
       repeatUnit: null,
       repeatUntil: null,
       repeatCount: null,
+      currency: '',
     }
   })
 
@@ -45,6 +45,7 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
     mutationSetting: {}
   })
 
+  const legalEntityGuid = watch('legalEntity')
 
 
   const onSubmit = async (data) => {
@@ -53,7 +54,7 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
         tip: ['Начисление'],
         data_operatsii: data.accuralDate,
         payment_confirmed: data.confirmAccrual,
-        my_account_id: data.legalEntity,
+        legal_entity_id: data.legalEntity,
         chart_of_accounts_id: data.chartOfAccountWriteOff,
         chart_of_accounts_id_2: data.chartOfAccountEnrollment,
         sales_transactions_id: data.sellingDealId,
@@ -66,7 +67,9 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
         repeat_unit: data.repeatUnit,
         repeat_until: data.repeatUntil,
         repeat_count: data.repeatCount,
-        comment: data.comment
+        comment: data.comment,
+        summa: StringtoNumber(data.summa),
+        currenies_id: data.currency,
       }
 
       console.log('requestData', requestData)
@@ -138,7 +141,7 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
                 render={({ field }) => (
                   <SelectLegelEntitties
                     value={field.value}
-                    onChange={(val) => field.onChange(val)}
+                    onChange={field.onChange}
                     multi={false}
                     placeholder="Выберите юрлицо..."
                     className="bg-white border rounded-md"
@@ -197,7 +200,7 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
           {/* Сумма */}
           <div className="flex items-center gap-4">
             <label className="w-[150px] text-[13px]">Сумма</label>
-            <div className="flex-1 flex flex-col gap-1 max-w-[600px]">
+            <div className="flex-1 flex gap-1 max-w-[600px]">
               <div className="flex items-center gap-3">
                 <Controller
                   name="summa"
@@ -208,11 +211,12 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
                       value={formatAmount(field.value)}
                       onChange={(e) => field.onChange(e.target.value)}
                       placeholder="0"
-                      className={cn("w-[230px]", errors.summa && "border-red-500")}
+                      className={cn("w-[200px]", errors.summa && "border-red-500")}
                     />
                   )}
                 />
               </div>
+              <MyAccountCurrensies guid={legalEntityGuid} value={watch('currency')} onChange={(val) => setValue('currency', val)} className="flex-1 bg-white " />
             </div>
           </div>
 

@@ -401,7 +401,6 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   value={formData.currenies_id}
                   onChange={(value) => setFormData({ ...formData, currenies_id: value })}
                   placeholder="Выберите валюту"
-                  withSearch={false}
                   isClearable={false}
                   className="flex-1 bg-white"
                 />

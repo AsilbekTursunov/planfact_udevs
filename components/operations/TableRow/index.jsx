@@ -131,6 +131,7 @@ const OperationTableRow = observer(({
             accrual={op.payment_accrual}
             currency={op.currency}
             dealId={op?.selling_deal_id}
+            toCurrency={op?.to_currenies_kod}
           />
         </td>
         <td
