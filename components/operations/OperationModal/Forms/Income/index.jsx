@@ -23,7 +23,6 @@ import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 import SingleSelect from '../../../../shared/Selects/SingleSelect'
 import SplitAmount from '../../SplitAmount'
-import CustomModal from '../../../../shared/CustomModal'
 
 // Icons
 import { DebitIcon, CreditIcon } from '../../../../../constants/icons'

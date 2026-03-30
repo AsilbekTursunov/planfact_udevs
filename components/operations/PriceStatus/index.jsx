@@ -38,14 +38,14 @@ const PriceStatus = observer(({ amount, type, tab, confirmed, accrual, currency,
         {tab == "Перемещение" ? <>
           <div className={`${styles.doubleAccount} flex flex-col `}>
             <span className={`flex items-center gap-1 text-neutral-500 ${isSpinasiya ? 'opacity-50' : ''}`}>-{formatAmount(amount)} <span className=" text-neutral-500">{
-              currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
+              currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : currency}</span></span>
             <span className={`flex items-center gap-1 text-neutral-500 ${isZachisleniya ? 'opacity-50' : ''}`}>+{formatAmount(amount)} <span className=" text-neutral-500">{
-              currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span></span>
+              currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : currency}</span></span>
           </div>
           {/* Отгрузка */}
         </> : <div>
           <span className='flex items-center justify-end gap-0.5'>{type == 'Поступление' ? '+' : type == 'Выплата' ? '-' : ''}{formatAmount(amount)} {tab != "Перемещение" && <span className={styles.currency}>{
-            currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : 'UZS'}</span>} {percent ? `(${percent?.toFixed(0)}%)` : ''}</span>
+              currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : currency}</span>} {percent ? `(${percent?.toFixed(0)}%)` : ''}</span>
         </div>}
       </div>
 

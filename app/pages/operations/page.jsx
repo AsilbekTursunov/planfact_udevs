@@ -427,6 +427,7 @@ const OperationsPage = observer(() => {
 			}, 0)
 	}, [allOperations, selectedOperations])
 
+	console.log('operationslist', operationsList)
 
 	return (
 		<div className={styles.container}>

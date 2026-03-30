@@ -166,6 +166,7 @@ const OperationModal = observer(({
 						{activeTab === 'accrual' && (
 							<AccuralForm
 								onCancel={onClose}
+								onClose={onClose}
 								onSuccess={onSuccess}
 								initialData={operationData}
 							/>

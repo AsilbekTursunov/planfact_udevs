@@ -12,11 +12,17 @@ import { useState } from 'react'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import CustomDatePicker from '../../../../shared/DatePicker'
+import { isFuture } from '../../../../../utils/formatDate'
+import SelectLegelEntitties from '../../../../ReadyComponents/SelectLegelEntitties'
+import { formatAmount } from '../../../../../utils/helpers'
+import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
+import { Loader2 } from 'lucide-react'
+import { GlobalCurrency } from '../../../../../constants/globalCurrency'
 
-const AccuralForm = ({ onCancel, onSuccess }) => {
+const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
   const [isFromRasxodChild, setIsFromRasxodChild] = useState(false)
   const [isToRasxodChild, setIsToRasxodChild] = useState(false)
-  const { getValues, control, handleSubmit, formState: { errors, } } = useForm({
+  const { getValues, control, handleSubmit, setValue, formState: { errors, } } = useForm({
     defaultValues: {
       accuralDate: formatDate(new Date()),
       confirmAccrual: true,
@@ -26,12 +32,16 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
       canAllowOpiu: true,
       chartOfAccountEnrollment: null,
       sellingDealId: '',
-      comment: ''
+      comment: '',
+      counterpary_id: '',
+      repeatEvery: null,
+      repeatUnit: null,
+      repeatUntil: null,
+      repeatCount: null,
     }
   })
 
   const { mutateAsync: createAccural, isPending } = useUcodeRequestMutation({
-
     mutationSetting: {}
   })
 
@@ -41,15 +51,15 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
     try {
       const requestData = {
         tip: ['Начисление'],
-        data_nachisleniya: data.accuralDate,
+        data_operatsii: data.accuralDate,
         payment_confirmed: data.confirmAccrual,
-        currenies_id: data.legalEntity,
+        my_account_id: data.legalEntity,
         chart_of_accounts_id: data.chartOfAccountWriteOff,
         chart_of_accounts_id_2: data.chartOfAccountEnrollment,
         sales_transactions_id: data.sellingDealId,
         sales_transactions_id_2: data.sellingDealId,
         project_id: data.legalEntity,
-        counterparties_id: data.legalEntity,
+        // counterparties_id: data.counterpary_id,
         include_in_profit_and_loss_cash_method: data.canAllowOpiu,
         repeat_enabled: data.repeatEnabled,
         repeat_every: data.repeatEvery,
@@ -60,11 +70,12 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
       }
 
       console.log('requestData', requestData)
-      // await createAccural({
-      //   method: 'create_operation',
-      //   data: requestData
-      // })
-      onSuccess?.(data)
+      await createAccural({
+        method: 'create_operation',
+        data: requestData
+      })
+      // onSuccess?.(data)
+      onClose()
     } catch (error) {
       console.error('Error in AccuralForm handleSubmit:', error)
     }
@@ -91,7 +102,10 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
                 render={({ field }) => (
                   <CustomDatePicker
                     value={field.value}
-                    onChange={field.onChange}
+                    onChange={(val) => {
+                      field.onChange(val)
+                      setValue('confirmAccrual', !isFuture(val))
+                    }}
                     placeholder="Выберите дату"
                     format='YYYY-MM-DD'
                     className={cn("w-[180px]!", errors.accuralDate && "border-red-500")}
@@ -122,11 +136,10 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
                 control={control}
                 rules={{ required: 'Выберите юрлицо' }}
                 render={({ field }) => (
-                  <SelectMyAccounts
+                  <SelectLegelEntitties
                     value={field.value}
                     onChange={(val) => field.onChange(val)}
                     multi={false}
-                    type="show"
                     placeholder="Выберите юрлицо..."
                     className="bg-white border rounded-md"
                     hasError={errors.legalEntity}
@@ -192,7 +205,7 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
                   render={({ field }) => (
                     <Input
                       type="text"
-                      value={field.value}
+                      value={formatAmount(field.value)}
                       onChange={(e) => field.onChange(e.target.value)}
                       placeholder="0"
                       className={cn("w-[230px]", errors.summa && "border-red-500")}
@@ -243,7 +256,7 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
                     placeholder="Выберите статью по кредиту..."
                     className="flex-1 bg-white border rounded-md"
                     type=""
-                    parent={["Расходы", "Доходы"]}
+                    parent="Расходы"
                     returnIsChild={setIsToRasxodChild}
                     hiddenValue={getValues("chartOfAccountWriteOff")}
                     hasError={errors.chartOfAccountEnrollment}
@@ -271,6 +284,24 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
               />
             </div>
           </div>}
+
+          {/* {isToRasxodChild && <div className="flex items-center gap-4">
+            <label className="w-[150px] text-xss">Контрагент</label>
+            <div className="flex-1 max-w-[600px]">
+              <Controller
+                name="counterparty_id"
+                control={control}
+                render={({ field }) => (
+                  <SingleCounterParty
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder='Не выбран.'
+                    className='bg-white border rounded-md'
+                  />
+                )}
+              />
+            </div>
+          </div>} */}
 
           {/* Назначение */}
           <div className="flex items-start gap-4">
@@ -300,7 +331,7 @@ const AccuralForm = ({ onCancel, onSuccess }) => {
       {/* Footer Actions */}
       <div className="flex border-t justify-end gap-2 px-3 pt-3 mt-auto bg-white">
         <button type="button" onClick={onCancel} className="secondary-btn py-2!">Отмена</button>
-        <button type="submit" className="primary-btn py-2!">Сохранить</button>
+        <button type="submit" className="primary-btn py-2!">{isPending ? <Loader2 className='animate-spin' /> : 'Сохранить'}</button>
       </div>
     </form>
   )

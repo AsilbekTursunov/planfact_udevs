@@ -2,12 +2,14 @@ import { appStore } from "../store/app.store";
 
 export const GlobalCurrency = {
   get name() {
-    return appStore.currency?.name;
+    return appStore.currency?.name || "";
   },
   get guid() {
-    return appStore.currency?.guid;
+    return appStore.currency?.guid || "";
   },
-  // To allow string coercion if needed
+  valueOf() {
+    return appStore.currency?.name || "";
+  },
   toString() {
     return appStore.currency?.name || "";
   }

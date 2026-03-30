@@ -113,12 +113,17 @@ const TotalPrice = observer(() => {
                     onClick={() => {
                         setIsBalanceOpen(!isBalanceOpen)
                     }}
-                    className={styles.balanceTrigger}
+                    className={""}
                 >
                     <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div className={styles.balanceDot}></div>
-                            <span className={styles.balanceText}>На счетах {formatAmount(totalBalance)} <span className={styles.balanceCurrency}>{GlobalCurrency.name}</span></span>
+                        <div className='text-sm font-medium font-roboto cursor-pointer flex items-center gap-2'>
+                            <div className="" />
+                            <div className="flex items-center gap-2">
+                                <p className="text-white">
+                                    На счетах {formatAmount(totalBalance)}
+                                </p>
+                                <p className='text-xs font-medium font-roboto text-white'>{GlobalCurrency.name}</p>
+                            </div>
                             <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
                         </div>
                         <div className={styles.balanceSubtext} style={{ marginLeft: '17px', color: '#fbbf24' }}>

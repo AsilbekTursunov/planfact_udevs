@@ -121,7 +121,7 @@ const GroupSelect = ({
         className={cn(
           'flex items-center cursor-pointer bg-neutral-50 transition-all duration-200 justify-between w-full rounded-md  px-3 py-2 outline-none focus:border-teal-500',
           className,
-          hasError ? 'border-red-ucode! border-2!' : "border border-neutral-200"
+          hasError ? 'border-red-ucode! border!' : "border border-neutral-200"
         )}
         onClick={() => {
           if (!open && buttonRef.current) {

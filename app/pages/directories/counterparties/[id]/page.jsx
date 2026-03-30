@@ -796,17 +796,17 @@ const KontragentDetailPage = observer(() => {
             </span>
             {stats.receiptsCount > 0 && (
               <span className={styles.footerText}>
-                {stats.receiptsCount} {stats.receiptsCount === 1 ? 'поступление' : stats.receiptsCount < 5 ? 'поступления' : 'поступлений'}: <span className={styles.footerTextBold}>{formatAmount(summary?.incoming)}</span>
+                {stats.receiptsCount} {stats.receiptsCount === 1 ? 'поступление' : stats.receiptsCount < 5 ? 'поступления' : 'поступлений'}: <span className={styles.footerTextBold}>{formatAmount(summary?.incoming)} {GlobalCurrency.name}</span>
               </span>
             )}
             {stats.paymentsCount > 0 && (
               <span className={styles.footerText}>
-                {stats.paymentsCount} {counterparty?.expense === 1 ? 'выплата' : counterparty?.expense < 5 ? 'выплаты' : 'выплат'}: <span className={styles.footerTextBold}>{formatAmount(summary?.outgoing)}</span>
+                {stats.paymentsCount} {counterparty?.expense === 1 ? 'выплата' : counterparty?.expense < 5 ? 'выплаты' : 'выплат'}: <span className={styles.footerTextBold}>{formatAmount(summary?.outgoing)} {GlobalCurrency.name}</span>
               </span>
             )}
             <span className={styles.footerText}>
               Итого: <span className={cn(styles.footerTextBold, summary.profit >= 0 ? styles.footerTextGreen : styles.footerTextRed)}>
-                {summary.profit >= 0 ? '+' : ''}{formatAmount(summary.profit)}
+                {summary.profit >= 0 ? '+' : ''}{formatAmount(summary.profit)} {GlobalCurrency.name}
               </span>
             </span>
           </div>

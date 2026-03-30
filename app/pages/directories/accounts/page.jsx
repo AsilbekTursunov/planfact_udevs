@@ -14,7 +14,7 @@ import DeleteAccountGroupModal from '@/components/directories/DeleteAccountGroup
 import { cn } from '@/app/lib/utils'
 import styles from './accounts.module.scss'
 import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
-import { ChevronDown, ChevronUp, Loader2, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, Search } from 'lucide-react'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 import CreateAccountGroupModal from '@/components/directories/CreateAccountGroupModal/CreateAccountGroupModal'
 import SelectLegelEntitties from '../../../../components/ReadyComponents/SelectLegelEntitties'
@@ -45,7 +45,7 @@ export default observer(function AccountsPage() {
 
   const {
     searchQuery, setSearchQuery,
-    isCash, isNonCash, isCard, isElectronic, toggleType,
+    toggleType,
     selectedEntity, setSelectedEntity,
     selectedAccounts, setSelectedAccounts,
     selectedGrouping, setSelectedGrouping,
@@ -98,14 +98,15 @@ export default observer(function AccountsPage() {
       limit: 100,
       search: debouncedSearchQuery.toLowerCase() || "",
       groupBy: selectedGrouping,
-      nalichnye: isCash,
-      beznalichnye: isNonCash,
-      kartaFizlica: isCard,
-      elektronnye: isElectronic,
+      nalichnye: accountsStore.isCash,
+      beznalichnye: accountsStore.isNonCash,
+      kartaFizlica: accountsStore.isCard,
+      elektronnye: accountsStore.isElectronic,
       legal_entity_ids: selectedEntity,
       accounts_and_groups_ids: selectedAccounts,
     }
-  }, [debouncedSearchQuery, selectedGrouping, isCash, isNonCash, isCard, isElectronic, selectedEntity, selectedAccounts])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchQuery, selectedGrouping, accountsStore.isCash, accountsStore.isNonCash, accountsStore.isCard, accountsStore.isElectronic, selectedEntity, selectedAccounts])
 
   // Fetch bank accounts using new invoke_function API
   const { data: bankAccountsData, isLoading: isLoadingBankAccounts } = useUcodeRequestQuery({
@@ -331,22 +332,22 @@ export default observer(function AccountsPage() {
         <FilterSection title="Тип">
           <div className="space-y-2.5 flex flex-col items-start">
             <OperationCheckbox
-              checked={isCash}
+              checked={accountsStore.isCash}
               onChange={() => toggleFilter('Наличный')}
               label="Наличный"
             />
             <OperationCheckbox
-              checked={isNonCash}
+              checked={accountsStore.isNonCash}
               onChange={() => toggleFilter('Безналичный')}
               label="Безналичный"
             />
             <OperationCheckbox
-              checked={isCard}
+              checked={accountsStore.isCard}
               onChange={() => toggleFilter('Карта физлица')}
               label="Карта физлица"
             />
             <OperationCheckbox
-              checked={isElectronic}
+              checked={accountsStore.isElectronic}
               onChange={() => toggleFilter('Электронный')}
               label="Электронный"
             />
