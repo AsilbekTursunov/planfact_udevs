@@ -94,7 +94,6 @@ const SettingsPage = observer(() => {
               value={appStore?.currency?.guid}
               onChange={handleSelectCurrency}
               placeholder='Выберите валюту'
-              withSearch={false}
               isClearable={false}
               className="bg-white text-neutral-700"
             />

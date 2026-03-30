@@ -5,7 +5,7 @@ import SingleSelect from '../../shared/Selects/SingleSelect'
 import { formatAmount } from '../../../utils/helpers'
 import { keepPreviousData } from '@tanstack/react-query'
 
-const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите счет", className, dropdownClassName, multi = true, type, selected, hasError }) => {
+const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите счет", className, dropdownClassName, multi = true, type, selected, hasError, extraValue, returnValue }) => {
 
   const { data: accountsData, isLoading } = useUcodeRequestQuery({
     method: "get_my_accounts",
@@ -30,6 +30,16 @@ const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите с�
     return data;
   }, [accountsData, type, selected])
 
+  const handleSelect = (value) => {
+    onChange?.(value)
+    if (returnValue) {
+      const matched = (accountsData || []).find(item => item.guid === value);
+      if (matched) {
+        returnValue?.(matched[extraValue] || 'Без названия');
+      }
+    }
+  }
+
   if (isLoading) {
     return <div className="text-xs text-neutral-400 flex items-center h-10 px-3 border border-neutral-200 rounded-md bg-neutral-50">Загрузка...</div>
   }
@@ -40,7 +50,7 @@ const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите с�
     <Component
       data={mappedData}
       value={value}
-      onChange={onChange}
+      onChange={handleSelect}
       placeholder={placeholder}
       className={className}
       dropdownClassName={dropdownClassName}
