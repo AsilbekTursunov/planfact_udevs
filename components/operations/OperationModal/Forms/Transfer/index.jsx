@@ -26,6 +26,8 @@ const TransferForm = observer(({ initialData, onClose }) => {
   const { data: bankAccountsData } = useBankAccountsPlanFact({ limit: 1000 })
   const bankAccounts = useMemo(() => bankAccountsData?.data?.data?.data || [], [bankAccountsData])
 
+  console.log('initialData23', initialData)
+
   // Form State
   const isNew = initialData?.isNew
   const defaultValues = useMemo(() => {
@@ -41,7 +43,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
         fromAmount: raw.summa ? Math.abs(raw.summa) : 0,
         toDate,
         toAccount: raw.my_accounts_id_2 || raw.bank_accounts_id_2 || null,
-        toAmount: raw.summa_2 || (raw.summa ? Math.abs(raw.summa) : 0),
+        toAmount: raw.to_amount || (raw.summa ? Math.abs(raw.summa) : 0),
         purpose: raw.opisanie || raw.comment || '',
         currency_1: raw.currenies_id || null,
         currency_2: raw.to_currenies_id || null,
