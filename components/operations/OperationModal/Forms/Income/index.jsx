@@ -243,21 +243,21 @@ const IncomeForm = observer(({
   chart_of_accounts_id = null
 }) => {
 
+
   // Form State
-  const isNew = initialData?.isNew || false
+  const isNew = initialData?.isNew
   const defaultValues = useMemo(() => {
     if (initialData && (!isNew || initialData.isCopy)) {
       const raw = initialData
       const paymentDate = raw.data_operatsii ? formatDate(raw.data_operatsii) : formatDate(new Date())
       const accrualDate = raw.data_nachisleniya ? formatDate(raw.data_nachisleniya) : paymentDate
 
-      
 
       return {
         paymentDate,
         confirmPayment: raw.payment_confirmed !== undefined ? raw.payment_confirmed : !!raw.oplata_podtverzhdena,
         accountAndLegalEntity: raw.my_accounts_id || raw.bank_accounts_id || null,
-        amount: raw.summa ? Math.abs(raw.summa) : 0,
+        amount: raw.summa !== undefined && raw.summa !== null ? Math.abs(Number(raw.summa)) : (raw.rawData?.summa !== undefined && raw.rawData?.summa !== null ? Math.abs(Number(raw.rawData.summa)) : 0),
         accrualDate,
         confirmAccrual: raw.payment_accrual !== undefined ? raw.payment_accrual : false,
         counterparty: raw.counterparties_id || preselectedCounterparty || null,
@@ -283,7 +283,8 @@ const IncomeForm = observer(({
       purpose: '',
       currency: null,
     }
-  }, [initialData, isNew, chart_of_accounts_id, preselectedCounterparty, defaultDealGuid])
+  }, [initialData])
+  //  isNew, chart_of_accounts_id, preselectedCounterparty, defaultDealGuid
 
   const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues
@@ -373,10 +374,14 @@ const IncomeForm = observer(({
       }))
     }
 
+    if (!isNew) {
+      payload.guid = initialData.guid
+    }
+
     try {
 
       await createOperation({
-        method: 'create_operation',
+        method: isNew ? 'create_operation' : 'update_operation',
         data: payload
       })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
@@ -397,6 +402,8 @@ const IncomeForm = observer(({
 
 
   // console.log('initialData', initialData)
+
+  console.log('defaultValues', defaultValues)
 
   return (
     <>

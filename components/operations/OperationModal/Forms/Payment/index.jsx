@@ -244,8 +244,10 @@ const PaymentForm = observer(({
   chart_of_accounts_id = null
 }) => {
 
+
+
   // Form State
-  const isNew = initialData?.isNew || false
+  const isNew = initialData?.isNew
   const defaultValues = useMemo(() => {
     if (initialData && (!isNew || initialData.isCopy)) {
       const raw = initialData
@@ -256,7 +258,7 @@ const PaymentForm = observer(({
         paymentDate,
         confirmPayment: raw.payment_confirmed !== undefined ? raw.payment_confirmed : !!raw.oplata_podtverzhdena,
         accountAndLegalEntity: raw.my_accounts_id || raw.bank_accounts_id || null,
-        amount: raw.summa ? Math.abs(raw.summa) : 0,
+        amount: raw.summa !== undefined && raw.summa !== null ? Math.abs(Number(raw.summa)) : (raw.rawData?.summa !== undefined && raw.rawData?.summa !== null ? Math.abs(Number(raw.rawData.summa)) : 0),
         accrualDate,
         confirmAccrual: raw.payment_accrual !== undefined ? raw.payment_accrual : false,
         counterparty: raw.counterparties_id || preselectedCounterparty || null,
@@ -372,10 +374,14 @@ const PaymentForm = observer(({
       }))
     }
 
+    if (!isNew) {
+      payload.guid = initialData.guid
+    }
+
     try {
 
       await createOperation({
-        method: 'create_operation',
+        method: isNew ? 'create_operation' : 'update_operation',
         data: payload
       })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })

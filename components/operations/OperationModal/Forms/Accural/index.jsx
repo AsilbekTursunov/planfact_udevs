@@ -1,14 +1,13 @@
 'use client'
 import { useForm, Controller, } from 'react-hook-form'
-import { DatePicker } from '@/components/common/DatePicker/DatePicker'
+import { useMemo, useState } from 'react'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
-import SelectMyAccounts from '../../../../ReadyComponents/SelectMyAccounts'
+
 import SinglSelectStatiya from '../../../../ReadyComponents/SingleSelectStatiya'
 import { formatDate } from '@/utils/formatDate'
 import { cn } from '@/app/lib/utils'
-import { useState } from 'react'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import CustomDatePicker from '../../../../shared/DatePicker'
@@ -18,11 +17,34 @@ import { formatAmount, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
 import MyAccountCurrensies from '../../../../ReadyComponents/MyAccountCurrensies'
 
-const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
+const AccuralForm = ({ onCancel, onClose, initialData }) => {
   const [isFromRasxodChild, setIsFromRasxodChild] = useState(false)
   const [isToRasxodChild, setIsToRasxodChild] = useState(false)
-  const { getValues, control, handleSubmit, setValue, watch, formState: { errors, } } = useForm({
-    defaultValues: {
+
+  const isNew = initialData?.isNew
+
+  const defaultValues = useMemo(() => {
+    if (initialData && (!isNew || initialData.isCopy)) {
+      const raw = initialData
+      return {
+        accuralDate: raw.data_operatsii ? formatDate(raw.data_operatsii) : formatDate(new Date()),
+        confirmAccrual: raw.payment_confirmed !== undefined ? raw.payment_confirmed : true,
+        legalEntity: raw.legal_entity_id || '',
+        chartOfAccountWriteOff: raw.chart_of_accounts_id || null,
+        summa: raw.summa !== undefined && raw.summa !== null ? Math.abs(Number(raw.summa)) : (raw.rawData?.summa !== undefined && raw.rawData?.summa !== null ? Math.abs(Number(raw.rawData.summa)) : 0),
+        canAllowOpiu: raw.include_in_profit_and_loss_cash_method !== undefined ? raw.include_in_profit_and_loss_cash_method : true,
+        chartOfAccountEnrollment: raw.chart_of_accounts_id_2 || null,
+        sellingDealId: raw.sales_transactions_id || '',
+        comment: raw.comment || '',
+        counterpary_id: raw.counterparties_id || '',
+        repeatEvery: raw.repeat_every || null,
+        repeatUnit: raw.repeat_unit || null,
+        repeatUntil: raw.repeat_until || null,
+        repeatCount: raw.repeat_count || null,
+        currency: raw.currenies_id || '',
+      }
+    }
+    return {
       accuralDate: formatDate(new Date()),
       confirmAccrual: true,
       legalEntity: '',
@@ -39,11 +61,17 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
       repeatCount: null,
       currency: '',
     }
+  }, [initialData, isNew])
+
+  const { getValues, control, handleSubmit, setValue, watch, formState: { errors, } } = useForm({
+    defaultValues
   })
 
   const { mutateAsync: createAccural, isPending } = useUcodeRequestMutation({
     mutationSetting: {}
   })
+
+
 
   const legalEntityGuid = watch('legalEntity')
 
@@ -72,9 +100,13 @@ const AccuralForm = ({ onCancel, onSuccess, onClose }) => {
         currenies_id: data.currency,
       }
 
+      if (!isNew) {
+        requestData.guid = initialData.guid
+      }
+
       console.log('requestData', requestData)
       await createAccural({
-        method: 'create_operation',
+        method: isNew ? 'create_operation' : 'update_operation',
         data: requestData
       })
       // onSuccess?.(data)

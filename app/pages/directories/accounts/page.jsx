@@ -204,6 +204,7 @@ export default observer(function AccountsPage() {
       'nazvanie',
       'nachalьnyy_ostatok_val',
       'current_balance_val',
+      'currenies_kod',
       "tip",
       "legal_entity_id",
       "requisites",
@@ -468,6 +469,7 @@ export default observer(function AccountsPage() {
                   </th>
                   <th className='p-2 text-start font-medium'>Начальный остаток</th>
                   <th className='p-2 text-start font-medium'>Текущий остаток</th>
+                  <th className='p-2 text-start font-medium'>Валюта</th>
                   <th className='p-2 text-start font-medium'>Тип</th>
                   <th className='p-2 text-start font-medium text-nowrap'>Юрлицо</th>
                   <th className='p-2 text-start font-medium'>Реквизиты</th>

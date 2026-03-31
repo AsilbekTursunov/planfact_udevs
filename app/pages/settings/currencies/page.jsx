@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { data as currencyData } from '../../../../constants/globalCurrency'
 import { formatDate } from '../../../../utils/formatDate'
+import moment from 'moment/moment'
 
 // Generate stable placeholder rates at the module level.
 // This ensures the component remains pure during render.
@@ -15,7 +16,7 @@ const STABLE_RATES = currencyData.reduce((acc, curr) => {
 const CurrenciesPage = () => {
   const [activeTab, setActiveTab] = useState('fiat') // 'fiat' or 'crypto'
 
-  const currentDate = formatDate(new Date())
+  const currentDate = new Date()
 
 
 
@@ -23,11 +24,11 @@ const CurrenciesPage = () => {
     <div className="flex-1 p-6 bg-gray-50 overflow-y-auto relative">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">
-          Курсы валют по ЦБ (обновлено {currentDate})
+          Курсы валют по ЦБ (обновлено {moment(currentDate).format('DD.MM.YYYY')})
         </h1>
 
         <div className="flex gap-2 mb-6">
-          <button
+          {/* <button
             onClick={() => setActiveTab('fiat')}
             className={`px-6 py-2 rounded-md text-sm font-medium transition-all border ${
               activeTab === 'fiat'
@@ -35,18 +36,8 @@ const CurrenciesPage = () => {
                 : 'bg-white border-transparent text-gray-500 hover:bg-gray-100'
             }`}
           >
-            Обычные валюты по ЦБ РФ
-          </button>
-          <button
-            onClick={() => setActiveTab('crypto')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-all border ${
-              activeTab === 'crypto'
-                ? 'bg-white border-cyan-500 text-cyan-600 shadow-sm'
-                : 'bg-white border-transparent text-gray-500 hover:bg-gray-100'
-            }`}
-          >
-            Криптовалюты
-          </button>
+            Обычные валюты по ЦБ
+          </button>  */}
         </div>
 
         <div className="bg-white  overflow-hidden">
@@ -71,16 +62,16 @@ const CurrenciesPage = () => {
               {activeTab === 'fiat' ? (
                 currencyData.map((currency) => (
                   <tr key={currency.guid} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                    <td className="px-6 py-4 w-20 text-sm text-gray-900 font-medium">
                       {currency.nazvanie}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 w-20 text-sm text-gray-500">
                       {currency.kod}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 font-serif">
+                    <td className="px-6 py-4 w-20 text-sm text-gray-500 font-serif">
                       {currency.icon}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 tabular-nums">
+                    <td className="px-6 py-4 w-20 text-sm text-gray-500 tabular-nums">
                       {/* Placeholder value as in image, since data doesn't have rates */}
                       {STABLE_RATES[currency.guid]}
                     </td>

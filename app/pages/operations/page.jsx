@@ -318,6 +318,10 @@ const OperationsPage = observer(() => {
 			setModalType('accrual')
 		}
 		openOperationModal(operation)
+		setOpenModal({
+			...operation,
+			isNew: false,
+		})
 	}
 
 

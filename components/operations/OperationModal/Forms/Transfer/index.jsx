@@ -21,14 +21,13 @@ import { observer } from 'mobx-react-lite'
 import { authStore } from '../../../../../store/auth.store'
 import { queryClient } from '../../../../../lib/queryClient'
 import { Loader2 } from 'lucide-react'
-import { appStore } from '../../../../../store/app.store'
 
 const TransferForm = observer(({ initialData, onClose }) => {
   const { data: bankAccountsData } = useBankAccountsPlanFact({ limit: 1000 })
   const bankAccounts = useMemo(() => bankAccountsData?.data?.data?.data || [], [bankAccountsData])
 
   // Form State
-  const isNew = initialData?.isNew || false
+  const isNew = initialData?.isNew
   const defaultValues = useMemo(() => {
     if (initialData && (!isNew || initialData.isCopy)) {
       const raw = initialData
@@ -116,10 +115,14 @@ const TransferForm = observer(({ initialData, onClose }) => {
       payload.to_amount = StringtoNumber(data.fromAmount)
     }
 
+    if (!isNew) {
+      payload.guid = initialData.guid
+    }
+
     try {
       await createOperation({
         method: isNew ? 'create_operation' : 'update_operation',
-        data: isNew ? payload : { ...payload, guid: initialData.guid }
+        data: payload
       })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['operationsList'] })

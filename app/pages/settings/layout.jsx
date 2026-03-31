@@ -21,7 +21,7 @@ export default function SettingLayouts({ children }) {
 
   return (
     <div className="fixed  top-[60px] flex left-[80px] w-[calc(100%-80px)] h-[calc(100%-60px)] ">
-      <aside className=" w-56 bg-white p-3">
+      <aside className=" w-56 bg-white p-3 shadow-2xl shadow-gray-200">
         <h2 className={styles.sidebarTitle}>Настройки</h2>
         <nav className={styles.sidebarNav}>
           {sidebarItems.map(item => {
