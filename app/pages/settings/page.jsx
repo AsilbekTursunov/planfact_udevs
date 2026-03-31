@@ -40,6 +40,7 @@ const SettingsPage = observer(() => {
       const response = appStore.currencies.find(c => c.guid === value)
       appStore.setCurrency({ name: response?.icon, guid: response?.guid, code: response?.code })
       queryClient.invalidateQueries({ queryKey: ['get_general_settings'] })
+      queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
     }).catch(() => {
       // errorToast('Ошибка при обновлении настроек')
     })
