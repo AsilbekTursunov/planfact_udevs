@@ -23,7 +23,7 @@ const AppProvider = ({ children }) => {
       appStore.setCurrencies(currencies)
       const currency = currencies.find(c => c.guid === data?.default_currency_id)
       if (currency) {
-        appStore.setCurrency({ name: currency.icon, guid: currency.guid })
+        appStore.setCurrency({ name: currency.icon, guid: currency.guid, code: currency.kod })
       }
     }
   }, [currencies, data])

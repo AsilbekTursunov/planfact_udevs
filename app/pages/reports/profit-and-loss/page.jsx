@@ -9,6 +9,9 @@ import styles from './profit-and-loss.module.scss'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
+import { toJS } from 'mobx'
+import SingleSelect from '@/components/shared/Selects/SingleSelect'
+import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 const accountingMethodOptions = [
   { guid: 'accrual', label: 'Метод начисления' },
@@ -31,6 +34,11 @@ const ProfitAndLossPage = observer(() => {
 
   const { reportData, isLoading, isFetching } = pnlStore
   const loading = isLoading || isFetching
+
+  const currencies = toJS(reportData)?.currencies?.map(item => ({
+    value: item.code,
+    label: item.code
+  }))
 
   const legend = useMemo(() => reportData?.legend || [], [reportData])
   const rows = useMemo(() => reportData?.rows || [], [reportData])
@@ -147,41 +155,54 @@ const ProfitAndLossPage = observer(() => {
 
         {/* Main Content */}
         <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
-          <div className={styles.header}>
-            <div className={styles.headerContent}>
-              <div className={styles.titleRow}>
-                <h1 className={styles.title}>Отчет о прибылях и убытках (P&L)</h1>
-              </div>
-              <div className={styles.headerRight}>
-                <GroupedSelect
-                  data={groupingOptions}
-                  value={pnlStore.selectedGrouping}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о прибылях и убытках (P&L)</h1>
+              {currencies && (
+                <SingleSelect
+                  data={currencies}
+                  value={pnlStore.selectedCurrency || GlobalCurrency.code}
                   onChange={(value) => {
-                    pnlStore.setSelectedGrouping(value)
+                    pnlStore.setSelectedCurrency(value)
                     pnlStore.fetchReport()
                   }}
-                  placeholder="Способ построения"
-                  className={styles.groupingSelect}
+                  isClearable={false}
+                  withSearch={false}
+                  className={'bg-white w-28'}
+                  dropdownClassName={'w-28'}
                 />
-                <GroupedSelect
-                  data={accountingMethodOptions}
-                  value={pnlStore.isCalculation ? 'accrual' : 'cash'}
-                  onChange={(value) => {
-                    pnlStore.setIsCalculation(value === 'accrual')
-                    pnlStore.fetchReport()
-                  }}
-                  placeholder="Метод учета"
-                  className={styles.accountingMethodSelect}
-                  autoHeight={true}
-                />
-                <button className={styles.moreButton}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="3" r="1" fill="currentColor" />
-                    <circle cx="8" cy="8" r="1" fill="currentColor" />
-                    <circle cx="8" cy="13" r="1" fill="currentColor" />
-                  </svg>
-                </button>
-              </div>
+              )}
+            </div>
+
+            <div className={styles.headerRight}>
+              <GroupedSelect
+                data={groupingOptions}
+                value={pnlStore.selectedGrouping}
+                onChange={(value) => {
+                  pnlStore.setSelectedGrouping(value)
+                  pnlStore.fetchReport()
+                }}
+                placeholder="Способ построения"
+                className={styles.groupingSelect}
+              />
+              <GroupedSelect
+                data={accountingMethodOptions}
+                value={pnlStore.isCalculation ? 'accrual' : 'cash'}
+                onChange={(value) => {
+                  pnlStore.setIsCalculation(value === 'accrual')
+                  pnlStore.fetchReport()
+                }}
+                placeholder="Метод учета"
+                className={styles.accountingMethodSelect}
+                autoHeight={true}
+              />
+              <button className={styles.moreButton}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="3" r="1" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1" fill="currentColor" />
+                </svg>
+              </button>
             </div>
           </div>
 

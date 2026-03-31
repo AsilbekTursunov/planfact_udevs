@@ -128,10 +128,14 @@ const OperationTableRow = observer(({
         </td>
         {/* statya */}
         <td className={cn(styles.tableCell, styles.statusCell, isActive && styles.activeRow)}>
-          {op?.tip == "Перемещение" ? <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+          {op?.tip == "Перемещение" && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
             <span className={`${isSpinasiya ? 'opacity-50' : ''}`}>[Перемещение - списание]</span>
             <span className={`${isZachisleniya ? 'opacity-50' : ''}`}>[Перемещение - зачисление]</span>
-          </div> : titleChartOfAccounts || ''}
+          </div>}
+          {op?.tip == "Начисление" && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+            <span>{op.chart_of_accounts_name}</span>
+            <span>{op.chart_of_accounts_name2}</span>
+          </div>}
         </td>
         {/* project */}
         {/* <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td> */}

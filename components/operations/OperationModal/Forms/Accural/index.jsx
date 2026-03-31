@@ -104,12 +104,10 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       if (!isNew) {
         requestData.guid = initialData.guid
       }
-
-      console.log('requestData', requestData)
-      // await createAccural({
-      //   method: isNew ? 'create_operation' : 'update_operation',
-      //   data: requestData
-      // })
+      await createAccural({
+        method: isNew ? 'create_operation' : 'update_operation',
+        data: requestData
+      })
       // onSuccess?.(data)
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['operationsList'] })

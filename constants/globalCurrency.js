@@ -7,6 +7,9 @@ export const GlobalCurrency = {
   get guid() {
     return appStore.currency?.guid || "";
   },
+  get code() {
+    return appStore.currency?.code || "";
+  },
   valueOf() {
     return appStore.currency?.name || "";
   },

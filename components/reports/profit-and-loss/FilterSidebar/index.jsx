@@ -68,6 +68,7 @@ const PnLFilterSidebar = observer(({ isOpen, onClose }) => {
       void pnlStore.profitTypes
       void pnlStore.selectedAccounts
       void pnlStore.selectedCounterparties
+      void pnlStore.selectedCurrency
       pnlStore.fetchReport()
     })
     return dispose

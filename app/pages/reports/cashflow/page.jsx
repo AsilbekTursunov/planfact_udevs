@@ -15,6 +15,8 @@ import styles from './cashflow.module.scss'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
+import { toJS } from 'mobx'
+import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 const groupingOptions = [
   { value: 'monthly', label: 'По месяцам' },
@@ -32,7 +34,13 @@ export default observer(function CashFlowReportPage() {
 
   const { reportData: cashFlowData, isLoading, isFetching } = cashFlowStore
   const loading = isLoading || isFetching
- 
+
+  const currencies = toJS(cashFlowData)?.currencies?.map(item => ({
+    value: item.code,
+    label: item.code
+  }))
+
+
   // Refetch data every time user enters the page
   useEffect(() => {
     cashFlowStore.fetchReport()
@@ -225,33 +233,43 @@ export default observer(function CashFlowReportPage() {
 
         {/* Main Content */}
         <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
-          <div className={styles.header}>
-            <div className={styles.headerContent}>
-              <div className={styles.titleRow}>
-                <h1 className={styles.title}>Отчет о движении денежных средств</h1>
-              </div>
-              <div className={styles.headerRight}>
-                <SingleSelect
-                  data={groupingOptions}
-                  value={cashFlowStore.filters.periodType}
-                  onChange={(value) => {
-                    cashFlowStore.setPeriodType(value)
-                    cashFlowStore.fetchReport()
-                  }}
-                  placeholder="Способ построения"
-                  withSearch={false}
-                  isClearable={false}
-                  className="bg-white w-44"
-                  dropdownClassName="bg-white"
-                />
-                <button className={styles.moreButton}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="3" r="1" fill="currentColor" />
-                    <circle cx="8" cy="8" r="1" fill="currentColor" />
-                    <circle cx="8" cy="13" r="1" fill="currentColor" />
-                  </svg>
-                </button>
-              </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
+              <SingleSelect
+                data={currencies}
+                value={cashFlowStore.filters.currencyCode || GlobalCurrency.code}
+                onChange={(value) => {
+                  cashFlowStore.setCurrencyCode(value)
+                  cashFlowStore.fetchReport()
+                }}
+                isClearable={false}
+                withSearch={false}
+                className={'bg-white w-28'}
+                dropdownClassName={'w-28'}
+              />
+            </div>
+            <div className={styles.headerRight}>
+              <SingleSelect
+                data={groupingOptions}
+                value={cashFlowStore.filters.periodType}
+                onChange={(value) => {
+                  cashFlowStore.setPeriodType(value)
+                  cashFlowStore.fetchReport()
+                }}
+                placeholder="Способ построения"
+                withSearch={false}
+                isClearable={false}
+                className="bg-white w-44"
+                dropdownClassName="bg-white"
+              />
+              <button className={styles.moreButton}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="3" r="1" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1" fill="currentColor" />
+                </svg>
+              </button>
             </div>
           </div>
 

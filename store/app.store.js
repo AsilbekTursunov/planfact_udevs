@@ -6,7 +6,8 @@ class AppStore {
   isPayment = false
   currency = {
     name: '',
-    guid: ''
+    guid: '',
+    code: ''
   }
   currencies = []
 

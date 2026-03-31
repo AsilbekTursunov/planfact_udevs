@@ -38,7 +38,7 @@ const SettingsPage = observer(() => {
     }).then((data) => {
       // successToast('Настройки успешно обновлены')
       const response = appStore.currencies.find(c => c.guid === value)
-      appStore.setCurrency({ name: response?.icon, guid: response?.guid })
+      appStore.setCurrency({ name: response?.icon, guid: response?.guid, code: response?.code })
       queryClient.invalidateQueries({ queryKey: ['get_general_settings'] })
     }).catch(() => {
       // errorToast('Ошибка при обновлении настроек')

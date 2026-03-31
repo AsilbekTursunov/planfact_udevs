@@ -22,9 +22,9 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
       void cashFlowStore.filters.periodEndDate
       void cashFlowStore.filters.periodType
       void cashFlowStore.filters.currencyCode
-      void cashFlowStore.filters.counterparty_id
-      void cashFlowStore.filters.deals
-      void cashFlowStore.filters.counterparties
+      void cashFlowStore.filters.sellingDealId
+      void cashFlowStore.filters.contrAgentId
+      void cashFlowStore.filters.accountId
       cashFlowStore.fetchReport()
     })
     return dispose

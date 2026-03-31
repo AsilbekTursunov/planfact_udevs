@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import { ucodeRequest } from '@/lib/api/ucode/base'
+import { GlobalCurrency } from '../../../constants/globalCurrency'
 
 const formatDate = (date) => {
   const d = typeof date === 'string' ? new Date(date) : date
@@ -30,6 +31,7 @@ class PnLStore {
   }
   selectedAccounts = []
   selectedCounterparties = []
+  selectedCurrency = GlobalCurrency.code || 'UZS'
 
   // ── Report state ────────────────────────────────────────────────────────────
   reportData = null
@@ -48,6 +50,7 @@ class PnLStore {
   setIsCalculation(val) { this.isCalculation = val }
   setSelectedAccounts(val) { this.selectedAccounts = val }
   setSelectedCounterparties(val) { this.selectedCounterparties = val }
+  setSelectedCurrency(val) { this.selectedCurrency = val }
 
   toggleProfitType(type) {
     this.profitTypes[type] = !this.profitTypes[type]
@@ -77,7 +80,7 @@ class PnLStore {
       periodStartDate: startDate,
       periodEndDate: endDate,
       periodType: getPeriodType(),
-      currencyCode: 'RUB',
+      userCurrencyCode: this.selectedCurrency,
       isCalculation: this.isCalculation,
       isGrossProfit: false,
       isOperatingProfit: this.profitTypes.operational,

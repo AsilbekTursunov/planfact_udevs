@@ -7,6 +7,10 @@ import BalanceFilterSidebar from '@/components/reports/balance/FilterSidebar'
 import { balanceStore } from '@/components/reports/balance/balance.store'
 import styles from './balance.module.scss'
 import { ExpendOpen, ExpendClose } from '@/constants/icons'
+import { toJS } from 'mobx'
+import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
+import { appStore } from '../../../../store/app.store'
+import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 export default observer(function BalancePage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
@@ -15,12 +19,10 @@ export default observer(function BalancePage() {
 
   const { balanceData, isLoading, error } = balanceStore
 
-  // Currency options
-  const currencyOptions = [
-    { guid: 'RUB', label: 'RUB' },
-    { guid: 'USD', label: 'USD' },
-    { guid: 'EUR', label: 'EUR' }
-  ]
+  const currencies = toJS(balanceData.currencies)?.map(item => ({
+    value: item.code,
+    label: item.code
+  }))
 
   // Auto-expand first two levels on initial data load
   useEffect(() => {
@@ -121,31 +123,23 @@ export default observer(function BalancePage() {
 
         {/* Main Content */}
         <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
-          <div className={styles.header}>
-            <div className={styles.headerContent}>
-              <div className={styles.titleRow}>
-                <h1 className={styles.title}>Балансовый отчет</h1>
-              </div>
-              <div className={styles.headerRight}>
-                <GroupedSelect
-                  data={currencyOptions}
-                  value={balanceStore.selectedCurrency}
-                  onChange={(value) => {
-                    balanceStore.setSelectedCurrency(value)
-                    balanceStore.fetchBalance()
-                  }}
-                  placeholder="Валюта"
-                  className={styles.currencySelect}
-                />
-                <button className={styles.moreButton}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="3" r="1" fill="currentColor" />
-                    <circle cx="8" cy="8" r="1" fill="currentColor" />
-                    <circle cx="8" cy="13" r="1" fill="currentColor" />
-                  </svg>
-                </button>
-              </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className='text-xl whitespace-nowrap font-semibold'>Балансовый отчет</h1>
+              <SingleSelect
+                data={currencies}
+                value={balanceStore.selectedCurrency || GlobalCurrency.code}
+                onChange={(value) => {
+                  balanceStore.setSelectedCurrency(value)
+                  balanceStore.fetchBalance()
+                }}
+                isClearable={false}
+                withSearch={false}
+                className={'bg-white w-28'}
+                dropdownClassName={'w-28'}
+              />
             </div>
+
           </div>
 
           <div className={styles.balanceEquation}>

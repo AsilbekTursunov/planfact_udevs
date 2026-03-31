@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import { makePersistable } from 'mobx-persist-store'
 import { ucodeRequest } from '@/lib/api/ucode/base'
+import { GlobalCurrency } from '../../../constants/globalCurrency'
 
 const formatDate = (date) => {
   if (!date) return ''
@@ -32,7 +33,7 @@ class CashFlowStore {
     periodStartDate: getDefaultStartDate(),
     periodEndDate: getDefaultEndDate(),
     periodType: 'monthly',
-    currencyCode: 'RUB', // Defaulting to RUB as seen in page
+    userCurrencyCode: GlobalCurrency.code || 'UZS', // Defaulting to RUB as seen in page
     sellingDealId: [], // these are same values 
     contrAgentId: [],
     accountId: [],
@@ -105,7 +106,7 @@ class CashFlowStore {
   }
 
   setCurrencyCode(value) {
-    this.filters.currencyCode = value
+    this.filters.userCurrencyCode = value
   }
 
   setDeals(value) {

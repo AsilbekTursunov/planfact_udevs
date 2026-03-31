@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import { getBalanceReport } from '@/lib/api/ucode/balance'
 import { legalEntitiesAPI } from '@/lib/api/ucode/legalEntities'
+import { GlobalCurrency } from '../../../constants/globalCurrency'
 
 const getDefaultDate = () => new Date().toISOString().split('T')[0]
 
@@ -8,7 +9,7 @@ class BalanceStore {
   // ── Filter state ────────────────────────────────────────────────────────────
   selectedDate = getDefaultDate()
   selectedEntity = ''
-  selectedCurrency = 'RUB'
+  selectedCurrency = GlobalCurrency.code || 'UZS'
   selectedCounterparties = []
   selectedAccount = ''
 
@@ -17,7 +18,7 @@ class BalanceStore {
   legalEntitiesLoading = false
 
   // ── Balance report data ─────────────────────────────────────────────────────
-  balanceData = { assets: [], liabilities: [], equity: [] }
+  balanceData = { assets: [], liabilities: [], equity: [], currencies: [] }
   isLoading = false
   error = null
 
@@ -106,7 +107,8 @@ class BalanceStore {
         this.balanceData = {
           assets: transformItems(apiData.assets || []),
           liabilities: transformItems(apiData.liabilities || []),
-          equity: transformItems(apiData.equity || [])
+          equity: transformItems(apiData.equity || []),
+          currencies: apiData.currencies || []
         }
         this.isLoading = false
       })
