@@ -213,11 +213,11 @@ export default observer(function DealDetailPage() {
         </div>
         <Popover>
           <PopoverTrigger asChild>
-            <span className={styles.detailsDots}>
+            <span className="w-10 h-10 rounded-md cursor-pointer border flex items-center justify-center p-2 bg-white">
               <Ellipsis size={18} className='text-neutral-800' />
             </span>
           </PopoverTrigger>
-          <PopoverContent className="w-40 rounded-md overflow-hidden p-0 border border-gray-100 bg-white shadow-md mt-1" align="end">
+          <PopoverContent className="w-40 rounded-md overflow-hidden p-0 border border-gray-50! ring ring-neutral-100 bg-white shadow-md mt-1" align="end">
             <div className="flex flex-col">
               <button
                 className="flex items-center gap-2 p-2.5 text-sm text-neutral-800 hover:bg-neutral-50 cursor-pointer w-full text-left border-none outline-none bg-transparent"

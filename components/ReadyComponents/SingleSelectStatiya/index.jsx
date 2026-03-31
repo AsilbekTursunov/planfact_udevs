@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import TreeSelect from '../../shared/Selects/TreeSelect'
 import { keepPreviousData } from '@tanstack/react-query'
@@ -77,7 +77,7 @@ const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'В
     };
     if (result) traverse(result);
     return flat;
-  }, [result]);
+  }, [result])
 
   const handleSelect = (val) => {
     setSelectedValue?.(val);

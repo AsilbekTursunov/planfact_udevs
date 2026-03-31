@@ -137,7 +137,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
         nomer_scheta: rawData.account_number
           ? (Array.isArray(rawData.account_number) ? rawData.account_number.map(v => ({ value: String(v) })) : [{ value: String(rawData.account_number) }])
           : [{ value: '' }],
-        primenyat_stat_i_po_umolchaniyu: rawData.primenyat_stat_i_po_umolchaniyu || false,
+        primenyat_stat_i_po_umolchaniyu: rawData.primenyatь_statьi_po_umolchaniyu || false,
         chart_of_accounts_id: getChartOfAccountsId('chart_of_accounts_id'),
         chart_of_accounts_id_2: getChartOfAccountsId('chart_of_accounts_id_2'),
         komentariy: rawData.komentariy || ''

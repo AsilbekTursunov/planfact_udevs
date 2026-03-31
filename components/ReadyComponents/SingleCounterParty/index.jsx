@@ -1,5 +1,5 @@
 'use client'
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
 import TreeSelect from '../../shared/Selects/TreeSelect'
 
@@ -50,31 +50,44 @@ const SingleCounterParty = ({
       }
     }
 
-    return groups.map(buildTree)
+    return groups.filter(item => item.children && item.children.length > 0).map(buildTree)
   }, [counterpartiesGroupsData])
+
+  const autoSelectChartOfAccount = (name, val) => {
+    // Find the item in the tree to get its rawData
+    const findItem = (nodes) => {
+      for (const node of nodes) {
+        if (node.value === val) return node
+        if (node.children) {
+          const found = findItem(node.children)
+          if (found) return found
+        }
+      }
+      return null
+    }
+
+    const node = findItem(result)
+    if (node && node.rawData) {
+      // Return the chart_of_accounts_id (or id_2) based on the 'name' prop
+      const accountId = node.rawData[name]
+      console.log('accountId', accountId)
+      returnChartOfAccount?.(accountId || null)
+
+    }
+  }
+
+
+  // useEffect(() => {
+  //   if (name) {
+  //     autoSelectChartOfAccount(name, value)
+  //   }
+  // }, [name])
 
   const handleSelect = (val) => {
     onChange(val)
     if (name && val) {
       // Find the item in the tree to get its rawData
-      const findItem = (nodes) => {
-        for (const node of nodes) {
-          if (node.value === val) return node
-          if (node.children) {
-            const found = findItem(node.children)
-            if (found) return found
-          }
-        }
-        return null
-      }
-
-      const node = findItem(result)
-      if (node && node.rawData) {
-        // Return the chart_of_accounts_id (or id_2) based on the 'name' prop
-        const accountId = node.rawData[name]
-        returnChartOfAccount?.(accountId || null)
-
-      }
+      autoSelectChartOfAccount(name, val)
     }
   }
 

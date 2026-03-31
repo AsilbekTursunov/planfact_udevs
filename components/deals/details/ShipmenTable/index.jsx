@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/popover"
 
 import EmptyState from '../EmptyState'
+import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
   const [showModal, setShowModal] = useState(false)
@@ -184,7 +185,7 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
       </div>
       <div className='flex justify-end'>
         <div className="p-4 text-right text-neutral-700 font-semibold">Итого:</div>
-        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(shipmentsList?.reduce((acc, item) => acc + item.summa, 0))} UZS</div>
+        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(shipmentsList?.reduce((acc, item) => acc + item.summa, 0))} {GlobalCurrency.name}</div>
       </div>
 
       {showModal && (

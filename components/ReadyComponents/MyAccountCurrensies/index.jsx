@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import { currencyInfo } from '../../../constants/globalCurrency'
 import SingleSelect from '../../shared/Selects/SingleSelect'
+import { Skeleton } from '@mui/material'
 
 const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, className, dropDownClassName, placeholder = 'Выберите валюту', wrapperClassName }) => {
 
@@ -44,7 +45,7 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
   const actualPlaceholder = isLoading ? "Загрузка..." : placeholder;
 
   return (
-    <SingleSelect
+    isLoading ? null : selectOptions?.length > 1 ? <SingleSelect
       data={selectOptions}
       value={value}
       withSearch={withSearch}
@@ -53,7 +54,7 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
       dropDownClassName={dropDownClassName}
       placeholder={actualPlaceholder}
       wrapperClassName={wrapperClassName}
-    />
+    /> : null
   )
 }
 

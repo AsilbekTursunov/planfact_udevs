@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { ChevronUp, GripVertical, Check, Pencil, Trash2, Loader2 } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { ChevronUp, Check, Pencil, Trash2, Loader2 } from 'lucide-react'
 import styles from './style.module.scss'
 import { useUcodeDefaultApiMutation, useUcodeDefaultApiQuery } from '@/hooks/useDashboard'
 import { useQueryClient } from '@tanstack/react-query'
@@ -44,7 +44,7 @@ export default function DealStatus({
   })
 
   // Mutations
-  const { mutateAsync: mutateStatus } = useUcodeDefaultApiMutation({
+  const { mutateAsync: mutateStatus, isLoading: isPendingStatus } = useUcodeDefaultApiMutation({
     mutationKey: 'sales_status_mutation'
   })
 
@@ -104,8 +104,7 @@ export default function DealStatus({
     try {
       await mutateStatus({
         urlMethod: 'DELETE',
-        urlParams: STATUS_API_URL,
-        data: { guid: status.guid }
+        urlParams: `/items/sales_status/${status.guid}?from-ofs=true`,
       })
       queryClient.invalidateQueries({ queryKey: ['sales_status'] })
       onStatusDelete?.(status)
@@ -125,7 +124,7 @@ export default function DealStatus({
         }
         await mutateStatus({
           urlMethod: 'PUT',
-          urlParams: STATUS_API_URL,
+          urlParams: `/items/sales_status/${editingStatus.guid}?from-ofs=true`,
           data: payload
         })
         queryClient.invalidateQueries({ queryKey: ['sales_status'] })
@@ -134,6 +133,7 @@ export default function DealStatus({
           ...payload
         })
         setEditingStatus(null)
+
       } catch (error) {
         console.error('Failed to update status:', error)
       }
@@ -231,8 +231,8 @@ export default function DealStatus({
 
                 return (
                   <div key={status.guid || index} className={styles.statusItem}>
-                    <div className={styles.statusItemLeft} onDoubleClick={() => handleSelect(status)}>
-                      <GripVertical size={14} className={styles.gripIcon} />
+                    <div className={styles.statusItemLeft} onClick={() => handleSelect(status)}>
+                      {isPendingStatus && <Loader2 size={14} className='animate-spin' />}
                       <span className={styles.statusDot} style={{ backgroundColor: status.color || '#667085' }} />
                       <span className={styles.statusItemName}>{status.name}</span>
                     </div>

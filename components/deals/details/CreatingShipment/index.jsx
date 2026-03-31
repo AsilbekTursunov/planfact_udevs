@@ -29,7 +29,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
   const [client, setClient] = useState(kontragentId || '')
   const [chartOfAccounts, setChartOfAccounts] = useState([])
   const [currency, setCurrency] = useState('')
-  const [showChartOfAccounts, setShowChartOfAccounts] = useState(false)
+  const [showChartOfAccounts, setShowChartOfAccounts] = useState(true)
   const [rows, setRows] = useState([
     { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
   ])
@@ -334,7 +334,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                 value={legalEntity}
                 onChange={(value) => setLegalEntity(value)}
                 placeholder="Выберите юрлицо"
-                className="w-72! bg-white"
+                className="w-80! bg-white"
               />
               {errors.legalEntity && (
                 <div className={styles.errorMessage}>{errors.legalEntity}</div>
@@ -344,16 +344,20 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
           </div>
 
           {/* Client */}
-          <div className={styles.formRow}>
-            <label className={styles.label}>
-              Клиент <span className={styles.required}>*</span>
+          <div className="w-full flex items-center gap-2 pb-2">
+            <label className="w-40! text-xss!">
+              Клиент <span className="text-red-500">*</span>
             </label>
-            <SingleCounterParty
-              value={client}
-              onChange={value => setClient(value)}
-              placeholder='Выберите клиента...'
-              className='flex-1 bg-white'
-            />
+            <div className="flex-1">
+              <SingleCounterParty
+                value={client}
+                onChange={value => setClient(value)}
+                placeholder='Выберите клиента...'
+                name='chart_of_accounts_id'
+                returnChartOfAccount={value => setChartOfAccounts(value)}
+                className="w-80! bg-white"
+              />
+            </div>
             {errors.client && (
               <div className={styles.errorMessage}>{errors.client}</div>
             )}
@@ -361,16 +365,18 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
 
           {/* Chart of accounts */}
           {showChartOfAccounts && (
-            <div className={styles.formRow}>
-              <label className={styles.label}>
+            <div className="w-full flex items-center gap-2 pb-2">
+              <label className="w-40! text-xss!">
                 Статья доходов
               </label>
-              <SinglSelectStatiya
-                selectedValue={chartOfAccounts}
-                setSelectedValue={value => setChartOfAccounts(value)}
-                placeholder='Нераспределенный доход'
-                className='flex-1 bg-white'
-              />
+              <div className="flex-1">
+                <SinglSelectStatiya
+                  selectedValue={chartOfAccounts}
+                  setSelectedValue={value => setChartOfAccounts(value)}
+                  placeholder='Нераспределенный доход'
+                  className='w-80! bg-white'
+                />
+              </div>
             </div>
           )}
 
@@ -381,12 +387,12 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                 <span className={styles.productsTitle}>Товары/услуги для отгрузки</span>
                 {errors.products && <span className='text-[10px] text-red-500 font-medium'>{errors.products}</span>}
               </div>
-              <button
+              {/* <button
                 className={styles.fillFromDeal}
                 onClick={() => setShowChartOfAccounts(!showChartOfAccounts)}
               >
                 Заполнить позициями из сделки
-              </button>
+              </button> */}
             </div>
 
             <div className={styles.tableContainer}>

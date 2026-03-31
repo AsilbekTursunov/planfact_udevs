@@ -9,6 +9,7 @@ import { useMyAccountsBoard, useUcodeRequestQuery } from '../../../hooks/useDash
 import { formatAmount } from '../../../utils/helpers'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
 import { observer } from 'mobx-react-lite'
+import { keepPreviousData } from '@tanstack/react-query'
 
 const TotalPrice = observer(() => {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false)
@@ -35,6 +36,7 @@ const TotalPrice = observer(() => {
         },
         querySetting: {
             select: (response) => response?.data?.data,
+            placeholderData: keepPreviousData
         }
     })
 
@@ -113,7 +115,7 @@ const TotalPrice = observer(() => {
             }
         })
     }, [accountsData])
- 
+
 
     const totalBalance = useMemo(() => {
         return legalEntitiesData?.reduce((sum, item) => sum + (item.balance || 0), 0) || 0;
@@ -151,7 +153,7 @@ const TotalPrice = observer(() => {
                             <div className="flex items-center gap-2">
                                 <p className="text-white">
                                     На счетах {mounted ? formatAmount(Summary?.current_balance) : '0'} {mounted ? GlobalCurrency?.name : ''}
-                                </p> 
+                                </p>
                             </div>
                             <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
                         </div>

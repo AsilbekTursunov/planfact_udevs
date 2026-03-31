@@ -21,7 +21,8 @@ const OperationModal = observer(({
 	defaultDealGuid = null,
 	initialTab = 'income',
 	modalType = null,
-	chart_of_accounts_id = null
+	chart_of_accounts_id = null,
+	chart_of_accounts_id_2 = null
 }) => {
 	const isNew = operation?.isNew || false
 
@@ -152,7 +153,7 @@ const OperationModal = observer(({
 								initialData={operationData}
 								preselectedCounterparty={preselectedCounterparty}
 								defaultDealGuid={defaultDealGuid}
-								chart_of_accounts_id={chart_of_accounts_id}
+								chart_of_accounts_id={chart_of_accounts_id_2}
 								onSuccess={onSuccess}
 							/>
 						)}

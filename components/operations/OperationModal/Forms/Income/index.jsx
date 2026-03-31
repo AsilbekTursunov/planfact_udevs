@@ -276,10 +276,10 @@ const IncomeForm = observer(({
       amount: 0,
       accrualDate: formatDate(new Date()),
       confirmAccrual: true,
-      counterparty: null,
-      chartOfAccount: null,
+      counterparty: preselectedCounterparty || null,
+      chartOfAccount: chart_of_accounts_id || null,
       paymentType: 'transfer',
-      salesDeal: null,
+      salesDeal: defaultDealGuid || null,
       purpose: '',
       currency: null,
     }
