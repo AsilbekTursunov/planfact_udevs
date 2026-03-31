@@ -8,13 +8,14 @@ class AppStore {
     name: '',
     guid: ''
   }
+  currencies = []
 
   constructor() {
     makeAutoObservable(this);
     if (typeof window !== 'undefined') {
       makePersistable(this, {
         name: "plan_fact_app",
-        properties: ["isPayment", "currency"],
+        properties: ["isPayment", "currency", "currencies"],
         storage: window.localStorage,
         debugMode: true,
       });
@@ -30,6 +31,9 @@ class AppStore {
     this.currency = value;
   }
 
+  setCurrencies(value) {
+    this.currencies = value;
+  }
 
 
   // Restore state from localStorage/cookies on init

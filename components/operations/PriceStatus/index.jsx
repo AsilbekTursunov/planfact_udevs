@@ -8,7 +8,7 @@ import { formatAmount } from '../../../utils/helpers'
 import { operationFilterStore } from '../../../store/operationFilter.store'
 import { observer } from 'mobx-react-lite'
 
-const PriceStatus = observer(({ amount, type, tab, confirmed, accrual, currency, dealId, percent, toCurrency }) => {
+const PriceStatus = observer(({ amount, type, tab, confirmed, accrual, currency, dealId, percent, toCurrency, toAmount }) => {
   const isSpinasiya = !operationFilterStore.selectedFilters?.includes('Списание')
   const isZachisleniya = !operationFilterStore.selectedFilters?.includes('Зачисление')
   return (
@@ -39,7 +39,7 @@ const PriceStatus = observer(({ amount, type, tab, confirmed, accrual, currency,
           <div className={`${styles.doubleAccount} flex flex-col `}>
             <span className={`flex items-center gap-1 text-neutral-500 ${isSpinasiya ? 'opacity-50' : ''}`}>-{formatAmount(amount)} <span className=" text-neutral-500">{
               currency == 'USD' ? <BsCurrencyDollar /> : currency == 'RUB' ? <TbCurrencyRubel /> : currency == 'KZT' ? <PiCurrencyKztDuotone /> : currency}</span></span>
-            <span className={`flex items-center gap-1 text-neutral-500 ${isZachisleniya ? 'opacity-50' : ''}`}>+{formatAmount(amount)} <span className=" text-neutral-500">{
+            <span className={`flex items-center gap-1 text-neutral-500 ${isZachisleniya ? 'opacity-50' : ''}`}>+{formatAmount(toAmount)} <span className=" text-neutral-500">{
               toCurrency == 'USD' ? <BsCurrencyDollar /> : toCurrency == 'RUB' ? <TbCurrencyRubel /> : toCurrency == 'KZT' ? <PiCurrencyKztDuotone /> : toCurrency}</span></span>
           </div>
           {/* Отгрузка */}

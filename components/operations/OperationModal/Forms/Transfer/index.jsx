@@ -102,18 +102,18 @@ const TransferForm = observer(({ initialData, onClose }) => {
       opisanie: data.purpose,
       comment: data.purpose,
       legal_entity_id: authStore.userData?.legal_entity_id || null,
-      to_amount: data?.toAmount,
+      to_amount: StringtoNumber(data.toAmount) || StringtoNumber(data.fromAmount),
       currenies_id: watchCurrency1,
       to_currenies_id: watchCurrency2
     }
 
-    // console.log('payload', payload)
+    console.log('payload', payload)
 
-    if (!isSameCurrency) {
-      payload.to_amount = StringtoNumber(data.toAmount)
-    } else {
-      payload.to_amount = StringtoNumber(data.fromAmount)
-    }
+    // if (!isSameCurrency) {
+    //   payload.to_amount = StringtoNumber(data.toAmount)
+    // } else {
+    //   payload.to_amount = StringtoNumber(data.fromAmount)
+    // }
 
     if (!isNew) {
       payload.guid = initialData.guid
@@ -126,7 +126,14 @@ const TransferForm = observer(({ initialData, onClose }) => {
       })
       queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       queryClient.invalidateQueries({ queryKey: ['operationsList'] })
+      queryClient.invalidateQueries({ queryKey: ['operations'] })
       queryClient.invalidateQueries({ queryKey: ['find_operations'] })
+      queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
+      queryClient.invalidateQueries({ queryKey: ['legal_entities'] })
+      queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+      queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
       onClose?.()
     } catch (error) {
       console.error('TransferForm onSubmit error', error)

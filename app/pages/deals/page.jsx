@@ -309,7 +309,7 @@ export default observer(function DealsPage() {
                       </div>
                     </td>
                     <td className='p-0!'>
-                      <span className={`${styles.status} ${styles[`status_${deal.status}`]}`}>
+                      <span className={`${styles.status} ${styles[`status_${deal.status}`]}`} style={{ color: deal?.color, backgroundColor: deal?.color + '10' }}>
                         {deal?.status || '-'}
                       </span>
                     </td>

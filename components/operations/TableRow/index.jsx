@@ -68,6 +68,7 @@ const OperationTableRow = observer(({
           }
         }}
       >
+        {/*  checkbox */}
         <td
           className={cn(styles.tableCell, styles.tableCellIndex)}
           onClick={e => e.stopPropagation()}
@@ -77,6 +78,7 @@ const OperationTableRow = observer(({
             onChange={() => toggleOperation(op.id)}
           /> : <span>{showIndex}</span>}
         </td>
+        {/* date */}
         <td className={cn(styles.tableCell, styles.dateCell, isActive && styles.activeRow)}>
           {op.operationParts?.length > 0 ? <>
             <div className={styles.childrenControl} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
@@ -88,14 +90,24 @@ const OperationTableRow = observer(({
               {isDifferentDate && <span className="text-mini text-neutral-400">{op?.accrualDate}</span>}
           </div>}
         </td>
+        {/* shot */}
         <td className={cn(styles.tableCell, styles.accountCell, isActive && styles.activeRow)}>
-          {op?.tip == "Перемещение" ? <>
+          {op?.tip == "Перемещение" && <>
             <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
               <span>{op.my_account_name}</span>
               <span>{op.my_account_name2}</span>
             </div>
-          </> : op.my_account_name || ''}
+          </>}
+          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+            <span>{op.my_account_name}</span>
+          </div>}
+          {op?.tip == "Начисление" && <>
+            <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+              <span>{op.legal_entity_name}</span>
+            </div>
+          </>}
         </td>
+        {/* tip */}
         <td className={styles.tableCell}>
           {op.tip ? (
             <div className={styles.typeIcon}>
@@ -110,20 +122,26 @@ const OperationTableRow = observer(({
             </div>
           ) : null}
         </td>
+        {/* counterparty */}
         <td className={cn(styles.tableCell, styles.counterpartyCell, isActive && styles.activeRow)}>
           {titleContragent}
         </td>
+        {/* statya */}
         <td className={cn(styles.tableCell, styles.statusCell, isActive && styles.activeRow)}>
           {op?.tip == "Перемещение" ? <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
             <span className={`${isSpinasiya ? 'opacity-50' : ''}`}>[Перемещение - списание]</span>
             <span className={`${isZachisleniya ? 'opacity-50' : ''}`}>[Перемещение - зачисление]</span>
           </div> : titleChartOfAccounts || ''}
         </td>
+        {/* project */}
         {/* <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td> */}
+        {/* zdelka */}
         <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.selling_deal_name || '-'}</td>
+        {/* price */}
         <td className={styles.tableCell} onClick={e => e.stopPropagation()}>
           <PriceStatus
             amount={op.summa}
+            toAmount={op.to_amount}
             tab={op.tip}
             type={op?.tip}
             percent={op?.percent}

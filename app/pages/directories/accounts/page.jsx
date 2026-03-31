@@ -117,6 +117,10 @@ export default observer(function AccountsPage() {
     }
   })
 
+  const summary = useMemo(() => {
+    return bankAccountsData?.data?.summary
+  }, [bankAccountsData]) 
+
 
   const { mutateAsync: deleteGroupMutate, isPending: isPendingDeleteGroup } = useUcodeRequestMutation({
     mutationSetting: {
@@ -524,6 +528,7 @@ export default observer(function AccountsPage() {
                               <td className="p-2"></td>
                               <td className="p-2"></td>
                               <td className="p-2"></td>
+                              <td className="p-2"></td>
                               <td className="p-2 text-end" onClick={(e) => e.stopPropagation()}>
                                 <AccountMenu
                                   onEdit={() => {
@@ -602,7 +607,7 @@ export default observer(function AccountsPage() {
         <div className={cn(styles.footer, isFilterOpen && styles.footerWithFilter)}>
           <div className={styles.footerText}>
             <span className={styles.footerTextBold}>
-              {bankAccountsData?.data?.total} {'счетов'}
+              {summary?.accounts_count} {'счетов'}
             </span>
           </div>
           <div className={styles.footerTextMuted}>
@@ -612,7 +617,7 @@ export default observer(function AccountsPage() {
                 <div className='flex items-center gap-1 text-xs'>
                   <p>Текущий остаток:</p>
                   <span className={styles.footerTextBold}>
-                  {totalCurrentBalance.toLocaleString('ru-RU')}
+                    {summary?.current_balance_val.toLocaleString('ru-RU')}
                 </span>
                   <span>
                     {GlobalCurrency.name}

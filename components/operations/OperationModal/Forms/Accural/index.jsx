@@ -16,6 +16,7 @@ import SelectLegelEntitties from '../../../../ReadyComponents/SelectLegelEntitti
 import { formatAmount, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
 import MyAccountCurrensies from '../../../../ReadyComponents/MyAccountCurrensies'
+import { queryClient } from '../../../../../lib/queryClient'
 
 const AccuralForm = ({ onCancel, onClose, initialData }) => {
   const [isFromRasxodChild, setIsFromRasxodChild] = useState(false)
@@ -35,7 +36,7 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
         canAllowOpiu: raw.include_in_profit_and_loss_cash_method !== undefined ? raw.include_in_profit_and_loss_cash_method : true,
         chartOfAccountEnrollment: raw.chart_of_accounts_id_2 || null,
         sellingDealId: raw.sales_transactions_id || '',
-        comment: raw.comment || '',
+        comment: raw.opisanie || '',
         counterpary_id: raw.counterparties_id || '',
         repeatEvery: raw.repeat_every || null,
         repeatUnit: raw.repeat_unit || null,
@@ -105,11 +106,21 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       }
 
       console.log('requestData', requestData)
-      await createAccural({
-        method: isNew ? 'create_operation' : 'update_operation',
-        data: requestData
-      })
+      // await createAccural({
+      //   method: isNew ? 'create_operation' : 'update_operation',
+      //   data: requestData
+      // })
       // onSuccess?.(data)
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      queryClient.invalidateQueries({ queryKey: ['operationsList'] })
+      queryClient.invalidateQueries({ queryKey: ['operations'] })
+      queryClient.invalidateQueries({ queryKey: ['find_operations'] })
+      queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
+      queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
+      queryClient.invalidateQueries({ queryKey: ['legal_entities'] })
+      queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+      queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
       onClose()
     } catch (error) {
       console.error('Error in AccuralForm handleSubmit:', error)

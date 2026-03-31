@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import { currencyInfo } from '../../../constants/globalCurrency'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 
-const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, className, dropDownClassName, placeholder = 'Выберите валюту' }) => {
+const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, className, dropDownClassName, placeholder = 'Выберите валюту', wrapperClassName }) => {
 
   const { data: myAccounts, isLoading } = useUcodeRequestQuery({
     method: 'get_my_accounts',
@@ -33,7 +33,13 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
     return Array.from(unique.values());
   }, [myAccounts])
 
-  if (!guid || selectOptions?.length < 1) return null
+  useEffect(() => {
+    if (selectOptions?.length === 1) {
+      onChange(selectOptions[0].value)
+    }
+  }, [selectOptions, onChange])
+
+  if (!guid) return null
 
   const actualPlaceholder = isLoading ? "Загрузка..." : placeholder;
 
@@ -46,6 +52,7 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
       className={className}
       dropDownClassName={dropDownClassName}
       placeholder={actualPlaceholder}
+      wrapperClassName={wrapperClassName}
     />
   )
 }

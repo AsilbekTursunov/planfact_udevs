@@ -17,6 +17,7 @@ const TotalPrice = observer(() => {
     const [activeGroupMenu, setActiveGroupMenu] = useState(null)
     const [modalMode, setModalMode] = useState('compact')
     const [today, setToday] = useState('')
+    const [mounted, setMounted] = useState(false)
 
     const balanceRef = useRef(null)
     const groupMenuRef = useRef(null)
@@ -54,6 +55,7 @@ const TotalPrice = observer(() => {
     // Set date only on client side to avoid hydration mismatch
     useEffect(() => {
         setToday(formatDateTime(new Date()))
+        setMounted(true)
     }, [])
 
     useEffect(() => {
@@ -111,8 +113,7 @@ const TotalPrice = observer(() => {
             }
         })
     }, [accountsData])
-
-    console.log('')
+ 
 
     const totalBalance = useMemo(() => {
         return legalEntitiesData?.reduce((sum, item) => sum + (item.balance || 0), 0) || 0;
@@ -149,9 +150,8 @@ const TotalPrice = observer(() => {
                             <div className="" />
                             <div className="flex items-center gap-2">
                                 <p className="text-white">
-                                    На счетах {formatAmount(Summary?.current_balance)} {GlobalCurrency?.name}
-                                </p>
-                                <p className='text-xs font-medium font-roboto text-white'>{GlobalCurrency.name}</p>
+                                    На счетах {mounted ? formatAmount(Summary?.current_balance) : '0'} {mounted ? GlobalCurrency?.name : ''}
+                                </p> 
                             </div>
                             <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
                         </div>
@@ -171,7 +171,7 @@ const TotalPrice = observer(() => {
                                     <div className={styles.balanceModalFullTitle}>
                                         <div className={styles.balanceModalFullTitleDot} />
                                         <div className={styles.balanceModalFullTitleContent}>
-                                            <h2 className="text-black text-xl font-semibold">{formatAmount(Summary?.current_balance)} {GlobalCurrency?.name}</h2>
+                                            <h2 className="text-black text-xl font-semibold">{mounted ? formatAmount(Summary?.current_balance) : '0'} {mounted ? GlobalCurrency?.name : ''}</h2>
                                             <p className={styles.balanceModalFullTitleDate}>{today}</p>
                                         </div>
                                     </div>

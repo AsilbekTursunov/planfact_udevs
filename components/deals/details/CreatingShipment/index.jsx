@@ -12,8 +12,13 @@ import SinglSelectStatiya from '../../../ReadyComponents/SingleSelectStatiya'
 import SingleCounterParty from '../../../ReadyComponents/SingleCounterParty'
 import SelectProductService from '../../../ReadyComponents/SelectProductService'
 import SelectLegelEntitties from '../../../ReadyComponents/SelectLegelEntitties'
+import MyAccountCurrensies from '../../../ReadyComponents/MyAccountCurrensies'
+import { appStore } from '../../../../store/app.store'
+import { observer } from 'mobx-react-lite'
+import { cn } from '@/app/lib/utils'
+import { toJS } from 'mobx'
 
-const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false }) => {
+const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false }) => {
   const today = new Date()
 
   const [shipmentDate, setShipmentDate] = useState(today.toISOString().split('T')[0])
@@ -23,16 +28,15 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
   const [legalEntity, setLegalEntity] = useState('')
   const [client, setClient] = useState(kontragentId || '')
   const [chartOfAccounts, setChartOfAccounts] = useState([])
+  const [currency, setCurrency] = useState('')
   const [showChartOfAccounts, setShowChartOfAccounts] = useState(false)
   const [rows, setRows] = useState([
     { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
   ])
 
-  // ac1a364d-840c-40cb-bf4c-ab68fa994304
-  // 2ce12ace-7b97-425e-a978-6a550dec4027
-
-
-  //0358a957-fa6b-43c7-b860-f32fb795fe6e
+  const myAccountCode = useMemo(() => {
+    return toJS(appStore.currencies).find(item => item.guid === currency)?.icon
+  }, [currency])
 
   useEffect(() => {
     if (open) {
@@ -95,12 +99,6 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
     }
   }, [open])
 
-  // Log initialData when modal opens or initialData changes
-  useEffect(() => {
-    if (open) {
-      console.log('initialData:', initialData)
-    }
-  }, [open, initialData])
 
   const addRow = () => {
     setRows(prev => [...prev, {
@@ -181,7 +179,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
         summa: totalSum,
         data_nachislenie: shipmentDate,
         data_oplaty: shipmentDate,
-        currency_code: "RUB",
+        currencies_id: currency,
         description: "Shipment",
         chart_of_accounts_id: chartOfAccounts,
         product_and_service_data: productData.map(row => {
@@ -264,7 +262,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
   return (
     <>
       {/* Overlay */}
-      <div className={styles.overlay} onClick={onClose} />
+      <div className={cn("fixed top-[60px] left-[80px] w-[calc(100%-80px)] h-full right-0 bottom-0 flex bg-black/50 z-1000 transition-opacity duration-300")} onClick={onClose} />
 
       {/* Panel */}
       <div className={styles.panel}>
@@ -291,29 +289,32 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
               Дата отгрузки <span className={styles.required}>*</span>
             </label>
             <div className={styles.fieldGroup} style={{ flex: 1, maxWidth: '600px' }}>
-              <div className="flex items-center gap-4">
-                <DatePicker
-                  value={shipmentDate}
-                  onChange={value => {
-                    setShipmentDate(value)
-                    if (errors.shipmentDate) {
-                      setErrors({ ...errors, shipmentDate: null })
-                    }
-                  }}
-                  dateFormat='YYYY-MM-DD'
-                  className={styles.datePicker}
-                  placeholder='Выберите дату'
-                />
-                <div style={{ opacity: isFutureDate ? 0.5 : 1, pointerEvents: isFutureDate ? 'none' : 'auto' }}>
-                  <OperationCheckbox
-                    checked={isFutureDate ? true : isPlanned}
-                    onChange={e => {
-                      if (!isFutureDate) {
-                        setIsPlanned(e.target.checked)
+              <div className="flex w-full items-center gap-4">
+                <div className='flex items-center gap-2'>
+                  <DatePicker
+                    value={shipmentDate}
+                    onChange={value => {
+                      setShipmentDate(value)
+                      if (errors.shipmentDate) {
+                        setErrors({ ...errors, shipmentDate: null })
                       }
                     }}
-                    label='Плановая отгрузка'
+                    dateFormat='YYYY-MM-DD'
+                    className={styles.datePicker}
+                    placeholder='Выберите дату'
                   />
+                  <div className='flex items-center' style={{ opacity: isFutureDate ? 0.5 : 1, pointerEvents: isFutureDate ? 'none' : 'auto' }}>
+                    <OperationCheckbox
+                      checked={isFutureDate ? true : isPlanned}
+                      onChange={e => {
+                        if (!isFutureDate) {
+                          setIsPlanned(e.target.checked)
+                        }
+                      }}
+                      className={'w-44'}
+                      label='Плановая отгрузка'
+                    />
+                  </div>
                 </div>
               </div>
               {errors.shipmentDate && (
@@ -323,22 +324,23 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
           </div>
 
           {/* Legal Entity */}
-          <div className={styles.formRow}>
-            <label className={styles.label}>
+          <div className="w-full flex items-center gap-2 pb-2">
+            <label className="w-40 text-xss!">
               Юрлицо <span className={styles.required}>*</span>
             </label>
-            <div className={styles.inputContainer} style={{ flex: 1, maxWidth: '600px' }}>
+            <div className="flex-1">
               <SelectLegelEntitties
                 multi={false}
                 value={legalEntity}
                 onChange={(value) => setLegalEntity(value)}
                 placeholder="Выберите юрлицо"
-                className="flex-1 bg-white"
+                className="w-72! bg-white"
               />
               {errors.legalEntity && (
                 <div className={styles.errorMessage}>{errors.legalEntity}</div>
               )}
             </div>
+            <MyAccountCurrensies guid={legalEntity} value={currency} onChange={(val) => setCurrency(val)} className=" bg-white " wrapperClassName={'w-48'} />
           </div>
 
           {/* Client */}
@@ -532,7 +534,7 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
             <div className={styles.tableFooter}>
               <button className={styles.addRowBtn} onClick={addRow}>Добавить...</button>
               <p className={styles.totalSum}>Сумма отгрузки: <strong>{totalSum.toLocaleString('ru-RU')}</strong>
-                <span className='text-neutral-600 ml-1'>UZS</span>
+                <span className='text-neutral-600 ml-1'>{myAccountCode}</span>
               </p>
             </div>
           </div>
@@ -553,6 +555,6 @@ const CreateShipment = ({ open, onClose, dealName, dealGuid, kontragentId, initi
       </div>
     </>
   )
-}
+})
 
 export default CreateShipment
