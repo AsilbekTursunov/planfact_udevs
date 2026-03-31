@@ -1,6 +1,6 @@
 'use client'
 import { useForm, Controller, } from 'react-hook-form'
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import Input from '@/components/shared/Input'
 import TextArea from '@/components/shared/TextArea'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
@@ -29,13 +29,14 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       const raw = initialData
       return {
         accuralDate: raw.data_operatsii ? formatDate(raw.data_operatsii) : formatDate(new Date()),
-        confirmAccrual: raw.payment_confirmed !== undefined ? raw.payment_confirmed : true,
+        confirmAccrual: raw.payment_confirmed,
         legalEntity: raw.legal_entity_id || '',
         chartOfAccountWriteOff: raw.chart_of_accounts_id || null,
         summa: raw.summa !== undefined && raw.summa !== null ? Math.abs(Number(raw.summa)) : (raw.rawData?.summa !== undefined && raw.rawData?.summa !== null ? Math.abs(Number(raw.rawData.summa)) : 0),
         canAllowOpiu: raw.include_in_profit_and_loss_cash_method !== undefined ? raw.include_in_profit_and_loss_cash_method : true,
         chartOfAccountEnrollment: raw.chart_of_accounts_id_2 || null,
         sellingDealId: raw.sales_transactions_id || '',
+        sellingDealId2: raw.sales_transactions_id_2 || '',
         comment: raw.opisanie || '',
         counterpary_id: raw.counterparties_id || '',
         repeatEvery: raw.repeat_every || null,
@@ -50,10 +51,11 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       confirmAccrual: true,
       legalEntity: '',
       chartOfAccountWriteOff: null,
-      summa: 0,
+      summa: '0',
       canAllowOpiu: true,
       chartOfAccountEnrollment: null,
       sellingDealId: '',
+      sellingDealId2: '',
       comment: '',
       counterpary_id: '',
       repeatEvery: null,
@@ -83,12 +85,11 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
         tip: ['Начисление'],
         data_operatsii: data.accuralDate,
         payment_confirmed: data.confirmAccrual,
-        legal_entity_id: data.legalEntity,
+        legal_entity_id: data.legalEntity, 
         chart_of_accounts_id: data.chartOfAccountWriteOff,
         chart_of_accounts_id_2: data.chartOfAccountEnrollment,
         sales_transactions_id: data.sellingDealId,
-        sales_transactions_id_2: data.sellingDealId,
-        project_id: data.legalEntity,
+        sales_transactions_id_2: data.sellingDealId2,
         // counterparties_id: data.counterpary_id,
         include_in_profit_and_loss_cash_method: data.canAllowOpiu,
         repeat_enabled: data.repeatEnabled,
@@ -97,13 +98,15 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
         repeat_until: data.repeatUntil,
         repeat_count: data.repeatCount,
         comment: data.comment,
-        summa: StringtoNumber(data.summa),
+        summa: StringtoNumber(data.summa) || '',
         currenies_id: data.currency,
       }
 
       if (!isNew) {
         requestData.guid = initialData.guid
       }
+      console.log('requestData', requestData);
+
       await createAccural({
         method: isNew ? 'create_operation' : 'update_operation',
         data: requestData
@@ -124,6 +127,8 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       console.error('Error in AccuralForm handleSubmit:', error)
     }
   }
+
+  console.log('israsxod', isFromRasxodChild);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col h-full overflow-hidden text-slate-900">
@@ -183,7 +188,7 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
                   <SelectLegelEntitties
                     value={field.value}
                     onChange={field.onChange}
-                    multi={false}
+                    multi={false} 
                     placeholder="Выберите юрлицо..."
                     className="bg-white border rounded-md"
                     hasError={errors.legalEntity}
@@ -257,7 +262,10 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
                   )}
                 />
               </div>
-              <MyAccountCurrensies guid={legalEntityGuid} value={watch('currency')} onChange={(val) => setValue('currency', val)} className="flex-1 bg-white " />
+              <MyAccountCurrensies guid={legalEntityGuid} value={watch('currency')} onChange={(val) => {
+                setValue('currency', val)
+                console.log(val)
+              }} className="flex-1 bg-white " />
             </div>
           </div>
 
@@ -315,7 +323,7 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
             <label className="w-[150px] text-xss!">Сделка продажи</label>
             <div className="flex-1 flex flex-col gap-1 max-w-[600px]">
               <Controller
-                name="sellingDealId"
+                name="sellingDealId2"
                 control={control}
                 render={({ field }) => (
                   <SingleZdelka
@@ -382,4 +390,4 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
   )
 }
 
-export default AccuralForm
+export default memo(AccuralForm)

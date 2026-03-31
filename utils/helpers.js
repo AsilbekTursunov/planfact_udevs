@@ -65,3 +65,8 @@ export const StringtoNumber = (text) => {
   if (isNaN(num)) return ''
   return num
 }
+
+
+export const getCurrencyIcon = (currency) => {
+  return appStore.currencies.find(c => c.code === currency)?.kod
+}

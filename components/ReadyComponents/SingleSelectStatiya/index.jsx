@@ -79,6 +79,16 @@ const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'В
     return flat;
   }, [result])
 
+  useEffect(() => {
+    if (selectedValue && returnIsChild) {
+      const ancestors = flattenedAncestry[selectedValue] || [];
+      const parentArray = Array.isArray(parent) ? parent : [parent];
+      // Check if any ancestor matches any of the parent names
+      const isDescendant = ancestors.some(name => parentArray.includes(name));
+      returnIsChild(isDescendant);
+    }
+  }, [selectedValue, flattenedAncestry, parent, returnIsChild])
+
   const handleSelect = (val) => {
     setSelectedValue?.(val);
     if (parent && returnIsChild) {

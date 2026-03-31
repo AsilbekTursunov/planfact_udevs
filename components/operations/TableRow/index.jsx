@@ -22,8 +22,11 @@ const OperationTableRow = observer(({
   const [open, setOpen] = useState(false)
   const children = new Set()
   const chartofaccounts = new Set()
+  const deals = new Set()
   const isSpinasiya = !operationFilterStore?.selectedFilters?.includes('Списание')
   const isZachisleniya = !operationFilterStore?.selectedFilters?.includes('Зачисление')
+  const isDebit = !operationFilterStore?.selectedFilters?.includes('Дебет')
+  const isCredit = !operationFilterStore?.selectedFilters?.includes('Кредит')
 
   op.operationParts?.forEach(part => {
     children.add(part?.counterparties_id)
@@ -31,6 +34,7 @@ const OperationTableRow = observer(({
   })
 
   const titleContragent = useMemo(() => {
+    if (op.tip == "Начисление") return op.counterparty || '[Начисление]'
     if (children.size === 1 && children.has(counterpartyGuid)) {
       return op.counterparty || ''
     } else if (children.size > 1) {
@@ -50,9 +54,32 @@ const OperationTableRow = observer(({
     }
   }, [chartofaccounts, op.chartOfAccounts])
 
+  const titleDeals = useMemo(() => {
+    if (op.tip == "Начисление" && op.sales_transaction_name && op.sales_transaction_name_2) {
+      return {
+        title: '2 [сделки]',
+        children: [
+          op.sales_transaction_name,
+          op.sales_transaction_name_2
+        ]
+      }
+    } else if (op.sales_transaction_name || op.sales_transaction_name_2) {
+      return {
+        title: op.sales_transaction_name || op.sales_transaction_name_2 || '',
+        children: []
+      }
+    } else {
+      return {
+        title: '',
+        children: []
+      }
+    }
+  }, [op.deal])
+
   const isDifferentDate = op?.accrualDate !== op?.operationDate
 
   const isActive = !op?.payment_confirmed && !op?.payment_accrual
+
 
   return (
     <>
@@ -80,15 +107,17 @@ const OperationTableRow = observer(({
         </td>
         {/* date */}
         <td className={cn(styles.tableCell, styles.dateCell, isActive && styles.activeRow)}>
-          {op.operationParts?.length > 0 ? <>
-            <div className={styles.childrenControl} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
-              {open ? <ExpendClose /> : <ExpendOpen />}
-              <span>{op?.operationDate}</span>
-            </div>
-          </> : <div className='flex flex-col items-start'>
-            <span className=''>{op?.operationDate}</span>
+          <div className={`${!op.payment_confirmed && 'text-primary'}`}>
+            {op.operationParts?.length > 0 ? <>
+              <div className={styles.childrenControl} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
+                {open ? <ExpendClose /> : <ExpendOpen />}
+                <span>{op?.operationDate}</span>
+              </div>
+            </> : <div className='flex flex-col items-start'>
+              <span className=''>{op?.operationDate}</span>
               {isDifferentDate && <span className="text-mini text-neutral-400">{op?.accrualDate}</span>}
-          </div>}
+            </div>}
+          </div>
         </td>
         {/* shot */}
         <td className={cn(styles.tableCell, styles.accountCell, isActive && styles.activeRow)}>
@@ -101,7 +130,7 @@ const OperationTableRow = observer(({
           {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
             <span>{op.my_account_name}</span>
           </div>}
-          {op?.tip == "Начисление" && <>
+          {(op?.tip == "Начисление" || op?.tip == "Отгрузка") && <>
             <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
               <span>{op.legal_entity_name}</span>
             </div>
@@ -124,7 +153,7 @@ const OperationTableRow = observer(({
         </td>
         {/* counterparty */}
         <td className={cn(styles.tableCell, styles.counterpartyCell, isActive && styles.activeRow)}>
-          {titleContragent}
+          <p className={`${!op.payment_confirmed && 'text-primary'}`}>{titleContragent}</p>
         </td>
         {/* statya */}
         <td className={cn(styles.tableCell, styles.statusCell, isActive && styles.activeRow)}>
@@ -132,15 +161,36 @@ const OperationTableRow = observer(({
             <span className={`${isSpinasiya ? 'opacity-50' : ''}`}>[Перемещение - списание]</span>
             <span className={`${isZachisleniya ? 'opacity-50' : ''}`}>[Перемещение - зачисление]</span>
           </div>}
+          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={`flex flex-col items-start `}>
+            <span className={`text-neutral-700 ${!op.payment_confirmed && 'text-primary'}`}>{titleChartOfAccounts}</span>
+            <span className='text-neutral-400'>{op.opisanie}</span>
+          </div>}
           {op?.tip == "Начисление" && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
-            <span>{op.chart_of_accounts_name}</span>
-            <span>{op.chart_of_accounts_name2}</span>
+            <span className={`${isDebit ? 'opacity-50' : ''}`}>{op.chartOfAccounts}</span>
+            <span className={`${isCredit ? 'opacity-50' : ''}`}>{op.chartOfAccounts2}</span>
+          </div>}
+          {(op?.tip == "Отгрузка") && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+            <span>{op.chartOfAccounts}</span>
           </div>}
         </td>
         {/* project */}
         {/* <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td> */}
         {/* zdelka */}
-        <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.selling_deal_name || '-'}</td>
+        <td className={cn(styles.tableCell, isActive && styles.activeRow)}>
+          {(op.tip === "Поступление" || op.tip === "Выплата" || op.tip === "Отгрузка") && <p className={`text-neutral-700 ${!op.payment_confirmed && 'text-primary'}`}>{op?.selling_deal_name || '-'}</p>}
+          {(op.tip === "Начисление") && <div className='flex flex-col items-start relative group text-neutral-700'>
+            {titleDeals?.children?.length === 0 && <p className={`${!op.payment_confirmed && 'text-primary'}`}>{titleDeals?.title || ''}</p>}
+            {titleDeals?.children?.length > 0 && <>
+              {titleDeals?.title || '-'}
+              <div className='absolute hidden group-hover:block space-y-1 w-32  z-50 bg-white shadow-md rounded-md p-2 top-[130%] -left-10 ring-1 ring-gray-200'>
+                {titleDeals?.children?.map(child => (
+                  <p key={child.id} className=' flex items-start line-clamp-1'>
+                    {child}
+                  </p>
+                ))}
+              </div></>}
+          </div>}
+        </td>
         {/* price */}
         <td className={styles.tableCell} onClick={e => e.stopPropagation()}>
           <PriceStatus

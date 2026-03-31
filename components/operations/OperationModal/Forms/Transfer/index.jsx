@@ -109,13 +109,13 @@ const TransferForm = observer(({ initialData, onClose }) => {
       to_currenies_id: watchCurrency2
     }
 
-    console.log('payload', payload)
+    // console.log('payload', payload)
 
-    // if (!isSameCurrency) {
-    //   payload.to_amount = StringtoNumber(data.toAmount)
-    // } else {
-    //   payload.to_amount = StringtoNumber(data.fromAmount)
-    // }
+    if (!isSameCurrency) {
+      payload.to_amount = StringtoNumber(data.toAmount)
+    } else {
+      payload.to_amount = StringtoNumber(data.fromAmount)
+    }
 
     if (!isNew) {
       payload.guid = initialData.guid
