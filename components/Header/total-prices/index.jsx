@@ -5,7 +5,7 @@ import { ChevronDown, MoreVertical, Maximize2 } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import styles from '../Header.module.scss'
 import { formatDateTime } from '../../../utils/formatDate'
-import { useMyAccountsBoard } from '../../../hooks/useDashboard'
+import { useMyAccountsBoard, useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import { formatAmount } from '../../../utils/helpers'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
 import { observer } from 'mobx-react-lite'
@@ -20,6 +20,35 @@ const TotalPrice = observer(() => {
 
     const balanceRef = useRef(null)
     const groupMenuRef = useRef(null)
+
+    const { data: myaccounts } = useUcodeRequestQuery({
+        method: 'get_my_accounts',
+        data: {
+            groupBy: "legal_entities",
+            page: 1,
+            limit: 100,
+            beznalichnye: true,
+            elektronnye: true,
+            kartaFizlica: true,
+            nalichnye: true,
+        },
+        querySetting: {
+            select: (response) => response?.data?.data,
+        }
+    })
+
+    const Summary = myaccounts?.summary
+    const Compactlist = useMemo(() => {
+        return myaccounts?.data?.map((item) => {
+            return [...item.children]?.map((child) => ({
+                name: child?.nazvanie,
+                balance: child?.balans_val,
+                currency: child?.currenies_kod,
+                color: child?.balans_val > 0 ? 'green' : 'red'
+            }))
+        }).flat()
+    }, [myaccounts])
+
 
 
     // Set date only on client side to avoid hydration mismatch
@@ -61,32 +90,32 @@ const TotalPrice = observer(() => {
 
     const { data: accountsData } = useMyAccountsBoard(accountFilterData)
 
+    console.log('myaccounts', myaccounts)
+
     const legalEntitiesData = useMemo(() => {
-        return (accountsData?.data?.data?.data?.legal_entities || [])?.map((item) => {
+        return (myaccounts?.data || [])?.map((item) => {
             return {
-                id: item.legal_entity_id,
-                name: item.legal_entity_name,
-                balance: item.childs?.reduce((acc, curr) => acc + curr.balance, 0),
-                total_items: item.childs?.length,
-                accounts: (item.childs || [])?.map((child) => {
+                id: item?.legal_entity_id,
+                name: item?.legal_entity_name,
+                balance: item?.current_balance,
+                total_items: item?.items_count,
+                accounts: (item?.childs || [])?.map((child) => {
                     return {
-                        id: child?.id,
-                        name: child?.my_accounts_name,
-                        balance: child?.balance,
+                        id: child?.guid,
+                        name: child?.nazvanie,
+                        balance: child?.balans_val,
                         currency: child?.currenies_kod,
-                        color: child?.balance > 0 ? 'green' : 'red'
+                        color: child?.balans_val > 0 ? 'green' : 'red'
                     }
                 })
             }
         })
     }, [accountsData])
 
+    console.log('')
+
     const totalBalance = useMemo(() => {
         return legalEntitiesData?.reduce((sum, item) => sum + (item.balance || 0), 0) || 0;
-    }, [legalEntitiesData]);
-
-    const allAccounts = useMemo(() => {
-        return legalEntitiesData?.flatMap(group => group.accounts || []) || [];
     }, [legalEntitiesData]);
 
     const viewOptions = [
@@ -120,7 +149,7 @@ const TotalPrice = observer(() => {
                             <div className="" />
                             <div className="flex items-center gap-2">
                                 <p className="text-white">
-                                    На счетах {formatAmount(totalBalance)}
+                                    На счетах {formatAmount(Summary?.current_balance)} {GlobalCurrency?.name}
                                 </p>
                                 <p className='text-xs font-medium font-roboto text-white'>{GlobalCurrency.name}</p>
                             </div>
@@ -142,7 +171,7 @@ const TotalPrice = observer(() => {
                                     <div className={styles.balanceModalFullTitle}>
                                         <div className={styles.balanceModalFullTitleDot} />
                                         <div className={styles.balanceModalFullTitleContent}>
-                                            <h2 className={styles.balanceModalFullTitleValue}>{totalBalance.toLocaleString('ru-RU')} {GlobalCurrency?.name}</h2>
+                                            <h2 className="text-black text-xl font-semibold">{formatAmount(Summary?.current_balance)} {GlobalCurrency?.name}</h2>
                                             <p className={styles.balanceModalFullTitleDate}>{today}</p>
                                         </div>
                                     </div>
@@ -173,7 +202,7 @@ const TotalPrice = observer(() => {
 
                             <div className={styles.balanceModalContent}>
                                 <div className={styles.balanceGroupContent}>
-                                    {allAccounts?.map((acc, idx) => (
+                                    {Compactlist?.map((acc, idx) => (
                                         <div key={idx} className={styles.balanceAccount}>
                                             <div className={styles.balanceAccountLeft}>
                                                 <div className={cn(styles.balanceAccountDot, acc?.color === 'red' && styles.red, acc?.color === 'green' && styles.green, acc?.color === 'blue' && styles.blue)} style={{ marginTop: '6px' }}></div>

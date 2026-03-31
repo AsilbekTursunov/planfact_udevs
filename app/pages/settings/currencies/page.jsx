@@ -21,9 +21,9 @@ const CurrenciesPage = () => {
 
 
   return (
-    <div className="flex-1 p-6 bg-gray-50 overflow-y-auto relative">
+    <div className="flex-1  bg-gray-50 overflow-y-auto relative">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-6">
+        <h1 className="text-2xl font-semibold mb-6 p-6 sticky top-0 z-10 bg-gray-50">
           Курсы валют по ЦБ (обновлено {moment(currentDate).format('DD.MM.YYYY')})
         </h1>
 
@@ -40,52 +40,39 @@ const CurrenciesPage = () => {
           </button>  */}
         </div>
 
-        <div className="bg-white  overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-neutral-100 border-b border-gray-200">
-                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Название валюты
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Обозначение
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Символ
-                </th>
-                <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Курс
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {activeTab === 'fiat' ? (
-                currencyData.map((currency) => (
-                  <tr key={currency.guid} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 w-20 text-sm text-gray-900 font-medium">
-                      {currency.nazvanie}
-                    </td>
-                    <td className="px-6 py-4 w-20 text-sm text-gray-500">
-                      {currency.kod}
-                    </td>
-                    <td className="px-6 py-4 w-20 text-sm text-gray-500 font-serif">
-                      {currency.icon}
-                    </td>
-                    <td className="px-6 py-4 w-20 text-sm text-gray-500 tabular-nums">
-                      {/* Placeholder value as in image, since data doesn't have rates */}
-                      {STABLE_RATES[currency.guid]}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="px-6 py-10 text-center text-gray-400 italic">
-                    Данные по криптовалютам отсутствуют
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="bg-gray-50 text-xs overflow-hidden p-6">
+          <div className="w-full text-left border-collapse">
+            <div className="bg-neutral-100 flex border-b border-gray-200">
+              <div className="px-6 py-3 w-64 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Название валюты
+              </div>
+              <div className="px-6 py-3 w-36 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Обозначение
+              </div>
+              <div className="px-6 py-3 w-36 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Символ
+              </div>
+              <div className="px-6 py-3 w-36 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Курс
+              </div>
+            </div>
+            {currencyData.map((currency) => (
+              <div key={currency.guid} className="hover:bg-gray-50 bg-white text-gray-900 text-xss! flex border-b cursor-pointer transition-colors">
+                <div className="px-6 py-4 w-64 ">
+                  {currency.nazvanie}
+                </div>
+                <div className="px-6 py-4 w-36 ">
+                  {currency.kod}
+                </div>
+                <div className="px-6 py-4 w-36  ">
+                  {currency.icon}
+                </div>
+                <div className="px-6 py-4 w-36  tabular-nums">
+                  {STABLE_RATES[currency.guid]}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

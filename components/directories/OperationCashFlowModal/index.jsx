@@ -2,6 +2,7 @@ import React from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './OperationCashFlowModal.module.scss'
 import { ExpenseArrow, IncomeArrow } from '../../../constants/icons'
+import { GlobalCurrency } from '../../../constants/globalCurrency'
 
 /**
  * Recursively flatten a row and its subRows into a flat list.
@@ -47,7 +48,7 @@ const formatAmount = (value) => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(Math.abs(value))
-  return (value > 0 ? '+' : '−') + abs + ' ₽'
+  return (value > 0 ? '+' : '−') + abs + ' ' + GlobalCurrency.name
 }
 
 const formatNumber = (value) => {
