@@ -45,6 +45,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
         setIsPlanned(initialData.planned_shipment || false)
         setLegalEntity(initialData.legal_entity_id || '')
         setClient(initialData.partners_id || kontragentId || '')
+        setChartOfAccounts(initialData.chart_of_accounts_id || '')
 
         if (initialData.product_and_service_data) {
           setRows(initialData?.product_and_service_data?.map((row, idx) => ({
@@ -468,7 +469,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                       <td className='w-[200px]'>
                         <div className="pr-2 pt-2 pb-2">
                           <SelectProductService
-                            value={'0c6fd4fe-0337-415b-b762-f9c656019868'}
+                            value={row.name}
                             onChange={(value) => handleSelectProductSerice(row?.id, value)}
                             placeholder="Выберите позицию"
                             className="bg-white border-none"

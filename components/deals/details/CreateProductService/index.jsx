@@ -2,13 +2,13 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { X } from 'lucide-react'
 import styles from './style.module.scss'
-import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation } from '@/hooks/useDashboard'
+import { useUcodeDefaultApiQuery } from '@/hooks/useDashboard'
 import { queryClient } from '../../../../lib/queryClient'
 import { formatAmount } from '../../../../utils/helpers'
-import Select from '../../../common/Select'
 import Input from '../../../shared/Input'
-import { useUcodeRequestMutation } from '../../../../hooks/useDashboard'
+import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import Loader from '../../../shared/Loader'
+import SingleSelect from '../../../shared/Selects/SingleSelect'
 
 const CreateProductService = ({
   open,
@@ -17,9 +17,7 @@ const CreateProductService = ({
   isEditing = false,
   dealGuid = null
 }) => {
-  const { mutateAsync: mutateProductService, isPending } = useUcodeDefaultApiMutation({
-    mutationKey: 'ADD_PRODUCT_SERVICE_TO_DEAL'
-  })
+
 
   const [formData, setFormData] = useState({
     product_and_service_id: initialData?.guid ? { value: initialData.guid, label: initialData.name || '' } : null,
@@ -31,17 +29,17 @@ const CreateProductService = ({
     nds: initialData?.nds != null ? String(initialData.nds) : '',
     artikul: initialData?.artikul || initialData?.article || '',
     group_product_and_service_id: initialData?.group_product_and_service_id || "",
-    naimenovanie: initialData?.name || ""
+    naimenovanie: initialData?.name || "",
+    unit_name: initialData?.unit_name || ""
   })
+
   const [errors, setErrors] = useState({})
 
   // Fetch product/service list
-  const { data: productServices } = useUcodeDefaultApiQuery({
-    queryKey: 'get_product_services_list',
-    urlMethod: 'GET',
-    urlParams: '/items/product_and_service?from-ofs=true&offset=0&limit=100',
+  const { data: productServices } = useUcodeRequestQuery({
+    method: 'list_products_and_services', 
     querySetting: {
-      select: data => data?.data?.data?.response
+      select: data => data?.data?.data?.data
     }
   })
 
@@ -49,55 +47,41 @@ const CreateProductService = ({
   const productServicesList = useMemo(() => {
     return productServices?.map(item => ({
       value: item?.guid,
-      label: item?.naimenovanie,
+      label: item?.Naimenovanie,
     })) || []
   }, [productServices])
 
 
-  // Fetch units of measurement
-  const { data: units } = useUcodeDefaultApiQuery({
-    queryKey: 'get_product_services_units',
-    urlMethod: 'GET',
-    urlParams: '/items/units_of_measurement?from-ofs=true&offset=0&limit=100',
-    querySetting: {
-      select: data => data?.data?.data?.response
-    }
-  })
 
   const { mutateAsync: mutateProductServiceCustom, isPending: isProductServiceCustomPending } = useUcodeRequestMutation()
 
-
-  const apiUnitOptions = useMemo(() => {
-    return units?.map(item => ({
-      value: item?.guid,
-      label: `${item?.full_name} ${item?.short_name}`,
-    })) || []
-  }, [units])
-
-
   // Auto-fill fields when a product/service is selected
-  const handleProductServiceChange = (selectedOption) => {
-    const item = productServices?.find(p => p?.guid === selectedOption?.value)
+  const handleProductServiceChange = (value) => {
+    const item = productServices?.find(p => p?.guid === value)
+    console.log('selectedOption', value)
     if (!item) {
-      setFormData(prev => ({ ...prev, product_and_service_id: selectedOption }))
+      setFormData(prev => ({ ...prev, product_and_service_id: value }))
       return
     }
 
-    const mesurementFullNam = item?.units_of_measurement_id_data?.full_name + ' ' + item?.units_of_measurement_id_data?.short_name
+
+    console.log('item', item)
+
+    const mesurementFullNam = item?.unit_name + ' ' + item?.unit_short_name
 
 
     setFormData(prev => ({
       ...prev,
-      product_and_service_id: selectedOption,
-      tsena_za_ed: item.tsena_za_ed != null ? String(item.tsena_za_ed) : prev.tsena_za_ed,
-      nds: item.nds != null ? String(item.nds) : prev.nds,
-      discount: item.discount != null ? String(item.discount) : prev.discount,
-      quantity: item.quantity != null ? String(item.quantity) : prev.quantity,
+      product_and_service_id: item?.guid,
+      tsena_za_ed: item.TSena_za_ed,
+      nds: item.NDS,
+      discount: item.Skidka,
+      quantity: item.Kol_vo,
       units_of_measurement_id: { value: item?.units_of_measurement_id, label: mesurementFullNam },
-      status: item.status != null ? String(item.status) : prev.status,
-      artikul: item?.artikul,
-      naimenovanie: item?.naimenovanie,
-      group_product_and_service_id: item?.group_product_and_service_id
+      status: item.Status,
+      artikul: item?.Artikul,
+      naimenovanie: item?.Naimenovanie,
+      group_product_and_service_id: item?.product_and_service_group_id
     }))
   }
 
@@ -208,6 +192,7 @@ const CreateProductService = ({
       TSena_za_ed: Number(String(formData?.tsena_za_ed || '0').replace(/\s/g, '')),
       Skidka: Number(String(formData?.discount || '0').replace(/\s/g, '')),
       Summa: totalSum,
+      Tip: "product",
     };
 
     if (!isEditing && dealGuid) {
@@ -231,7 +216,7 @@ const CreateProductService = ({
     }
 
     if (formData?.group_product_and_service_id) {
-      object_data.group_product_and_service_id = formData.group_product_and_service_id;
+      object_data.product_and_service_group_id = formData.group_product_and_service_id;
     }
 
     if (formData?.comment) {
@@ -250,7 +235,7 @@ const CreateProductService = ({
       })
       resetForm()
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
-      queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] })
+      queryClient.invalidateQueries({ queryKey: ['products_services_list'] })
       onClose()
     } catch (error) {
       console.error('mutateProductService', error?.message)
@@ -285,11 +270,12 @@ const CreateProductService = ({
 						<label className={styles.label}>
 							Наименование <span className={styles.required}>*</span>
 						</label>
-						<Select
-							options={productServicesList}
+            <SingleSelect
+              data={productServicesList}
 							value={formData.product_and_service_id}
 							onChange={handleProductServiceChange}
 							placeholder='Наименование'
+              className={'h-[38]! bg-white'}
 						/>
 						{errors.product_and_service_id && (
 							<span className={styles.errorText}>{errors.product_and_service_id}</span>
@@ -315,7 +301,7 @@ const CreateProductService = ({
 							<label className={styles.label}>Единица</label>
 							<Input
 								type='text'
-								value={formData.units_of_measurement_id?.label || ''}
+                value={formData.unit_name || ''}
 								className={styles.input}
 								placeholder='Единица'
 								readOnly
@@ -342,7 +328,7 @@ const CreateProductService = ({
 					<div className={styles.twoCol}>
 						<div className={styles.colItem}>
 							<label className={styles.label}>Скидка</label>
-							<input
+              <Input
 								type='text'
 								maxLength={3}
 								value={formData.discount ? `${formData.discount}%` : ''}
@@ -354,7 +340,7 @@ const CreateProductService = ({
 						</div>
 						<div className={styles.colItem}>
 							<label className={styles.label}>НДС</label>
-							<input
+              <Input
 								type='text'
 								maxLength={3}
 								value={formData.nds ? `${formData.nds}%` : ''}

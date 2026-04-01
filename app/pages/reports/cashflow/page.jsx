@@ -16,7 +16,6 @@ import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 import { toJS } from 'mobx'
-import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 const groupingOptions = [
   { value: 'monthly', label: 'По месяцам' },
@@ -56,11 +55,20 @@ export default observer(function CashFlowReportPage() {
   const data = useMemo(() => {
     if (!cashFlowData?.rows) return []
 
-    const transformRow = (row, depth = 0) => {
+    const transformRow = (row, depth = 0, sectionName = null) => {
       const monthData = {}
       months.forEach(monthKey => {
         monthData[monthKey] = row.values?.[monthKey] || 0
       })
+
+      // Determine section (Receipts/Payments/Transfers)
+      let currentSection = sectionName;
+      if (depth === 1) {
+        if (row.name === 'Поступления') currentSection = 'Поступления';
+        if (row.name === 'Выплаты') currentSection = 'Выплаты';
+        if (row.name === 'Списания') currentSection = 'Списания';
+        if (row.name === 'Зачисления') currentSection = 'Зачисления';
+      }
 
       const node = {
         id: row.id,
@@ -68,11 +76,12 @@ export default observer(function CashFlowReportPage() {
         total: row.totalValue || 0,
         months: monthData,
         level: depth,
+        section: currentSection,
         subRows: []
       }
 
       if (row.details && Array.isArray(row.details) && row.details.length > 0) {
-        node.subRows = row.details.map(detail => transformRow(detail, depth + 1))
+        node.subRows = row.details.map(detail => transformRow(detail, depth + 1, currentSection))
       }
 
       return node
@@ -109,7 +118,7 @@ export default observer(function CashFlowReportPage() {
 
   // Format number
   const formatNumber = (value) => {
-    if (value === 0 || value === null || value === undefined) return '-'
+    if (value === 0 || value === null || value === undefined) return ''
     return new Intl.NumberFormat('ru-RU', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
@@ -160,10 +169,13 @@ export default observer(function CashFlowReportPage() {
         cell: ({ getValue, row }) => {
           const value = getValue()
           const isTopLevel = row.depth === 0
+          const isEndingBalance = row.original.id === 'ending-balance'
+
           return (
             <span
-              className={`${isTopLevel ? styles.boldNumber : ''} ${styles.clickableCell}`}
+              className={`${isTopLevel ? styles.boldNumber : ''} ${!isEndingBalance ? styles.clickableCell : ''}`}
               onClick={() => {
+                if (isEndingBalance) return
                 setSelectedColumn(row?.original)
                 setSelectedMonth({ key: month, label: formatMonth(month) })
                 setIsModalOpen(true)
@@ -318,6 +330,8 @@ export default observer(function CashFlowReportPage() {
                 ))}
               </tbody>
             </table>
+            {/* create table without using react table */}
+
           </div>
         </div>
       </div>

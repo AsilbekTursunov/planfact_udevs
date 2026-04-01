@@ -34,50 +34,62 @@ const returnSingleName = (name) => {
 }
 
 const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth }) => {
-
-  console.log('🔵 OperationCashFlowModal - Data:', data)
-
   const months = formatPeriod(
     cashFlowStore.filters.periodStartDate,
     cashFlowStore.filters.periodEndDate
   )
 
+  const dateRange = useMemo(() => {
+    if (!selectedMonth?.key) return { start: null, end: null }
+    const [year, month] = selectedMonth.key.split('-').map(Number)
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    const lastDay = new Date(year, month, 0).getDate()
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    return { start: startDate, end: endDate }
+  }, [selectedMonth])
+
   const tips = useMemo(() => {
     if (!data) return null
 
-    // Check if the current row itself explicitly matches a tip
-    const selfTip = returnSingleName(data?.name)
-    if (selfTip) {
-      return { tip: selfTip }
+    // 1. High-level flows
+    if (['Операционный поток', 'Инвестиционный поток', 'Финансовый поток'].includes(data.name)) {
+      return { tip: ['Поступление', 'Выплата'] }
     }
 
-    // // Try collecting from subRows (e.g. when clicking a top-level category like "Операционная деятельность")
-    // if (data?.subRows?.length > 0) {
-    //   const childTips = data.subRows
-    //     .map(row => returnSingleName(row?.name))
-    //     .filter(Boolean) // Remove nulls mapped from unmatched subRows (e.g. articles)
+    // 2. Section-based logic (Receipts/Payments/Transfers)
+    if (data.section === 'Поступления') {
+      return { tip: ['Поступление'] }
+    }
+    if (data.section === 'Выплаты') {
+      return { tip: ['Выплата'] }
+    }
+    if (data.section === 'Списания') {
+      return { tip: ['Списание', 'Перемещение'] }
+    }
+    if (data.section === 'Зачисления') {
+      return { tip: ['Зачисление', 'Перемещение'] }
+    }
 
-    //   if (childTips.length > 0) {
-    //     return { tip: childTips }
-    //   }
-    // }
+    // 3. Fallback to existing single name mapping
+    const mappedTip = returnSingleName(data.name)
+    if (mappedTip) {
+      return { tip: mappedTip }
+    }
 
-    // Fallback if no specific tips matched (so we avoid sending [null, null, null])
     return {}
   }, [data])
-
-
-
 
   const { data: cashflowData, isLoading } = useUcodeRequestQuery({
     method: 'find_operations',
     data: {
       ...tips,
       paymentConfirmed: true,
-      paymentNotConfirmed: false
+      paymentNotConfirmed: false,
+      paymentDateStart: dateRange.start,
+      paymentDateEnd: dateRange.end,
     },
     querySetting: {
-      enabled: !!tips,
+      enabled: !!tips && !!isOpen,
       select: response => response?.data?.data,
       staleTime: 0,
       refetchOnMount: true,

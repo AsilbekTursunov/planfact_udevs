@@ -22,6 +22,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
   const queryClient = useQueryClient()
 
   const { data: productServices, isLoading } = useUcodeRequestQuery({
+    queryKey: "products_services_list",
     method: "list_products_and_services",
     data: {
       sales_transaction_id: sellingDealId,
@@ -37,6 +38,8 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
   const productServicesList = useMemo(() => {
     return productServiceDto(productServices)
   }, [productServices])
+
+  console.log(productServicesList)
 
 
   const handleSelectAll = (event) => {
@@ -76,7 +79,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
       })
 
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
-      queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] })
+      queryClient.invalidateQueries({ queryKey: ['products_services_list', sellingDealId] })
       queryClient.invalidateQueries({ queryKey: ['list_sales_operations'] })
       setOpen(false)
       setSelectedItems(new Set())
@@ -148,7 +151,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
                       <OperationCheckbox checked={selectedItems.has(item.guid)} onChange={(e) => handleSelectItem(e, item.guid)} />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-left border-r border-neutral-200">{item?.name}</td>
+                  <td className="px-4 py-3 text-left border-r border-neutral-200">{item?.Naimenovanie}</td>
                   <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.kolvo}</td>
                   <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.unit_name}</td>
                   <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.tsena_za_ed}</td>

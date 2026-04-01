@@ -6,7 +6,7 @@ import SegmentedControl from '../../shared/SegmentedControl'
 import Input from '../../shared/Input'
 import TextArea from '../../shared/TextArea'
 import Select from '../../common/Select'
-import { useUcodeDefaultApiMutation, useUcodeDefaultApiQuery } from '../../../hooks/useDashboard'
+import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard' // refreshed import
 import { queryClient } from '../../../lib/queryClient'
 import Loader from '../../shared/Loader'
 
@@ -19,9 +19,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
     { value: 'service', label: 'Услуги' }
   ]
 
-  const { mutateAsync: mutateProductService, isPending } = useUcodeDefaultApiMutation({
-    mutationKey: "CREATE_PRODUCT_SERVICE"
-  })
+  const { mutateAsync: mutateProductService, isPending } = useUcodeRequestMutation()
 
   const { data: units, } = useUcodeDefaultApiQuery({
     queryKey: "get_product_services_units",
@@ -93,14 +91,14 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
       if (initialData) {
         setViewMode(initialData?.status?.[0] === 'service' ? 'service' : 'product')
         setFormData({
-          name: initialData?.naimenovanie || '',
-          article: initialData?.artikul || '',
-          unit: apiOptions?.find(opt => opt.value === initialData?.units_of_measurement_id) || apiOptions?.[0],
+          name: initialData?.naimenovanie || initialData?.Naimenovanie || '',
+          article: initialData?.artikul || initialData?.Artikul || '',
+          unit: apiOptions?.find(opt => opt.value === initialData?.units_of_measurement_id || opt.value === initialData?.unit_of_measurement_id) || apiOptions?.[0],
           group: [],
-          price: (initialData?.tsena_za_ed || '').toString(),
+          price: (initialData?.tsena_za_ed || initialData?.TSena_za_ed || '').toString(),
           currency: currencyOptions[0],
-          vat: initialData?.nds?.toString() || '',
-          comment: initialData?.commentary || ''
+          vat: (initialData?.nds || initialData?.NDS || '').toString(),
+          comment: initialData?.commentary || initialData?.kommentariy || ''
         })
       } else {
         resetForm()
@@ -125,21 +123,17 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
       return
     }
     const payload = {
-      naimenovanie: formData?.name,
-      tsena_za_ed: parseInt((formData?.price || '').replace(/\s/g, '').replace(/[^\d]/g, '')) || 0,
-      units_of_measurement_id: formData?.unit?.value,
-      artikul: formData?.article,
-      nds: parseInt((formData?.vat || '').replace('%', '')) || 0,
-      commentary: formData?.comment,
-      status: [viewMode],
-      group_product_and_service_id: formData?.group?.value
+      Naimenovanie: formData?.name,
+      TSena_za_ed: parseInt((formData?.price || '').replace(/\s/g, '').replace(/[^\d]/g, '')) || 0,
+      unit_of_measurement_id: formData?.unit?.value,
+      NDS: parseInt((formData?.vat || '').replace('%', '')) || 0,
+      product_and_service_group_id: formData?.group?.value,
+      Tip: viewMode,
+      kommentariy: formData?.comment,
     }
 
     if (viewMode === 'product') {
-      payload.article = formData.article;
-    } else {
-      // create service action
-      delete payload.article;
+      payload.Artikul = formData.article;
     }
 
     if (isEditing && initialData?.guid) {
@@ -148,8 +142,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
 
     try {
       await mutateProductService({
-        urlMethod: isEditing ? "PUT" : "POST",
-        urlParams: "/items/product_and_service?from-ofs=true",
+        method: isEditing ? "update_product_and_service" : "create_product_and_service",
         data: payload
       })
       resetForm()
