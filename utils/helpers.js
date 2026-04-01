@@ -37,7 +37,7 @@ export const formatAmount = (v) => {
   const raw = String(v).replace(/\s/g, '').replace(/[^0-9.-]/g, '');
   const num = parseFloat(raw);
   if (isNaN(num)) return '0'
-  return Number(num).toFixed(2).toLocaleString('ru-RU')
+  return num.toLocaleString('ru-RU')
 }
 
 

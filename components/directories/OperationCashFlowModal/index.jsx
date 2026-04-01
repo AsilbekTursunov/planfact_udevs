@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import styles from './OperationCashFlowModal.module.scss'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import operationsDto from '../../../lib/dtos/operationsDto'
@@ -8,9 +8,6 @@ import { GlobalCurrency } from '../../../constants/globalCurrency'
 import { formatAmount, formatPeriod } from '../../../utils/helpers'
 import { cashFlowStore } from '../../reports/cashflow/cashflow.store'
 import { observer } from 'mobx-react-lite'
-
-
-
 
 
 const returnSingleName = (name) => {
@@ -41,7 +38,7 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
     // Check if the current row itself explicitly matches a tip
     const selfTip = returnSingleName(data?.name)
     if (selfTip) {
-      return { tip: [selfTip] }
+      return { tip: [selfTip, selfTip === 'Списание' || selfTip === 'Зачисление' ? 'Перемещение' : null] }
     }
 
     // Try collecting from subRows (e.g. when clicking a top-level category like "Операционная деятельность")
@@ -92,7 +89,7 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
 
 
 
-  const periodLabel = selectedMonth?.label || 'Итого' 
+  const isTransfer = returnSingleName(data?.name) === 'Зачисления' || returnSingleName(data?.name) === 'Списания'
 
 
   if (!isOpen) return null
@@ -138,8 +135,8 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
               <tr className=' text-xs text-neutral-600 '>
                 <th className=" px-4 text-start">Дата ▾</th>
                 <th className=" px-4 text-center">Тип</th>
-                <th className=" px-2 text-start">Контрагент</th>
-                <th className=" px-2 text-start">Статья</th>
+                  <th className=" px-2 text-start">{isTransfer ? 'Откуда' : 'Контрагент'}</th>
+                  <th className=" px-2 text-start">{isTransfer ? 'Куда' : 'Статья'}</th>
                 <th className=" px-4 text-end">Сумма</th>
               </tr>
             </thead>

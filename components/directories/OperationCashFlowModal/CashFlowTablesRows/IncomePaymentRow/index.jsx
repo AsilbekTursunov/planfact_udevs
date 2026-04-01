@@ -75,14 +75,14 @@ const IncomePaymentTableRow = observer(({
         </td>
         {/* counterparty */}
         <td className={"text-xs px-2"}>
-          <p className={`${!op.payment_confirmed && 'text-primary'}`}>{titleContragent}</p>
+          {op?.tip === 'Перемещение' ? op?.my_account_name : <>
+            <p>{titleContragent}</p></>}
         </td>
         {/* statya */}
         <td className={"text-xs px-2"}>
-          {op?.tip == "Перемещение" && <div className={`flex flex-col items-start`}>
-            <span>[Перемещение - списание]</span>
-            <span>[Перемещение - зачисление]</span>
-          </div>}
+          {op?.tip == "Перемещение" && <p >
+            {op?.my_account_name2}
+          </p>}
           {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={`flex flex-col items-start `}>
             <span className={`text-neutral-700 ${!op.payment_confirmed && 'text-primary'}`}>{titleChartOfAccounts}</span>
             <span className='text-neutral-400'>{op.opisanie}</span>
