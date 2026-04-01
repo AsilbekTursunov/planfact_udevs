@@ -34,12 +34,7 @@ const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
 
   if (!isOpen) return null
 
-  // ── Build entity options ───────────────────────────────────────────────────
-  const entityOptions = [
-    { guid: '', label: 'Все счета' },
-    ...balanceStore.legalEntities
-  ]
-
+   
   // ── Date range adapter for NewDateRangeComponent ───────────────────────────
   const dateRangeValue = { start: balanceStore.selectedDate, end: balanceStore.selectedDate }
   const handleDateRangeChange = (range) => {

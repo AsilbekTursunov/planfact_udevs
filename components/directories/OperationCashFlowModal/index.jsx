@@ -13,19 +13,29 @@ import { observer } from 'mobx-react-lite'
 const returnSingleName = (name) => {
   switch (name) {
     case "Поступления":
-      return "Поступление"
+      return ["Поступление"]
     case "Выплаты":
-      return "Выплата"
+      return ["Выплата"]
     case "Списания":
-      return "Списание"
+      return ["Списание", "Перемещение"]
     case "Зачисления":
-      return "Зачисление"
+      return ["Зачисление", "Перемещение"]
+    case "Перемещения":
+      return ["Списание", "Зачисление", "Перемещение"]
+    case "Операционный поток":
+      return ["Поступление", "Выплата"]
+    case "Инвестиционный поток":
+      return ["Поступление", "Выплата"]
+    case "Финансовый поток":
+      return ["Поступление", "Выплата"]
     default:
       return null
   }
 }
 
 const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth }) => {
+
+  console.log('🔵 OperationCashFlowModal - Data:', data)
 
   const months = formatPeriod(
     cashFlowStore.filters.periodStartDate,
@@ -38,19 +48,19 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
     // Check if the current row itself explicitly matches a tip
     const selfTip = returnSingleName(data?.name)
     if (selfTip) {
-      return { tip: [selfTip, selfTip === 'Списание' || selfTip === 'Зачисление' ? 'Перемещение' : null] }
+      return { tip: selfTip }
     }
 
-    // Try collecting from subRows (e.g. when clicking a top-level category like "Операционная деятельность")
-    if (data?.subRows?.length > 0) {
-      const childTips = data.subRows
-        .map(row => returnSingleName(row?.name))
-        .filter(Boolean) // Remove nulls mapped from unmatched subRows (e.g. articles)
+    // // Try collecting from subRows (e.g. when clicking a top-level category like "Операционная деятельность")
+    // if (data?.subRows?.length > 0) {
+    //   const childTips = data.subRows
+    //     .map(row => returnSingleName(row?.name))
+    //     .filter(Boolean) // Remove nulls mapped from unmatched subRows (e.g. articles)
 
-      if (childTips.length > 0) {
-        return { tip: childTips }
-      }
-    }
+    //   if (childTips.length > 0) {
+    //     return { tip: childTips }
+    //   }
+    // }
 
     // Fallback if no specific tips matched (so we avoid sending [null, null, null])
     return {}
@@ -60,7 +70,6 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
 
 
   const { data: cashflowData, isLoading } = useUcodeRequestQuery({
-    queryKey: ['cashflow_operations', data],
     method: 'find_operations',
     data: {
       ...tips,
@@ -69,14 +78,35 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
     },
     querySetting: {
       enabled: !!tips,
-      select: response => response?.data?.data
+      select: response => response?.data?.data,
+      staleTime: 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
     }
   })
 
-  console.log('🔵 OperationCashFlowModal - Data:', cashflowData)
   const totalSummary = useMemo(() => {
-    return cashflowData?.totalSummary
-  }, [cashflowData])
+    switch (data?.name) {
+      case "Операционный поток":
+        return cashflowData?.totalSummary?.net_cash_flow
+      case "Инвестиционный поток":
+        return cashflowData?.totalSummary?.net_cash_flow
+      case "Финансовый поток":
+        return cashflowData?.totalSummary?.net_cash_flow
+      case "Списания":
+        return cashflowData?.totalSummary?.by_type?.transfer?.total_summa
+      case "Зачисления":
+        return cashflowData?.totalSummary?.by_type?.transfer?.total_summa
+      case "Перемещения":
+        return cashflowData?.totalSummary?.by_type?.transfer?.total_summa
+      case "Поступления":
+        return cashflowData?.totalSummary?.by_type?.receipt?.total_summa
+      case "Выплаты":
+        return cashflowData?.totalSummary?.by_type?.payment?.total_summa
+      default:
+        return cashflowData?.totalSummary?.net_cash_flow
+    }
+  }, [cashflowData, data?.name])
 
   const operationsList = useMemo(() => {
     return {
@@ -89,7 +119,8 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
 
 
 
-  const isTransfer = returnSingleName(data?.name) === 'Зачисления' || returnSingleName(data?.name) === 'Списания'
+  const isTransfer = data?.name === 'Зачисления' || data?.name === 'Списания' || data?.name === 'Перемещения'
+
 
 
   if (!isOpen) return null
@@ -102,7 +133,7 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.title}>
-            {data?.name || 'Операции по показателю'}
+            Операции {data?.name || 'Операции по показателю'}
           </div>
           <button onClick={onClose} className={styles.closeButton}>
             <svg className={styles.closeIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -120,7 +151,7 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
           <div className="flex text-sm items-center gap-10">
             <span className=" font-medium">Сумма операций</span>
             <div className="flex items-center gap-2">
-              <span>{formatAmount(totalSummary?.net_cash_flow)}</span>
+              <span>{(data?.name === 'Списания') ? '-' : ''}{formatAmount(Number(totalSummary).toFixed(2))}</span>
               <span>{GlobalCurrency.name}</span>
             </div>
           </div>
@@ -131,7 +162,7 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
           {isLoading ? <div className='w-full h-full flex items-center justify-center'>
             <Loader2 className='animate-spin text-primary' size={30} />
           </div> : <table className="w-full relative">
-            <thead className="sticky top-0 z-10 h-10 bg-neutral-50  border-b-2 box-content border-gray-300">
+              <thead className="sticky top-0 z-10 h-10 bg-neutral-50  border-b box-content border-gray-300">
               <tr className=' text-xs text-neutral-600 '>
                 <th className=" px-4 text-start">Дата ▾</th>
                 <th className=" px-4 text-center">Тип</th>
@@ -154,7 +185,7 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
                           </td>
                         </tr>
                       )}
-                      {operationsList?.future?.map(op => <IncomePaymentTableRow key={op.id} op={op} />)}
+                      {operationsList?.future?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={data?.name} />)}
 
                       {operationsList?.today?.length > 0 && (
                         <tr className=" border-y border-y-gray-100 bg-neutral-50">
@@ -163,15 +194,16 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
                           </td>
                         </tr>
                       )}
-                      {operationsList?.today?.map(op => <IncomePaymentTableRow key={op.id} op={op} />)}
-                      {operationsList?.today?.length > 0 && (
+                      {operationsList?.today?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={data?.name} />)}
+
+                      {operationsList?.before?.length > 0 && (
                         <tr className=" border-y border-y-gray-100 bg-neutral-50">
                           <td colSpan='5' className=" py-1 text-xs px-4">
                             <h3 className="">До</h3>
                           </td>
                         </tr>
                       )}
-                      {operationsList?.before?.map(op => <IncomePaymentTableRow key={op.id} op={op} />)}
+                      {operationsList?.before?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={data?.name} />)}
                     </>
                 )}
               </tbody>
