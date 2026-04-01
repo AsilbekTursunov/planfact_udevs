@@ -6,12 +6,38 @@ export const formatDateRu = (dateStr) => {
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
 }
 
+export const formatPeriod = (startDate, endDate) => {
+  if (!startDate || !endDate) return '';
+  
+  const d1 = new Date(startDate);
+  const d2 = new Date(endDate);
+  
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) return '';
+  
+  const shortMonths = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+  
+  const d1Day = String(d1.getDate()).padStart(2, '0');
+  const d2Day = String(d2.getDate()).padStart(2, '0');
+  
+  const d1Month = shortMonths[d1.getMonth()];
+  const d2Month = shortMonths[d2.getMonth()];
+  
+  const d1Year = String(d1.getFullYear()).slice(-2);
+  const d2Year = String(d2.getFullYear()).slice(-2);
+  
+  if (d1Year !== d2Year) {
+    return `${d1Day} ${d1Month} '${d1Year} – ${d2Day} ${d2Month} '${d2Year}`;
+  } else {
+    return `${d1Day} ${d1Month} – ${d2Day} ${d2Month} '${d2Year}`;
+  }
+}
+
 export const formatAmount = (v) => {
   if (v === null || v === undefined || v === '') return '0'
   const raw = String(v).replace(/\s/g, '').replace(/[^0-9.-]/g, '');
   const num = parseFloat(raw);
   if (isNaN(num)) return '0'
-  return num.toLocaleString('ru-RU')
+  return Number(num).toFixed(2).toLocaleString('ru-RU')
 }
 
 

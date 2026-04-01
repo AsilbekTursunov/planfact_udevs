@@ -41,7 +41,7 @@ export function FilterSidebar({ isOpen, onClose, children, clearCount, onClear }
         </div>
 
         {/* Табы фильтров */}
-        <div className={styles.filterTabs}>
+        {/* <div className={styles.filterTabs}>
           <button
             className={cn(styles.filterTab, activeTab === 'general' ? styles.active : styles.inactive)}
             onClick={() => setActiveTab('general')}
@@ -56,7 +56,7 @@ export function FilterSidebar({ isOpen, onClose, children, clearCount, onClear }
           >
             Быстрые
           </button>
-        </div>
+        </div> */}
 
         {activeTab === 'general' && (
           <div className={styles.childrenContainer}>

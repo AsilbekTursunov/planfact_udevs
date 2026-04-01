@@ -334,6 +334,8 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                 value={legalEntity}
                 onChange={(value) => setLegalEntity(value)}
                 placeholder="Выберите юрлицо"
+                childFieldName={'currenies_id'}
+                returnFieldValue={setCurrency}
                 className="w-80! bg-white"
               />
               {errors.legalEntity && (
@@ -466,7 +468,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                       <td className='w-[200px]'>
                         <div className="pr-2 pt-2 pb-2">
                           <SelectProductService
-                            value={row.name}
+                            value={'0c6fd4fe-0337-415b-b762-f9c656019868'}
                             onChange={(value) => handleSelectProductSerice(row?.id, value)}
                             placeholder="Выберите позицию"
                             className="bg-white border-none"

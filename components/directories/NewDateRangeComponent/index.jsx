@@ -5,6 +5,7 @@ import CustomCalendar from '../../shared/Calendar'
 import { formatDate } from '../../../utils/formatDate'
 import { CgClose } from 'react-icons/cg'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu'
+import moment from 'moment/moment'
 
 const getPresetRange = (key) => {
 
@@ -127,8 +128,8 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
             <input
               type="text"
               value={singleDateMode
-                ? (startDate ? formatDate(startDate) : 'Выберите дату')
-                : `${startDate ? formatDate(startDate) + ' ~' : 'Укажите '} ${endDate ? formatDate(endDate) : 'период'}`
+                ? (startDate ? moment(startDate).format('DD.MM.YYYY') : 'Выберите дату')
+                : `${startDate ? moment(startDate).format('DD.MM.YYYY') + ' ~' : 'Укажите '} ${endDate ? moment(endDate).format('DD.MM.YYYY') : 'период'}`
               }
               className="border-none outline-none bg-transparent text-gray-ucode-400 text-xs font-normal w-full"
               placeholder={singleDateMode ? "Выберите дату" : "Укажите период"}

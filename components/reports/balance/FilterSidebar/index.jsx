@@ -72,7 +72,7 @@ const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
         </div>
 
         {/* Tabs (visual only, "Общие" active) */}
-        <div className={styles.filterTabs}>
+        {/* <div className={styles.filterTabs}>
           <button className={`${styles.filterTab} ${styles.active}`}>Общие</button>
           <button
             className={`${styles.filterTab} ${styles.inactive}`}
@@ -81,7 +81,7 @@ const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
           >
             Быстрые
           </button>
-        </div>
+        </div> */}
 
         {/* Filter content */}
         <div className={styles.filterContent}>

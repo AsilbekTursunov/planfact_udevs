@@ -72,7 +72,7 @@ export const OperationsFiltersSidebar = observer(({
               </div>
 
               {/* Табы фильтров */}
-              <div className="filterTabWrapper">
+              {/* <div className="filterTabWrapper">
                 <button
                   className={cn('filterTab', activeTab === 'general' ? 'active' : 'inactive')}
                   onClick={() => setActiveTab('general')}
@@ -85,8 +85,7 @@ export const OperationsFiltersSidebar = observer(({
                 >
                   Быстрые
                 </button>
-                {/* <div className={cn("filterTabActiveBg", activeTab === 'general' ? 'active' : 'inactive')}></div> */}
-              </div>
+              </div> */}
 
               <div className={styles.filterContentWrapper}>
                 {/* Контент табов с анимацией */}
@@ -331,6 +330,7 @@ export const OperationsFiltersSidebar = observer(({
                           value={localAmount.min}
                           onChange={(e) => handleAmountChange('min', e.target.value)}
                           style={{ flex: 1, minWidth: 0 }}
+                          className="h-[34px]! bg-neutral-50"
                         />
                         <span style={{ color: '#9ca3af', fontSize: '13px' }}>–</span>
                         <Input
@@ -341,6 +341,7 @@ export const OperationsFiltersSidebar = observer(({
                           value={localAmount.max}
                           onChange={(e) => handleAmountChange('max', e.target.value)}
                           style={{ flex: 1, minWidth: 0 }}
+                          className="h-[34px]! bg-neutral-50"
                         />
                       </div>
 

@@ -11,7 +11,7 @@ const TreeNode = ({ node, level = 0, selectedValue, onSelect, multi }) => {
     <div className='flex flex-col w-full'>
       <div
         className={cn(
-          "w-full px-4 py-2 hover:bg-neutral-50 flex items-center justify-between text-xss! transition-colors",
+          "w-full px-4 py-2 h-[34px]! hover:bg-neutral-50 flex items-center justify-between text-xss! transition-colors",
           isSelectable ? "cursor-pointer" : "cursor-default text-neutral-700",
           node.bold && "font-bold",
           isSelected && "bg-neutral-100/60"
@@ -180,7 +180,7 @@ const TreeSelect = ({
         ref={buttonRef}
         type="button"
         className={cn(
-          'flex items-center cursor-pointer bg-neutral-50 transition-all duration-200 justify-between w-full rounded-md  px-3 py-2 outline-none focus:border-primary/80',
+          'flex items-center cursor-pointer h-[34px]! bg-neutral-50 transition-all duration-200 justify-between w-full rounded-md  px-3 py-2 outline-none focus:border-primary/80',
           className,
           hasError ? 'border-red-ucode! border!' : "border border-neutral-200"
         )}

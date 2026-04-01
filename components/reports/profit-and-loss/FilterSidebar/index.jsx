@@ -90,12 +90,12 @@ const PnLFilterSidebar = observer(({ isOpen, onClose }) => {
         </div>
 
         {/* Tabs */}
-        <div className={styles.filterTabs}>
+        {/* <div className={styles.filterTabs}>
           <button className={`${styles.filterTab} ${styles.active}`}>Общие</button>
           <button className={`${styles.filterTab} ${styles.inactive}`} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
             Быстрые
           </button>
-        </div>
+        </div> */}
 
         {/* Content */}
         <div className={styles.filterContent}>

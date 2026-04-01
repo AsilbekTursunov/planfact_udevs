@@ -1288,9 +1288,9 @@ export const useUcodeRequestMutation = ({ mutationSetting = {} } = {}) => {
 /**
  * Universal useUcodeRequestQuery globally accessible
  */
-export const useUcodeRequestQuery = ({ method, data, skip = false, querySetting = {} }) => {
+export const useUcodeRequestQuery = ({ queryKey, method, data, skip = false, querySetting = {} }) => {
   return useQuery({
-    queryKey: [method, data],
+    queryKey: [queryKey || method, data],
     queryFn: () => ucodeRequest({ method, data }),
     enabled: !skip,
     onError: (error) => {

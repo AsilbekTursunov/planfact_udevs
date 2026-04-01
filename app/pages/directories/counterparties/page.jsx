@@ -54,6 +54,7 @@ const CounterpartiesPage = observer(() => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedRows, setSelectedRows] = useState([])
   const [viewMode, setViewMode] = useState('list') // 'list' | 'nested' | 'groups'
+  const [tip, setTip] = useState('')
 
   // Pagination state
   const [page, setPage] = useState(1)
@@ -476,7 +477,12 @@ const CounterpartiesPage = observer(() => {
       >
         <FilterSection title="Параметры">
           <div className="space-y-2.5">
-            <SingleSelect data={tipOptions} />
+            <SingleSelect
+              value={tip}
+              onChange={(value) => setTip(value)}
+              data={tipOptions}
+              placeholder="Выберите тип"
+            />
             <SelectCounterParties
               value={filters.selectedCounterparties}
               onChange={(values) => setFilters(prev => ({ ...prev, selectedCounterparties: values }))}

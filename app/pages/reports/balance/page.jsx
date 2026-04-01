@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
-import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import BalanceFilterSidebar from '@/components/reports/balance/FilterSidebar'
 import { balanceStore } from '@/components/reports/balance/balance.store'
 import styles from './balance.module.scss'
 import { ExpendOpen, ExpendClose } from '@/constants/icons'
 import { toJS } from 'mobx'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
-import { appStore } from '../../../../store/app.store'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 export default observer(function BalancePage() {

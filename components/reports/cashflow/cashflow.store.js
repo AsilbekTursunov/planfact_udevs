@@ -33,7 +33,7 @@ class CashFlowStore {
     periodStartDate: getDefaultStartDate(),
     periodEndDate: getDefaultEndDate(),
     periodType: 'monthly',
-    userCurrencyCode: GlobalCurrency.code || 'UZS', // Defaulting to RUB as seen in page
+    currencyCode: GlobalCurrency.code, // Defaulting to RUB as seen in page
     sellingDealId: [], // these are same values 
     contrAgentId: [],
     accountId: [],
@@ -106,7 +106,7 @@ class CashFlowStore {
   }
 
   setCurrencyCode(value) {
-    this.filters.userCurrencyCode = value
+    this.filters.currencyCode = value
   }
 
   setDeals(value) {
@@ -126,7 +126,7 @@ class CashFlowStore {
       periodStartDate: getDefaultStartDate(),
       periodEndDate: getDefaultEndDate(),
       periodType: 'monthly',
-      currencyCode: 'RUB',
+      currencyCode: GlobalCurrency.code,
       sellingDealId: [],
       contrAgentId: [],
       accountId: [],

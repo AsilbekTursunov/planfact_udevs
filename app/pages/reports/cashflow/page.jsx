@@ -238,7 +238,7 @@ export default observer(function CashFlowReportPage() {
               <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
               <SingleSelect
                 data={currencies}
-                value={cashFlowStore.filters.currencyCode || GlobalCurrency.code}
+                value={cashFlowStore.filters.currencyCode}
                 onChange={(value) => {
                   cashFlowStore.setCurrencyCode(value)
                   cashFlowStore.fetchReport()

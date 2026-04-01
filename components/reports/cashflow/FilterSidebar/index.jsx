@@ -50,12 +50,12 @@ const CashFlowFilterSidebar = observer(({ isOpen, onClose }) => {
           </div>
 
           {/* Tabs */}
-          <div className="filterTabWrapper">
+          {/* <div className="filterTabWrapper">
             <button className={`filterTab active`}>Общие</button>
             <button className={`filterTab inactive`}>
               Быстрые
             </button>
-          </div>
+          </div> */}
 
           {/* Content */}
           <div className="">
