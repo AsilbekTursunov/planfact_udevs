@@ -54,7 +54,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
     name: "kpp"
   })
 
-  const { fields: accountFields, append: appendAccount, remove: removeAccount } = useFieldArray({
+  const { fields: accountFields, append: appendAccount, remove: removeAccount, } = useFieldArray({
     control,
     name: "nomer_scheta"
   })
@@ -201,8 +201,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
       // } else if (data.chart_of_accounts_id && data.chart_of_accounts_id_2) {
       //   tip = ['Смешанный']
       // }
-      console.log('--- Submission Flow Started ---')
-      console.log('Raw Form Data (data):', data)
+
 
       const processDynamicField = (fieldArray) => {
         if (!fieldArray) return null
@@ -251,6 +250,7 @@ export default function CreateCounterpartyModal({ isOpen, onClose, preselectedGr
       if (onSuccess) onSuccess()
       handleClose()
       reset()
+      console.log('--- Submission Flow Completed ---', data)
     } catch (error) {
       console.error('Error creating counterparty:', error)
       setError('root', { message: error.message || 'Не удалось создать контрагента' })

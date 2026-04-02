@@ -135,19 +135,6 @@ export default observer(function DealDetailPage() {
   const [isCopying, setIsCopying] = useState(false)
 
 
-
-  // Deal statuses
-  const [dealStatuses, setDealStatuses] = useState([
-    { guid: 'Новая', name: 'Новая', color: '#F79009' },
-    { guid: 'В процессе', name: 'В процессе', color: '#2E90FA' },
-    { guid: 'Завершенная', name: 'Завершенная', color: '#12B76A' },
-  ]);
-  const [selectedStatus, setSelectedStatus] = useState(dealStatuses[summeryCards?.Status]);
-
-  // Set initial status from deal data
-
-
-
   if (isLoading) {
     return (
       <div className="w-full h-dvh flex items-center justify-center">
@@ -196,9 +183,9 @@ export default observer(function DealDetailPage() {
   }
 
   return (
-    <div className="flex overflow-hidden flex-col space-y-4 fixed left-[80px] top-[60px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
+    <div className="flex overflow-hidden overflow-y-auto  flex-col space-y-4 fixed left-[80px] top-[60px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
       {/* Breadcrumbs */}
-      <div className="px-3 py-2 bg-white/90">
+      <div className="px-3 py-2 bg-white sticky top-0 z-10">
         <button onClick={() => router.push('/pages/deals')} className={styles.breadcrumbLink}>
           Сделки по продажам
         </button>
@@ -242,7 +229,7 @@ export default observer(function DealDetailPage() {
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-[minmax(340px,1fr)_minmax(250px,310px)_minmax(250px,310px)_minmax(250px,310px)] gap-4 px-3">
+      <div className="min-w-[1280px] max-w-[1440px] gap-4 px-3 grid grid-cols-4">
         {/* Card 1: Deal Amount */}
         <div className={'bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]'}>
           <div className="flex items-center justify-between">
@@ -395,7 +382,7 @@ export default observer(function DealDetailPage() {
             </Popover>
           </div>
 
-          <div className="flex items-start gap-3 mb-3">
+          <div className="flex  items-start gap-3 mb-3">
             <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
               <HiOutlineCreditCard size={20} className='text-neutral-400' />
             </div>
@@ -424,95 +411,91 @@ export default observer(function DealDetailPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Main Content Layout */}
-      <div className="grid grid-cols-[1fr_310px] gap-4 px-3 flex-1">
+        {/* Main Content Layout */}
         {/* Left side - Tabs and content */}
-        <div className="">
+        <div className="col-span-3">
           {/* Tabs */}
-          <div className="flex bg-white border-b border-neutral-200 rounded-t-xl overflow-hidden mb-0">
-            <button
-              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'products' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
-                }`}
-              onClick={() => setActiveTab('products')}
-            >
-              Товары и услуги ({summeryCards?.products_count ?? 0})
-            </button>
-            <button
-              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'receipts' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
-                }`}
-              onClick={() => setActiveTab('receipts')}
-            >
-              Поступления ({summeryCards?.receipts_count ?? 0})
-            </button>
-            <button
-              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'expenses' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
-                }`}
-              onClick={() => setActiveTab('expenses')}
-            >
-              Расходы ({summeryCards?.expenses_count ?? 0})
-            </button>
-            <button
-              className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'shipments' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
-                }`}
-              onClick={() => setActiveTab('shipments')}
-            >
-              Отгрузки ({summeryCards?.shipments_count ?? 0})
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          <div className={styles.tabContent}>
-            <div className={styles.sectionHeader}>
-              <div className={styles.sectionTitle}>
-                {activeTab === 'products' && 'Выберите товары или услуги для продажи'}
-                {activeTab === 'receipts' && 'Платежи от клиентов за проданные товары или оказанные услуги '}
-                {activeTab === 'expenses' && 'Понесенные затраты по сделке'}
-                {activeTab === 'shipments' && 'Товары и услуги, которые вы отгрузили клиенту '}
-              </div>
-              <div className={styles.searchContainer}>
-                <Input
-                  leftIcon={<Search size={18} />}
-                  type="text"
-                  placeholder="Поиск по названию"
-                  className={styles.searchInput}
-                />
-                <button
-                  className='primary-btn'
-                  onClick={() => {
-                    if (activeTab === 'shipments') {
-                      setShowShipmentModal(true);
-                    } else if (activeTab === 'receipts' || activeTab === 'expenses') {
-                      handleCreateOperation()
-                    } else if (activeTab === 'products') {
-                      setShowProductModal(true)
-                    }
-                  }}
-                >
-                  Добавить
-                </button>
-              </div>
+          <div className='flex flex-col sticky top-16 z-10 '>
+            <div className="flex bg-white border-b h-16  border-neutral-100 rounded-t-xl overflow-hidden mb-0">
+              <button
+                className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'products' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                  }`}
+                onClick={() => setActiveTab('products')}
+              >
+                Товары и услуги ({summeryCards?.products_count ?? 0})
+              </button>
+              <button
+                className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'receipts' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                  }`}
+                onClick={() => setActiveTab('receipts')}
+              >
+                Поступления ({summeryCards?.receipts_count ?? 0})
+              </button>
+              <button
+                className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'expenses' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                  }`}
+                onClick={() => setActiveTab('expenses')}
+              >
+                Расходы ({summeryCards?.expenses_count ?? 0})
+              </button>
+              <button
+                className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'shipments' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                  }`}
+                onClick={() => setActiveTab('shipments')}
+              >
+                Отгрузки ({summeryCards?.shipments_count ?? 0})
+              </button>
             </div>
-            <div className={styles.contentContainer}>
-              {activeTab === 'products' && <ProductServiceTable handleSelect={handleSelectProduct} sellingDealId={dealId} onAdd={() => setShowProductModal(true)} />}
+            {/* Tab Content */}
+            <div className="py-2 bg-white">
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionTitle}>
+                  {activeTab === 'products' && 'Выберите товары или услуги для продажи'}
+                  {activeTab === 'receipts' && 'Платежи от клиентов за проданные товары или оказанные услуги '}
+                  {activeTab === 'expenses' && 'Понесенные затраты по сделке'}
+                  {activeTab === 'shipments' && 'Товары и услуги, которые вы отгрузили клиенту '}
+                </div>
+                <div className={styles.searchContainer}>
+                  <Input
+                    leftIcon={<Search size={18} />}
+                    type="text"
+                    placeholder="Поиск по названию"
+                    className={styles.searchInput}
+                  />
+                  <button
+                    className='primary-btn'
+                    onClick={() => {
+                      if (activeTab === 'shipments') {
+                        setShowShipmentModal(true);
+                      } else if (activeTab === 'receipts' || activeTab === 'expenses') {
+                        handleCreateOperation()
+                      } else if (activeTab === 'products') {
+                        setShowProductModal(true)
+                      }
+                    }}
+                  >
+                    Добавить
+                  </button>
+                </div>
+              </div>
+              <div className={styles.contentContainer}>
+                {activeTab === 'products' && <ProductServiceTable handleSelect={handleSelectProduct} sellingDealId={dealId} onAdd={() => setShowProductModal(true)} />}
 
-              {activeTab === 'receipts' && <IncomeOperationsTable type='Поступление' sellingDealId={dealId} onAdd={handleCreateOperation} />}
+                {activeTab === 'receipts' && <IncomeOperationsTable type='Поступление' sellingDealId={dealId} onAdd={handleCreateOperation} />}
 
-              {activeTab === 'expenses' && <ExpenseOperationsTable type='Выплата' sellingDealId={dealId} onAdd={handleCreateOperation} />}
+                {activeTab === 'expenses' && <ExpenseOperationsTable type='Выплата' sellingDealId={dealId} onAdd={handleCreateOperation} />}
 
-              {activeTab === 'shipments' && <ShipmenTable dealGuid={dealId} dealName={summeryCards?.Nazvanie} onAdd={() => setShowShipmentModal(true)} />}
+                {activeTab === 'shipments' && <ShipmenTable dealGuid={dealId} dealName={summeryCards?.Nazvanie} onAdd={() => setShowShipmentModal(true)} />}
+              </div>
             </div>
           </div>
         </div>
+        <div>
+          <CommentChat dealGuid={dealId} />
+        </div>
 
-        {/* Right side - Comments (always visible) */}
-
-        <CommentChat dealGuid={dealId} />
-
+        {/* Shipment Creation Modal */}
       </div>
-
-      {/* Shipment Creation Modal */}
       <CreateShipment
         open={showShipmentModal}
         onClose={() => setShowShipmentModal(false)}
@@ -520,6 +503,8 @@ export default observer(function DealDetailPage() {
         dealGuid={dealId}
         kontragentId={summeryCards?.counterparty_id}
       />
+
+
 
       {/* Operation Modal */}
       {showOperationModal && (

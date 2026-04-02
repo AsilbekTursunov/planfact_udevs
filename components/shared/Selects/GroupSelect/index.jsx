@@ -119,7 +119,7 @@ const GroupSelect = ({
         ref={buttonRef}
         type="button"
         className={cn(
-          'flex items-center cursor-pointer bg-neutral-50 h-[34px]! transition-all duration-200 justify-between w-full rounded-md  px-3 py-2 outline-none focus:border-teal-500',
+          'flex items-center cursor-pointer bg-neutral-50 h-[36px]! transition-all duration-200 justify-between w-full rounded-md  px-3 py-2 outline-none focus:border-teal-500',
           className,
           hasError ? 'border-red-ucode! border!' : "border border-neutral-200"
         )}

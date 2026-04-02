@@ -1,8 +1,7 @@
 'use client'
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { cn } from '@/app/lib/utils'
-import { useOperation } from '@/hooks/useDashboard'
-import styles from './OperationModal.module.scss'
+// import styles from './OperationModal.module.scss'
 import AccuralForm from './Forms/Accural'
 import IncomeForm from './Forms/Income'
 import TransferForm from './Forms/Transfer'
@@ -32,28 +31,28 @@ const OperationModal = observer(({
 	}, [isNew, operation])
 
 	// Fetch full operation data if editing existing operation
-	const { data: fullOperationData, isLoading: isLoadingOperation, refetch } = useOperation(operationGuid, {
-		enabled: !isNew && !!operationGuid
-	})
+	// const { data: fullOperationData, isLoading: isLoadingOperation, refetch } = useOperation(operationGuid, {
+	// 	enabled: !isNew && !!operationGuid
+	// })
 
 	// Refetch operation data when modal opens
-	useEffect(() => {
-		if (!isNew && operationGuid && isOpening) {
-			refetch()
-		}
-	}, [isOpening, operationGuid, isNew, refetch])
+	// useEffect(() => {
+	// 	if (!isNew && operationGuid && isOpening) {
+	// 		refetch()
+	// 	}
+	// }, [isOpening, operationGuid, isNew, refetch])
 
 	// Use full operation data if available, otherwise use passed operation
 	const operationData = useMemo(() => {
 		if (isNew) return operation
-		if (fullOperationData?.data?.data?.data) {
-			return {
-				...operation,
-				rawData: fullOperationData.data.data.data
-			}
-		}
+		// if (fullOperationData?.data?.data?.data) {
+		// 	return {
+		// 		...operation,
+		// 		// rawData: fullOperationData.data.data.data
+		// 	}
+		// }
 		return operation
-	}, [isNew, operation, fullOperationData])
+	}, [isNew, operation])
 
 	// Current active tab 
 	const getTabType = useCallback((op) => {
@@ -68,10 +67,10 @@ const OperationModal = observer(({
 
 	// Update active tab when operationData changes (for editing)
 	useEffect(() => {
-		if ((!isNew || operation?.isCopy) && operationData && !isLoadingOperation) {
+		if ((!isNew || operation?.isCopy) && operationData) {
 			setActiveTab(getTabType(operationData))
 		}
-	}, [operationData, isNew, isLoadingOperation, getTabType, operation?.isCopy])
+	}, [operationData, isNew, getTabType, operation?.isCopy])
 
 	// Block body scroll when modal is open
 	useEffect(() => {
@@ -81,14 +80,14 @@ const OperationModal = observer(({
 		}
 	}, [])
 
-	if (!isNew && isLoadingOperation) {
-		return (
-			<div className={styles.loadingOverlay}>
-				<div className={styles.loadingSpinner}></div>
-				<span>Загрузка операции...</span>
-			</div>
-		)
-	}
+	// if (!isNew && isLoadingOperation) {
+	// 	return (
+	// 		<div className={styles.loadingOverlay}>
+	// 			<div className={styles.loadingSpinner}></div>
+	// 			<span>Загрузка операции...</span>
+	// 		</div>
+	// 	)
+	// }
 
 	if (!operationData && !isNew) return null
 

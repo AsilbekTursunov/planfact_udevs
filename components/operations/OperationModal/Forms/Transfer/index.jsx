@@ -1,5 +1,5 @@
 'use client'
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { cn } from '@/app/lib/utils'
 
@@ -21,12 +21,17 @@ import { observer } from 'mobx-react-lite'
 import { authStore } from '../../../../../store/auth.store'
 import { queryClient } from '../../../../../lib/queryClient'
 import { Loader2 } from 'lucide-react'
+import { appStore } from '../../../../../store/app.store'
+import { toJS } from 'mobx'
 
 const TransferForm = observer(({ initialData, onClose }) => {
+  const [title, setTitle] = useState({
+    currency_1: '',
+    currency_2: '',
+  })
   const { data: bankAccountsData } = useBankAccountsPlanFact({ limit: 1000 })
   const bankAccounts = useMemo(() => bankAccountsData?.data?.data?.data || [], [bankAccountsData])
 
-  console.log('initialData23', initialData)
 
   // Form State
   const isNew = initialData?.isNew
@@ -72,7 +77,6 @@ const TransferForm = observer(({ initialData, onClose }) => {
 
   const watchFromAccount = watch('fromAccount')
   const watchToAccount = watch('toAccount')
-  const watchFromAmount = watch('fromAmount')
   const watchFromDate = watch('fromDate')
   const watchCurrency1 = watch('currency_1')
   const watchCurrency2 = watch('currency_2')
@@ -83,13 +87,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
     return fromAcc?.currenies_id === toAcc?.currenies_id
   }, [watchFromAccount, watchToAccount, bankAccounts])
 
-
-  // Sync toAmount with fromAmount if same currency
-  React.useEffect(() => {
-    if (isSameCurrency) {
-      setValue('toAmount', watchFromAmount)
-    }
-  }, [watchFromAmount, isSameCurrency, setValue])
+ 
 
   const onSubmit = async (data) => {
     const payload = {
@@ -140,6 +138,15 @@ const TransferForm = observer(({ initialData, onClose }) => {
     } catch (error) {
       console.error('TransferForm onSubmit error', error)
     }
+  }
+
+  const handleSelectMyAccount = (type, value) => {
+    setValue(type, value)
+    const selected = toJS(appStore.currencies).find(c => c.guid === value)
+    setTitle(prev => ({
+      ...prev,
+      [type]: `${selected.kod} ${selected.nazvanie}`
+    }))
   }
 
   return (
@@ -201,15 +208,16 @@ const TransferForm = observer(({ initialData, onClose }) => {
                   <SelectMyAccounts
                     value={field.value}
                     selected={watchToAccount}
-                    onChange={field.onChange}
+                    onChange={(value) => {
+                      field.onChange(value)
+                      setTitle((prev) => ({ ...prev, currency_1: '' }))
+                    }}
                     multi={false}
                     type="show"
                     extraValue="currenies_id"
-                    returnValue={(value) => {
-                      setValue('currency_1', value)
-                    }}
+                    returnValue={(value) => handleSelectMyAccount('currency_1', value)}
                     placeholder="Юрлица и счета"
-                    className="bg-white border rounded-md"
+                    className="bg-white border rounded-md h-[36px]!"
                     hasError={errors.fromAccount}
                   />
                 )}
@@ -221,19 +229,22 @@ const TransferForm = observer(({ initialData, onClose }) => {
           <div className="flex items-center gap-4">
             <label className="w-[150px] text-xss">Сумма списания</label>
             <div className="flex-1 max-w-[600px]">
-              <Controller
-                name="fromAmount"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    type="text"
-                    value={formatAmount(field.value)}
-                    onChange={(e) => field.onChange(parseAmount(e.target.value))}
-                    placeholder="0"
-                    className={cn("w-[230px]", errors.fromAmount && "border-red-500")}
-                  />
-                )}
-              />
+              <div className="flex items-center">
+                <Controller
+                  name="fromAmount"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      type="text"
+                      value={formatAmount(field.value)}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      placeholder="0"
+                      className={cn('w-56', errors.fromAmount && "border - red - 500")}
+                    />
+                  )}
+                />
+                {title.currency_1 && <span className="text-sm font-medium whitespace-nowrap flex-1 text-gray-800">{title.currency_1}</span>}
+              </div>
             </div>
           </div>
         </div>
@@ -276,15 +287,16 @@ const TransferForm = observer(({ initialData, onClose }) => {
                   <SelectMyAccounts
                     value={field.value}
                     selected={watchFromAccount}
-                    onChange={field.onChange}
+                    onChange={(value) => {
+                      field.onChange(value)
+                      setTitle((prev) => ({ ...prev, currency_2: '' }))
+                    }}
                     multi={false}
                     type="show"
                     extraValue="currenies_id"
-                    returnValue={(value) => {
-                      setValue('currency_2', value)
-                    }}
+                    returnValue={(value) => handleSelectMyAccount('currency_2', value)}
                     placeholder="Юрлица и счета"
-                    className="bg-white border rounded-md"
+                    className="bg-white border rounded-md h-[36px]!"
                     hasError={errors.toAccount}
                   />
                 )}
@@ -297,20 +309,23 @@ const TransferForm = observer(({ initialData, onClose }) => {
             <div className="flex items-center gap-4">
               <label className="w-[150px] text-xss">Сумма зачисления <span className="text-red-500 ml-0.5">*</span></label>
               <div className="flex-1 flex flex-col gap-1 max-w-[600px]">
-                <Controller
-                  name="toAmount"
-                  control={control}
-                  rules={{ required: 'Укажите сумму зачисления' }}
-                  render={({ field }) => (
-                    <Input
-                      type="text"
-                      value={formatAmount(field.value)}
-                      onChange={(e) => field.onChange(parseAmount(e.target.value))}
-                      placeholder="0"
-                      className={cn("w-[230px]", errors.toAmount && "border-red-500")}
-                    />
-                  )}
-                />
+                <div className="flex items-center">
+                  <Controller
+                    name="toAmount"
+                    control={control}
+                    rules={{ required: 'Укажите сумму зачисления' }}
+                    render={({ field }) => (
+                      <Input
+                        type="text"
+                        value={formatAmount(field.value)}
+                        onChange={(e) => field.onChange(parseAmount(e.target.value))}
+                        placeholder="0"
+                        className={cn("w-56", errors.toAmount && "border-red-500")}
+                      />
+                    )}
+                  />
+                  <span className="text-sm font-medium whitespace-nowrap flex-1 text-gray-800">{title.currency_2}</span>
+                </div>
                 {errors.toAmount && <span className="text-xs text-red-500">{errors.toAmount.message}</span>}
               </div>
             </div>

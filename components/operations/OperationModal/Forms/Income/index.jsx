@@ -32,6 +32,7 @@ import { authStore } from '../../../../../store/auth.store'
 import { queryClient } from '../../../../../lib/queryClient'
 import { StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
+import { toJS } from 'mobx'
 
 // ── Reducer Logic ──────────────────────────────────────────
 
@@ -298,14 +299,12 @@ const IncomeForm = observer(({
   const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(preselectedCounterparty), emptyRow()])
   const [selectedSplits, setSelectedSplits] = useState([])
   const [divivedAmounts, setdivivedAmounts] = useState([])
-  const [tempSalesDeal, setTempSalesDeal] = useState(null)
-  const [isDateModalOpen, setIsDateModalOpen] = useState(false)
-
+  const [title, setTitle] = useState() 
   // Initialize splits and rows if editing existing operation
   useEffect(() => {
     if (initialData && (!isNew || initialData.isCopy) && initialData.operationParts?.length > 0) {
       const parts = initialData.operationParts
-      
+
       const newSplits = []
       if (parts.some(p => p.data_nachisleniya)) newSplits.push({ value: 'Начисление', label: 'Начисление' })
       if (parts.some(p => p.counterparties_id)) newSplits.push({ value: 'Контрагент', label: 'Контрагент' })
@@ -341,10 +340,9 @@ const IncomeForm = observer(({
 
   // Derived flags
   const isDebit = (!showDate && !watchConfirmPayment && watchConfirmAccrual && !watchSalesDeal)
-  const isCredit = (!showDate && watchConfirmPayment && !watchConfirmAccrual && !watchSalesDeal)
+  const isCredit = (!showDate && watchConfirmPayment && !watchConfirmAccrual && !watchSalesDeal) 
 
   const onSubmit = async (data) => {
-
 
     const payload = {
       tip: ['Поступление'],
@@ -403,7 +401,11 @@ const IncomeForm = observer(({
 
   // console.log('initialData', initialData)
 
-  console.log('defaultValues', defaultValues)
+  const handleSelectMyAccount = (value) => {
+    setValue('currency', value)
+    const selected = toJS(appStore.currencies).find(c => c.guid === value)
+    setTitle(`${selected.kod} ${selected.nazvanie}`)
+  }
 
   return (
     <>
@@ -457,15 +459,16 @@ const IncomeForm = observer(({
                   render={({ field }) => (
                     <SelectMyAccounts
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(val) => {
+                        field.onChange(val)
+                        setTitle('')
+                      }}
                       multi={false}
                       type="show"
                       extraValue="currenies_id"
-                      returnValue={(value) => {
-                        setValue('currency', value)
-                      }}
+                      returnValue={handleSelectMyAccount}
                       placeholder="Юрлица и счета"
-                      className="bg-white border rounded-md"
+                      className="bg-white border rounded-md h-[36px]!"
                       hasError={errors.accountAndLegalEntity}
                     />
                   )}
@@ -499,6 +502,7 @@ const IncomeForm = observer(({
                         </div>
                       )}
                     />
+                    <p className='text-xss text-black font-medium text-end w-full'>{title}</p>
 
                   </div>
                   <div className="flex items-center gap-4">
@@ -581,7 +585,7 @@ const IncomeForm = observer(({
                         onChange={field.onChange}
                         name='chart_of_accounts_id'
                         placeholder='Не выбран.'
-                        className='bg-white border rounded-md'
+                        className='bg-white border rounded-md h-[36px]!'
                         returnChartOfAccount={(val) => setValue('chartOfAccount', val)}
                       />
                     )}
@@ -602,7 +606,7 @@ const IncomeForm = observer(({
                         selectedValue={field.value}
                         setSelectedValue={field.onChange}
                         placeholder='Нераспределенный доход'
-                        className='bg-white border rounded-md'
+                        className='bg-white border rounded-md h-[36px]!'
                         type={'Расходы'}
                       />
                     )}
@@ -648,7 +652,7 @@ const IncomeForm = observer(({
                       value={field.value}
                       onChange={field.onChange}
                       placeholder='Выберите сделку...'
-                      className='bg-white border rounded-md'
+                      className='bg-white border rounded-md h-[36px]!'
                       hasError={!!errors.salesDeal}
                     />
                   )}

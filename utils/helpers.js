@@ -1,3 +1,6 @@
+import { toJS } from "mobx"
+import { appStore } from "../store/app.store"
+
 // ── Format helpers ──────────────────────────────────────────
 export const formatDateRu = (dateStr) => {
   if (!dateStr) return ''
@@ -94,7 +97,7 @@ export const StringtoNumber = (text) => {
 
 
 export const getCurrencyIcon = (currency) => {
-  return appStore.currencies.find(c => c.code === currency)?.kod
+  return toJS(appStore.currencies.find(c => c.guid === currency))
 }
 
 export const formatTotalSumma = (summa) => {

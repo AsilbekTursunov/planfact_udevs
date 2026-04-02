@@ -1,7 +1,7 @@
 import DatePicker from "react-multi-date-picker"
 import './style.scss'
 import { Calendar } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/app/lib/utils";
 
 export default function CustomDatePicker({ value, onChange, format = "DD MMM, YYYY", className, ...props }) {
   return (

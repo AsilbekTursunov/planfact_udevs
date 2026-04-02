@@ -2,12 +2,6 @@
 
 import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { observer } from 'mobx-react-lite'
-import {
-  useReactTable,
-  getCoreRowModel,
-  getExpandedRowModel,
-  flexRender,
-} from '@tanstack/react-table'
 import SingleSelect from '@/components/shared/Selects/SingleSelect'
 import CashFlowFilterSidebar from '@/components/reports/cashflow/FilterSidebar'
 import { cashFlowStore } from '@/components/reports/cashflow/cashflow.store'
@@ -23,13 +17,100 @@ const groupingOptions = [
   { value: 'yearly', label: 'По годам' }
 ]
 
+// Format number: empty string for zero, otherwise locale-formatted
+const formatNumber = (value) => {
+  if (value === 0 || value === null || value === undefined) return ''
+  return new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value)
+}
+
+// Recursive row renderer
+function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCellClick }) {
+  const hasChildren = row.subRows && row.subRows.length > 0
+  const isExpanded = !!expandedMap[row.id]
+  const isEndingBalance = row.id === 'ending-balance'
+  const isTotal = row.id === 'overall-cash-flow' || row.id === 'ending-balance'
+  const isBold = depth === 0 || isTotal
+
+  const totalMonthSum = months.reduce((acc, m) => acc + (row.months?.[m] || 0), 0)
+
+  return (
+    <>
+      <tr className={`${styles.tr} ${depth === 0 ? styles.topLevelRow : ''}`}>
+        {/* Name cell */}
+        <td className={styles.td} style={{ paddingLeft: `${depth * 1.25 + 0.75}rem` }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: hasChildren ? 'pointer' : 'default' }}
+            onClick={hasChildren ? () => onToggle(row.id) : undefined}
+          >
+            {hasChildren && (
+              <button className={styles.expandButton}>
+                {isExpanded ? <ExpendClose /> : <ExpendOpen />}
+              </button>
+            )}
+            <span className={isBold ? styles.boldText : ''}>{row.name}</span>
+          </div>
+        </td>
+
+        {/* Month value cells */}
+        {months.map(month => {
+          const val = row.months?.[month] ?? 0
+          const legendItem = legend.find(l => l.key === month)
+          return (
+            <td key={month} className={styles.td} style={{ textAlign: 'right', paddingRight: '1rem' }}>
+              <span
+                className={`${isBold ? styles.boldNumber : ''} ${!isEndingBalance ? styles.clickableCell : ''}`}
+                onClick={() => {
+                  if (isEndingBalance) return
+                  onCellClick(row, { key: month, label: legendItem?.title || month })
+                }}
+              >
+                {formatNumber(val)}
+              </span>
+            </td>
+          )
+        })}
+
+        {/* Total cell */}
+        <td className={styles.td} style={{ textAlign: 'right', paddingRight: '1rem' }}>
+          <span
+            className={`${isBold ? styles.boldNumber : ''} ${!isEndingBalance ? styles.clickableCell : ''}`}
+            onClick={() => {
+              if (isEndingBalance) return
+              onCellClick(row, null)
+            }}
+          >
+            {formatNumber(row.total || totalMonthSum)}
+          </span>
+        </td>
+      </tr>
+
+      {/* Render children if expanded */}
+      {hasChildren && isExpanded && row.subRows.map(child => (
+        <TableRow
+          key={child.id}
+          row={child}
+          months={months}
+          legend={legend}
+          depth={depth + 1}
+          expandedMap={expandedMap}
+          onToggle={onToggle}
+          onCellClick={onCellClick}
+        />
+      ))}
+    </>
+  )
+}
+
 export default observer(function CashFlowReportPage() {
-  const [expanded, setExpanded] = useState({})
+  const [expandedMap, setExpandedMap] = useState({})
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedColumn, setSelectedColumn] = useState(null)
   const [selectedMonth, setSelectedMonth] = useState(null)
-
+  const didAutoExpand = useRef(false)
 
   const { reportData: cashFlowData, isLoading, isFetching } = cashFlowStore
   const loading = isLoading || isFetching
@@ -39,19 +120,15 @@ export default observer(function CashFlowReportPage() {
     label: item.code
   }))
 
-
-  // Refetch data every time user enters the page
   useEffect(() => {
     cashFlowStore.fetchReport()
   }, [])
 
-  // Extract months from legend
-  const months = useMemo(() => {
-    if (!cashFlowData?.legend) return []
-    return cashFlowData.legend.map(item => item.key)
-  }, [cashFlowData])
+  // Extract legend (month columns)
+  const legend = useMemo(() => cashFlowData?.legend || [], [cashFlowData])
+  const months = useMemo(() => legend.map(l => l.key), [legend])
 
-  // Transform API data into hierarchical structure
+  // Transform rows into tree structure with section context
   const data = useMemo(() => {
     if (!cashFlowData?.rows) return []
 
@@ -61,13 +138,12 @@ export default observer(function CashFlowReportPage() {
         monthData[monthKey] = row.values?.[monthKey] || 0
       })
 
-      // Determine section (Receipts/Payments/Transfers)
-      let currentSection = sectionName;
+      let currentSection = sectionName
       if (depth === 1) {
-        if (row.name === 'Поступления') currentSection = 'Поступления';
-        if (row.name === 'Выплаты') currentSection = 'Выплаты';
-        if (row.name === 'Списания') currentSection = 'Списания';
-        if (row.name === 'Зачисления') currentSection = 'Зачисления';
+        if (row.name === 'Поступления') currentSection = 'Поступления'
+        if (row.name === 'Выплаты') currentSection = 'Выплаты'
+        if (row.name === 'Списания') currentSection = 'Списания'
+        if (row.name === 'Зачисления') currentSection = 'Зачисления'
       }
 
       const node = {
@@ -87,152 +163,37 @@ export default observer(function CashFlowReportPage() {
       return node
     }
 
-    return cashFlowData?.rows?.map(row => transformRow(row, 0))
+    return cashFlowData.rows.map(row => transformRow(row, 0))
   }, [cashFlowData, months])
 
-  // Auto-expand every top-level row that has children on first load
-  const didAutoExpand = useRef(false)
+  // Auto-expand top-level rows on first load
   useEffect(() => {
-    if (didAutoExpand.current) return
-    if (!Array.isArray(data) || data.length === 0) return
-
+    if (didAutoExpand.current || !Array.isArray(data) || data.length === 0) return
     const initial = {}
-    data.forEach((row, index) => {
-      if (Array.isArray(row.subRows) && row.subRows.length > 0) {
-        initial[String(index)] = true
-      }
+    data.forEach(row => {
+      if (row.subRows?.length > 0) initial[row.id] = true
     })
-
     if (Object.keys(initial).length > 0) {
-      setExpanded(initial)
+      setExpandedMap(initial)
       didAutoExpand.current = true
     }
   }, [data])
 
-  // Format month for display
-  const formatMonth = React.useCallback((monthKey) => {
-    if (!cashFlowData?.legend) return monthKey
-    const legendItem = cashFlowData.legend.find(item => item.key === monthKey)
-    return legendItem?.title || monthKey
-  }, [cashFlowData])
-
-  // Format number
-  const formatNumber = (value) => {
-    if (value === 0 || value === null || value === undefined) return ''
-    return new Intl.NumberFormat('ru-RU', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value)
+  const handleToggle = (id) => {
+    setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
-  const columns = useMemo(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'По статьям учета',
-        size: 400,
-        minSize: 400,
-        cell: ({ row, getValue }) => {
-          const value = getValue()
-          const hasSubRows = row.subRows?.length > 0
-          const isExpanded = row.getIsExpanded()
-
-          return (
-            <div
-              style={{
-                paddingLeft: `${row.depth * 1.5}rem`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                cursor: hasSubRows ? 'pointer' : 'default'
-              }}
-              onClick={hasSubRows ? row.getToggleExpandedHandler() : undefined}
-            >
-              {hasSubRows && (
-                <button className={styles.expandButton}>
-                  {isExpanded ? <ExpendClose /> : <ExpendOpen />}
-                </button>
-              )}
-              <span className={row.depth === 0 ? styles.boldText : ''}>{value}</span>
-            </div>
-          )
-        },
-      },
-      // Dynamic month columns
-      ...months.map(month => ({
-        accessorFn: row => row.months?.[month],
-        id: month,
-        header: formatMonth(month),
-        size: 100,
-        minSize: 100,
-        maxSize: 100,
-        cell: ({ getValue, row }) => {
-          const value = getValue()
-          const isTopLevel = row.depth === 0
-          const isEndingBalance = row.original.id === 'ending-balance'
-
-          return (
-            <span
-              className={`${isTopLevel ? styles.boldNumber : ''} ${!isEndingBalance ? styles.clickableCell : ''}`}
-              onClick={() => {
-                if (isEndingBalance) return
-                setSelectedColumn(row?.original)
-                setSelectedMonth({ key: month, label: formatMonth(month) })
-                setIsModalOpen(true)
-              }}
-            >
-              {formatNumber(value)}
-            </span>
-          )
-        },
-      })),
-      {
-        accessorKey: 'total',
-        header: 'Итого',
-        size: 100,
-        minSize: 100,
-        maxSize: 100,
-        cell: ({ getValue, row }) => {
-          const value = getValue()
-          const isTopLevel = row.depth === 0
-          return (
-            <span
-              className={`${isTopLevel ? styles.boldNumber : ''} ${styles.clickableCell}`}
-              onClick={() => {
-                setSelectedColumn(row?.original)
-                setSelectedMonth(null)
-                setIsModalOpen(true)
-              }}
-            >
-              {formatNumber(value)}
-            </span>
-          )
-        },
-      },
-    ],
-    [months, formatMonth]
-  )
-
-  const table = useReactTable({
-    data,
-    columns,
-    state: { expanded },
-    onExpandedChange: setExpanded,
-    getSubRows: row => row.subRows,
-    getCoreRowModel: getCoreRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-  })
+  const handleCellClick = (row, monthObj) => {
+    setSelectedColumn(row)
+    setSelectedMonth(monthObj)
+    setIsModalOpen(true)
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.contentWrapper}>
-        {/* Cashflow-specific Filter Sidebar */}
-        <CashFlowFilterSidebar
-          isOpen={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
-        />
+        <CashFlowFilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
 
-        {/* Filter Toggle Bar */}
         {!isFilterOpen && (
           <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
             <button className={styles.filterToggleBarButton}>
@@ -243,7 +204,6 @@ export default observer(function CashFlowReportPage() {
           </div>
         )}
 
-        {/* Main Content */}
         <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
@@ -285,56 +245,48 @@ export default observer(function CashFlowReportPage() {
             </div>
           </div>
 
-          <div className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`} style={{ position: 'relative' }}>
-            {/* Loading overlay */}
+          <div
+            className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`}
+            style={{ position: 'relative' }}
+          >
             {loading && (
               <div className={styles.loadingOverlay}>
                 <div className={styles.loadingSpinner} />
                 <span>Загрузка данных...</span>
               </div>
             )}
-            <table className={`${styles.table} ${loading ? styles.tableLoading : ''}`}>
-              <thead className={styles.thead}>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th
-                        key={header.id}
-                        className={styles.th}
-                        style={{ width: header.getSize() }}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
+
+            <table className={`${styles.table}`}>
+              <thead className={"bg-neutral-100 z-10 sticky top-0"}>
+                <tr>
+                  <th className={styles.th} style={{ minWidth: 320 }}>По статьям учета</th>
+                  {legend.map(col => (
+                    <th key={col.key} className={styles.th} style={{ width: 110, textAlign: 'right', paddingRight: '1rem' }}>
+                      {col.title}
+                    </th>
+                  ))}
+                  <th className={styles.th} style={{ width: 110, textAlign: 'right', paddingRight: '1rem' }}>Итого</th>
+                </tr>
               </thead>
               <tbody className={styles.tbody}>
-                {table.getRowModel().rows.map((row, index) => (
-                  <tr
+                {data.map(row => (
+                  <TableRow
                     key={row.id}
-                    className={`${styles.tr} ${row.depth === 0 && index > 0 ? styles.topLevelRow : ''}`}
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <td
-                        key={cell.id}
-                        className={styles.td}
-                        style={{ width: cell.column.getSize() }}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
+                    row={row}
+                    months={months}
+                    legend={legend}
+                    depth={0}
+                    expandedMap={expandedMap}
+                    onToggle={handleToggle}
+                    onCellClick={handleCellClick}
+                  />
                 ))}
               </tbody>
             </table>
-            {/* create table without using react table */}
-
           </div>
         </div>
       </div>
+
       <OperationCashFlowModal
         data={selectedColumn}
         selectedMonth={selectedMonth}

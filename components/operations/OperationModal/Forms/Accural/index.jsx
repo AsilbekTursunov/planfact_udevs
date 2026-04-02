@@ -13,23 +13,29 @@ import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import CustomDatePicker from '../../../../shared/DatePicker'
 import { isFuture } from '../../../../../utils/formatDate'
 import SelectLegelEntitties from '../../../../ReadyComponents/SelectLegelEntitties'
-import { formatAmount, StringtoNumber } from '../../../../../utils/helpers'
+import { formatAmount, getCurrencyIcon, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
 import MyAccountCurrensies from '../../../../ReadyComponents/MyAccountCurrensies'
 import { queryClient } from '../../../../../lib/queryClient'
+import { observer } from 'mobx-react-lite'
+import { appStore } from '../../../../../store/app.store'
+import { toJS } from 'mobx'
 
-const AccuralForm = ({ onCancel, onClose, initialData }) => {
+const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
   const [isFromRasxodChild, setIsFromRasxodChild] = useState(false)
   const [isToRasxodChild, setIsToRasxodChild] = useState(false)
+  const [title, setTitle] = useState()
 
   const isNew = initialData?.isNew
+  const defaultCurrency = toJS(appStore.currencies).find(c => c.guid === appStore.currency.guid)
+  const currencyTitle = title || `${defaultCurrency.kod} ${defaultCurrency.nazvanie}`
 
   const defaultValues = useMemo(() => {
     if (initialData && (!isNew || initialData.isCopy)) {
       const raw = initialData
       return {
         accuralDate: raw.data_operatsii ? formatDate(raw.data_operatsii) : formatDate(new Date()),
-        confirmAccrual: raw.payment_confirmed,
+        confirmAccrual: raw.payment_accrual,
         legalEntity: raw.legal_entity_id || '',
         chartOfAccountWriteOff: raw.chart_of_accounts_id || null,
         summa: raw.summa !== undefined && raw.summa !== null ? Math.abs(Number(raw.summa)) : (raw.rawData?.summa !== undefined && raw.rawData?.summa !== null ? Math.abs(Number(raw.rawData.summa)) : 0),
@@ -62,7 +68,7 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       repeatUnit: null,
       repeatUntil: null,
       repeatCount: null,
-      currency: '',
+      currency: null,
     }
   }, [initialData, isNew])
 
@@ -75,8 +81,23 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
   })
 
 
+  const handleSelect = (value) => {
+    setValue('legalEntity', value)
+    const selected = getCurrencyIcon(currency)
+    if (selected) {
+      setTitle(`${selected.kod} ${selected.nazvanie}`)
+    } else {
+      setTitle(`${defaultCurrency.kod} ${defaultCurrency.nazvanie}`)
+    }
+  }
+
+  useMemo(() => {
+    setTitle(`${defaultCurrency.kod} ${defaultCurrency.nazvanie}`)
+  }, [])
+
 
   const legalEntityGuid = watch('legalEntity')
+  const currency = watch('currency')
 
 
   const onSubmit = async (data) => {
@@ -84,8 +105,8 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       const requestData = {
         tip: ['Начисление'],
         data_operatsii: data.accuralDate,
-        payment_confirmed: data.confirmAccrual,
-        legal_entity_id: data.legalEntity, 
+        payment_accural: data.confirmAccrual,
+        legal_entity_id: data.legalEntity,
         chart_of_accounts_id: data.chartOfAccountWriteOff,
         chart_of_accounts_id_2: data.chartOfAccountEnrollment,
         sales_transactions_id: data.sellingDealId,
@@ -99,7 +120,7 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
         repeat_count: data.repeatCount,
         comment: data.comment,
         summa: StringtoNumber(data.summa) || '',
-        currenies_id: data.currency,
+        currenies_id: data.currency || appStore.currency.guid,
       }
 
       if (!isNew) {
@@ -127,8 +148,18 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       console.error('Error in AccuralForm handleSubmit:', error)
     }
   }
+  const handleSelectCurrency = (value) => {
+    setValue('currency', value)
+    const selected = getCurrencyIcon(value)
+    if (selected) {
+      setTitle(`${selected.kod} ${selected.nazvanie}`)
+    } else {
+      setTitle(`${defaultCurrency.kod} ${defaultCurrency.nazvanie}`)
+    }
+  }
 
-  console.log('israsxod', isFromRasxodChild);
+
+
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col h-full overflow-hidden text-slate-900">
@@ -187,16 +218,25 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
                 render={({ field }) => (
                   <SelectLegelEntitties
                     value={field.value}
-                    onChange={field.onChange}
-                    multi={false} 
+                    onChange={handleSelect}
+                    multi={false}
+                    childFieldName={'currenies_id'}
+                    returnFieldValue={(value) => {
+                      if (value) {
+                        setValue('currency', value)
+                      } else {
+                        setValue('currency', '')
+                      }
+                    }}
                     placeholder="Выберите юрлицо..."
-                    className="bg-white border rounded-md"
+                    className="bg-white border rounded-md flex-1 h-[36px]!"
                     hasError={errors.legalEntity}
                   />
                 )}
               />
               {errors.legalEntity && <span className="text-xs text-red-500">{errors.legalEntity.message}</span>}
             </div>
+            <MyAccountCurrensies guid={legalEntityGuid} value={watch('currency')} onChange={handleSelectCurrency} className="w-40 bg-white " wrapperClassName={'w-40'} />
           </div>
 
           {/* Статья списания */}
@@ -262,10 +302,7 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
                   )}
                 />
               </div>
-              <MyAccountCurrensies guid={legalEntityGuid} value={watch('currency')} onChange={(val) => {
-                setValue('currency', val)
-                console.log(val)
-              }} className="flex-1 bg-white " />
+              <p className='text-sm text-neutral-600 mt-2 font-bold text-end w-full'>{currencyTitle}</p>
             </div>
           </div>
 
@@ -388,6 +425,6 @@ const AccuralForm = ({ onCancel, onClose, initialData }) => {
       </div>
     </form>
   )
-}
+})
 
 export default memo(AccuralForm)

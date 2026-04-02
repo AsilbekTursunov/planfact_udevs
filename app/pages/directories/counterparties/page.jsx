@@ -43,6 +43,7 @@ import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import { formatAmount } from '../../../../utils/helpers'
 import { ChevronDown } from 'lucide-react'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
+import ScreenLoader from '../../../../components/shared/ScreenLoader'
 
 const CounterpartiesPage = observer(() => {
 
@@ -468,7 +469,7 @@ const CounterpartiesPage = observer(() => {
 
 
   return (
-    <div className={styles.container}>
+    <div className="w-[calc(100%-80px)] flex h-[calc(100%-600px)] fixed left-[80px] top-[60px]">
       <FilterSidebar
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
@@ -576,8 +577,9 @@ const CounterpartiesPage = observer(() => {
           </button>
         </div>
       )}
+      {isFetching && !isLoadingCounterparties && <ScreenLoader />}
 
-      <div ref={contentRef} className={cn(styles.content, isFilterOpen && styles.contentWithFilter)}>
+      <div ref={contentRef} className={`p-4 w-full h-dvh overflow-y-auto flex-1 bg-white ${isFilterOpen ? "ml-[230px]" : ""}`}>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerContent}>
@@ -651,8 +653,8 @@ const CounterpartiesPage = observer(() => {
         </div>
 
         {/* Table Container */}
-        <div ref={tableWrapperRef} className="flex-1 overflow-auto relative px-3">
-          <table className="w-full text-xs text-left">
+        <div ref={tableWrapperRef} className="flex-1 w-full overflow-auto relative px-3">
+          <table className="w-full relative text-xs text-left">
             <thead className="sticky top-0 bg-neutral-100/95 shadow-[0_1px_2px_rgba(0,0,0,0.05)] z-10 text-neutral-500 font-medium">
               <tr>
                 <th className="p-2 border-b border-neutral-200 w-10">
@@ -857,7 +859,7 @@ const CounterpartiesPage = observer(() => {
         </div>
 
         {/* Loading indicator */}
-        {isFetching && hasMore && page > 1 && (
+        {/* {isFetching && hasMore && page > 1 && (
           <div style={{
             display: 'flex',
             justifyContent: 'center',
@@ -886,12 +888,8 @@ const CounterpartiesPage = observer(() => {
                 }
               `}</style>
           </div>
-        )}
-        {isFetching && !isLoadingCounterparties && (
-          <div className={styles.fetchOverlay}>
-            <div className={styles.loadingSpinner} style={{ width: 28, height: 28, borderWidth: 3 }} />
-          </div>
-        )}
+        )} */}
+
 
         {/* Footer */}
         <div className={cn(

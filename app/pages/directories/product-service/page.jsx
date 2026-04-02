@@ -19,6 +19,7 @@ import CustomModal from '../../../../components/shared/CustomModal';
 import Loader from '../../../../components/shared/Loader'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
+import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
 
 
 export default function LegalEntitiesPage() {
@@ -28,8 +29,8 @@ export default function LegalEntitiesPage() {
   const [isCreateSingleOpen, setIsCreateSingleOpen] = useState(false)
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
   const [filters, setFilters] = useState({
-    type: { value: 'Все', label: 'Все' },
-    group: { value: 'none', label: 'Без группировки' },
+    type: 'Все',
+    group: 'none',
   })
 
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -297,7 +298,7 @@ export default function LegalEntitiesPage() {
       await deleteProductService({
         urlMethod: 'DELETE',
         urlParams: `/items/product_and_service?from-ofs=true`,
-        data: { guid: guids }
+        data: { ids: guids }
       });
       queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] });
       queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] });
@@ -372,8 +373,8 @@ export default function LegalEntitiesPage() {
 
   return (
     <>
-      <div className="flex fixed left-[80px] top-[60px] flex-col flex-1 w-[calc(100%-80px)] h-[calc(100%-60px)] p-3 gap-4">
-        <div className="flex items-center justify-between">
+      <div className="flex fixed bg-white/10 overflow-y-auto pb-20  left-[80px] top-[60px] flex-col flex-1 w-[calc(100%-80px)] h-[calc(100%-60px)]  gap-4">
+        <div className="flex items-center sticky top-0 bg-red-400 z-10 p-3 justify-between">
           <div className="flex items-center gap-3">
             <h1 className="h1 text-xl text-neutral-700 font-semibold">Товары & Услуги</h1>
             <div ref={menuRef} className="flex items-center gap-2 relative">
@@ -403,34 +404,32 @@ export default function LegalEntitiesPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 ">
-            {/* <button className="outline-btn flex items-center gap-2 bg-white p-2 ">
-              <Download size={16} />
-              <span>.xls</span>
-            </button> */}
+          <div className="flex items-center gap-2 "> 
             <div className="w-32 h-10">
-              <Select
-                instanceId="product-service-type-filter"
-                options={[
+              <SingleSelect
+                data={[
                   { value: 'Все', label: 'Все' },
                   { value: 'Товары', label: 'Товары' },
                   { value: 'Услуги', label: 'Услуги' }
                 ]}
                 value={filters.type}
-                isSearchable={false}
+                withSearch={false}
+                isClearable={false}
                 onChange={(value) => setFilters(prev => ({ ...prev, type: value }))}
+                className={'bg-white'}
               />
             </div>
             <div className="w-44 h-10">
-              <Select
-                instanceId="product-service-grouping-filter"
-                options={[
+              <SingleSelect
+                data={[
                   { value: 'none', label: 'Без группировки' },
                   { value: 'group', label: 'По группам' }
                 ]}
                 value={filters.group}
+                withSearch={false}
+                isClearable={false}
                 onChange={(value) => setFilters(prev => ({ ...prev, group: value }))}
-                isSearchable={false}
+                className={'bg-white'}
               />
             </div>
             <div className="w-64 h-10">
@@ -440,6 +439,7 @@ export default function LegalEntitiesPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={18} />}
+                className={'bg-white h-[34px]'}
               />
             </div>
           </div>
@@ -672,7 +672,7 @@ export default function LegalEntitiesPage() {
             </tbody>
           </table>
         </div>
-
+        Lorem ipsum dolor sit amet, consectetur adipisicing elit. Incidunt quam, quia laboriosam laborum delectus iusto adipisci possimus, veritatis doloremque accusantium magnam repudiandae enim maxime! Aut excepturi dolorem rerum quos quia eos explicabo dolorum architecto, quam, sequi at dolore, fugit inventore iusto harum ex odit laboriosam tempora sint vel. Enim hic aliquid voluptate molestiae officiis perferendis tempore est harum cumque? Accusantium sed ipsa deleniti nostrum nesciunt, voluptatibus fuga deserunt error aut minus? Aut suscipit explicabo aspernatur commodi ducimus veniam quidem sequi eum fugit, perferendis id fugiat consectetur quaerat tenetur corporis in nam? Dicta amet corrupti aperiam sint eligendi dolores nostrum veniam facilis ipsum reprehenderit quaerat quam fugit, voluptatibus sequi sapiente esse temporibus non quod tempore repellendus consectetur in voluptatem perspiciatis magni. Cum earum temporibus facilis vero quis placeat voluptatum corrupti pariatur eveniet impedit voluptatibus, reiciendis omnis quae ducimus odit obcaecati expedita. Iure nulla repudiandae quisquam voluptate in, praesentium corrupti, alias architecto quam perferendis cum sit eius! Aliquid, pariatur id, recusandae quasi nisi consequuntur magni laboriosam quod tempore consequatur, quibusdam voluptatibus aspernatur vel odio debitis beatae quisquam. Amet, accusantium reiciendis. Labore praesentium enim nobis laborum quo nam doloremque, cumque similique. Dolore temporibus consequuntur tenetur voluptate beatae, rerum, quidem deleniti obcaecati repudiandae ex, qui nesciunt ab unde doloribus sapiente voluptas ducimus! Ut incidunt aliquam corporis veniam vitae officia animi maxime, quo magnam. Ea repellendus nihil qui optio inventore deleniti alias hic fuga explicabo perferendis, vitae suscipit consectetur. Laborum dignissimos qui reprehenderit delectus voluptas nihil dolor inventore, amet unde ratione minima aliquid reiciendis at error, quasi id libero consectetur pariatur quaerat est rerum cupiditate molestiae! Tempora ipsum eos debitis sed eaque neque quos placeat eum illo autem laudantium, deleniti fugiat molestiae natus dicta laborum molestias sit reprehenderit quisquam, adipisci facere. Asperiores aliquid ea odio et veniam amet facilis distinctio, in dolorem inventore! Harum ratione architecto minus ipsa earum nisi facilis iusto error, nesciunt excepturi illo possimus dolore asperiores voluptatem officiis perferendis iste dolorum itaque? Accusamus reprehenderit sit dolorum explicabo sunt cumque facere inventore, voluptatum labore omnis. Molestiae tenetur error adipisci veritatis delectus sapiente, totam iusto ipsa sint id consectetur quidem mollitia quibusdam eius praesentium dolores voluptate laborum, nihil laudantium quam? Eius est saepe officiis, ullam libero praesentium natus quae facilis exercitationem commodi quas aperiam excepturi vitae debitis omnis minus corrupti beatae ut voluptas laboriosam temporibus! Tempora voluptatum porro maxime autem aut, praesentium modi dolorem, nulla animi dolorum commodi laborum sed in! Earum beatae maxime esse animi, iure nemo. Ipsa quis sit corrupti incidunt. Ipsam a ipsa molestias sequi? Velit quidem obcaecati tempora veritatis sed corporis porro, accusamus harum minus quia quod eaque ducimus mollitia cupiditate, cumque cum tempore vel blanditiis dolorem illum. Ipsum, a. Laudantium dolores odio tenetur. Sed quidem consequatur omnis laborum aut nihil beatae! Perferendis reprehenderit suscipit quae dolorum in aperiam. Harum optio possimus expedita error dolorem, quo fugit ratione et soluta esse temporibus odio officiis laboriosam inventore consequuntur quae nam? Sint, deleniti! Voluptate architecto voluptates incidunt id repellendus culpa minima ratione in. Rem, non. Quae dolores fuga eligendi doloribus sit iure sint incidunt tenetur expedita id adipisci doloremque quo facere ea consectetur, perspiciatis autem facilis deserunt odio porro neque, magni quod saepe hic. Unde eligendi sint ut, voluptas impedit perferendis earum? Tempore minima, commodi excepturi tempora id tenetur quia vel distinctio doloribus perspiciatis esse officiis quidem in blanditiis necessitatibus quas, aliquid assumenda magni atque consequatur iure. Non hic sed ab ullam molestiae, accusantium eum quod enim est nostrum, laboriosam vel temporibus delectus alias libero. Dolores officia vitae accusamus fuga error quae, at odio sequi voluptate quas tempora, natus atque incidunt modi sit rerum similique doloremque debitis veritatis eligendi molestiae! Adipisci, expedita tenetur id tempora repellendus asperiores laborum in consectetur, aut eos sequi exercitationem, sint laboriosam? Non maxime atque aliquid, corporis provident cumque, veniam tempora expedita vitae animi illum, hic nulla sed vero laboriosam officiis porro accusamus deserunt consectetur odio id. Ut ab dicta impedit corporis corrupti facilis numquam sit quisquam, nostrum neque repudiandae at ea sed cum accusamus expedita quo earum. Corporis in magnam veniam ea exercitationem! Ducimus officia perspiciatis aliquam provident corporis, optio incidunt at vitae nihil velit, nulla labore sed autem architecto iusto commodi voluptatibus quasi dolorem tempora, deleniti quisquam consectetur. Minima odio ad aliquam quod vel. Eos, ex non distinctio esse dicta blanditiis recusandae commodi perspiciatis expedita magni, molestiae sapiente libero porro aut inventore vitae cum. Fugiat, nisi natus, officiis, laborum sunt doloremque neque vero nemo nulla ipsum illum numquam exercitationem impedit blanditiis id nihil atque! Esse molestias, eum blanditiis facere rem architecto repellendus beatae. Dolor facilis obcaecati sunt nostrum officia quasi quisquam in vitae adipisci, eum quos deserunt. Cumque expedita quae quam soluta, obcaecati dolorem repudiandae officiis quidem dolorum porro, eveniet eius, nisi alias voluptates quo. Porro totam animi qui blanditiis, voluptatem ipsam odit nostrum sunt dolores harum cumque velit, sed illo autem aliquid facere eum corporis! Non, facere tempore omnis eaque laborum cupiditate excepturi, porro fugiat cumque asperiores rerum dignissimos alias maiores pariatur voluptas reprehenderit aspernatur. Eaque consequuntur eum ut illum? Quisquam ducimus officiis accusantium repellendus modi quas, eius amet facere reiciendis commodi voluptatem corporis labore illum placeat cumque porro iusto provident magnam omnis laborum totam! Maiores eligendi voluptatem molestias esse. Et, unde veritatis tempore quae nemo aliquid accusamus consequatur rerum animi quam eos laborum cum nesciunt consectetur, quia, eligendi modi deleniti. Accusantium, quis earum? Voluptates dolorum quod rerum nesciunt culpa tempora corrupti eius omnis, quo esse aut optio pariatur recusandae iure! Nisi in sint, iusto impedit consequatur aut fugit. Repellat debitis nam, officia praesentium ab sequi omnis ad libero! Minima similique veniam exercitationem quae ex, amet excepturi tenetur tempore blanditiis maxime, ea provident libero soluta illo a obcaecati dolorum ipsa. Temporibus optio quia culpa earum itaque laborum libero, minima deserunt cumque illo dicta. Atque, recusandae delectus quasi tempore voluptas mollitia deleniti dignissimos incidunt ut eaque numquam soluta voluptatum ea, assumenda quam saepe temporibus quidem. Nihil assumenda repellat fugit enim non qui dolorem? Alias vitae repellat harum, molestiae tempore cum suscipit magni in saepe facilis asperiores amet vero voluptatem, cumque labore debitis aspernatur nisi! Et, dignissimos.       
       </div>
       {/* Footer */}
       <div className="fixed bottom-0 left-[80px] py-4 px-3 right-0 bg-white border-t border-gray-200">

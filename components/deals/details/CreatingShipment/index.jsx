@@ -50,7 +50,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
         if (initialData.product_and_service_data) {
           setRows(initialData?.product_and_service_data?.map((row, idx) => ({
             id: idx + 1,
-            name: row.guid || row.product_and_service_id || '',
+            name: row.product_and_service_id || row.guid || '',
             quantity: row.Kol_vo ?? row?.quantity ?? 0,
             price: row.TSena_za_ed ?? row?.tsena_za_ed ?? 0,
             discount: String(row.Skidka ?? row?.discount ?? ''),
@@ -186,7 +186,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
         product_and_service_data: productData.map(row => {
           const product = productServicesList.find(p => p.guid === row.name)
           return {
-            guid: product?.guid || undefined,
+            product_and_service_id: product?.guid || undefined,
             Naimenovanie: product ? product.name : "",
             Artikul: product?.article || "",
             Kol_vo: Number(row.quantity?.toString().replace(/\s/g, '')) || 0,

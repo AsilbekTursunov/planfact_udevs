@@ -19,6 +19,7 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
 
 
   const selectOptions = useMemo(() => {
+    console.log(myAccounts)
     if (!myAccounts) return []
     const unique = new Map();
     myAccounts.forEach((account) => {
@@ -36,6 +37,8 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
   useEffect(() => {
     if (selectOptions?.length === 1 && value !== selectOptions[0].value) {
       onChange(selectOptions[0].value)
+    } else if (selectOptions?.length === 0 && value !== '') {
+      onChange('')
     }
   }, [selectOptions, onChange, value])
 

@@ -132,7 +132,7 @@ const OperationTableRow = observer(({
           </div>}
           {(op?.tip == "Начисление" || op?.tip == "Отгрузка") && <>
             <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
-              <span>{op.legal_entity_name}</span>
+              <span>[{op.legal_entity_name}]</span>
             </div>
           </>}
         </td>

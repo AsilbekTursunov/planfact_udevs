@@ -23,7 +23,6 @@ import SingleCounterParty from '../../../../ReadyComponents/SingleCounterParty'
 import SingleZdelka from '../../../../ReadyComponents/SingleZdelka'
 import SingleSelect from '../../../../shared/Selects/SingleSelect'
 import SplitAmount from '../../SplitAmount'
-import CustomModal from '../../../../shared/CustomModal'
 
 // Icons
 import { DebitIcon, CreditIcon } from '../../../../../constants/icons'
@@ -33,6 +32,7 @@ import { authStore } from '../../../../../store/auth.store'
 import { queryClient } from '../../../../../lib/queryClient'
 import { StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
+import { toJS } from 'mobx'
 
 // ── Reducer Logic ──────────────────────────────────────────
 
@@ -298,8 +298,7 @@ const PaymentForm = observer(({
   const [rows, dispatch] = useReducer(rowsReducer, [emptyRow(preselectedCounterparty), emptyRow()])
   const [selectedSplits, setSelectedSplits] = useState([])
   const [divivedAmounts, setdivivedAmounts] = useState([])
-  const [tempSalesDeal, setTempSalesDeal] = useState(null)
-  const [isDateModalOpen, setIsDateModalOpen] = useState(false)
+  const [title, setTitle] = useState()
 
   // Initialize splits and rows if editing existing operation
   useEffect(() => {
@@ -400,6 +399,12 @@ const PaymentForm = observer(({
     }
   }
 
+  const handleSelectMyAccount = (value) => {
+    setValue('currency', value)
+    const selected = toJS(appStore.currencies).find(c => c.guid === value)
+    setTitle(`${selected.kod} ${selected.nazvanie}`)
+  }
+
 
   // console.log('initialData', initialData)
 
@@ -455,15 +460,16 @@ const PaymentForm = observer(({
                   render={({ field }) => (
                     <SelectMyAccounts
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(val) => {
+                        field.onChange(val)
+                        setTitle('')
+                      }}
                       multi={false}
                       type="show"
                       extraValue="currenies_id"
-                      returnValue={(value) => {
-                        setValue('currency', value)
-                      }}
+                      returnValue={handleSelectMyAccount}
                       placeholder="Юрлица и счета"
-                      className="bg-white border rounded-md"
+                      className="bg-white border rounded-md h-[36px]!"
                       hasError={errors.accountAndLegalEntity}
                     />
                   )}
@@ -497,7 +503,7 @@ const PaymentForm = observer(({
                         </div>
                       )}
                     />
-
+                    <p className='text-xss text-black font-medium text-end w-full'>{title}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <SplitAmount
@@ -576,7 +582,7 @@ const PaymentForm = observer(({
                         onChange={field.onChange}
                         name='chart_of_accounts_id_2'
                         placeholder='Не выбран.'
-                        className='bg-white border rounded-md'
+                        className='bg-white border rounded-md h-[36px]!'
                         returnChartOfAccount={(val) => setValue('chartOfAccount', val)}
                       />
                     )}
@@ -597,7 +603,7 @@ const PaymentForm = observer(({
                         selectedValue={field.value}
                         setSelectedValue={field.onChange}
                         placeholder='Нераспределенный доход'
-                        className='bg-white border rounded-md'
+                        className='bg-white border rounded-md h-[36px]!'
                         type={'Доходы'}
                       />
                     )}
@@ -643,7 +649,7 @@ const PaymentForm = observer(({
                       value={field.value}
                       onChange={field.onChange}
                       placeholder='Выберите сделку...'
-                      className='bg-white border rounded-md'
+                      className='bg-white border rounded-md h-[36px]!'
                       hasError={!!errors.salesDeal}
                     />
                   )}
