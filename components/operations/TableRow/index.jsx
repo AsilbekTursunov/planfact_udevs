@@ -166,8 +166,8 @@ const OperationTableRow = observer(({
             <span className='text-neutral-400'>{op.opisanie}</span>
           </div>}
           {op?.tip == "Начисление" && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
-            <span className={`${isDebit ? 'opacity-50' : ''}`}>{op.chartOfAccounts}</span>
-            <span className={`${isCredit ? 'opacity-50' : ''}`}>{op.chartOfAccounts2}</span>
+            <span className={`line-clamp-1 ${isDebit ? 'opacity-50' : ''}`}>{op.chartOfAccounts} [по дебету]</span>
+            <span className={`line-clamp-1 ${isCredit ? 'opacity-50' : ''}`}>{op.chartOfAccounts2} [по кредиту]</span>
           </div>}
           {(op?.tip == "Отгрузка") && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
             <span>{op.chartOfAccounts}</span>
