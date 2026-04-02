@@ -107,7 +107,7 @@ const OperationTableRow = observer(({
         </td>
         {/* date */}
         <td className={cn(styles.tableCell, styles.dateCell, isActive && styles.activeRow)}>
-          <div className={`${!op.payment_confirmed && 'text-primary'}`}>
+          <div className={cn(op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
             {op.operationParts?.length > 0 ? <>
               <div className={styles.childrenControl} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
                 {open ? <ExpendClose /> : <ExpendOpen />}
@@ -122,16 +122,16 @@ const OperationTableRow = observer(({
         {/* shot */}
         <td className={cn(styles.tableCell, styles.accountCell, isActive && styles.activeRow)}>
           {op?.tip == "Перемещение" && <>
-            <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+            <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
               <span>{op.my_account_name}</span>
               <span>{op.my_account_name2}</span>
             </div>
           </>}
-          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
             <span>{op.my_account_name}</span>
           </div>}
           {(op?.tip == "Начисление" || op?.tip == "Отгрузка") && <>
-            <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+            <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
               <span>[{op.legal_entity_name}]</span>
             </div>
           </>}
@@ -153,19 +153,19 @@ const OperationTableRow = observer(({
         </td>
         {/* counterparty */}
         <td className={cn(styles.tableCell, styles.counterpartyCell, isActive && styles.activeRow)}>
-          <p className={`${!op.payment_confirmed && 'text-primary'}`}>{titleContragent}</p>
+          <p className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>{titleContragent}</p>
         </td>
         {/* statya */}
         <td className={cn(styles.tableCell, styles.statusCell, isActive && styles.activeRow)}>
-          {op?.tip == "Перемещение" && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+          {op?.tip == "Перемещение" && <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
             <span className={`${isSpinasiya ? 'opacity-50' : ''}`}>[Перемещение - списание]</span>
             <span className={`${isZachisleniya ? 'opacity-50' : ''}`}>[Перемещение - зачисление]</span>
           </div>}
-          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={`flex flex-col items-start `}>
+          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
             <span className={`text-neutral-700 ${!op.payment_confirmed && 'text-primary'}`}>{titleChartOfAccounts}</span>
             <span className='text-neutral-400'>{op.opisanie}</span>
           </div>}
-          {op?.tip == "Начисление" && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+          {op?.tip == "Начисление" && <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
             <span className={`line-clamp-1 ${isDebit ? 'opacity-50' : ''}`}>{op.chartOfAccounts} [по дебету]</span>
             <span className={`line-clamp-1 ${isCredit ? 'opacity-50' : ''}`}>{op.chartOfAccounts2} [по кредиту]</span>
           </div>}
@@ -179,7 +179,7 @@ const OperationTableRow = observer(({
         <td className={cn(styles.tableCell, isActive && styles.activeRow)}>
           {(op.tip === "Поступление" || op.tip === "Выплата" || op.tip === "Отгрузка") && <p className={`text-neutral-700 ${!op.payment_confirmed && 'text-primary'}`}>{op?.selling_deal_name || '-'}</p>}
           {(op.tip === "Начисление") && <div className='flex flex-col items-start relative group text-neutral-700'>
-            {titleDeals?.children?.length === 0 && <p className={`${!op.payment_confirmed && 'text-primary'}`}>{titleDeals?.title || ''}</p>}
+            {titleDeals?.children?.length === 0 && <p className={`${!op.payment_accrual && 'text-primary'}`}>{titleDeals?.title || ''}</p>}
             {titleDeals?.children?.length > 0 && <>
               {titleDeals?.title || '-'}
               <div className='absolute hidden group-hover:block space-y-1 w-32  z-50 bg-white shadow-md rounded-md p-2 top-[130%] -left-10 ring-1 ring-gray-200'>
