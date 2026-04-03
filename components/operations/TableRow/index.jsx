@@ -96,7 +96,7 @@ const OperationTableRow = observer(({
         }}
       >
         {/*  checkbox */}
-        <td
+        {(toggleOperation || showIndex) && <td
           className={cn(styles.tableCell, styles.tableCellIndex)}
           onClick={e => e.stopPropagation()}
         >
@@ -104,7 +104,7 @@ const OperationTableRow = observer(({
             checked={selectedOperations.includes(op.id)}
             onChange={() => toggleOperation(op.id)}
           /> : <span>{showIndex}</span>}
-        </td>
+        </td>}
         {/* date */}
         <td className={cn(styles.tableCell, styles.dateCell, isActive && styles.activeRow)}>
           <div className={cn(op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>

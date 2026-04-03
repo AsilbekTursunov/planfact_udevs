@@ -843,7 +843,7 @@
   padding: 0 16px 0px;
   border: none !important;
   display: flex;
-  position: relative;
+  // position: relative;
   overflow: hidden;
 }
 
@@ -978,14 +978,14 @@
 }
 
 .tableHeaderRow {
-  background: #F2F4F7;
+  // background: #F2F4F7;
   border-bottom: 2px solid #e5e7eb;
 }
 
 .tableHeaderCellActions {
   // position: sticky;
     // right: 0;
-  background: #F2F4F7 !important;
+  // background: #F2F4F7 !important;
   z-index: 21;
   min-width: 48px;
   width: 48px;

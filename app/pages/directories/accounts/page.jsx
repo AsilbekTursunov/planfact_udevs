@@ -119,7 +119,7 @@ export default observer(function AccountsPage() {
 
   const summary = useMemo(() => {
     return bankAccountsData?.data?.summary
-  }, [bankAccountsData]) 
+  }, [bankAccountsData])
 
 
   const { mutateAsync: deleteGroupMutate, isPending: isPendingDeleteGroup } = useUcodeRequestMutation({
@@ -332,8 +332,8 @@ export default observer(function AccountsPage() {
 
 
   return (
-    <div className={styles.container}>
-      <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}>
+    <div className="w-[calc(100%-80px)] flex h-[calc(100%-60px)]  fixed left-[80px] top-[60px]">
+      <FilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(!isFilterOpen)}>
         <FilterSection title="Тип">
           <div className="space-y-2.5 flex flex-col items-start">
             <OperationCheckbox
@@ -378,18 +378,7 @@ export default observer(function AccountsPage() {
         </FilterSection>
       </FilterSidebar>
 
-      {/* Filter Toggle Bar */}
-      {!isFilterOpen && (
-        <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
-          <button className={styles.filterToggleButton}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      <div className={cn(styles.content, isFilterOpen && styles.contentWithFilter)}>
+      <div className={cn(` pb-40 w-full h-dvh  overflow-y-auto flex-1 bg-white `)}>
         <div className={styles.header}>
           <div className={styles.headerContent}>
             <div className={styles.titleRow}>
@@ -601,10 +590,10 @@ export default observer(function AccountsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </div> 
 
         {/* Footer - Always visible at bottom */}
-        <div className={cn(styles.footer, isFilterOpen && styles.footerWithFilter)}>
+        <div className={cn("absolute bottom-0 z-10 bg-neutral-100  p-2 w-full ")}>
           <div className={styles.footerText}>
             <span className={styles.footerTextBold}>
               {summary?.accounts_count} {'счетов'}

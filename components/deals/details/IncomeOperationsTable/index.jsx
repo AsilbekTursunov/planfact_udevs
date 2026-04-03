@@ -144,7 +144,7 @@ const IncomeOperationsTable = ({ sellingDealId, onAdd }) => {
                     <td className={`p-3 text-right ${isActive ? 'active-row' : ''}`}>
                       <div className="flex items-center justify-end gap-4 h-6">
                         <p className={`font-base text-green-600`}>
-                          {'+'}{formatAmount(item.summa)} UZS
+                          {'+'}{formatAmount(item.summa)} {item.currency}
                         </p>
                         <div className=' items-center  hidden group-hover:flex '>
                           <button onClick={(e) => { e.stopPropagation(); handleEditOperation(item); }} className='text-neutral-600 size-6 hover:bg-gray-200 cursor-pointer flex items-center justify-center rounded-full hover:text-neutral-900'>

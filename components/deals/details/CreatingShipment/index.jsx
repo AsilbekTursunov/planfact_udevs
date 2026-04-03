@@ -17,9 +17,11 @@ import { appStore } from '../../../../store/app.store'
 import { observer } from 'mobx-react-lite'
 import { cn } from '@/app/lib/utils'
 import { toJS } from 'mobx'
+import { shipmentsDto } from '../../../../lib/dtos/shipmentsDto'
+import { keepPreviousData } from '@tanstack/react-query'
 
-const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false }) => {
-  const today = new Date()
+const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false, onSuccess }) => {
+  const today = useMemo(() => new Date(), [])
 
   const [shipmentDate, setShipmentDate] = useState(today.toISOString().split('T')[0])
   const isFutureDate = new Date(shipmentDate).setHours(0, 0, 0, 0) > today.setHours(0, 0, 0, 0)
@@ -33,40 +35,49 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
   const [rows, setRows] = useState([
     { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
   ])
+  const [code, setCode] = useState('')
+  const { data: SingleShipment, isPending: isGettingSingleShipment } = useUcodeRequestQuery({
+    method: "get_shipment_transaction",
+    data: {
+      guid: initialData?.guid
+    },
+    querySetting: {
+      select: response => response?.data?.data,
+      enable: !!initialData?.guid,
+      placeholder: keepPreviousData
+    }
+  })
 
-  const myAccountCode = useMemo(() => {
-    return toJS(appStore.currencies).find(item => item.guid === currency)?.icon
-  }, [currency])
 
   useEffect(() => {
-    if (open) {
-      if (initialData) {
-        setShipmentDate(initialData.data_operatsii?.split('T')[0] || today.toISOString().split('T')[0])
-        setIsPlanned(initialData.planned_shipment || false)
-        setLegalEntity(initialData.legal_entity_id || '')
-        setClient(initialData.partners_id || kontragentId || '')
-        setChartOfAccounts(initialData.chart_of_accounts_id || '')
+    if (open && SingleShipment) {
+      setShipmentDate(SingleShipment.data_nachislenie?.split('T')[0] || today.toISOString().split('T')[0])
+      setIsPlanned(SingleShipment.planned_shipment || false)
+      setLegalEntity(SingleShipment.legal_entity_id || '')
+      setClient(SingleShipment.partners_id || kontragentId || '')
+      setChartOfAccounts(SingleShipment.chart_of_accounts_id || '')
+      setCurrency(SingleShipment.currencies_id || '')
 
-        if (initialData.product_and_service_data) {
-          setRows(initialData?.product_and_service_data?.map((row, idx) => ({
-            id: idx + 1,
-            name: row.product_and_service_id || row.guid || '',
-            quantity: row.Kol_vo ?? row?.quantity ?? 0,
-            price: row.TSena_za_ed ?? row?.tsena_za_ed ?? 0,
-            discount: String(row.Skidka ?? row?.discount ?? ''),
-            nds: String(row.NDS ?? row?.nds ?? ''),
-            sum: row.Summa ?? row?.summa ?? 0
-          })))
-        }
-      } else {
-        setShipmentDate(today.toISOString().split('T')[0])
-        setIsPlanned(false)
-        setLegalEntity('')
-        setClient(kontragentId || '')
-        setRows([{ id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }])
+      const currencies = toJS(appStore.currencies)
+      const icon = currencies?.find(item => item.guid === SingleShipment.currencies_id)?.icon
+      setCode(icon || '')
+
+      if (SingleShipment.product_and_service_data) {
+        setRows(SingleShipment.product_and_service_data.map((row, idx) => ({
+          id: idx + 1,
+          row_guid: row.guid,
+          name: row.product_and_service_id || '',
+          naimenovanie: row.Naimenovanie || '',
+          artikul: row.Artikul || '',
+          quantity: row.Kol_vo ?? 0,
+          price: row.TSena_za_ed ?? 0,
+          discount: String(row.Skidka ?? ''),
+          nds: String(row.NDS ?? ''),
+          sum: row.Summa ?? 0
+        })))
       }
     }
-  }, [open, initialData])
+  }, [open, SingleShipment, kontragentId, today])
 
   const [selectedProducts, setSelectedProducts] = useState(new Set())
 
@@ -75,6 +86,8 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
   // Fetch legal entities data
 
   const { mutateAsync: createShipment, isPending: isCreating } = useUcodeRequestMutation()
+
+
 
 
   const { data: productServices } = useUcodeRequestQuery({
@@ -147,7 +160,6 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
     }))
   }
 
-
   const totalSum = useMemo(() => {
     return rows.reduce((acc, row) => {
       const sumVal = Number(row.sum?.toString().replace(/\s/g, '')) || 0;
@@ -185,10 +197,10 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
         chart_of_accounts_id: chartOfAccounts,
         product_and_service_data: productData.map(row => {
           const product = productServicesList.find(p => p.guid === row.name)
-          return {
-            product_and_service_id: product?.guid || undefined,
-            Naimenovanie: product ? product.name : "",
-            Artikul: product?.article || "",
+          const result = {
+            product_and_service_id: product?.guid || row.name || undefined,
+            Naimenovanie: product ? product.name : row.naimenovanie || "",
+            Artikul: product?.article || row.artikul || "",
             Kol_vo: Number(row.quantity?.toString().replace(/\s/g, '')) || 0,
             TSena_za_ed: Number(row.price?.toString().replace(/\s/g, '')) || 0,
             Summa: Number(row.sum?.toString().replace(/\s/g, '')) || 0,
@@ -196,6 +208,10 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
             NDS: Number(row.nds?.toString().replace(/\s/g, '')) || 0,
             unit_of_measurement_id: product?.raw?.units_of_measurement_id || undefined
           }
+          if (row.row_guid) {
+            result.guid = row.row_guid
+          }
+          return result
         })
       }
 
@@ -257,8 +273,39 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
     }))
   }
 
+  const handleSelect = (value) => {
+    setLegalEntity(value)
+    if (!value) {
+      setCode('')
+    }
+  }
+
+  const handleChangeCurrency = (value) => {
+    const selectedGuid = value || toJS(appStore.currency)?.guid
+    setCurrency(selectedGuid)
+
+    const currencies = toJS(appStore.currencies)
+    const icon = currencies.find(item => item.guid === selectedGuid)?.icon
+    if (legalEntity) {
+      setCode(icon)
+    }
+  }
+
   if (!open) return null
 
+  if (isGettingSingleShipment) {
+    return (
+      <>
+        {/* Overlay */}
+        <div className={cn("fixed top-[60px] left-[80px] w-[calc(100%-80px)] h-full right-0 bottom-0 flex bg-black/50 z-1000 transition-opacity duration-300")} onClick={onClose} />
+
+        {/* Panel */}
+        <div className={cn(styles.panel, "flex justify-center items-center")}>
+          <Loader />
+        </div>
+      </>
+    )
+  }
 
   return (
     <>
@@ -329,21 +376,21 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
             <label className="w-40 text-xss!">
               Юрлицо <span className={styles.required}>*</span>
             </label>
-            <div className="flex-1">
+            <div className="w-80!">
               <SelectLegelEntitties
                 multi={false}
                 value={legalEntity}
-                onChange={(value) => setLegalEntity(value)}
+                onChange={handleSelect}
                 placeholder="Выберите юрлицо"
                 childFieldName={'currenies_id'}
-                returnFieldValue={setCurrency}
+                returnFieldValue={handleChangeCurrency}
                 className="w-80! bg-white"
               />
               {errors.legalEntity && (
                 <div className={styles.errorMessage}>{errors.legalEntity}</div>
               )}
             </div>
-            <MyAccountCurrensies guid={legalEntity} value={currency} onChange={(val) => setCurrency(val)} className=" bg-white " wrapperClassName={'w-48'} />
+            <MyAccountCurrensies guid={legalEntity} value={currency} onChange={handleChangeCurrency} className=" bg-white " wrapperClassName={'w-48'} />
           </div>
 
           {/* Client */}
@@ -401,7 +448,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
             <div className={styles.tableContainer}>
               <table className="w-full">
                 <thead className='sticky top-0 z-10 bg-neutral-50'>
-                  <tr className='bg-neutral-50  text-neutral-600 font-light h-8 text-xs w-full border-b border-gray-200'>
+                  <tr className='bg-neutral-50  text-neutral-600 font-light h-8 text-mini w-full border-b border-gray-200'>
                     <th className="w-10">
                       <div className='flex items-center justify-center'>
                         <OperationCheckbox type="checkbox" checked={selectedProducts?.size > 0 && selectedProducts?.size === rows?.length} onChange={(e) => {
@@ -437,10 +484,10 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                     {selectedProducts?.size === 0 && <>
                       <th className='w-[150px]  text-left'>Наименование</th>
                       <th className="w-[80px] border-l text-right px-1">Кол-во</th>
-                      <th className="w-[120px] border-l text-right px-1">Цена за ед.</th>
+                      <th className="w-[120px] border-l text-right px-1">Цена за ед. {code}</th>
                       <th className="w-[80px] border-l text-right px-2">Скидка</th>
                       <th className="w-[80px] border-l text-right px-2">НДС</th>
-                      <th className=" border-l text-right px-2">Сумма</th>
+                      <th className=" border-l text-right px-2">Сумма {code}</th>
                     </>}
                   </tr>
                 </thead>
@@ -543,7 +590,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
             <div className={styles.tableFooter}>
               <button className={styles.addRowBtn} onClick={addRow}>Добавить...</button>
               <p className={styles.totalSum}>Сумма отгрузки: <strong>{totalSum.toLocaleString('ru-RU')}</strong>
-                <span className='text-neutral-600 ml-1'>{myAccountCode}</span>
+                <span className='text-neutral-600 ml-1'>{code}</span>
               </p>
             </div>
           </div>

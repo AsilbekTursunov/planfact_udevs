@@ -6,7 +6,7 @@ import { FilterSidebar, FilterSection } from '@/components/directories/FilterSid
 import SelectCounterParties from '@/components/ReadyComponents/SelectCounterParties'
 import MultiSelectStatiya from '@/components/ReadyComponents/MultiSelectStatiya'
 import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
-import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useCounterpartiesPlanFact, useCounterpartiesGroupsPlanFact } from '@/hooks/useDashboard'
+import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useCounterpartiesPlanFact } from '@/hooks/useDashboard'
 import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
 import EditCounterpartyGroupModal from '@/components/directories/EditCounterpartyGroupModal/EditCounterpartyGroupModal'
 import { CounterpartyMenu } from '@/components/directories/CounterpartyMenu/CounterpartyMenu'
@@ -42,7 +42,6 @@ import SelectLegelEntitties from '../../../../components/ReadyComponents/SelectL
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import { formatAmount } from '../../../../utils/helpers'
 import { ChevronDown } from 'lucide-react'
-import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
 
 const CounterpartiesPage = observer(() => {
@@ -146,12 +145,18 @@ const CounterpartiesPage = observer(() => {
     searchString: viewMode === 'list' ? debouncedSearchQuery : '',
   }, true) // Always enable the query
 
+
   const SummaryTotal = useMemo(() => {
     if (!counterpartiesData?.data?.data?.data) return {}
     return counterpartiesData.data.data.summary
   }, [counterpartiesData])
 
-  console.log('SummaryTotal', SummaryTotal)
+  const allCounterpartiesList = useMemo(() => {
+    if (!counterpartiesData?.data?.data?.data) return []
+    return counterpartiesData.data.data.data
+  }, [counterpartiesData])
+  console.log('allCounterpartiesList', allCounterpartiesList)
+
 
   // Update counterparties when new data arrives
   useEffect(() => {
@@ -296,26 +301,9 @@ const CounterpartiesPage = observer(() => {
     }
   }, [hasMore])
 
-  // Extract counterparties from accumulated data (for table rendering only)
-  const counterpartiesItems = useMemo(() => {
-    return Array.isArray(allCounterparties) ? allCounterparties : []
-  }, [allCounterparties])
-
-  // Fetch counterparties specifically for filter dropdowns (unfiltered)
-
 
   // Fetch counterparties groups using new invoke_function API
-  const { data: counterpartiesGroupsData } = useCounterpartiesGroupsPlanFact({
-    page: 1,
-    limit: 100,
-    searchString: (viewMode === 'nested' || viewMode === 'groups') ? debouncedSearchQuery : '',
-  })
 
-
-  const counterpartiesGroupsItems = useMemo(() => {
-    const items = counterpartiesGroupsData?.data?.data?.data || []
-    return Array.isArray(items) ? items : []
-  }, [counterpartiesGroupsData])
 
 
 
@@ -350,99 +338,90 @@ const CounterpartiesPage = observer(() => {
 
   // Convert counterparties API data to component format with grouping
   const { groupedCounterparties, flatCounterparties } = useMemo(() => {
-    // For flat list view - use counterpartiesItems
-    const items = counterpartiesItems.map((item, index) => {
-      return {
-        id: item.guid || `counterparty-${index}`,
-        guid: item.guid,
-        nazvanie: item.nazvanie || 'Без названия',
-        polnoe_imya: item.polnoe_imya || null,
-        gruppa: item.group_name || null,
-        inn: item.inn ? String(item.inn) : null,
-        kpp: item.kpp ? String(item.kpp) : null,
-        nomer_scheta: item.nomer_scheta ? String(item.nomer_scheta) : null,
-        counterparties_group_id: item.counterparties_group_id || null,
-        counterparties_group: item.group_name || null,
-        komentariy: item.komentariy || null,
-        data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
-        receivables: item.receivables || 0,
-        payables: item.payables || 0,
-        debitorka: item.debitorka || 0,
-        difference: item?.difference,
-        kreditorka: item.kreditorka || 0,
-        profit: item.profit || 0,
-        income: item?.income,
-        expenses: item?.expense,
-        rawData: item
+    const items = allCounterpartiesList.map((item, index) => ({
+      id: item.guid || `counterparty-${index}`,
+      guid: item.guid,
+      nazvanie: item.nazvanie || 'Без названия',
+      polnoe_imya: item.polnoe_imya || null,
+      gruppa: item.group_name || null,
+      inn: item.inn || null,
+      kpp: item.kpp || null,
+      nomer_scheta: item.account_number || null,
+      counterparties_group_id: item.counterparties_group_id || null,
+      counterparties_group: item.group_name || null,
+      komentariy: item.komentariy || null,
+      data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
+      receivables: item.receivables || 0,
+      payables: item.payables || 0,
+      debitorka: item.debitorka || 0,
+      chart_of_accounts_id: item.chart_of_accounts_id || null,
+      chart_of_accounts_id_2: item.chart_of_accounts_id_2 || null,
+      primenyatь_statьi_po_umolchaniyu: item.primenyatь_statьi_po_umolchaniyu || false,
+      difference: item?.difference,
+      kreditorka: item.kreditorka || 0,
+      profit: item.profit || 0,
+      income: item?.income,
+      expenses: item?.expense,
+      rawData: item
+    }))
+
+    const groupsMap = {}
+    items.forEach(item => {
+      const groupId = item.counterparties_group_id || 'no-group'
+      const groupName = item.counterparties_group || 'Без группы'
+
+      if (!groupsMap[groupId]) {
+        groupsMap[groupId] = {
+          id: `group-${groupId}`,
+          guid: groupId === 'no-group' ? null : groupId,
+          nazvanie: groupName,
+          items: [],
+          operationsCount: 0,
+          receivables: 0,
+          payables: 0,
+          debitorka: 0,
+          kreditorka: 0,
+          profit: 0,
+          income: 0,
+          expenses: 0,
+          difference: 0
+        }
       }
+
+      groupsMap[groupId].items.push(item)
+      groupsMap[groupId].receivables += (item.receivables || 0)
+      groupsMap[groupId].payables += (item.payables || 0)
+      groupsMap[groupId].debitorka += (item.debitorka || 0)
+      groupsMap[groupId].kreditorka += (item.kreditorka || 0)
+      groupsMap[groupId].profit += (item.profit || 0)
+      groupsMap[groupId].income += (item.income || 0)
+      groupsMap[groupId].expenses += (item.expenses || 0)
+      groupsMap[groupId].difference += (item.difference || 0)
     })
 
-    // For nested view - use counterpartiesGroupsItems with children
-    const groupedFromAPI = counterpartiesGroupsItems
-      .map(group => {
-        const children = (group.children || []).map((item, index) => ({
-          id: item.guid || `counterparty-${index}`,
-          guid: item.guid,
-          nazvanie: item.nazvanie || 'Без названия',
-          polnoe_imya: item.polnoe_imya || null,
-          gruppa: item.group_name || null,
-          inn: item.inn ? String(item.inn) : null,
-          kpp: item.kpp ? String(item.kpp) : null,
-          nomer_scheta: item.nomer_scheta ? String(item.nomer_scheta) : null,
-          counterparties_group_id: item.counterparties_group_id || null,
-          counterparties_group: item.group_name || null,
-          komentariy: item.komentariy || null,
-          data_sozdaniya: item.data_sozdaniya ? new Date(item.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
-          receivables: item.receivables || 0,
-          payables: item.payables || 0,
-          debitorka: item.debitorka || 0,
-          kreditorka: item.kreditorka || 0,
-          profit: item.profit,
-          income: item?.income,
-          expenses: item?.expense,
-          difference: item?.difference,
-          profitDifference: filters.calculationMethod !== 'Cashflow' ? item.difference : item.profit,
-          rawData: item
-        }))
-
-
-        return {
-          id: `group-${group.guid}`,
-          guid: group.guid,
-          nazvanie: group.nazvanie_gruppy || 'Без названия группы',
-          data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
-          isGroup: true,
-          items: children,
-          operationsCount: children.reduce((s, c) => s + (c.operationsCount || 0), 0),
-          receivables: children.reduce((s, c) => s + (c.receivables || 0), 0),
-          payables: children.reduce((s, c) => s + (c.payables || 0), 0),
-          debitorka: children.reduce((s, c) => s + (c.debitorka || 0), 0),
-          kreditorka: children.reduce((s, c) => s + (c.kreditorka || 0), 0),
-          profit: children.reduce((s, c) => s + (c.profit || 0), 0),
-          income: children.reduce((s, c) => s + (c.income || 0), 0),
-          expenses: children.reduce((s, c) => s + (c.expenses || 0), 0),
-          difference: children.reduce((s, c) => s + (c.difference || 0), 0),
-        }
-      })
+    const groupedData = Object.values(groupsMap).map(group => ({
+      ...group,
+      isGroup: true
+    }))
 
     return {
-      groupedCounterparties: groupedFromAPI,
+      groupedCounterparties: groupedData,
       flatCounterparties: items
     }
-  }, [counterpartiesItems, counterpartiesGroupsItems, filters.calculationMethod])
+  }, [allCounterpartiesList])
 
   // Create array of only groups for 'groups' view mode
   const counterpartiesGroups = useMemo(() => {
-    return counterpartiesGroupsItems.map((group, index) => ({
-      id: `group-${group.guid}`,
+    return groupedCounterparties.map((group, index) => ({
+      id: group.id,
       guid: group.guid,
-      nazvanie: group.nazvanie_gruppy || 'Без названия',
-      opisanie_gruppy: group.opisanie_gruppy || null,
-      data_sozdaniya: group.data_sozdaniya ? new Date(group.data_sozdaniya)?.toLocaleDateString('ru-RU') : null,
+      nazvanie: group.nazvanie,
+      opisanie_gruppy: null,
+      data_sozdaniya: null,
       isGroup: true,
-      items: [] // Empty for groups-only view
+      items: []
     }))
-  }, [counterpartiesGroupsItems])
+  }, [groupedCounterparties])
 
 
 
@@ -469,21 +448,15 @@ const CounterpartiesPage = observer(() => {
 
 
   return (
-    <div className="w-[calc(100%-80px)] flex h-[calc(100%-600px)] fixed left-[80px] top-[60px]">
+    <div className="w-[calc(100%-80px)] flex h-[calc(100%-60px)]  fixed left-[80px] top-[60px]">
       <FilterSidebar
         isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
+        onClose={() => setIsFilterOpen(prev => !prev)}
         clearCount={counterpartiesStore.activeFilterCount}
         onClear={counterpartiesStore.resetFilters}
       >
         <FilterSection title="Параметры">
           <div className="space-y-2.5">
-            <SingleSelect
-              value={tip}
-              onChange={(value) => setTip(value)}
-              data={tipOptions}
-              placeholder="Выберите тип"
-            />
             <SelectCounterParties
               value={filters.selectedCounterparties}
               onChange={(values) => setFilters(prev => ({ ...prev, selectedCounterparties: values }))}
@@ -566,20 +539,9 @@ const CounterpartiesPage = observer(() => {
         </FilterSection>
 
       </FilterSidebar>
+      {isFetching && !isLoadingCounterparties && <ScreenLoader className={'left-[250px]'} />}
 
-      {/* Filter Toggle Bar */}
-      {!isFilterOpen && (
-        <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
-          <button className={styles.filterToggleButton}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
-      )}
-      {isFetching && !isLoadingCounterparties && <ScreenLoader />}
-
-      <div ref={contentRef} className={`p-4 w-full h-dvh overflow-y-auto flex-1 bg-white ${isFilterOpen ? "ml-[230px]" : ""}`}>
+      <div ref={contentRef} className={`p-4 pb-40 w-full h-dvh overflow-y-auto flex-1 bg-white `}>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerContent}>
@@ -624,15 +586,6 @@ const CounterpartiesPage = observer(() => {
                   >
                     <LuListTree size={18} />
                   </button>
-                  {/* <button
-                    className={cn(styles.filterIcon, viewMode === 'groups' && styles.active)}
-                    onClick={() => setViewMode('groups')}
-                    title="Только группы"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                  </button> */}
                 </div>
                 <div className={styles.searchContainer}>
                   <SearchBar
@@ -666,7 +619,7 @@ const CounterpartiesPage = observer(() => {
                     <ChevronDown className='size-4' />
                   </button>
                 </th>
-                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Тип</th>
+                {/* <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Тип</th> */}
                 {viewMode !== 'nested' && (
                   <th className="p-3 border-b border-neutral-200 whitespace-nowrap">Группа</th>
                 )}
@@ -697,15 +650,14 @@ const CounterpartiesPage = observer(() => {
                 <tr>
                   <td colSpan={15} className="p-8 text-center text-neutral-500">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary border-t-transparent"></div>
-                      <span>Загрузка...</span>
+
                     </div>
                   </td>
                 </tr>
-              ) : (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 ? (
-                  <tr>
-                    <td colSpan={15} className="p-8 text-center text-neutral-500">
-                      Нет данных
+              ) : (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 && !isLoadingCounterparties ? (
+                <tr>
+                  <td colSpan={15} className="p-8 text-center text-neutral-500">
+
                     </td>
                   </tr>
                 ) : (
@@ -728,7 +680,7 @@ const CounterpartiesPage = observer(() => {
                                 <span className="text-slate-900">{item.nazvanie} ({item.items?.length || 0})</span>
                               </div>
                             </td>
-                            <td className="p-2 text-neutral-900 font-medium">{item.rawData?.type_name || item.rawData?.tip_kontragenta || 'Смешанный'}</td>
+                            {/* <td className="p-2 text-neutral-900 font-medium">{item.rawData?.type_name || item.rawData?.tip_kontragenta || 'Смешанный'}</td> */}
                             {filters.calculationMethod !== 'Cashflow' && (
                               <td className="p-2 text-neutral-500">–</td>
                             )}
@@ -780,7 +732,7 @@ const CounterpartiesPage = observer(() => {
                                     {counterparty.komentariy && <span className="text-neutral-400 text-xs mt-0.5">{counterparty.komentariy}</span>}
                                   </div>
                                 </td>
-                                <td className="p-2 text-neutral-500">{counterparty.rawData?.type_name || counterparty.rawData?.tip_kontragenta || '–'}</td>
+                                {/* <td className="p-2 text-neutral-500">{counterparty.rawData?.type_name || counterparty.rawData?.tip_kontragenta || '–'}</td> */}
                                 {filters.calculationMethod !== 'Cashflow' && (
                                   <td className="p-2 text-neutral-500">{counterparty.inn || '–'}</td>
                                 )}
@@ -827,7 +779,7 @@ const CounterpartiesPage = observer(() => {
                               {item.komentariy && <span className="text-neutral-400 text-xs mt-0.5">{item.komentariy}</span>}
                             </div>
                           </td>
-                          <td className="p-2 text-neutral-500">{item.rawData?.type_name || item.rawData?.tip_kontragenta || 'Плательщик'}</td>
+                          {/* <td className="p-2 text-neutral-500">{item.rawData?.type_name || item.rawData?.tip_kontragenta || 'Плательщик'}</td> */}
                           <td className="p-2 text-neutral-500">{item.gruppa || '–'}</td>
                           {filters.calculationMethod !== 'Cashflow' && (
                             <td className="p-2 text-neutral-500">{item.inn || '–'}</td>
@@ -858,43 +810,13 @@ const CounterpartiesPage = observer(() => {
           </table>
         </div>
 
-        {/* Loading indicator */}
-        {/* {isFetching && hasMore && page > 1 && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            padding: '20px',
-            color: '#6b7280'
-          }}>
-            <svg
-              style={{ animation: 'spin 1s linear infinite' }}
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-            >
-              <circle cx="12" cy="12" r="10" strokeWidth="3" stroke="#e5e7eb" />
-              <path
-                d="M12 2a10 10 0 0 1 10 10"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-            </svg>
-            <style jsx>{`
-                @keyframes spin {
-                  from { transform: rotate(0deg); }
-                  to { transform: rotate(360deg); }
-                }
-              `}</style>
-          </div>
-        )} */}
+
 
 
         {/* Footer */}
         <div className={cn(
-          'fixed bottom-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex items-center gap-8 shrink-0 z-10  transition-[left] duration-300',
-          isFilterOpen ? 'left-[313px]' : 'left-[83px]'
+          'fixed bottom-0 right-0 bg-neutral-100 p-2 border-t border-neutral-200   flex items-center gap-8 shrink-0 z-10  transition-[left] duration-300',
+          isFilterOpen ? 'left-[320px]' : 'left-[110px]'
         )}>
           <div className="text-sm text-slate-900">
             <span className="font-semibold text-slate-900 whitespace-nowrap">

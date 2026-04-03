@@ -25,6 +25,7 @@ import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMy
 import MultiSelectStatiya from '../../../../../components/ReadyComponents/MultiSelectStatiya'
 import { formatAmount } from '../../../../../utils/helpers'
 import { GlobalCurrency } from '../../../../../constants/globalCurrency'
+import CreateShipment from '../../../../../components/deals/details/CreatingShipment'
 
 const calculationOptions = [
   { value: "Cashflow", label: 'Учет по денежному потоку' },
@@ -83,6 +84,14 @@ const KontragentDetailPage = observer(() => {
   const [deletingOperation, setDeletingOperation] = useState(null)
   const [isEditCounterpartyModalOpen, setIsEditCounterpartyModalOpen] = useState(false)
   const deleteOperationMutation = useDeleteOperation()
+
+
+  // shipment states
+  const [showShipmentModal, setShowShipmentModal] = useState(false)
+  const [selectedShipment, setSelectedShipment] = useState(null)
+  const [isShipmentEditing, setIsShipmentEditing] = useState(false)
+  const [isShipmentCopying, setIsShipmentCopying] = useState(false)
+  const [isShipmentDeleting, setIsShipmentDeleting] = useState(false)
   const queryClient = useQueryClient()
 
   const filterCounterParty = useMemo(() => {
@@ -122,6 +131,7 @@ const KontragentDetailPage = observer(() => {
 
   const operationsList = useMemo(() => {
     return {
+      future: operationsDto(counterpartyOperations || [], 'future'),
       today: operationsDto(counterpartyOperations || [], 'today'),
       before: operationsDto(counterpartyOperations || [], 'before'),
     }
@@ -138,12 +148,11 @@ const KontragentDetailPage = observer(() => {
       fullName: counterparty.polnoe_imya || '',
       inn: counterparty.inn && counterparty.inn !== 0 ? counterparty.inn : null,
       kpp: (Array.isArray(counterparty.kpp) ? counterparty.kpp.filter(v => v !== null && v !== '') : (counterparty.kpp && counterparty.kpp !== 0 ? [counterparty.kpp] : [])),
-      accountNumber: (Array.isArray(counterparty.nomer_scheta) ? counterparty.nomer_scheta.filter(v => v !== null && v !== '') : (counterparty.nomer_scheta && counterparty.nomer_scheta !== 0 ? [counterparty.nomer_scheta] : [])),
-      receiptArticle: counterparty.chart_of_accounts_id_data?.nazvanie || (counterparty.chart_of_accounts_id ? '-' : null),
-      paymentArticle: counterparty.chart_of_accounts_id_2_data?.nazvanie || (counterparty.chart_of_accounts_id_2 ? '-' : null),
+      accountNumber: (Array.isArray(counterparty.account_number) ? counterparty.account_number.filter(v => v !== null && v !== '') : (counterparty.account_number && counterparty.account_number !== 0 ? [counterparty.account_number] : [])),
+      receiptArticle: counterparty.chart_of_accounts_name || (counterparty.chart_of_accounts_id ? '-' : null),
+      paymentArticle: counterparty.chart_of_accounts_name_2 || (counterparty.chart_of_accounts_id_2 ? '-' : null),
       comment: counterparty.komentariy || null,
-      type: counterparty.tip || 'Не указан',
-      // Financial metrics from API
+      type: counterparty.tip || 'Не указан', 
       income: counterparty.income || 0,
       expense: counterparty.expense || 0,
       difference: counterparty.difference || 0,
@@ -229,7 +238,32 @@ const KontragentDetailPage = observer(() => {
     }
   }
 
+
+  const handleEditShipment = (shipment) => {
+    setSelectedShipment(shipment)
+    setIsShipmentEditing(true)
+    setIsShipmentCopying(false)
+    setShowShipmentModal(true)
+  }
+
+  const handleCopyShipment = (shipment) => {
+    setSelectedShipment(shipment)
+    setIsShipmentEditing(false)
+    setIsShipmentCopying(true)
+    setShowShipmentModal(true)
+  }
+
+  const handleDeleteShipment = (shipment) => {
+    setOperationToDelete(shipment)
+    setIsShipmentDeleting(true)
+    setIsDeleteModalOpen(true)
+  }
+
   const handleEditOperation = (operation) => {
+    if (operation.tip === 'Отгрузка') {
+      handleEditShipment(operation)
+      return
+    }
     setEditingOperation(operation)
     setIsEditModalClosing(false)
     setIsEditModalOpening(true)
@@ -239,6 +273,10 @@ const KontragentDetailPage = observer(() => {
   }
 
   const handleCopyOperation = (operation) => {
+    if (operation.tip === 'Отгрузка') {
+      handleCopyShipment(operation)
+      return
+    }
     const copiedOperation = { ...operation };
 
     delete copiedOperation.guid;
@@ -298,6 +336,10 @@ const KontragentDetailPage = observer(() => {
   }
 
   const handleDeleteOperation = (operation) => {
+    if (operation.tip === 'Отгрузка') {
+      handleDeleteShipment(operation)
+      return
+    }
     setDeletingOperation(operation)
   }
 
@@ -724,7 +766,7 @@ const KontragentDetailPage = observer(() => {
                   <table className="w-full">
                     <thead className={`bg-neutral-100 text-neutral-600 text-sm h-9 sticky ${isFiltersOpen ? 'top-[140px]' : 'top-[96px]'} z-10 font-normal`}>
                     <tr>
-                        <th className={""}>№</th>
+                        {/* <th className={""}>№</th> */}
                         <th className={"text-start px-2"}>Дата</th>
                         <th className={"text-start px-2"}>Счет</th>
                         <th className={"text-start px-2"}>Тип</th>
@@ -736,11 +778,31 @@ const KontragentDetailPage = observer(() => {
                     </tr>
                   </thead>
                   <tbody className={styles.tableBody}>
+                      {operationsList?.future?.length > 0 && (
+                        <tr className=" border-y border-y-gray-100 bg-white">
+                          <td colSpan='9' className=" py-2 text-sm px-4">
+                            <h3 className="">После</h3>
+                          </td>
+                        </tr>
+                      )}
+
+                      {operationsList?.future?.map((op, index) => (
+                        <OperationTableRow
+                          key={op.guid}
+                          op={op}
+                          selectedOperations={selectedOperations}
+                          openOperationModal={handleEditOperation}
+                          counterpartyGuid={counterpartyInfo?.guid}
+                          handleEditOperation={handleEditOperation}
+                          handleDeleteOperation={handleDeleteOperation}
+                          handleCopyOperation={handleCopyOperation}
+                        />
+                      ))}
                     {/* Today — Section Header */}
                     {operationsList?.today?.length > 0 && (
-                      <tr className={styles.sectionHeader}>
-                        <td colSpan='9' className={styles.sectionHeaderCell}>
-                          <h3 className={styles.sectionHeaderTitle}>Сегодня</h3>
+                        <tr className=" border-y border-y-gray-100 bg-white">
+                          <td colSpan='9' className=" py-2 text-sm px-4">
+                            <h3 className="">Сегодня</h3>
                         </td>
                       </tr>
                     )}
@@ -748,12 +810,10 @@ const KontragentDetailPage = observer(() => {
                       {operationsList?.today?.map((op, index) => (
                       <OperationTableRow
                         key={op.guid}
-                        op={op}
-                        showIndex={index + 1}
+                          op={op}
                         selectedOperations={selectedOperations}
                         openOperationModal={handleEditOperation}
-                        counterpartyGuid={counterpartyInfo?.guid}
-                          toggleOperation={toggleOperation}
+                          counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
                         handleDeleteOperation={handleDeleteOperation}
                         handleCopyOperation={handleCopyOperation}
@@ -761,21 +821,19 @@ const KontragentDetailPage = observer(() => {
                     ))}
                     {/* Вчера и ранее - Section Header */}
                     {operationsList?.before?.length > 0 && (
-                      <tr className={styles.sectionHeader}>
-                        <td colSpan='9' className={styles.sectionHeaderCell}>
-                          <h3 className={styles.sectionHeaderTitle}>Вчера и ранее</h3>
+                        <tr className=" border-y border-y-gray-100 bg-white">
+                          <td colSpan='9' className=" py-2 text-sm px-4">
+                            <h3 className="">Вчера и ранее</h3>
                         </td>
                       </tr>
                     )}
                       {operationsList?.before?.map((op, index) => (
                       <OperationTableRow
                         key={op.guid}
-                        op={op}
-                        showIndex={index + 1}
+                          op={op}
                         selectedOperations={selectedOperations}
                         openOperationModal={handleEditOperation}
-                        counterpartyGuid={counterpartyInfo?.guid}
-                          toggleOperation={toggleOperation}
+                          counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
                         handleDeleteOperation={handleDeleteOperation}
                         handleCopyOperation={handleCopyOperation}
@@ -925,6 +983,19 @@ const KontragentDetailPage = observer(() => {
             </div>
           </div>
         </div>
+      )}
+
+      {showShipmentModal && (
+        <CreateShipment
+          open={showShipmentModal}
+          onClose={() => setShowShipmentModal(false)}
+          initialData={selectedShipment}
+          isEditing={isShipmentEditing}
+          isCopying={isShipmentCopying}
+          dealName={selectedShipment?.selling_deal_name}
+          dealGuid={selectedShipment?.selling_deal_id}
+          kontragentId={counterparty?.guid}
+        />
       )}
 
       {/* Unified Create/Edit Modal */}

@@ -200,7 +200,7 @@ export default observer(function DealsPage() {
 
 
   return (
-    <div className="flex overflow-hidden fixed left-[80px] top-[60px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
+    <div className="flex fixed left-[80px] top-[60px] w-[calc(100%-80px)] h-[calc(100%-60px)]">
       <FilterSidebar onOpenChange={setIsFilterOpen} />
       <main className=" w-full relative  overflow-y-auto scroll-smooth bg-white">
         <header className="flex items-center justify-between  px-3 h-[60px] sticky top-0  bg-white z-20 ">
@@ -261,15 +261,15 @@ export default observer(function DealsPage() {
                 </th>
                 <th className='px-2 text-start'>Название</th>
                 <th className='px-2 text-start'>Клиент</th>
-                <th className='px-2 text-start'>Статус</th>
-                <th className='px-2 text-start'>
-                  <div className='flex items-center gap-1'>
+                <th className='px-2 text-center'>Статус</th>
+                <th className='px-2 text-end'>
+                  <div className='flex items-end justify-end gap-1'>
                     <p>Сумма сделки</p>
                     <p>{GlobalCurrency.name}</p>
                   </div>
                 </th>
-                <th className='px-2 text-start'>Поступило</th>
-                <th className='px-2 text-start'>Отгружено</th>
+                <th className='px-2 text-end'>Поступило</th>
+                <th className='px-2 text-end'>Отгружено</th>
                 <th className='px-2  text-end w-44'>
                   <div className='flex items-center justify-end gap-1'>
                     <p>Прибыль</p>
@@ -308,14 +308,14 @@ export default observer(function DealsPage() {
                         {deal?.partner_name || '-'}
                       </div>
                     </td>
-                    <td className='p-0!'>
+                    <td className='p-0! text-center'>
                       <span className={`${styles.status} ${styles[`status_${deal.status}`]}`} style={{ color: deal?.color, backgroundColor: deal?.color + '10' }}>
                         {deal?.status || '-'}
                       </span>
                     </td>
-                    <td className='p-2'>{formatAmount(deal.summa_sdelki)}</td>
-                    <td className='p-2'>{deal.postupilo || '0%'}</td>
-                    <td className='p-2'>{deal.otgruzheno || '0%'}</td>
+                    <td className='p-2 text-end'>{formatAmount(deal.summa_sdelki)}</td>
+                    <td className='p-2 text-end'>{deal.postupilo || '0%'}</td>
+                    <td className='p-2 text-end'>{deal.otgruzheno || '0%'}</td>
                     <td className='relative  text-end p-2'>
                       <div className='group-hover:hidden'>
                         <p className={`${price < 0 ? 'text-red-600' : 'text-green-600'}`}>
@@ -341,15 +341,14 @@ export default observer(function DealsPage() {
               })}
             </tbody>
           </table>
-        </div>
-
+        </div> 
         {isFetching && <ScreenLoader className={'left-0!'} />}
       </main>
 
       {/* Fixed Footer */}
       <footer className={cn(
-        'fixed bottom-0 right-0 bg-white border-t border-gray-200 px-6 py-2 flex items-center gap-6 z-10 transition-[left] duration-300',
-        isFilterOpen ? 'left-[304px]' : 'left-[116px]'
+        'fixed bottom-0 right-0 bg-neutral-100 p-2 py-3 border-t border-neutral-200   flex items-center gap-6 z-10 transition-[left] duration-300',
+        isFilterOpen ? 'left-[320px]' : 'left-[110px]'
       )}>
         <span className="flex items-center gap-1.5">
           <span className="text-[11px] text-gray-500 font-medium">{deals?.summary?.count || 0} сделок на сумму:</span>

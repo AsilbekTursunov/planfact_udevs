@@ -5,11 +5,11 @@ import { observer } from 'mobx-react-lite'
 import SingleSelect from '@/components/shared/Selects/SingleSelect'
 import CashFlowFilterSidebar from '@/components/reports/cashflow/FilterSidebar'
 import { cashFlowStore } from '@/components/reports/cashflow/cashflow.store'
-import styles from './cashflow.module.scss'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 import { toJS } from 'mobx'
+import ScreenLoader from '../../../../components/shared/ScreenLoader'
 
 const groupingOptions = [
   { value: 'monthly', label: 'По месяцам' },
@@ -38,19 +38,19 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
 
   return (
     <>
-      <tr className={`${styles.tr} ${depth === 0 ? styles.topLevelRow : ''}`}>
+      <tr className={`border-b border-neutral-200 transition-colors ${depth === 0 ? 'bg-neutral-50 font-semibold' : 'hover:bg-neutral-50'}`}>
         {/* Name cell */}
-        <td className={styles.td} style={{ paddingLeft: `${depth * 1.25 + 0.75}rem` }}>
+        <td className="px-4  py-2" style={{ paddingLeft: `${depth * 1.5 + 1}rem` }}>
           <div
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: hasChildren ? 'pointer' : 'default' }}
+            className={`flex items-center text-xss!  gap-2 ${hasChildren ? 'cursor-pointer' : 'cursor-default'}`}
             onClick={hasChildren ? () => onToggle(row.id) : undefined}
           >
             {hasChildren && (
-              <button className={styles.expandButton}>
+              <button className="bg-transparent border-none p-0 flex items-center justify-center cursor-pointer text-neutral-500 hover:text-neutral-900 transition-colors w-4 h-4">
                 {isExpanded ? <ExpendClose /> : <ExpendOpen />}
               </button>
             )}
-            <span className={isBold ? styles.boldText : ''}>{row.name}</span>
+            <span className={isBold ? "font-semibold" : "text-sm"}>{row.name}</span>
           </div>
         </td>
 
@@ -59,9 +59,9 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
           const val = row.months?.[month] ?? 0
           const legendItem = legend.find(l => l.key === month)
           return (
-            <td key={month} className={styles.td} style={{ textAlign: 'right', paddingRight: '1rem' }}>
+            <td key={month} className="px-4 py-2 text-xss! text-end border-l">
               <span
-                className={`${isBold ? styles.boldNumber : ''} ${!isEndingBalance ? styles.clickableCell : ''}`}
+                className={`${isBold ? "font-semibold" : ""} ${!isEndingBalance ? 'cursor-pointer hover:underline hover:text-primary transition-colors' : ''}`}
                 onClick={() => {
                   if (isEndingBalance) return
                   onCellClick(row, { key: month, label: legendItem?.title || month })
@@ -74,9 +74,9 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
         })}
 
         {/* Total cell */}
-        <td className={styles.td} style={{ textAlign: 'right', paddingRight: '1rem' }}>
+        <td className="px-4 py-2 text-right border-l ">
           <span
-            className={`${isBold ? styles.boldNumber : ''} ${!isEndingBalance ? styles.clickableCell : ''}`}
+            className={`${isBold ? "font-semibold" : "text-sm"} ${!isEndingBalance ? 'cursor-pointer hover:underline hover:text-primary transition-colors' : ''}`}
             onClick={() => {
               if (isEndingBalance) return
               onCellClick(row, null)
@@ -190,100 +190,80 @@ export default observer(function CashFlowReportPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.contentWrapper}>
-        <CashFlowFilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
+    <div className="fixed left-[80px] w-[calc(100%-80px)]  flex top-[60px] h-[calc(100%-60px)]">
+      <CashFlowFilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(!isFilterOpen)} />
 
-        {!isFilterOpen && (
-          <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
-            <button className={styles.filterToggleBarButton}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {loading && <ScreenLoader />}
+
+      <div className={"w-full relative bg-white overflow-auto pb-10"}>
+        <div className="flex px-4 h-16 items-center sticky top-0 z-20 bg-white justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
+            <SingleSelect
+              data={currencies}
+              value={cashFlowStore.filters.currencyCode}
+              onChange={(value) => {
+                cashFlowStore.setCurrencyCode(value)
+                cashFlowStore.fetchReport()
+              }}
+              isClearable={false}
+              withSearch={false}
+              className={'bg-white w-28'}
+              dropdownClassName={'w-28'}
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <SingleSelect
+              data={groupingOptions}
+              value={cashFlowStore.filters.periodType}
+              onChange={(value) => {
+                cashFlowStore.setPeriodType(value)
+                cashFlowStore.fetchReport()
+              }}
+              placeholder="Способ построения"
+              withSearch={false}
+              isClearable={false}
+              className="bg-white w-44"
+              dropdownClassName="bg-white"
+            />
+            <button className="flex items-center justify-center p-2 rounded-md hover:bg-neutral-100 text-neutral-600 transition-colors">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="3" r="1" fill="currentColor" />
+                <circle cx="8" cy="8" r="1" fill="currentColor" />
+                <circle cx="8" cy="13" r="1" fill="currentColor" />
               </svg>
             </button>
           </div>
-        )}
+        </div>
 
-        <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
-              <SingleSelect
-                data={currencies}
-                value={cashFlowStore.filters.currencyCode}
-                onChange={(value) => {
-                  cashFlowStore.setCurrencyCode(value)
-                  cashFlowStore.fetchReport()
-                }}
-                isClearable={false}
-                withSearch={false}
-                className={'bg-white w-28'}
-                dropdownClassName={'w-28'}
-              />
-            </div>
-            <div className={styles.headerRight}>
-              <SingleSelect
-                data={groupingOptions}
-                value={cashFlowStore.filters.periodType}
-                onChange={(value) => {
-                  cashFlowStore.setPeriodType(value)
-                  cashFlowStore.fetchReport()
-                }}
-                placeholder="Способ построения"
-                withSearch={false}
-                isClearable={false}
-                className="bg-white w-44"
-                dropdownClassName="bg-white"
-              />
-              <button className={styles.moreButton}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="3" r="1" fill="currentColor" />
-                  <circle cx="8" cy="8" r="1" fill="currentColor" />
-                  <circle cx="8" cy="13" r="1" fill="currentColor" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div
-            className={`${styles.tableContainer} ${isFilterOpen ? styles.tableContainerWithFilter : ''}`}
-            style={{ position: 'relative' }}
-          >
-            {loading && (
-              <div className={styles.loadingOverlay}>
-                <div className={styles.loadingSpinner} />
-                <span>Загрузка данных...</span>
-              </div>
-            )}
-
-            <table className={`${styles.table}`}>
-              <thead className={"bg-neutral-100 z-10 sticky top-0"}>
-                <tr>
-                  <th className={styles.th} style={{ minWidth: 320 }}>По статьям учета</th>
-                  {legend.map(col => (
-                    <th key={col.key} className={styles.th} style={{ width: 110, textAlign: 'right', paddingRight: '1rem' }}>
-                      {col.title}
-                    </th>
-                  ))}
-                  <th className={styles.th} style={{ width: 110, textAlign: 'right', paddingRight: '1rem' }}>Итого</th>
-                </tr>
-              </thead>
-              <tbody className={styles.tbody}>
-                {data.map(row => (
-                  <TableRow
-                    key={row.id}
-                    row={row}
-                    months={months}
-                    legend={legend}
-                    depth={0}
-                    expandedMap={expandedMap}
-                    onToggle={handleToggle}
-                    onCellClick={handleCellClick}
-                  />
+        <div className='px-4 mt-2'>
+          <table className="w-full">
+            <thead className={"bg-neutral-100 z-10 sticky top-16"}>
+              <tr>
+                <th className="text-left px-4 py-2 text-xs border-r border-neutral-200 font-medium" style={{ minWidth: 320 }}>По статьям учета</th>
+                {legend.map(col => (
+                  <th key={col.key} className="text-right border-r border-neutral-200 px-4 py-2 text-xs font-medium" style={{ width: 110 }}>
+                    {col.title}
+                  </th>
                 ))}
-              </tbody>
-            </table>
-          </div>
+                <th className="text-right px-4 py-2 text-xs font-medium" style={{ width: 110 }}>Итого</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map(row => (
+                <TableRow
+                  key={row.id}
+                  row={row}
+                  months={months}
+                  legend={legend}
+                  depth={0}
+                  expandedMap={expandedMap}
+                  onToggle={handleToggle}
+                  onCellClick={handleCellClick}
+                />
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

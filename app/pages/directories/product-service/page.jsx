@@ -297,7 +297,7 @@ export default function LegalEntitiesPage() {
       const guids = Array.from(selectedItems);
       await deleteProductService({
         urlMethod: 'DELETE',
-        urlParams: `/items/product_and_service?from-ofs=true`,
+        urlParams: `/object/operations`,
         data: { ids: guids }
       });
       queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] });

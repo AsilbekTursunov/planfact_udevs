@@ -39,7 +39,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
     return productServiceDto(productServices)
   }, [productServices])
 
-  console.log(productServicesList)
+  console.log('productServicesList', productServicesList)
 
 
   const handleSelectAll = (event) => {
@@ -151,7 +151,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
                       <OperationCheckbox checked={selectedItems.has(item.guid)} onChange={(e) => handleSelectItem(e, item.guid)} />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-left border-r border-neutral-200">{item?.Naimenovanie}</td>
+                  <td className="px-4 py-3 text-left border-r border-neutral-200">{item?.name}</td>
                   <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.kolvo}</td>
                   <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.unit_name}</td>
                   <td className="px-4 py-3 text-right border-r border-neutral-200">{item?.tsena_za_ed}</td>

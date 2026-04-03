@@ -229,7 +229,7 @@ export default observer(function DealDetailPage() {
       </div>
 
       {/* Info Cards */}
-      <div className="min-w-[1280px] max-w-[1440px] gap-4 px-3 grid grid-cols-4">
+      <div className="min-w-[1280px] max-w-[1920px] gap-4 px-3 grid grid-cols-4">
         {/* Card 1: Deal Amount */}
         <div className={'bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]'}>
           <div className="flex items-center justify-between">
@@ -240,17 +240,7 @@ export default observer(function DealDetailPage() {
             <DealStatus
               currentStatus={summeryCards?.status}
               onStatusChange={(status) => {
-                setSelectedStatus(status);
                 handleUpdateStatus(status);
-              }}
-              onStatusEdit={(updated) => {
-                setDealStatuses(prev => prev.map(s => s.guid === updated.guid ? updated : s))
-              }}
-              onStatusDelete={(status) => {
-                setDealStatuses(prev => prev.filter(s => s.guid !== status.guid))
-              }}
-              onStatusCreate={(newStatus) => {
-                setDealStatuses(prev => [...prev, { ...newStatus, guid: Date.now().toString() }])
               }}
             />
           </div>

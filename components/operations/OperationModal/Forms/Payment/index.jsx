@@ -392,6 +392,7 @@ const PaymentForm = observer(({
       queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
       queryClient.invalidateQueries({ queryKey: ['legal_entities'] })
       queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })
+      queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
       queryClient.invalidateQueries({ queryKey: ['get_my_accounts'] })
       onClose?.()
     } catch (error) {

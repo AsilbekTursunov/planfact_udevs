@@ -8,6 +8,8 @@ import CreateLegalEntityModal from '@/components/directories/CreateLegalEntityMo
 import LegalEntityMenu from '@/components/directories/LegalEntityMenu/LegalEntityMenu'
 import DeleteLegalEntityConfirmModal from '@/components/directories/DeleteLegalEntityConfirmModal/DeleteLegalEntityConfirmModal'
 import styles from './legal-entities.module.scss'
+import Input from '../../../../components/shared/Input'
+import { Search } from 'lucide-react'
 
 export default function LegalEntitiesPage() {
   const queryClient = useQueryClient()
@@ -114,10 +116,10 @@ export default function LegalEntitiesPage() {
   }, [])
 
   return (
-    <div className={styles.container}>
-      <div className={styles.content}>
+    <div className="w-[calc(100%-80px)] flex h-[calc(100%-60px)]  overflow-auto fixed left-[80px] top-[60px]">
+      <div className="w-full h-full">
         {/* Header */}
-        <div className={styles.header}>
+        <div className="px-5 h-16 flex items-center bg-neutral-50 sticky top-0 z-10">
           <div className={styles.headerInner}>
             <div className={styles.titleRow}>
               <h1 className={styles.title}>Мои юрлица</h1>
@@ -131,31 +133,22 @@ export default function LegalEntitiesPage() {
 
             {/* Search */}
             <div className={styles.searchContainer}>
-              <input
-                type="text"
+              <Input
+                leftIcon={<Search size={20} />}
                 placeholder="Поиск по краткому названию"
-                className={styles.searchInput}
+                className={""}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <svg
-                className={styles.searchIcon}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
+              /> 
             </div>
           </div>
         </div>
 
         {/* Table */}
-        <div className={styles.tableWrapper}>
+        <div className="px-5 pt-3 bg-neutral-50">
           <div className={styles.tableOuter}>
-            <table className={styles.table}>
-              <thead className={styles.theadDefault}>
+            <table className="w-full">
+              <thead className="bg-neutral-100 sticky top-16 z-20">
                 <tr>
                   <th className={cn(styles.th, styles.thIndex)}>
                     №
@@ -171,7 +164,7 @@ export default function LegalEntitiesPage() {
                   <th className={styles.th}>Полное название</th>
                   <th className={styles.th}>ИНН</th>
                   <th className={styles.th}>КПП</th>
-                  <th className={cn(styles.th, styles.thActions)}></th>
+                  <th className={cn(styles.th)}></th>
                 </tr>
               </thead>
 
@@ -220,7 +213,7 @@ export default function LegalEntitiesPage() {
               {isLoadingLegalEntities ? 'Загрузка...' : `${legalEntitiesItems.length} ${legalEntitiesItems.length === 1 ? 'юрлицо' : legalEntitiesItems.length < 5 ? 'юрлица' : 'юрлиц'}`}
             </span>
           </div>
-        </div>
+        </div> 
       </div>
 
       {/* Create Legal Entity Modal */}

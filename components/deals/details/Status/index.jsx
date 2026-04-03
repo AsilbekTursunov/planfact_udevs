@@ -84,6 +84,7 @@ export default function DealStatus({
   const activeName = activeStatus?.name || 'Новая'
 
   const handleSelect = (status) => {
+    console.log(status)
     onStatusChange?.(status)
     setIsOpen(false)
     setContextMenu(null)

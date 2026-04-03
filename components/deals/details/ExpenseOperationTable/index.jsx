@@ -145,7 +145,7 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
                           <span className='flex items-center gap-1'>{isDebit && <DebitIcon />}
                             {isCredit && <CreditIcon />}</span>
                           <p className={`font-base text-red-600`}>
-                            {'-'}{formatAmount(item.summa)} UZS
+                            {'-'}{formatAmount(item.summa)} {item.currency}
                           </p>
                         </div>
                         <div className=' items-center  hidden group-hover:flex '>

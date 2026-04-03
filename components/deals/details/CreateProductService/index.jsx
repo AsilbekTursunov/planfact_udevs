@@ -22,7 +22,7 @@ const CreateProductService = ({
   const [formData, setFormData] = useState({
     product_and_service_id: initialData?.guid ? { value: initialData.guid, label: initialData.name || '' } : null,
     quantity: initialData?.kolvo != null ? String(initialData.kolvo) : '',
-    units_of_measurement_id: initialData?.unit_of_measurement_id ? { value: initialData.unit_of_measurement_id, label: initialData.unit_name || '' } : null,
+    units_of_measurement_id: initialData?.unit_of_measurement_id || null,
     tsena_za_ed: initialData?.tsena_za_ed != null ? String(initialData.tsena_za_ed) : '',
     discount: initialData?.discount != null ? String(initialData.discount) : '',
     status: Array.isArray(initialData?.status) ? initialData.status[0] : (initialData?.status || ''),
@@ -58,14 +58,10 @@ const CreateProductService = ({
   // Auto-fill fields when a product/service is selected
   const handleProductServiceChange = (value) => {
     const item = productServices?.find(p => p?.guid === value)
-    console.log('selectedOption', value)
     if (!item) {
       setFormData(prev => ({ ...prev, product_and_service_id: value }))
       return
     }
-
-
-    console.log('item', item)
 
     const mesurementFullNam = item?.unit_name + ' ' + item?.unit_short_name
 

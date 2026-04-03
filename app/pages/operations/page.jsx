@@ -23,6 +23,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import operationsDto from '../../../lib/dtos/operationsDto'
 import { OperationsFooter } from '../../../components/operations/OperationsFooter/OperationsFooter'
 import ScreenLoader from '../../../components/shared/ScreenLoader'
+import Input from '../../../components/shared/Input'
+import { EllipsisVertical, Search } from 'lucide-react'
 
 const OperationsPage = observer(() => {
 	const [isModalClosing, setIsModalClosing] = useState(false)
@@ -431,50 +433,73 @@ const OperationsPage = observer(() => {
 			}, 0)
 	}, [allOperations, selectedOperations])
 
-	console.log('operationslist', operationsList)
+	const handleCreate = () => {
+		setOpenModal({ id: 'new', isNew: true })
+		setModalType('income')
+		setIsModalClosing(false)
+		setIsModalOpening(true)
+		document.body.style.overflow = 'hidden'
+		setTimeout(() => {
+			setIsModalOpening(false)
+		}, 50)
+	}
+
 
 	return (
-		<div className={styles.container}>
+		<div className="fixed left-[80px] top-[60px]  w-[calc(100%-80px)] flex h-[calc(100%-60px)]">
 			{/* Sidebar Filters */}
 			<OperationsFiltersSidebar
 				isOpen={isFilterOpen}
-				onClose={() => setIsFilterOpen(false)}
+				onClose={() => setIsFilterOpen(!isFilterOpen)}
 			/>
 
-			{/* Filter Toggle Bar */}
-			{!isFilterOpen && (
-				<div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
-					<button className={styles.filterToggleButton}>
-						<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-						</svg>
-					</button>
-				</div>
-			)}
-
 			{/* Main Content */}
-			<div className={styles.mainContent}>
+			<div className="w-full overflow-auto bg-neutral-50">
 				{/* Header */}
-				<OperationsHeader
-					isFilterOpen={isFilterOpen}
-					onFilterToggle={() => setIsFilterOpen(!isFilterOpen)}
-					onCreateClick={() => {
-						setOpenModal({ id: 'new', isNew: true })
-						setModalType('income')
-						setIsModalClosing(false)
-						setIsModalOpening(true)
-						document.body.style.overflow = 'hidden'
-						setTimeout(() => {
-							setIsModalOpening(false)
-						}, 50)
-					}}
-					selectedCount={selectedOperations.length}
-					searchQuery={searchQuery}
-					onSearchChange={(val) => operationFilterStore.setSearchQuery(val)}
-				/>
+				<div className="sticky h-20 px-4 flex items-center justify-between top-0 z-40 bg-neutral-50 ">
+					<div className="flex h-16 items-center gap-4 ">
+						<h1 className="text-xl font-semibold">Операции</h1>
+						<button
+							onClick={handleCreate}
+							className="primary-btn"
+						>
+							Создать
+						</button>
+					</div>
+					<div className=" flex items-center justify-self-center gap-2">
+						<Input
+							type="text"
+							leftIcon={<Search size={20} />}
+							placeholder="По счету, контрагенту, или статья"
+							value={searchQuery}
+							className="w-[300px]"
+							onChange={(e) => onSearchChange?.(e.target.value)}
+						/>
+						<button className=" bg-white rounded-md border  flex items-center justify-center p-2">
+							<EllipsisVertical size={20} className='text-neutral-500' />
+						</button>
+					</div>
+					{/* <OperationsHeader
+						isFilterOpen={isFilterOpen}
+						onFilterToggle={() => setIsFilterOpen(!isFilterOpen)}
+						onCreateClick={() => {
+							setOpenModal({ id: 'new', isNew: true })
+							setModalType('income')
+							setIsModalClosing(false)
+							setIsModalOpening(true)
+							document.body.style.overflow = 'hidden'
+							setTimeout(() => {
+								setIsModalOpening(false)
+							}, 50)
+						}}
+						selectedCount={selectedOperations.length}
+						searchQuery={searchQuery}
+						onSearchChange={(val) => operationFilterStore.setSearchQuery(val)}
+					/> */}
+				</div>
 
 				{/* Table */}
-				<div className={styles.tableArea} style={{ position: 'relative' }}>
+				<div className="" >
 					{/* Refetch overlay spinner isLoadingOperations */}
 					{isLoadingOperations && <ScreenLoader className={'left-0!'} />}
 					{/* Selection Bar */}
@@ -527,10 +552,10 @@ const OperationsPage = observer(() => {
 						</div>
 					)}
 
-					<div className={styles.tableWrapper} ref={tableWrapperRef}>
-						<table className={styles.table}>
-							<thead className={styles.tableHeader}>
-								<tr className={styles.tableHeaderRow}>
+					<div className="" ref={tableWrapperRef}>
+						<table className="w-full ">
+							<thead className="bg-neutral-50 sticky top-20  z-10">
+								<tr className="bg-neutral-100">
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>
 										<OperationCheckbox
 											checked={isAllSelected}
@@ -558,7 +583,7 @@ const OperationsPage = observer(() => {
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
 								</tr>
 							</thead>
-							<tbody style={{ backgroundColor: 'white' }}>
+							<tbody >
 								{allOperations.length === 0 && !isLoadingOperations ? (
 									<tr className={styles.emptyRow}>
 										<td colSpan='9' className={styles.emptyCell}>
@@ -630,18 +655,11 @@ const OperationsPage = observer(() => {
 					</div>
 				</div>
 
-				{/* Loading indicator at the bottom outside the table */}
-				{/* {isFetchingNextPage && (
-					<div className={styles.loadingMore}>
-						<div className={styles.loadingSpinner}></div>
-						<span>Загрузка...</span>
-					</div>
-				)} */}
-
-
 				<OperationsFooter totalSummary={totalSummary} isFilterOpen={isFilterOpen} />
 
 			</div>
+
+			{isFetchingNextPage && <ScreenLoader className={'left-0!'} />}
 
 			{/* Right Side Modal */}
 			{openModal && (

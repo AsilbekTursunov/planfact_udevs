@@ -1,16 +1,15 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import { pnlStore } from '@/components/reports/profit-and-loss/pnl.store'
 import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
-import styles from '@/components/reports/ReportFilterSidebar/ReportFilterSidebar.module.scss'
-import '@/styles/report-filters.css'
-import { useUcodeRequestQuery } from '@/hooks/useDashboard'
-import { useMemo } from 'react'
+import { FilterSidebar } from '@/components/directories/FilterSidebar/FilterSidebar'
+import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import { FilterSection } from '../../../directories/FilterSidebar/FilterSidebar'
 
 const PnLFilterSidebar = observer(({ isOpen, onClose }) => {
   // ── Load accounts & counterparties via React Query (cached) ─────────────────
@@ -74,107 +73,85 @@ const PnLFilterSidebar = observer(({ isOpen, onClose }) => {
     return dispose
   }, [])
 
-  if (!isOpen) return null
-
   return (
-    <div className={`${styles.sidebar} report-filter-sidebar`}>
-      <div className={styles.sidebarContent}>
-        {/* Header */}
-        <div className={styles.sidebarHeader}>
-          <h2 className={styles.sidebarTitle}>Фильтры</h2>
-          <button onClick={onClose} className={styles.sidebarCloseButton}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
+    <FilterSidebar
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-4 pt-4">
+        {/* Date range */}
+        <FilterSection title="Период">
+          <NewDateRangeComponent
+            value={pnlStore.dateRange}
+            onChange={(val) => pnlStore.setDateRange(val)}
+          />
+        </FilterSection>
 
-        {/* Tabs */}
-        {/* <div className={styles.filterTabs}>
-          <button className={`${styles.filterTab} ${styles.active}`}>Общие</button>
-          <button className={`${styles.filterTab} ${styles.inactive}`} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-            Быстрые
-          </button>
-        </div> */}
-
-        {/* Content */}
-        <div className={styles.filterContent}>
-          {/* Date range */}
-          <div className={styles.filterSection}>
-            <h3 className={styles.filterSectionTitle}>Период</h3>
-            <NewDateRangeComponent
-              value={pnlStore.dateRange}
-              onChange={(val) => pnlStore.setDateRange(val)}
+        {/* Accounts */}
+        <div>
+          {accountOptions.length > 0 ? (
+            <MultiSelect
+              data={accountOptions}
+              value={pnlStore.selectedAccounts}
+              onChange={(val) => pnlStore.setSelectedAccounts(val)}
+              placeholder="Юрлица и счета"
+              hideSelectAll={true}
+              valueKey="value"
             />
-          </div>
-
-          {/* Accounts */}
-          <div className={styles.filterSection}>
-            {accountOptions.length > 0 ? (
-              <MultiSelect
-                data={accountOptions}
-                value={pnlStore.selectedAccounts}
-                onChange={(val) => pnlStore.setSelectedAccounts(val)}
-                placeholder="Юрлица и счета"
-                hideSelectAll={true}
-                valueKey="value"
-              />
-            ) : (
-              <MultiSelect
-                data={[]}
-                value={[]}
-                onChange={() => {}}
-                placeholder="Загрузка..."
-                loading={true}
-              />
-            )}
-          </div>
-
-          {/* Counterparties */}
-          <div className={styles.filterSection}>
-            {counterpartyOptions.length > 0 ? (
-              <MultiSelect
-                data={counterpartyOptions}
-                value={pnlStore.selectedCounterparties}
-                onChange={(val) => pnlStore.setSelectedCounterparties(val)}
-                hideSelectAll={true}
-                placeholder="Все контрагенты"
-                valueKey="value"
-              />
-            ) : (
-              <MultiSelect
-                data={[]}
-                value={[]}
-                onChange={() => {}}
-                placeholder="Загрузка..."
-                loading={true}
-              />
-            )}
-          </div>
-
-          {/* Profit types */}
-          <div className={styles.filterSection}>
-            <h3 className={styles.filterSectionTitle}>Виды прибыли</h3>
-            <div className={styles.checkboxGroup}>
-              {[
-                { key: 'operational', label: 'Операционная' },
-                { key: 'ebitda', label: 'EBITDA' },
-                { key: 'ebit', label: 'EBIT' },
-                { key: 'ebt', label: 'EBT' }
-              ].map(({ key, label }) => (
-                <label key={key} className={styles.checkboxLabel}>
-                  <OperationCheckbox
-                    checked={pnlStore.profitTypes[key]}
-                    onChange={() => pnlStore.toggleProfitType(key)}
-                    label={label}
-                  />
-                </label>
-              ))}
-            </div>
-          </div>
+          ) : (
+            <MultiSelect
+              data={[]}
+              value={[]}
+              onChange={() => { }}
+              placeholder="Загрузка..."
+              loading={true}
+            />
+          )}
         </div>
+
+        {/* Counterparties */}
+        <div>
+          {counterpartyOptions.length > 0 ? (
+            <MultiSelect
+              data={counterpartyOptions}
+              value={pnlStore.selectedCounterparties}
+              onChange={(val) => pnlStore.setSelectedCounterparties(val)}
+              hideSelectAll={true}
+              placeholder="Все контрагенты"
+              valueKey="value"
+            />
+          ) : (
+            <MultiSelect
+              data={[]}
+              value={[]}
+              onChange={() => { }}
+              placeholder="Загрузка..."
+              loading={true}
+            />
+          )}
+        </div>
+
+        {/* Profit types */}
+        <FilterSection title="Виды прибыли">
+          <div className="space-y-2">
+            {[
+              { key: 'operational', label: 'Операционная' },
+              { key: 'ebitda', label: 'EBITDA' },
+              { key: 'ebit', label: 'EBIT' },
+              { key: 'ebt', label: 'EBT' }
+            ].map(({ key, label }) => (
+              <label key={key} className="flex items-center gap-2 cursor-pointer">
+                <OperationCheckbox
+                  checked={pnlStore.profitTypes[key]}
+                  onChange={() => pnlStore.toggleProfitType(key)}
+                  label={label}
+                />
+              </label>
+            ))}
+          </div>
+        </FilterSection>
       </div>
-    </div>
+    </FilterSidebar>
   )
 })
 

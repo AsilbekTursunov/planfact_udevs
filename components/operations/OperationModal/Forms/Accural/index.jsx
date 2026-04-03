@@ -28,7 +28,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
 
   const isNew = initialData?.isNew
   const defaultCurrency = toJS(appStore.currencies).find(c => c.guid === appStore.currency.guid)
-  const currencyTitle = title || `${defaultCurrency.kod} ${defaultCurrency.nazvanie}`
+
 
   const defaultValues = useMemo(() => {
     if (initialData && (!isNew || initialData.isCopy)) {
@@ -91,14 +91,11 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
     }
   }
 
-  useMemo(() => {
-    setTitle(`${defaultCurrency.kod} ${defaultCurrency.nazvanie}`)
-  }, [])
 
 
   const legalEntityGuid = watch('legalEntity')
   const currency = watch('currency')
-
+  const currencyTitle = legalEntityGuid ? title : ``
 
   const onSubmit = async (data) => {
     try {
@@ -139,6 +136,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
       queryClient.invalidateQueries({ queryKey: ['find_operations'] })
       queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
+      queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
       queryClient.invalidateQueries({ queryKey: ['myAccountsBoard'] })
       queryClient.invalidateQueries({ queryKey: ['legal_entities'] })
       queryClient.invalidateQueries({ queryKey: ['legalEntitiesPlanFact'] })

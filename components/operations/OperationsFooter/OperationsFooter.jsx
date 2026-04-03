@@ -2,7 +2,7 @@
 
 import { cn } from '@/app/lib/utils'
 import styles from './OperationsFooter.module.scss'
-import { formatAmount, formatTotalSumma } from '../../../utils/helpers'
+import { formatTotalSumma } from '../../../utils/helpers'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
 import { observer } from 'mobx-react-lite'
 
@@ -10,7 +10,7 @@ export const OperationsFooter = observer(({ isFilterOpen = false, totalSummary }
 
 
   return (
-    <div className={cn(styles.footer, isFilterOpen && styles.withFilter)}>
+    <div className={cn('fixed bg-neutral-100 p-2  border-neutral-200 border-t items-center justify-center bottom-0 left-0 right-0 py-3 z-30 transition-all duration-300', isFilterOpen ? 'left-[320px]' : 'left-[110px]')}>
       <div className={styles.footerInner}>
         <div className={styles.footerLeft}>
           <span><strong className={styles.footerText}>{totalSummary?.count}</strong> операций</span>

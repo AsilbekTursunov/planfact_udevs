@@ -9,6 +9,7 @@ import { ExpendOpen, ExpendClose } from '@/constants/icons'
 import { toJS } from 'mobx'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
+import ScreenLoader from '../../../../components/shared/ScreenLoader'
 
 export default observer(function BalancePage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
@@ -100,82 +101,66 @@ export default observer(function BalancePage() {
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.contentWrapper}>
-        {/* Balance-specific Filter Sidebar */}
-        <BalanceFilterSidebar
-          isOpen={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
-        />
+    <div className="fixed left-[80px] w-[calc(100%-80px)] flex top-[60px] h-[calc(100%-60px)]">
+      {/* Balance-specific Filter Sidebar */}
+      <BalanceFilterSidebar
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+      />
 
-        {/* Filter Toggle Bar (shown when sidebar is closed) */}
-        {!isFilterOpen && (
-          <div className={styles.filterToggleBar} onClick={() => setIsFilterOpen(true)}>
-            <button className={styles.filterToggleBarButton}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+      {isLoading && <ScreenLoader />}
+      {/* Main Content */}
+      <div className={"w-full relative bg-white overflow-auto pb-10"}>
+        <div className="flex px-4 h-16 items-center sticky top-0 z-20 bg-white justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className='text-xl whitespace-nowrap font-semibold'>Балансовый отчет</h1>
+            <SingleSelect
+              data={currencies}
+              value={balanceStore.selectedCurrency || GlobalCurrency.code}
+              onChange={(value) => {
+                balanceStore.setSelectedCurrency(value)
+                balanceStore.fetchBalance()
+              }}
+              isClearable={false}
+              withSearch={false}
+              className={'bg-white w-28'}
+              dropdownClassName={'w-28'}
+            />
           </div>
-        )}
 
-        {/* Main Content */}
-        <div className={`${styles.mainContent} ${isFilterOpen ? styles.mainContentWithFilter : ''}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className='text-xl whitespace-nowrap font-semibold'>Балансовый отчет</h1>
-              <SingleSelect
-                data={currencies}
-                value={balanceStore.selectedCurrency || GlobalCurrency.code}
-                onChange={(value) => {
-                  balanceStore.setSelectedCurrency(value)
-                  balanceStore.fetchBalance()
-                }}
-                isClearable={false}
-                withSearch={false}
-                className={'bg-white w-28'}
-                dropdownClassName={'w-28'}
-              />
+        </div>
+
+        <div className="px-4 text-center mb-4 text-sm font-medium ">
+          Активы = Обязательства + Капитал
+        </div>
+
+        {/* Table with loading overlay */}
+        <div className='px-4'>
+          {/* Spinner overlay on filter change (data already present) */}
+
+
+          {error && !isLoading ? (
+            <div className={styles.tableError}>
+              <p>Ошибка загрузки данных: {error.message}</p>
+              <button onClick={() => balanceStore.fetchBalance()} className={styles.retryButton}>
+                Повторить
+              </button>
             </div>
-
-          </div>
-
-          <div className={styles.balanceEquation}>
-            Активы = Обязательства + Капитал
-          </div>
-
-          {/* Table with loading overlay */}
-          <div className={styles.tableContainer} style={{ position: 'relative' }}>
-            {/* Spinner overlay on filter change (data already present) */}
-            {isLoading && (
-              <div className={styles.tableOverlay}>
-                <div className={styles.spinner} />
-              </div>
-            )}
-
-            {error && !isLoading ? (
-              <div className={styles.tableError}>
-                <p>Ошибка загрузки данных: {error.message}</p>
-                <button onClick={() => balanceStore.fetchBalance()} className={styles.retryButton}>
-                  Повторить
-                </button>
-              </div>
-            ) : (
-              <table className={styles.table}>
-                <thead className={styles.thead}>
+          ) : (
+              <table className="w-full">
+                <thead className=" bg-neutral-100 sticky top-16 z-10">
                   <tr>
-                    <th className={styles.th}>СЧЕТ</th>
-                    <th className={styles.th}>Итого</th>
-                  </tr>
-                </thead>
-                <tbody className={styles.tbody}>
-                  {balanceData.assets.map(row => renderRow(row))}
-                  {balanceData.liabilities.map(row => renderRow(row))}
-                  {balanceData.equity.map(row => renderRow(row))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                  <th className="text-left px-4 py-2 text-xs font-medium">СЧЕТ</th>
+                  <th className="text-right px-4 py-2 text-xs font-medium">Итого</th>
+                </tr>
+              </thead>
+              <tbody className={styles.tbody}>
+                {balanceData.assets.map(row => renderRow(row))}
+                {balanceData.liabilities.map(row => renderRow(row))}
+                {balanceData.equity.map(row => renderRow(row))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
