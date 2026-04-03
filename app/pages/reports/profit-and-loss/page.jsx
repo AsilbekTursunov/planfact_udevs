@@ -12,6 +12,16 @@ import { toJS } from 'mobx'
 import SingleSelect from '@/components/shared/Selects/SingleSelect'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
+import { formatPeriod } from '../../../../utils/helpers'
+
+const formatDateLocal = (date) => {
+  if (!date) return null
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const accountingMethodOptions = [
   { guid: 'accrual', label: 'Метод начисления' },
@@ -29,8 +39,11 @@ const ProfitAndLossPage = observer(() => {
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedColumn, setSelectedColumn] = useState(null)
-  const [selectedMonth, setSelectedMonth] = useState(null)
+  const [modalConfig, setModalConfig] = useState({ 
+    filterData: null, 
+    summaryData: null, 
+    title: '' 
+  })
 
   const { reportData, isLoading, isFetching } = pnlStore
   const loading = isLoading || isFetching
@@ -104,11 +117,7 @@ const ProfitAndLossPage = observer(() => {
               <td key={period.key} className="px-4 py-2 text-xs text-center border-r">
                 <span
                   className={`${item.level === 0 || isResultRow || isTotalRow ? "font-medium" : "text-xs"} cursor-pointer hover:underline hover:text-primary transition-colors`}
-                  onClick={() => {
-                    setSelectedColumn(item)
-                    setSelectedMonth({ key: period.key, label: period.title })
-                    setIsModalOpen(true) 
-                  }}
+                  onClick={() => handleCellClick(item, { key: period.key, label: period.title })}
                 >
                   {displayValue}
                 </span>
@@ -118,11 +127,7 @@ const ProfitAndLossPage = observer(() => {
           <td className="px-4 py-2 text-right text-sm">
             <span
               className={`${item.level === 0 || isResultRow || isTotalRow ? "font-semibold" : "text-xs"} cursor-pointer hover:underline hover:text-primary transition-colors`}
-              onClick={() => {
-                setSelectedColumn(item)
-                setSelectedMonth(null)
-                setIsModalOpen(true)
-              }}
+              onClick={() => handleCellClick(item, null)}
             >
               {item.totalValue === 0 ? '–' : isPercentRow ? `${item.totalValue?.toFixed(1)}` : item.totalValue?.toLocaleString('ru-RU')}
             </span>
@@ -131,6 +136,57 @@ const ProfitAndLossPage = observer(() => {
         {hasChildren && isExpanded && item.details.map(child => renderRow(child, true))}
       </React.Fragment>
     )
+  }
+
+  const handleCellClick = (item, monthObj) => {
+    let dateRange = {
+      start: formatDateLocal(pnlStore.dateRange.start),
+      end: formatDateLocal(pnlStore.dateRange.end)
+    }
+
+    if (monthObj?.key) {
+      const [year, month] = monthObj.key.split('-').map(Number)
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+      const lastDay = new Date(year, month, 0).getDate()
+      const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+      dateRange = { start: startDate, end: endDate }
+    }
+
+    const collectIds = (node) => {
+      let ids = []
+      if (typeof node.id === 'string' && /\d/.test(node.id)) {
+        ids.push(node.id)
+      }
+      if (node.details && Array.isArray(node.details)) {
+        node.details.forEach(child => {
+          ids.push(...collectIds(child))
+        })
+      }
+      return ids
+    }
+
+    const chartOfAccountIds = collectIds(item)
+
+    const filterData = {
+      tip: ["Списание", "Зачисление", "Перемещение", "Выплата", "Поступление", "Отгрузка", "Дебет", "Кредит", "Начисление"],
+      paymentAccural: true,
+      paymentNotAccural: false,
+      paymentDateStart: dateRange.start,
+      paymentDateEnd: dateRange.end,
+      ...(chartOfAccountIds.length > 0 ? { chart_of_accounts_ids: chartOfAccountIds } : {})
+    }
+
+    const periodLabel = formatPeriod(dateRange.start, dateRange.end)
+
+    setModalConfig({
+      filterData,
+      summaryData: {
+        periodLabel,
+        totalAmount: monthObj ? (item.values?.[monthObj.key] || 0) : item.totalValue
+      },
+      title: item.name
+    })
+    setIsModalOpen(true)
   }
 
   return (
@@ -227,11 +283,11 @@ const ProfitAndLossPage = observer(() => {
         </div>
       </div>
       <OperationCashFlowModal
-        type="pnl"
-        data={selectedColumn}
-        selectedMonth={selectedMonth}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        filterData={modalConfig.filterData}
+        summaryData={modalConfig.summaryData}
+        title={modalConfig.title}
       />
     </div>
   )

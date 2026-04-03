@@ -10,6 +10,7 @@ import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks
 import Loader from '../../../shared/Loader'
 import SingleSelect from '../../../shared/Selects/SingleSelect'
 import { keepPreviousData } from '@tanstack/react-query'
+import CustomModal from '../../../shared/CustomModal'
 
 const CreateProductService = ({
   open,
@@ -163,8 +164,6 @@ const CreateProductService = ({
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  if (!open) return null
-
   const validate = () => {
     const newErrors = {}
     if (!formData.product_and_service_id) newErrors.product_and_service_id = 'Выберите наименование'
@@ -241,31 +240,21 @@ const CreateProductService = ({
 
 
   return (
-    <>
-      {/* Overlay */}
-      <div className={styles.overlay} onClick={onClose} />
-
-      {/* Panel */}
-      <div className={styles.panel}>
-        {/* Header */}
-        <div className={styles.header}>
-          <div>
-            <h2 className={styles.title}>
-              {isEditing ? 'Редактировать позицию' : 'Добавить товар/услугу'}
-            </h2>
-            <p className={styles.subtitle}>Заполните данные позиции сделки</p>
-          </div>
-          <button className={styles.closeBtn} onClick={onClose}>
-            <X size={20} />
-          </button>
+    <CustomModal isOpen={open} onClose={onClose} className={'w-[500px]! p-0'}>
+      <div className="">
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold">
+            {isEditing ? 'Редактировать позицию' : 'Добавить товар/услугу'}
+          </h2>
+          <p className="text-sm text-gray-ucode-500">Заполните данные позиции сделки</p>
         </div>
 
         {/* Body */}
-        <div className={styles.body}>
+        <div className="p-4 py-5">
           {/* Наименование */}
-          <div className={styles.formRow}>
-            <label className={styles.label}>
-              Наименование <span className={styles.required}>*</span>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">
+              Наименование <span className="text-red-500">*</span>
             </label>
             <SingleSelect
               data={productServicesList}
@@ -287,8 +276,8 @@ const CreateProductService = ({
               </label>
               <Input
                 type='text'
-                value={formatAmount(formData.quantity)}
-                onChange={(e) => setFormData(prev => ({ ...prev, quantity: e.target.value }))}
+                value={formatNumber(formData.quantity)}
+                onChange={(e) => setFormData(prev => ({ ...prev, quantity: formatNumber(e.target.value) }))}
                 className={`${styles.input} ${errors.quantity ? styles.inputError : ''}`}
                 placeholder='0'
               />
@@ -313,8 +302,8 @@ const CreateProductService = ({
             </label>
             <Input
               type='text'
-              value={formData.tsena_za_ed ? formatNumber(formData.tsena_za_ed) : ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, tsena_za_ed: e.target.value }))}
+              value={formatNumber(formData.tsena_za_ed)}
+              onChange={(e) => setFormData(prev => ({ ...prev, tsena_za_ed: formatNumber(e.target.value) }))}
               className={`${styles.input} ${styles.textRight} ${errors.tsena_za_ed ? styles.inputError : ''}`}
               placeholder='Цена за ед.'
             />
@@ -359,8 +348,8 @@ const CreateProductService = ({
         </div>
 
         {/* Footer */}
-        <div className={styles.footer}>
-          <button className={styles.cancelBtn} onClick={onClose}>
+        <div className="flex items-center justify-end gap-2 p-3 border-t">
+          <button className="secondary-btn" onClick={onClose}>
             Отменить
           </button>
           <button
@@ -372,7 +361,7 @@ const CreateProductService = ({
           </button>
         </div>
       </div>
-    </>
+    </CustomModal>
   )
 }
 

@@ -4,6 +4,8 @@ import { useEffect } from "react"
 import { useUcodeRequestQuery } from "../hooks/useDashboard"
 import { appStore } from "../store/app.store"
 
+import { TooltipProvider } from "@/components/ui/tooltip"
+
 const AppProvider = ({ children }) => {
   const { data } = useUcodeRequestQuery({
     method: 'get_general_settings',
@@ -30,7 +32,9 @@ const AppProvider = ({ children }) => {
 
 
   return (
-    <div>{children}</div>
+    <TooltipProvider delay={0}>
+      <div>{children}</div>
+    </TooltipProvider>
   )
 }
 

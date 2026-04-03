@@ -31,7 +31,7 @@ import CommentChat from '../../../../components/deals/details/CommentChat';
 import { sealDeal } from '../../../../store/saleDeal.store';
 import ExpenseOperationsTable from '../../../../components/deals/details/ExpenseOperationTable';
 import IncomeOperationsTable from '../../../../components/deals/details/IncomeOperationsTable';
-import { calculatePercent, formatDateRu } from '../../../../utils/helpers';
+import { calculatePercent, formatDateRu, formatNumber } from '../../../../utils/helpers';
 import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
 import { DeleteDealModal } from '@/components/deals/DeleteDealModal/DeleteDealModal';
 import { useUcodeDefaultApiMutation } from '@/hooks/useDashboard';
@@ -228,132 +228,134 @@ export default observer(function DealDetailPage() {
         </Popover>
       </div>
 
-      {/* Info Cards */}
-      <div className="min-w-[1280px] max-w-[1920px] gap-4 px-3 grid grid-cols-4">
+      {/* Info Cards */} 
+      <div className="min-w-[920px] max-w-[1920px] gap-2 xl:gap-4 px-3 grid grid-cols-4">
         {/* Card 1: Deal Amount */}
-        <div className={'bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]'}>
+        <div className={'bg-white rounded-xl p-4 xl:p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]'}>
           <div className="flex items-center justify-between">
-            <p className='text-xl flex gap-1 font-semibold text-neutral-800 mt-2'>
-              <span>{formatAmount(dealAmount)}</span>
+            <p className='text-base xl:text-xl flex gap-1 font-semibold text-neutral-800 mt-2 truncate'>
+              <span className="truncate">{formatNumber(42342342342342)}</span> 
               <span>{GlobalCurrency.name}</span>
             </p>
-            <DealStatus
-              currentStatus={summeryCards?.status}
-              onStatusChange={(status) => {
-                handleUpdateStatus(status);
-              }}
-            />
+            <div className="shrink-0 ml-1">
+              <DealStatus
+                currentStatus={summeryCards?.status}
+                onStatusChange={(status) => {
+                  handleUpdateStatus(status);
+                }}
+              />
+            </div>
           </div>
 
 
-          <div className="border-b border-gray-100 my-3"></div>
+          <div className="border-b border-gray-100 my-2 xl:my-3"></div>
 
-          <div className="grid grid-cols-[100px_1fr] gap-y-2 mt-2 font-sans">
-            <span className="text-sm font-normal text-[#8892A3]">Тип</span>
-            <div className="flex">
-              <span className="flex items-center gap-1.5 bg-[#F2F4F7] rounded-[10px] px-3 py-1 text-sm font-semibold text-neutral-800">
-                <PiDatabaseFill size={16} className='text-[#9aa4b3]' />
+          <div className="grid grid-cols-[70px_1fr] xl:grid-cols-[100px_1fr] gap-y-2 mt-1 xl:mt-2 font-sans">
+            <span className="text-xs xl:text-sm font-normal text-[#8892A3]">Тип</span>
+            <div className="flex items-center">
+              <span className="flex items-center gap-1 md:gap-1.5 bg-[#F2F4F7] rounded-lg xl:rounded-[10px] px-2 xl:px-3 py-0.5 xl:py-1 text-xs xl:text-sm font-semibold text-neutral-800">
+                <PiDatabaseFill size={14} className='text-[#9aa4b3] xl:w-4 xl:h-4 w-3.5 h-3.5' />
                 Продажа
               </span>
             </div>
 
-            <span className="text-sm font-normal text-[#8892A3]">Клиент</span>
-            <div className="flex">
+            <span className="text-xs xl:text-sm font-normal text-[#8892A3]">Клиент</span>
+            <div className="flex items-center w-full min-w-0 overflow-hidden">
               <span
-                className="text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer hover:text-primary transition-colors flex items-center gap-1 group"
+                className="text-xs xl:text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer hover:text-primary transition-colors flex items-center gap-1 group truncate w-full"
                 onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
               >
-                {summeryCards?.counterparties_name || 'test'}
-                <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+                <div className="truncate">{summeryCards?.counterparties_name || 'test'}</div>
+                <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0" />
               </span>
             </div>
 
-            <span className="text-sm font-normal text-[#8892A3]">Создана</span>
-            <div className="flex">
+            <span className="text-xs xl:text-sm font-normal text-[#8892A3]">Создана</span>
+            <div className="flex items-center">
               <span
-                className="text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer flex items-center gap-1 group"
+                className="text-xs xl:text-sm font-medium text-neutral-800 border-b border-dotted border-gray-400 pb-0.5 cursor-pointer flex items-center gap-1 group whitespace-nowrap"
                 onClick={() => { setDealToEdit(deal); setIsCreateModalOpen(true); }}
               >
                 {formatDateRu(deal?.sale_date)}
-                <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+                <Pencil size={12} className="text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0" />
               </span>
             </div>
           </div>
         </div>
 
         {/* Card 2: Receipts */}
-        <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
-          <div className="flex items-center justify-between mb-4">
-            <span className="font-semibold text-base text-gray-ucode-800">Поступления</span>
-            <button onClick={() => { handleCreateOperation(); setActiveTab('receipts'); }} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
-              <CirclePlus size={20} strokeWidth={1.5} className='text-neutral-300' />
+        <div className="bg-white rounded-xl p-4 xl:p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)] overflow-hidden">
+          <div className="flex items-center justify-between mb-2 xl:mb-4">
+            <span className="font-semibold text-sm xl:text-base text-gray-ucode-800 truncate pr-2">Поступления</span>
+            <button onClick={() => { handleCreateOperation(); setActiveTab('receipts'); }} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70 shrink-0">
+              <CirclePlus size={20} strokeWidth={1.5} className='text-neutral-300 w-4 h-4 xl:w-5 xl:h-5' />
             </button>
           </div>
 
-          <div className="flex items-start gap-3 mb-5">
-            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
-              <HiOutlineDatabase size={20} className='text-neutral-400' />
+          <div className="flex items-center xl:items-start gap-2 xl:gap-3 mb-3 xl:mb-5">
+            <div className="w-10 h-10 xl:w-[52px] xl:h-[52px] rounded-lg xl:rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
+              <HiOutlineDatabase size={20} className='text-neutral-400 w-4 h-4 xl:w-5 xl:h-5' />
             </div>
 
-            <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(received)} {GlobalCurrency.name}</div>
-              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} {GlobalCurrency.name}</div>
+            <div className="flex flex-col gap-0 min-w-0">
+              <div className="font-semibold text-sm xl:text-lg text-gray-ucode-800 truncate">{formatAmount(received)} {GlobalCurrency.name}</div>
+              <div className="font-normal text-mini xl:text-xs text-gray-ucode-500 truncate">из {formatAmount(dealAmount)} {GlobalCurrency.name}</div>
             </div>
           </div>
 
-          <div className="w-full h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-2">
+          <div className="w-full h-1.5 xl:h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-1 xl:mb-2 mt-auto">
             <CustomProgress min={0} value={received} max={dealAmount} fillColor="#12B76A" />
           </div>
-          <div className="font-normal text-xs text-gray-ucode-500 mt-2 mb-5">Поступило: {calculatePercent(dealAmount, received)}</div>
+          <div className="font-normal text-mini xl:text-xs text-gray-ucode-500 mt-1 xl:mt-2 mb-3 xl:mb-5 truncate">Поступило: {calculatePercent(dealAmount, received)}</div>
 
-          <div className="flex text-xs flex-1 items-end  gap-2">
-            <span className="font-normal  text-gray-ucode-500">Клиент должен:</span>
-            <p>
-              <span className="font-medium  text-[#344054]">{formatAmount(clientDebt)} </span>
+          <div className="flex text-mini xl:text-xs flex-wrap items-end gap-1 xl:gap-2">
+            <span className="font-normal text-gray-ucode-500 whitespace-nowrap">Клиент должен:</span>
+            <p className="truncate">
+              <span className="font-medium text-[#344054]">{formatAmount(clientDebt)} </span>
               <span>{GlobalCurrency.name}</span>
             </p>
           </div>
         </div>
 
         {/* Card 3: Shipments */}
-        <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
-          <div className="flex items-center justify-between mb-4">
-            <span className="font-semibold text-base text-gray-ucode-800">Отгрузки клиенту</span>
-            <button onClick={() => setShowShipmentModal(true)} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70">
-              <ShipmentPlusIcon />
+        <div className="bg-white rounded-xl p-4 xl:p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)] overflow-hidden">
+          <div className="flex items-center justify-between mb-2 xl:mb-4">
+            <span className="font-semibold text-sm xl:text-base text-gray-ucode-800 truncate pr-2">Отгрузки клиенту</span>
+            <button onClick={() => setShowShipmentModal(true)} className="bg-transparent border-none cursor-pointer p-0 flex items-center justify-center transition-opacity hover:opacity-70 shrink-0">
+              <div className="scale-75 xl:scale-100 origin-right transition-transform"><ShipmentPlusIcon /></div>
             </button>
           </div>
 
-          <div className="flex items-start text-lg gap-3 mb-5">
-            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
-              <BoxIcon />
+          <div className="flex items-center xl:items-start text-lg gap-2 xl:gap-3 mb-3 xl:mb-5">
+            <div className="w-10 h-10 xl:w-[52px] xl:h-[52px] rounded-lg xl:rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
+              <div className="scale-75 xl:scale-100"><BoxIcon /></div>
             </div>
 
-            <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(shipped)} {GlobalCurrency.name}</div>
-              <div className="font-normal text-xs text-gray-ucode-500">из {formatAmount(dealAmount)} {GlobalCurrency.name}</div>
+            <div className="flex flex-col gap-0 min-w-0">
+              <div className="font-semibold text-sm xl:text-lg text-gray-ucode-800 truncate">{formatAmount(shipped)} {GlobalCurrency.name}</div>
+              <div className="font-normal text-mini xl:text-xs text-gray-ucode-500 truncate">из {formatAmount(dealAmount)} {GlobalCurrency.name}</div>
             </div>
           </div>
 
-          <div className="w-full h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-2">
+          <div className="w-full h-1.5 xl:h-2 bg-[#F2F4F7] rounded-md overflow-hidden mb-1 xl:mb-2 mt-auto">
             <CustomProgress min={0} value={shipped} max={dealAmount} fillColor="#12B76A" />
           </div>
-          <div className="font-normal text-xs text-gray-ucode-500 mt-2 mb-5">Отгружено: {calculatePercent(dealAmount, shipped)}</div>
+          <div className="font-normal text-mini xl:text-xs text-gray-ucode-500 mt-1 xl:mt-2 mb-3 xl:mb-5 truncate">Отгружено: {calculatePercent(dealAmount, shipped)}</div>
 
-          <div className="flex text-xs  gap-2 flex-1 items-end">
-            <span className="font-normal  text-gray-ucode-500">Мы должны:</span>
-            <span className="font-medium  text-[#344054]">{formatAmount(remainingShipment)} {GlobalCurrency.name}</span>
+          <div className="flex text-mini xl:text-xs gap-1 xl:gap-2 flex-wrap items-end">
+            <span className="font-normal text-gray-ucode-500 whitespace-nowrap">Мы должны:</span>
+            <span className="font-medium text-[#344054] truncate">{formatAmount(remainingShipment)} {GlobalCurrency.name}</span>
           </div>
         </div>
 
         {/* Card 4: Profit */}
-        <div className="bg-white rounded-xl p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]">
-          <div className="flex items-center justify-between mb-4">
-            <span className="font-semibold text-base text-gray-ucode-800">Прибыль сделки</span>
+        <div className="bg-white rounded-xl p-4 xl:p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)] overflow-hidden">
+          <div className="flex items-center justify-between mb-2 xl:mb-4">
+            <span className="font-semibold text-sm xl:text-base text-gray-ucode-800 truncate pr-1">Прибыль сделки</span>
             <Popover open={showAccounting} onOpenChange={setShowAccounting}>
-              <PopoverTrigger className="relative bg-primary/10 cursor-pointer text-primary px-2 py-1 rounded-full text-xs border-none outline-none">
-                <div className="flex items-center gap-2">
-                  <p className="text-xs">Учет</p>
+              <PopoverTrigger className="relative bg-primary/10 cursor-pointer text-primary px-1.5 xl:px-2 py-0.5 xl:py-1 rounded-full text-mini xl:text-xs border-none outline-none shrink-0">
+                <div className="flex items-center gap-1 xl:gap-2">
+                  <p className="text-mini xl:text-xs">Учет</p>
                   <ChevronUp size={12} className={`transition-all duration-300 ${showAccounting ? 'rotate-180' : ''}`} />
                 </div>
               </PopoverTrigger>
@@ -361,75 +363,78 @@ export default observer(function DealDetailPage() {
                 <div className="flex flex-col bg-white">
                   <label htmlFor="accrual" className="flex p-3 items-center gap-2 cursor-pointer hover:bg-neutral-50">
                     <CustomRadio name="accounting" id="accrual" value="accrual" checked={accounting === 'accrual'} onChange={(e) => { sealDeal.setState('accounting', e.target.value); setShowAccounting(false); }} />
-                    <span className="whitespace-nowrap text-sm text-neutral-800">Методом начисления</span>
+                    <span className="whitespace-nowrap text-xs text-neutral-800">Методом начисления</span>
                   </label>
                   <label htmlFor="cash" className="flex p-3 items-center gap-2 cursor-pointer hover:bg-neutral-50">
                     <CustomRadio name="accounting" id="cash" value="cash" checked={accounting === 'cash'} onChange={(e) => { sealDeal.setState('accounting', e.target.value); setShowAccounting(false); }} />
-                    <span className="whitespace-nowrap text-sm text-neutral-800">Кассовым методом</span>
+                    <span className="whitespace-nowrap text-xs text-neutral-800">Кассовым методом</span>
                   </label>
                 </div>
               </PopoverContent>
             </Popover>
           </div>
 
-          <div className="flex  items-start gap-3 mb-3">
-            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
-              <HiOutlineCreditCard size={20} className='text-neutral-400' />
+          <div className="flex items-center xl:items-start gap-2 xl:gap-3 mb-2 xl:mb-3 mt-auto">
+            <div className="w-10 h-10 xl:w-[52px] xl:h-[52px] rounded-lg xl:rounded-[10px] bg-[#F2F4F7] flex items-center justify-center shrink-0">
+              <HiOutlineCreditCard size={20} className='text-neutral-400 w-4 h-4 xl:w-5 xl:h-5' />
             </div>
 
-            <div className="flex flex-col gap-0">
-              <div className="font-semibold text-lg text-gray-ucode-800">{formatAmount(profit)} {GlobalCurrency.name}</div>
-              <div className="font-normal text-xs text-gray-ucode-500">Рентабельность {profitPercent}%</div>
+            <div className="flex flex-col gap-0 min-w-0">
+              <div className="font-semibold text-sm xl:text-lg text-gray-ucode-800 truncate">{formatAmount(profit)} {GlobalCurrency.name}</div>
+              <div className="font-normal text-mini xl:text-xs text-gray-ucode-500 truncate">Рентабельность {profitPercent}%</div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 my-2">
-            <CustomProgress value={received} fillColor="#12B76A" min={0} max={received} />
-            <CustomProgress value={expenses} fillColor="#FFC609" min={0} max={income} />
+          <div className="flex flex-col gap-1.5 xl:gap-2 my-1 xl:my-2">
+            <div className="w-full xl:h-2 h-1.5 bg-[#F2F4F7] rounded-md overflow-hidden">
+              <CustomProgress value={received} fillColor="#12B76A" min={0} max={received} />
+            </div>
+            <div className="w-full xl:h-2 h-1.5 bg-[#F2F4F7] rounded-md overflow-hidden">
+              <CustomProgress value={expenses} fillColor="#FFC609" min={0} max={income} />
+            </div>
           </div>
 
-          <div className="flex flex-1 items-end   gap-2">
-            <div className="flex flex-col flex-1">
-              <div className={styles.profitBarDot} style={{ backgroundColor: '#12B76A' }}></div>
-              <span className="font-normal text-xs text-gray-ucode-500">Доходы</span>
-              <span className="font-medium text-sm text-gray-ucode-800">+{formatAmount(income)} {GlobalCurrency.name}</span>
+          <div className="flex flex-1 items-end gap-1.5 xl:gap-2">
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className={styles.profitBarDot} style={{ backgroundColor: '#12B76A', flexShrink: 0, width: '4px', height: '4px', borderRadius: '50%', marginBottom: '2px' }}></div>
+              <span className="font-normal text-mini xl:text-xs text-gray-ucode-500 truncate">Доходы</span>
+              <span className="font-medium text-[11px] xl:text-sm text-gray-ucode-800 truncate">+{formatAmount(income)} {GlobalCurrency.name}</span>
             </div>
-            <div className="flex flex-col flex-1">
-              <div className={styles.profitBarDot} style={{ backgroundColor: '#FFC609' }}></div>
-              <span className="font-normal text-xs text-gray-ucode-500">Расходы</span>
-              <span className="font-medium text-sm text-gray-ucode-800">-{formatAmount(expenses)} {GlobalCurrency.name}</span>
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className={styles.profitBarDot} style={{ backgroundColor: '#FFC609', flexShrink: 0, width: '4px', height: '4px', borderRadius: '50%', marginBottom: '2px' }}></div>
+              <span className="font-normal text-mini xl:text-xs text-gray-ucode-500 truncate">Расходы</span>
+              <span className="font-medium text-[11px] xl:text-sm text-gray-ucode-800 truncate">-{formatAmount(expenses)} {GlobalCurrency.name}</span>
             </div>
           </div>
         </div>
         {/* Main Content Layout */}
         {/* Left side - Tabs and content */}
-        <div className="col-span-3">
-          {/* Tabs */}
-          <div className='flex flex-col sticky top-16 z-10 '>
-            <div className="flex bg-white border-b h-16  border-neutral-100 rounded-t-xl overflow-hidden mb-0">
+        <div className="col-span-3 bg-white rounded-xl shadow-[0_10px_10px_rgba(118,164,172,0.1)]">
+          <div className='flex flex-col sticky top-16 z-10  '>
+            <div className="flex  border-b h-16 border-neutral-100 rounded-t-xl  mb-0">
               <button
-                className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'products' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                className={`font-semibold text-mini xl:text-xs px-3 xl:px-5 py-3 xl:py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 truncate ${activeTab === 'products' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
                   }`}
                 onClick={() => setActiveTab('products')}
               >
                 Товары и услуги ({summeryCards?.products_count ?? 0})
               </button>
               <button
-                className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'receipts' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                className={`font-semibold text-mini xl:text-xs px-3 xl:px-5 py-3 xl:py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 truncate ${activeTab === 'receipts' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
                   }`}
                 onClick={() => setActiveTab('receipts')}
               >
                 Поступления ({summeryCards?.receipts_count ?? 0})
               </button>
               <button
-                className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'expenses' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                className={`font-semibold text-mini xl:text-xs px-3 xl:px-5 py-3 xl:py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 truncate ${activeTab === 'expenses' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
                   }`}
                 onClick={() => setActiveTab('expenses')}
               >
                 Расходы ({summeryCards?.expenses_count ?? 0})
               </button>
               <button
-                className={`font-semibold text-xs px-5 py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 ${activeTab === 'shipments' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
+                className={`font-semibold text-mini xl:text-xs px-3 xl:px-5 py-3 xl:py-4 cursor-pointer uppercase border-b-2 bg-transparent border-none relative transition-all hover:text-neutral-800 truncate ${activeTab === 'shipments' ? 'text-neutral-900 border-neutral-900 font-bold' : 'text-neutral-400 border-transparent'
                   }`}
                 onClick={() => setActiveTab('shipments')}
               >
@@ -437,9 +442,9 @@ export default observer(function DealDetailPage() {
               </button>
             </div>
             {/* Tab Content */}
-            <div className="py-2 bg-white">
+            <div className="p-2  rounded-b-xl">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionTitle}>
+                <div className={`${styles.sectionTitle} text-xs xl:text-sm pr-2 truncate`}>
                   {activeTab === 'products' && 'Выберите товары или услуги для продажи'}
                   {activeTab === 'receipts' && 'Платежи от клиентов за проданные товары или оказанные услуги '}
                   {activeTab === 'expenses' && 'Понесенные затраты по сделке'}
@@ -447,13 +452,13 @@ export default observer(function DealDetailPage() {
                 </div>
                 <div className={styles.searchContainer}>
                   <Input
-                    leftIcon={<Search size={18} />}
+                    leftIcon={<Search size={16} className="xl:w-[18px] xl:h-[18px]" />}
                     type="text"
-                    placeholder="Поиск по названию"
-                    className={styles.searchInput}
+                    placeholder="Поиск"
+                    className={` w-[240px] xl:w-[200px] text-xs xl:text-sm`}
                   />
                   <button
-                    className='primary-btn'
+                    className='primary-btn  text-xs xl:text-sm px-3 xl:px-4 py-2 xl:py-2.5 whitespace-nowrap shrink-0'
                     onClick={() => {
                       if (activeTab === 'shipments') {
                         setShowShipmentModal(true);
@@ -468,7 +473,7 @@ export default observer(function DealDetailPage() {
                   </button>
                 </div>
               </div>
-              <div className={styles.contentContainer}>
+              <div className="">
                 {activeTab === 'products' && <ProductServiceTable handleSelect={handleSelectProduct} sellingDealId={dealId} onAdd={() => setShowProductModal(true)} />}
 
                 {activeTab === 'receipts' && <IncomeOperationsTable type='Поступление' sellingDealId={dealId} onAdd={handleCreateOperation} />}
@@ -480,7 +485,7 @@ export default observer(function DealDetailPage() {
             </div>
           </div>
         </div>
-        <div>
+        <div className='flex-1 h-full max-h-[600px]'>
           <CommentChat dealGuid={dealId} />
         </div>
 

@@ -10,6 +10,9 @@ import OperationCashFlowModal from '@/components/directories/OperationCashFlowMo
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 import { toJS } from 'mobx'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
+import { cn } from '@/lib/utils'
+import { formatPeriod } from '../../../../utils/helpers'
+import CustomTooltip from '../../../../components/shared/Tooltip'
 
 const groupingOptions = [
   { value: 'monthly', label: 'По месяцам' },
@@ -38,11 +41,19 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
 
   return (
     <>
-      <tr className={`border-b border-neutral-200 transition-colors ${depth === 0 ? 'bg-neutral-50 font-semibold' : 'hover:bg-neutral-50'}`}>
+      <tr className={`border-b box-content border-neutral-200 transition-colors ${depth === 0 ? 'bg-neutral-50 font-semibold' : 'hover:bg-neutral-50'}`}>
         {/* Name cell */}
-        <td className="px-4  py-2" style={{ paddingLeft: `${depth * 1.5 + 1}rem` }}>
+
+        <td
+          className={cn(
+            " sticky left-0 z-10 p-0! box-border transition-shadow duration-300",
+            depth === 0 ? "bg-neutral-50" : "bg-white",
+            "hover:bg-neutral-100 transition-colors",
+          )}
+          style={{ paddingLeft: `${depth * 1.5 + 1}rem` }}
+        >
           <div
-            className={`flex items-center text-xss!  gap-2 ${hasChildren ? 'cursor-pointer' : 'cursor-default'}`}
+            className={`flex items-center w-full  border-r px-4 py-2 text-xss! gap-2 ${hasChildren ? "cursor-pointer" : "cursor-default"}`}
             onClick={hasChildren ? () => onToggle(row.uniquePath) : undefined}
           >
             {hasChildren && (
@@ -59,24 +70,26 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
           const val = row.months?.[month] ?? 0
           const legendItem = legend.find(l => l.key === month)
           return (
-            <td key={month} className="px-4 py-2 text-xss! text-end border-l">
+            <td key={month} className="px-2  text-xs text-end border-r min-w-[150px] max-w-[150px]">
               <span
-                className={`${isBold ? "font-semibold" : ""} ${!isEndingBalance ? 'cursor-pointer hover:underline hover:text-primary transition-colors' : ''}`}
+                className={` cursor-pointer ${isBold ? "font-semibold" : ""} ${!isEndingBalance ? ' hover:text-primary transition-colors' : ''}`}
                 onClick={() => {
                   if (isEndingBalance) return
                   onCellClick(row, { key: month, label: legendItem?.title || month })
                 }}
               >
-                {formatNumber(val)}
+                {/* <CustomTooltip> */}
+                <span className='line-clamp-1 text-end w-full cursor-pointer'>{formatNumber(val)}</span>
+                {/* </CustomTooltip> */}
               </span>
             </td>
           )
         })}
 
         {/* Total cell */}
-        <td className="px-4 py-2 text-right border-l ">
+        <td className="px-2 text-right border-l min-w-[150px] max-w-[150px]">
           <span
-            className={`${isBold ? "font-semibold" : "text-sm"} ${!isEndingBalance ? 'cursor-pointer hover:underline hover:text-primary transition-colors' : ''}`}
+            className={`text-xs line-clamp-1 ${isBold ? "font-semibold" : "text-xs"} ${!isEndingBalance ? 'cursor-pointer hover:underline hover:text-primary transition-colors' : ''}`}
             onClick={() => {
               if (isEndingBalance) return
               onCellClick(row, null)
@@ -104,13 +117,19 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
   )
 }
 
+
 export default observer(function CashFlowReportPage() {
   const [expandedMap, setExpandedMap] = useState({})
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedColumn, setSelectedColumn] = useState(null)
-  const [selectedMonth, setSelectedMonth] = useState(null)
+  const [modalConfig, setModalConfig] = useState({
+    filterData: null,
+    summaryData: null,
+    title: '',
+    isTransfer: false
+  })
   const didAutoExpand = useRef(false)
+  const tableContainerRef = useRef(null)
 
   const { reportData: cashFlowData, isLoading, isFetching } = cashFlowStore
   const loading = isLoading || isFetching
@@ -122,6 +141,16 @@ export default observer(function CashFlowReportPage() {
 
   useEffect(() => {
     cashFlowStore.fetchReport()
+
+    const container = tableContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      setIsScrolled(container.scrollLeft > 0)
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
   // Extract legend (month columns)
@@ -187,9 +216,59 @@ export default observer(function CashFlowReportPage() {
   }
 
   const handleCellClick = (row, monthObj) => {
-    setSelectedColumn(row)
-    setSelectedMonth(monthObj)
-    setIsModalOpen(true)
+    console.log('row', row)
+    console.log('monthObj', monthObj)
+    // const filters = cashFlowStore.filters
+    // let dateRange = { start: filters.periodStartDate, end: filters.periodEndDate }
+
+    // if (monthObj?.key) {
+    //   const [year, month] = monthObj.key.split('-').map(Number)
+    //   const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+    //   const lastDay = new Date(year, month, 0).getDate()
+    //   const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+    //   dateRange = { start: startDate, end: endDate }
+    // }
+
+    // const tips = (() => {
+    //   if (['Операционный поток', 'Инвестиционный поток', 'Финансовый поток'].includes(row.name)) {
+    //     return { tip: ['Поступление', 'Выплата'] }
+    //   }
+    //   if (row.section === 'Поступления') return { tip: ['Поступление'] }
+    //   if (row.section === 'Выплаты') return { tip: ['Выплата'] }
+    //   if (row.section === 'Списания') return { tip: ['Списание', 'Перемещение'] }
+    //   if (row.section === 'Зачисления') return { tip: ['Зачисление', 'Перемещение'] }
+
+    //   const nameMap = {
+    //     "Поступления": ["Поступление"],
+    //     "Выплаты": ["Выплата"],
+    //     "Списания": ["Списание", "Перемещение"],
+    //     "Зачисления": ["Зачисление", "Перемещение"],
+    //     "Перемещения": ["Списание", "Зачисление", "Перемещение"],
+    //   }
+    //   return nameMap[row.name] ? { tip: nameMap[row.name] } : {}
+    // })()
+
+    // const filterData = {
+    //   ...tips,
+    //   paymentConfirmed: true,
+    //   paymentNotConfirmed: false,
+    //   paymentDateStart: dateRange.start,
+    //   paymentDateEnd: dateRange.end,
+    // }
+
+    // const periodLabel = formatPeriod(dateRange.start, dateRange.end)
+    // const isTransfer = row.name === 'Зачисления' || row.name === 'Списания' || row.name === 'Перемещения'
+
+    // setModalConfig({
+    //   filterData,
+    //   summaryData: {
+    //     periodLabel,
+    //     totalAmount: monthObj ? (row.months?.[monthObj.key] || 0) : row.total
+    //   },
+    //   title: row.name,
+    //   isTransfer
+    // })
+    // setIsModalOpen(true)
   }
 
   return (
@@ -239,42 +318,55 @@ export default observer(function CashFlowReportPage() {
           </div>
         </div>
 
-        <div className='px-4 mt-2'>
-          <table className="w-full">
-            <thead className={"bg-neutral-100 z-10 sticky top-16"}>
-              <tr>
-                <th className="text-left px-4 py-2 text-xs border-r border-neutral-200 font-medium" style={{ minWidth: 320 }}>По статьям учета</th>
-                {legend.map(col => (
-                  <th key={col.key} className="text-right border-r border-neutral-200 px-4 py-2 text-xs font-medium" style={{ width: 110 }}>
-                    {col.title}
+        <div className='px-4 mt-2 overflow-hidden'>
+          <div ref={tableContainerRef} id="report-table-container" className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead className={"bg-neutral-100 z-30 sticky top-0"}>
+                <tr>
+                  <th
+                    className={cn(
+                      "text-left  text-xs border-r border-neutral-200 font-medium sticky left-0 z-40 bg-neutral-100 transition-shadow duration-300",
+                    )}
+                    style={{ minWidth: 420 }}
+                  >
+                    <p className='px-4 w-full border-r py-2'> По статьям учета</p>
                   </th>
+                  {legend.map(col => (
+                    <th key={col.key} className="text-right  text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium" >
+                      {col.title}
+                    </th>
+                  ))}
+                  <th className="text-right text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] shrink-0 border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium" >
+                    Итого
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map(row => (
+                  <TableRow
+                    key={row.uniquePath}
+                    row={row}
+                    months={months}
+                    legend={legend}
+                    depth={0}
+                    expandedMap={expandedMap}
+                    onToggle={handleToggle}
+                    onCellClick={handleCellClick}
+                  />
                 ))}
-                <th className="text-right px-4 py-2 text-xs font-medium" style={{ width: 110 }}>Итого</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map(row => (
-                <TableRow
-                  key={row.uniquePath}
-                  row={row}
-                  months={months}
-                  legend={legend}
-                  depth={0}
-                  expandedMap={expandedMap}
-                  onToggle={handleToggle}
-                  onCellClick={handleCellClick}
-                />
-              ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       <OperationCashFlowModal
-        data={selectedColumn}
-        selectedMonth={selectedMonth}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        filterData={modalConfig.filterData}
+        summaryData={modalConfig.summaryData}
+        title={modalConfig.title}
+        isTransfer={modalConfig.isTransfer}
       />
     </div>
   )

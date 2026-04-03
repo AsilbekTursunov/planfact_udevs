@@ -50,7 +50,7 @@ const IncomePaymentTableRow = observer(({
         <td className=" px-4 py-4">
           <div>
             {op.operationParts?.length > 0 ? <>
-              <div className={styles.childrenControl} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
+              <div className={"flex items-center gap-2 cursor-pointer"} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
                 {open ? <ExpendClose /> : <ExpendOpen />}
                 <span>{op?.operationDate}</span>
               </div>
@@ -106,18 +106,6 @@ const IncomePaymentTableRow = observer(({
               </>
             )}
           </div>
-          {/* <PriceStatus
-            amount={op.summa}
-            toAmount={op.to_amount}
-            tab={op.tip}
-            type={op?.tip}
-            percent={op?.percent}
-            confirmed={op.payment_confirmed}
-            accrual={op.payment_accrual}
-            currency={op.currency}
-            dealId={op?.selling_deal_id}
-            toCurrency={op?.to_currenies_kod}
-          /> */}
         </td>
       </tr>
       {open &&
@@ -159,7 +147,7 @@ const IncomePaymentTableRow = observer(({
                   </div>
                 )}
               </td>
-              <td colSpan={2} className={styles.tableCell} onClick={e => e.stopPropagation()}>
+              <td colSpan={3} className={""} onClick={e => e.stopPropagation()}>
                 <PriceStatus
                   amount={part.summa}
                   tab={part?.tip}

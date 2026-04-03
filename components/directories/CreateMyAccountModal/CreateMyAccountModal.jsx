@@ -9,7 +9,7 @@ import SelectLegelEntitties from '../../ReadyComponents/SelectLegelEntitties'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import CustomModal from '../../shared/CustomModal'
 import Loader from '../../shared/Loader'
-import { formatNumber, returnNumber } from '../../../utils/helpers'
+import { formatDecimal, formatNumber, returnNumber, StringtoNumber } from '../../../utils/helpers'
 import SelectMyAccoutGroup from '../../ReadyComponents/SelectMyAccoutGroup'
 import { queryClient } from '../../../lib/queryClient'
 import { appStore } from '../../../store/app.store'
@@ -151,7 +151,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
       const submitData = {
         nazvanie: formData.nazvanie.trim(),
         tip: formData.tip,
-        nachalьnyy_ostatok: formData.nachalьnyy_ostatok ? Number(formData.nachalьnyy_ostatok.toString().replace(/\s/g, '').replace(/,/g, '.')) : null,
+        nachalьnyy_ostatok: formData.nachalьnyy_ostatok ? formatDecimal(StringtoNumber(formData.nachalьnyy_ostatok)) : null,
         data_nachalьnogo_ostatka: formData.data_sozdaniya || null,
         currenies_id: formData.currenies_id || null,
         komentariy: formData.komentariy || null,
@@ -373,7 +373,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                   <Input
                     type="text"
                     value={formatNumber(formData.nachalьnyy_ostatok)}
-                    onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: formatNumber(e.target.value) })}
                     placeholder="0"
                     className="w-44"
                     onWheel={(e) => e.target.blur()}

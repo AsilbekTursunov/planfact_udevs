@@ -185,13 +185,6 @@ export default function CreateChartOfAccountsModal({ isOpen, onClose, initialTab
     }
 
     const result = rootItems.map(item => buildTree(item, 0))
-    
-    console.log('TreeSelect data for tab', activeTab, ':', {
-      filteredCount: filteredAccounts.length,
-      rootItemsCount: rootItems.length,
-      treeStructure: JSON.stringify(result, null, 2)
-    })
-    
     return result
   }, [allAccounts, activeTab])
 

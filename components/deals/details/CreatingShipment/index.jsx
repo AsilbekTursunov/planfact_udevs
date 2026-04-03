@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { X, TrashIcon } from 'lucide-react'
 import styles from './style.module.scss'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
-import { formatAmount } from '../../../../utils/helpers'
+import { formatAmount, formatDecimal, formatNumber, StringtoNumber } from '../../../../utils/helpers'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import Loader from '../../../shared/Loader'
@@ -17,7 +17,6 @@ import { appStore } from '../../../../store/app.store'
 import { observer } from 'mobx-react-lite'
 import { cn } from '@/app/lib/utils'
 import { toJS } from 'mobx'
-import { shipmentsDto } from '../../../../lib/dtos/shipmentsDto'
 import { keepPreviousData } from '@tanstack/react-query'
 
 const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false, onSuccess }) => {
@@ -26,14 +25,14 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
   const [shipmentDate, setShipmentDate] = useState(today.toISOString().split('T')[0])
   const isFutureDate = new Date(shipmentDate).setHours(0, 0, 0, 0) > today.setHours(0, 0, 0, 0)
 
-  const [isPlanned, setIsPlanned] = useState(false)
+  const [isPlanned, setIsPlanned] = useState(true)
   const [legalEntity, setLegalEntity] = useState('')
   const [client, setClient] = useState(kontragentId || '')
   const [chartOfAccounts, setChartOfAccounts] = useState([])
   const [currency, setCurrency] = useState('')
   const [showChartOfAccounts, setShowChartOfAccounts] = useState(true)
   const [rows, setRows] = useState([
-    { id: 1, name: '', quantity: 0, price: 0, discount: '', nds: '', sum: 0 }
+    { id: 1, name: '', quantity: '', price: '', discount: '', nds: '', sum: '' }
   ])
   const [code, setCode] = useState('')
   const { data: SingleShipment, isPending: isGettingSingleShipment } = useUcodeRequestQuery({
@@ -87,9 +86,6 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
 
   const { mutateAsync: createShipment, isPending: isCreating } = useUcodeRequestMutation()
 
-
-
-
   const { data: productServices } = useUcodeRequestQuery({
     method: "list_products_and_services",
     querySetting: {
@@ -118,11 +114,11 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
     setRows(prev => [...prev, {
       id: Date.now(),
       name: '',
-      quantity: 0,
-      price: 0,
+      quantity: '',
+      price: '',
       discount: '',
       nds: '',
-      sum: 0
+      sum: ''
     }])
   }
 
@@ -163,7 +159,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
   const totalSum = useMemo(() => {
     return rows.reduce((acc, row) => {
       const sumVal = Number(row.sum?.toString().replace(/\s/g, '')) || 0;
-      return acc + sumVal;
+      return formatDecimal(acc + sumVal);
     }, 0)
   }, [rows])
 
@@ -201,9 +197,9 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
             product_and_service_id: product?.guid || row.name || undefined,
             Naimenovanie: product ? product.name : row.naimenovanie || "",
             Artikul: product?.article || row.artikul || "",
-            Kol_vo: Number(row.quantity?.toString().replace(/\s/g, '')) || 0,
-            TSena_za_ed: Number(row.price?.toString().replace(/\s/g, '')) || 0,
-            Summa: Number(row.sum?.toString().replace(/\s/g, '')) || 0,
+            Kol_vo: formatDecimal(StringtoNumber(row.quantity)) || 0,
+            TSena_za_ed: formatDecimal(StringtoNumber(row.price)) || 0,
+            Summa: formatDecimal(StringtoNumber(row.sum)) || 0,
             Skidka: Number(row.discount?.toString().replace(/\s/g, '')) || 0,
             NDS: Number(row.nds?.toString().replace(/\s/g, '')) || 0,
             unit_of_measurement_id: product?.raw?.units_of_measurement_id || undefined
@@ -218,6 +214,8 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
       if (isEditing && initialData?.guid) {
         payload.transaction_guid = initialData.guid
       }
+
+      console.log('payload', payload)
 
       await createShipment({
         method: isEditing ? "update_shipment_transaction" : "create_shipment_transaction",
@@ -293,7 +291,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
 
   if (!open) return null
 
-  if (isGettingSingleShipment) {
+  if (isGettingSingleShipment && initialData?.guid) {
     return (
       <>
         {/* Overlay */}
@@ -520,36 +518,25 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                             onChange={(value) => handleSelectProductSerice(row?.id, value)}
                             placeholder="Выберите позицию"
                             className="bg-white border-none"
-                          />
-                          {/* <GroupedSelect
-                            data={groupedProductServicesList}
-                            value={row.name}
-                            onChange={(value) => handleSelectProductSerice(row?.id, value)}
-                            placeholder="Выберите позицию"
-                            groupBy={true}
-                            labelKey="label"
-                            valueKey="value"
-                            className="shipment-grouped-select"
-                            dropdownClassName='grouped-select-dropdown'
-                          /> */}
+                          /> 
                         </div>
                       </td>
                       <td className="w-[80px] border-l">
                         <input
                           type="text"
                           min={0}
-                          value={row.quantity}
-                          onChange={(e) => updateRow(row.id, 'quantity', formatAmount(e.target.value))}
-                          className={styles.numInput}
+                          value={formatNumber(row.quantity)}
+                          onChange={(e) => updateRow(row.id, 'quantity', formatNumber(e.target.value))}
+                          className={'w-full border-none border border-gray-400 h-10 text-end text-xs outline-none pr-2'}
                         />
                       </td>
                       <td className="w-[120px] border-l">
                         <input
                           type="text"
                           min={0}
-                          value={formatAmount(row.price)}
-                          onChange={(e) => updateRow(row.id, 'price', formatAmount(e.target.value))}
-                          className={styles.numInput}
+                          value={formatNumber(row.price)}
+                          onChange={(e) => updateRow(row.id, 'price', formatNumber(e.target.value))}
+                          className={'w-full border-none border border-gray-400 h-10 text-end text-xs outline-none pr-2'}
                         />
                       </td>
                       <td className="w-[80px] border-l relative">
@@ -558,7 +545,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                           value={row.discount.replace(/\D/g, '')}
                           maxLength={2}
                           onChange={(e) => updateRow(row.id, 'discount', e.target.value)}
-                          className={`w-[80px] outline-none text-xs text-right pr-2 mr-2`}
+                          className={`w-[80px] outline-none text-xs h-10 text-right pr-2 mr-2`}
                         />
                         <span className='absolute top-1/2 text-xs  -translate-y-1/2 right-1'>%</span>
                       </td>
@@ -568,7 +555,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                           maxLength={2}
                           value={row.nds}
                           onChange={(e) => updateRow(row.id, 'nds', e.target.value)}
-                          className={`w-[80px] outline-none text-xs text-right pr-2 mr-2`}
+                          className={`w-[80px] outline-none text-xs h-10 text-right pr-2 mr-2`}
                         />
                         <span className='absolute top-1/2 text-xs  -translate-y-1/2 right-1'>%</span>
                       </td>
@@ -576,9 +563,9 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                         <input
                           type="text"
                           min={0}
-                          value={formatAmount(row.sum)}
-                          onChange={(e) => updateRow(row.id, 'sum', formatAmount(e.target.value))}
-                          className={styles.numInput}
+                          value={formatNumber(row.sum)}
+                          onChange={(e) => updateRow(row.id, 'sum', formatNumber(e.target.value))}
+                          className={'w-full h-full text-xs text-end h-10 border-none outline-none pr-2'}
                         />
                       </td>
                     </tr>

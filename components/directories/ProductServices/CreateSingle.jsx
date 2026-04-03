@@ -9,7 +9,7 @@ import Select from '../../common/Select'
 import { useUcodeDefaultApiQuery, useUcodeRequestMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import { queryClient } from '../../../lib/queryClient'
 import Loader from '../../shared/Loader'
-import { formatNumber } from '../../../utils/helpers'
+import { formatDecimal, formatNumber, StringtoNumber } from '../../../utils/helpers'
 import { keepPreviousData } from '@tanstack/react-query'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import { useForm, Controller } from 'react-hook-form'
@@ -118,7 +118,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
   const onSubmit = async (data) => {
     const payload = {
       Naimenovanie: data.name,
-      TSena_za_ed: parseInt((data.price || '').toString().replace(/\s/g, '').replace(/[^\d]/g, '')) || 0,
+      TSena_za_ed: formatDecimal(StringtoNumber(data.price)),
       unit_of_measurement_id: data.unit?.value,
       NDS: parseInt((data.vat || '').toString().replace('%', '')) || 0,
       product_and_service_group_id: data.group,
@@ -282,7 +282,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
                       className={styles.priceInput}
                       placeholder="0.00"
                       value={formatNumber(field.value)}
-                      onChange={e => field.onChange(e.target.value)}
+                      onChange={e => field.onChange(formatNumber(e.target.value))}
                     />
                   )}
                 />
