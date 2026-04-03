@@ -25,7 +25,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
     queryKey: "products_services_list",
     method: "list_products_and_services",
     data: {
-      sales_transaction_id: sellingDealId,
+      sales_transactions_id: sellingDealId,
     },
     querySetting: {
       select: data => data?.data?.data?.data
@@ -79,8 +79,9 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
       })
 
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
-      queryClient.invalidateQueries({ queryKey: ['products_services_list', sellingDealId] })
+      queryClient.invalidateQueries({ queryKey: ['products_services_list'] })
       queryClient.invalidateQueries({ queryKey: ['list_sales_operations'] })
+      queryClient.invalidateQueries({ queryKey: ['products_services_list'] })
       setOpen(false)
       setSelectedItems(new Set())
     } catch (error) {
@@ -98,6 +99,10 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
       />
     )
   }
+
+  // "1e1e3673-95aa-4651-8b2e-649c583a2c26"
+  // "acc59c68-cb5f-4c74-b943-d531b25107c5"
+  // "275ceb8e-5b2f-40bd-9d96-4036bc6c5e1a"
 
 
   if (isLoading) {

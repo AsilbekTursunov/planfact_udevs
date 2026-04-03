@@ -29,7 +29,7 @@ const formatNumber = (value) => {
 // Recursive row renderer
 function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCellClick }) {
   const hasChildren = row.subRows && row.subRows.length > 0
-  const isExpanded = !!expandedMap[row.id]
+  const isExpanded = !!expandedMap[row.uniquePath]
   const isEndingBalance = row.id === 'ending-balance'
   const isTotal = row.id === 'overall-cash-flow' || row.id === 'ending-balance'
   const isBold = depth === 0 || isTotal
@@ -43,7 +43,7 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
         <td className="px-4  py-2" style={{ paddingLeft: `${depth * 1.5 + 1}rem` }}>
           <div
             className={`flex items-center text-xss!  gap-2 ${hasChildren ? 'cursor-pointer' : 'cursor-default'}`}
-            onClick={hasChildren ? () => onToggle(row.id) : undefined}
+            onClick={hasChildren ? () => onToggle(row.uniquePath) : undefined}
           >
             {hasChildren && (
               <button className="bg-transparent border-none p-0 flex items-center justify-center cursor-pointer text-neutral-500 hover:text-neutral-900 transition-colors w-4 h-4">
@@ -90,7 +90,7 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
       {/* Render children if expanded */}
       {hasChildren && isExpanded && row.subRows.map(child => (
         <TableRow
-          key={child.id}
+          key={child.uniquePath}
           row={child}
           months={months}
           legend={legend}
@@ -132,7 +132,7 @@ export default observer(function CashFlowReportPage() {
   const data = useMemo(() => {
     if (!cashFlowData?.rows) return []
 
-    const transformRow = (row, depth = 0, sectionName = null) => {
+    const transformRow = (row, depth = 0, sectionName = null, parentPath = '') => {
       const monthData = {}
       months.forEach(monthKey => {
         monthData[monthKey] = row.values?.[monthKey] || 0
@@ -146,8 +146,11 @@ export default observer(function CashFlowReportPage() {
         if (row.name === 'Зачисления') currentSection = 'Зачисления'
       }
 
+      const rowUniquePath = parentPath ? `${parentPath}-${row.id}` : String(row.id)
+
       const node = {
         id: row.id,
+        uniquePath: rowUniquePath,
         name: row.name,
         total: row.totalValue || 0,
         months: monthData,
@@ -157,13 +160,13 @@ export default observer(function CashFlowReportPage() {
       }
 
       if (row.details && Array.isArray(row.details) && row.details.length > 0) {
-        node.subRows = row.details.map(detail => transformRow(detail, depth + 1, currentSection))
+        node.subRows = row.details.map(detail => transformRow(detail, depth + 1, currentSection, rowUniquePath))
       }
 
       return node
     }
 
-    return cashFlowData.rows.map(row => transformRow(row, 0))
+    return cashFlowData.rows.map(row => transformRow(row, 0, null, ''))
   }, [cashFlowData, months])
 
   // Auto-expand top-level rows on first load
@@ -171,7 +174,7 @@ export default observer(function CashFlowReportPage() {
     if (didAutoExpand.current || !Array.isArray(data) || data.length === 0) return
     const initial = {}
     data.forEach(row => {
-      if (row.subRows?.length > 0) initial[row.id] = true
+      if (row.subRows?.length > 0) initial[row.uniquePath] = true
     })
     if (Object.keys(initial).length > 0) {
       setExpandedMap(initial)
@@ -179,8 +182,8 @@ export default observer(function CashFlowReportPage() {
     }
   }, [data])
 
-  const handleToggle = (id) => {
-    setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }))
+  const handleToggle = (uniquePath) => {
+    setExpandedMap(prev => ({ ...prev, [uniquePath]: !prev[uniquePath] }))
   }
 
   const handleCellClick = (row, monthObj) => {
@@ -252,7 +255,7 @@ export default observer(function CashFlowReportPage() {
             <tbody>
               {data.map(row => (
                 <TableRow
-                  key={row.id}
+                  key={row.uniquePath}
                   row={row}
                   months={months}
                   legend={legend}

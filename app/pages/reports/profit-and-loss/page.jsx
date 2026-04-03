@@ -227,6 +227,7 @@ const ProfitAndLossPage = observer(() => {
         </div>
       </div>
       <OperationCashFlowModal
+        type="pnl"
         data={selectedColumn}
         selectedMonth={selectedMonth}
         isOpen={isModalOpen}

@@ -11,6 +11,8 @@ import { observer } from 'mobx-react-lite'
 import { toJS } from 'mobx'
 
 
+import { pnlStore } from '../../reports/profit-and-loss/pnl.store'
+
 const returnSingleName = (name) => {
   switch (name) {
     case "Поступления":
@@ -34,24 +36,50 @@ const returnSingleName = (name) => {
   }
 }
 
-const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth }) => {
+const formatDateLocal = (date) => {
+  if (!date) return null
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth, type = "cashflow" }) => {
   const months = formatPeriod(
-    cashFlowStore.filters.periodStartDate,
-    cashFlowStore.filters.periodEndDate
+    type === 'pnl' ? pnlStore.dateRange.start : cashFlowStore.filters.periodStartDate,
+    type === 'pnl' ? pnlStore.dateRange.end : cashFlowStore.filters.periodEndDate
   )
 
   console.log('data', toJS(data))
 
   const dateRange = useMemo(() => {
-    if (!selectedMonth?.key) return { start: null, end: null }
-    const [year, month] = selectedMonth.key.split('-').map(Number)
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-    const lastDay = new Date(year, month, 0).getDate()
-    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
-    return { start: startDate, end: endDate }
-  }, [selectedMonth])
+    if (selectedMonth?.key) {
+      const [year, month] = selectedMonth.key.split('-').map(Number)
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`
+      const lastDay = new Date(year, month, 0).getDate()
+      const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+      return { start: startDate, end: endDate }
+    }
+
+    if (type === 'pnl') {
+      return {
+        start: formatDateLocal(pnlStore.dateRange.start),
+        end: formatDateLocal(pnlStore.dateRange.end)
+      }
+    }
+
+    return {
+      start: cashFlowStore.filters.periodStartDate,
+      end: cashFlowStore.filters.periodEndDate
+    }
+  }, [selectedMonth, type])
 
   const tips = useMemo(() => {
+    if (type === 'pnl') {
+      return { tip: ["Списание", "Зачисление", "Перемещение", "Выплата", "Поступление", "Отгрузка", "Дебет", "Кредит", "Начисление"] }
+    }
+
     if (!data) return null
 
     // 1. High-level flows
@@ -80,14 +108,42 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
     }
 
     return {}
-  }, [data])
+  }, [data, type])
+
+  const chartOfAccountIds = useMemo(() => {
+    if (type !== 'pnl' || !data) return undefined;
+
+    const collectIds = (node) => {
+      let ids = [];
+      // Only push node.id if it contains at least one number (like a UUID format)
+      if (typeof node.id === 'string' && /\d/.test(node.id)) {
+        ids.push(node.id);
+      }
+      // If there are child details, recursively collect their IDs
+      if (node.details && Array.isArray(node.details)) {
+        node.details.forEach(child => {
+          ids.push(...collectIds(child));
+        });
+      }
+      return ids;
+    };
+
+    const result = collectIds(data);
+    return result.length > 0 ? result : undefined;
+  }, [type, data]);
 
   const { data: cashflowData, isLoading } = useUcodeRequestQuery({
     method: 'find_operations',
     data: {
       ...tips,
-      paymentConfirmed: true,
-      paymentNotConfirmed: false,
+      ...(type === 'cashflow' ? {
+        paymentConfirmed: true,
+        paymentNotConfirmed: false,
+      } : {
+        paymentAccural: true,
+        paymentNotAccural: false,
+        ...(chartOfAccountIds?.length > 0 ? { chart_of_accounts_ids: chartOfAccountIds } : {})
+      }),
       paymentDateStart: dateRange.start,
       paymentDateEnd: dateRange.end,
     },
@@ -101,6 +157,12 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
   })
 
   const totalSummary = useMemo(() => {
+    if (type === 'pnl') {
+      // In PnL, we don't have existing explicit logic for total summary mapping yet, but we could try reading net_cash_flow 
+      // or simply returning the value coming from the cell itself (which we can access via data?). For now using net_cash_flow.
+      return cashflowData?.totalSummary?.net_cash_flow || 0
+    }
+
     switch (data?.name) {
       case "Операционный поток":
         return cashflowData?.totalSummary?.net_cash_flow
@@ -121,7 +183,7 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
       default:
         return cashflowData?.totalSummary?.net_cash_flow
     }
-  }, [cashflowData, data?.name])
+  }, [cashflowData, data?.name, type])
 
   const operationsList = useMemo(() => {
     return {
@@ -131,10 +193,12 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
     }
   }, [cashflowData])
 
+  console.log('operationsList', operationsList)
 
 
 
-  const isTransfer = data?.name === 'Зачисления' || data?.name === 'Списания' || data?.name === 'Перемещения'
+
+  const isTransfer = type === 'cashflow' && (data?.name === 'Зачисления' || data?.name === 'Списания' || data?.name === 'Перемещения')
 
 
 
