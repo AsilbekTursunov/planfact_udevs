@@ -3,7 +3,7 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { RefreshCw, ClipboardList, Library } from 'lucide-react'
+import { RefreshCw, ClipboardList, Library, DivideCircle } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import { UsersIcon, DealIcon } from '@/constants/icons'
 import { AppLogo } from '../../constants/icons'
@@ -62,7 +62,7 @@ export function Sidebar() {
             <AppLogo size={44} strokeWidth={1.5} className='mt-2' />
             {/* </div> */}
 
-            <nav className="flex flex-col gap-2 p-2 w-full">
+            <nav className="flex flex-col   w-full">
                 {navItems
                     .filter(item => item.hasPage)
                     .map((item, index) => {
@@ -72,7 +72,7 @@ export function Sidebar() {
 
                         const LinkContent = (
                             <div className={cn(
-                                "flex flex-col items-center justify-center w-full py-2 px-1 rounded-md transition-all cursor-pointer text-white/60 hover:text-white ",
+                                "flex flex-col h-[65px] items-center justify-center w-full rounded-md transition-all cursor-pointer text-white/60 hover:text-white ",
                                 (isActive || isSubmenuActive) && " text-white"
                             )}>
                                 <div className="mb-1">
@@ -86,11 +86,11 @@ export function Sidebar() {
 
                         if (hasSubmenu) {
                             return (
-                                <HoverCard key={index} openDelay={50} closeDelay={50}>
-                                    <HoverCardTrigger>
+                                <div key={index} className='relative group'>
+                                    <div className='relative'>
                                         {LinkContent}
-                                    </HoverCardTrigger>
-                                    <HoverCardContent side="right" className="bg-blue-950 left-10 border-none rounded-none text-white min-w-[200px] shadow-none rounded-tr-lg rounded-br-lg p-2">
+                                    </div>
+                                    <div className="bg-blue-950 -top-1/2 left-[80px]  absolute hidden group-hover:block rounded-none text-white min-w-[180px] shadow-none rounded-tr-lg rounded-br-lg p-2">
                                         <div className="flex flex-col gap-1">
                                             {item.submenu
                                                 .filter(sub => sub.hasPage)
@@ -101,7 +101,7 @@ export function Sidebar() {
                                                             key={subIndex}
                                                             href={sub.href}
                                                             className={cn(
-                                                                "block p-2 text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-md transition-colors",
+                                                                "block p-2 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-md transition-colors",
                                                                 isSubActive && "bg-white/20 text-white"
                                                             )}
                                                         >
@@ -110,13 +110,13 @@ export function Sidebar() {
                                                     )
                                                 })}
                                         </div>
-                                    </HoverCardContent>
-                                </HoverCard>
+                                    </div>
+                                </div>
                             )
                         }
 
                         return (
-                            <Link key={index} href={item.href || '/'}>
+                            <Link className='w-full' key={index} href={item.href || '/'}>
                                 {LinkContent}
                             </Link>
                         )

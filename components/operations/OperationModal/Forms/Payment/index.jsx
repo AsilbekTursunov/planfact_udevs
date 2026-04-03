@@ -30,7 +30,7 @@ import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import { observer } from 'mobx-react-lite'
 import { authStore } from '../../../../../store/auth.store'
 import { queryClient } from '../../../../../lib/queryClient'
-import { formatNumber, StringtoNumber } from '../../../../../utils/helpers'
+import { formatDecimal, formatNumber, returnNumber, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
 import { toJS } from 'mobx'
 
@@ -274,7 +274,7 @@ const PaymentForm = observer(({
       paymentDate: formatDate(new Date()),
       confirmPayment: true,
       accountAndLegalEntity: null,
-      amount: 0,
+      amount: '',
       accrualDate: formatDate(new Date()),
       confirmAccrual: true,
       counterparty: preselectedCounterparty || null,
@@ -347,7 +347,7 @@ const PaymentForm = observer(({
 
     const payload = {
       tip: ['Выплата'],
-      summa: StringtoNumber(data?.amount),
+      summa: formatDecimal(StringtoNumber(data?.amount)),
       data_operatsii: data?.paymentDate,
       data_nachisleniya: data?.accrualDate,
       payment_confirmed: data?.confirmPayment,
@@ -364,7 +364,7 @@ const PaymentForm = observer(({
 
     if (divivedAmounts.length > 0) {
       payload.items = divivedAmounts.map(item => ({
-        summa: Number(item?.value),
+        summa: formatDecimal(StringtoNumber(item?.value)),
         percent: Number(item?.percent),
         data_nachisleniya: showDate && !watchSalesDeal ? (item?.calculationDate || null) : null,
         payment_accrual: showDate && !watchSalesDeal ? (item?.isCalculationCommitted ?? false) : false,
@@ -406,8 +406,10 @@ const PaymentForm = observer(({
     setTitle(`${selected.kod} ${selected.nazvanie}`)
   }
 
-
-  // console.log('initialData', initialData)
+  const totalSplitValue = divivedAmounts.reduce((acc, curr) => acc + Number(String(curr.value).replace(/\s/g, '') || 0), 0)
+  const amountToNumber = Number(StringtoNumber(watchAmount))
+  const isSplitExceeded = divivedAmounts.length > 0 && amountToNumber > 0 && totalSplitValue > amountToNumber
+  const canSubmit = !isSplitExceeded
 
   return (
     <>
@@ -493,8 +495,8 @@ const PaymentForm = observer(({
                           <Input
                             type="text"
                             value={formatNumber(field.value)}
-                            onChange={(e) => field.onChange((e.target.value))}
-                            placeholder="0"
+                            onChange={(e) => field.onChange(formatNumber(e.target.value))}
+                            placeholder="Сумму"
                             className={cn("w-[230px]", errors.amount && "border-red-500")}
                           />
                           <span className="flex items-center gap-2">
@@ -688,7 +690,7 @@ const PaymentForm = observer(({
 
         <div className="flex border-t justify-end gap-2 px-3 pt-3 mt-auto bg-white">
           <button type="button" onClick={() => onClose?.()} className="secondary-btn py-2!">Отмена</button>
-          <button type="submit" className="primary-btn py-2!">{isPending ? <Loader2 className='animate-spin' /> : 'Сохранить'}</button>
+          <button type="submit" disabled={isPending || !canSubmit} className={cn("primary-btn py-2!", (!canSubmit || isPending) && 'opacity-60 cursor-not-allowed')}>{isPending ? <Loader2 className='animate-spin' /> : 'Сохранить'}</button>
         </div>
       </form>
 

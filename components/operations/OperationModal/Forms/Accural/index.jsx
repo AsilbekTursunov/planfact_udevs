@@ -13,7 +13,7 @@ import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import CustomDatePicker from '../../../../shared/DatePicker'
 import { isFuture } from '../../../../../utils/formatDate'
 import SelectLegelEntitties from '../../../../ReadyComponents/SelectLegelEntitties'
-import { formatAmount, formatNumber, getCurrencyIcon, StringtoNumber } from '../../../../../utils/helpers'
+import { formatDecimal, formatNumber, getCurrencyIcon, returnNumber, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
 import MyAccountCurrensies from '../../../../ReadyComponents/MyAccountCurrensies'
 import { queryClient } from '../../../../../lib/queryClient'
@@ -57,7 +57,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
       confirmAccrual: true,
       legalEntity: '',
       chartOfAccountWriteOff: null,
-      summa: '0',
+      summa: '',
       canAllowOpiu: true,
       chartOfAccountEnrollment: null,
       sellingDealId: '',
@@ -116,7 +116,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
         repeat_until: data.repeatUntil,
         repeat_count: data.repeatCount,
         comment: data.comment,
-        summa: StringtoNumber(data.summa) || '',
+        summa: formatDecimal(StringtoNumber(data.summa)) || '',
         currenies_id: data.currency || appStore.currency.guid,
       }
 
@@ -292,7 +292,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
                     <Input
                       type="text"
                       value={formatNumber(field.value)}
-                      onChange={(e) => field.onChange(e.target.value)}
+                      onChange={(e) => field.onChange(formatNumber(e.target.value))}
                       placeholder="0"
                       className={cn("w-[200px]", errors.summa && "border-red-500")}
                     />

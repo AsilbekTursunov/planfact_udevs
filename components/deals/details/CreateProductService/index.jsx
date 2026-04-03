@@ -31,7 +31,8 @@ const CreateProductService = ({
     artikul: initialData?.artikul || initialData?.article || '',
     group_product_and_service_id: initialData?.group_product_and_service_id || "",
     naimenovanie: initialData?.name || "",
-    unit_name: initialData?.unit_name || ""
+    unit_name: initialData?.unit_name || "",
+    currenies_id: initialData?.currenies_id || "",
   })
 
   const [errors, setErrors] = useState({})
@@ -54,8 +55,6 @@ const CreateProductService = ({
       label: item?.Naimenovanie,
     })) || []
   }, [productServices])
-
-
 
   const { mutateAsync: mutateProductServiceCustom, isPending: isProductServiceCustomPending } = useUcodeRequestMutation()
 
@@ -82,19 +81,9 @@ const CreateProductService = ({
       status: item.Status,
       artikul: item?.Artikul,
       naimenovanie: item?.Naimenovanie,
+      currenies_id: item?.currenies_id,
       group_product_and_service_id: item?.product_and_service_group_id
     }))
-  }
-
-  const set = (field) => (value) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }))
-  }
-
-  const setRaw = (field) => (e) => {
-    const raw = e.target.value.replace(/\s/g, '').replace(/[^0-9.]/g, '')
-    setFormData(prev => ({ ...prev, [field]: raw }))
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }))
   }
 
   const setPercent = (field) => (e) => {
@@ -158,7 +147,8 @@ const CreateProductService = ({
           nds: initialData.nds != null ? String(initialData.nds) : '',
           artikul: initialData.artikul || initialData.article || '',
           group_product_and_service_id: initialData.group_product_and_service_id || '',
-          naimenovanie: initialData.name || ''
+          naimenovanie: initialData.name || '',
+          currenies_id: initialData.currenies_id || '',
         })
 
       } else {
@@ -194,6 +184,7 @@ const CreateProductService = ({
       Skidka: Number(parseFloat(String(formData?.discount || '0').replace(/\s/g, '') || 0).toFixed(2)),
       Summa: Number(totalSum),
       Tip: "product",
+      currenies_id: formData?.currenies_id || "",
     };
 
     if (!isEditing && dealGuid) {
@@ -209,8 +200,8 @@ const CreateProductService = ({
     if (formData?.product_and_service_id) {
       object_data.product_and_service_id = formData.product_and_service_id;
     }
-    if (formData?.units_of_measurement_id?.value) {
-      object_data.units_of_measurement_id = formData.units_of_measurement_id.value;
+    if (formData?.units_of_measurement_id) {
+      object_data.units_of_measurement_id = formData.units_of_measurement_id;
     }
 
     if (formData?.nds) {
@@ -230,7 +221,7 @@ const CreateProductService = ({
     }
 
     if (formData?.status) {
-      object_data.status = [formData.status];
+      object_data.status = formData.status;
     }
 
 

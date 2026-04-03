@@ -156,6 +156,7 @@ export default function LegalEntitiesPage() {
         comment: item?.Kommentariy || '',
         type: item?.Status ? item?.Status?.[0] === 'product' ? 'Товары' : 'Услуги' : '',
         raw: item,
+        currency: item?.currenies_symbol,
         groupName: groupName,
         groupId: groupId
       }
@@ -253,7 +254,6 @@ export default function LegalEntitiesPage() {
   // Extract legal entities from response - correct path is data.data.data
   const legalEntitiesItems = useMemo(() => {
     const items = legalEntitiesData?.data?.data?.data || []
-    console.log('Legal entities items:', items)
     return Array.isArray(items) ? items : []
   }, [legalEntitiesData])
 
@@ -315,11 +315,11 @@ export default function LegalEntitiesPage() {
   };
 
   const totalItemsCount = useMemo(() => {
-    if (filters.group.value === 'group') {
+    if (filters.type === 'group') {
       return productServicesList.reduce((acc, group) => acc + (group.items?.length || 0), 0)
     }
     return productServicesList.length
-  }, [productServicesList, filters.group.value])
+  }, [productServicesList, filters.type])
 
   // Block body scroll when page is mounted
   useEffect(() => {
@@ -331,7 +331,7 @@ export default function LegalEntitiesPage() {
 
   const handleSelectAll = () => {
     let allItemGuids = []
-    if (filters.group.value === 'group') {
+    if (filters.type === 'group') {
       productServicesList.forEach(group => {
         group.items?.forEach(item => allItemGuids.push(item.guid))
       })
@@ -589,10 +589,10 @@ export default function LegalEntitiesPage() {
                               {child.name || '—'}
                             </td>
                             <td className="p-3 text-start text-neutral-500">{child.artikul || '—'}</td>
-                            <td className="p-3 text-end text-neutral-700">{child.price ? `${child.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                            <td className="p-3 text-end text-neutral-700">{child.price ? `${child.price.toLocaleString('ru-RU')} ${child.currency}` : '—'}</td>
                             <td className="p-3 text-center text-neutral-500">{child.unit}</td>
-                            <td className="p-3 text-center text-neutral-500">{child.vat}</td>
-                            <td className="p-3 text-end text-neutral-700">{child.priceWithVat ? `${child.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                            <td className="p-3 text-center text-neutral-500">{child.vat} </td>
+                            <td className="p-3 text-end text-neutral-700">{child.priceWithVat ? `${child.priceWithVat.toLocaleString('ru-RU')} ${child.currency}` : '—'}</td>
                             <td className="p-3 text-start text-neutral-500 max-w-[160px] overflow-hidden text-overflow-ellipsis whitespace-nowrap">{child.comment || '—'}</td>
                             <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                               <div className="relative inline-block" ref={openRowMenuId === child.guid ? rowMenuRef : null}>
@@ -632,10 +632,10 @@ export default function LegalEntitiesPage() {
                         <td className="p-3 text-start font-medium text-neutral-700">{item.name || '—'}</td>
                         <td className="p-3 text-start font-normal text-xs  text-neutral-500">{item.type || '—'}</td>
                         <td className="p-3 text-start text-neutral-500">{item.artikul || '—'}</td>
-                        <td className="p-3 text-end text-neutral-700">{item.price ? `${item.price.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                        <td className="p-3 text-end text-neutral-700">{item.price ? `${item.price.toLocaleString('ru-RU')} ${item.currency}` : '—'}</td>
                         <td className="p-3 text-center text-neutral-500">{item.unit}</td>
                         <td className="p-3 text-center text-neutral-500">{item.vat}</td>
-                        <td className="p-3 text-end text-neutral-700">{item.priceWithVat ? `${item.priceWithVat.toLocaleString('ru-RU')} ₽` : '—'}</td>
+                        <td className="p-3 text-end text-neutral-700">{item.priceWithVat ? `${item.priceWithVat.toLocaleString('ru-RU')} ${item.currency}` : '—'}</td>
                         <td className="p-3 text-start text-neutral-500 max-w-[160px] overflow-hidden text-overflow-ellipsis whitespace-nowrap">{item.comment || '—'}</td>
                         <td className="p-3 text-center w-10 " onClick={(e) => e.stopPropagation()}>
                           <div className="relative  inline-block" ref={openRowMenuId === item.guid ? rowMenuRef : null}>

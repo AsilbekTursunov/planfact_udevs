@@ -78,11 +78,13 @@ export const calculatePercent = (totalAmount, minAmount) => {
 
 
 export const returnNumber = (text) => {
-  if (!text) return ''
-  const raw = String(text).replace(/\s/g, '').replace(/[^0-9.]/g, '');
-  const num = parseFloat(raw);
-  if (isNaN(num)) return ''
-  return (num || '').toLocaleString('ru-RU')
+	if (!text) return ''
+	const raw = text
+		.replace(/\s/g, '')
+		.replace(/[^0-9.]/g, '')
+		.replace(/(\..*?)\..*/g, '$1') // keep only first dot
+	const num = parseFloat(raw)
+	return num
 }
 
 
@@ -110,13 +112,41 @@ export const formatTotalSumma = (summa) => {
 //  format number with thousand separators
 
 export function formatNumber(value) {
-  const str = String(value).trim();
-  const dotIndex = str.indexOf('.');
-  
-  const intPart = dotIndex !== -1 ? str.slice(0, dotIndex) : str;
-  const decimalPart = dotIndex !== -1 ? str.slice(dotIndex) : '';
+	// strip everything except digits and dot
+	const clean = String(value).replace(/[^\d.]/g, '')
 
-  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  
-  return formatted + decimalPart;
+	// keep only the first dot
+	const parts = clean.split('.')
+	const intPart = parts[0] || ''
+	const decPart = parts.length > 1 ? '.' + parts[1] : ''
+
+	// add thousand separators to the integer part only
+	const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+
+	return formatted + decPart
+}
+
+export function handleInput(e) {
+	const raw = e.target.value
+	const cursor = e.target.selectionStart
+	// count real digits+dot before the cursor (ignoring commas)
+	const before = raw.slice(0, cursor).replace(/,/g, '').length
+
+	e.target.value = formatNumber(raw)
+
+	// walk the new string and restore cursor at the same logical position
+	let newPos = 0,
+		count = 0
+	for (let i = 0; i < e.target.value.length; i++) {
+		if (e.target.value[i] !== ',') count++
+		if (count === before) {
+			newPos = i + 1
+			break
+		}
+	}
+	e.target.setSelectionRange(newPos, newPos)
+}
+
+export function formatDecimal(num, decimalPlaces = 2) {
+	return parseFloat(Number(num).toFixed(decimalPlaces))
 }

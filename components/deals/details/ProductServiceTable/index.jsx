@@ -39,7 +39,6 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
     return productServiceDto(productServices)
   }, [productServices])
 
-  console.log('productServicesList', productServicesList)
 
 
   const handleSelectAll = (event) => {
@@ -165,7 +164,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
                   <td className={`px-4 py-3  w-72 text-right`}>
                     <div className="flex items-center justify-end gap-4 h-6">
                       <p className={`text-sm text-neutral-600`}>
-                        {formatAmount(item?.summa)} UZS
+                        {formatAmount(item?.summa)} {item?.currency}
                       </p>
                       <div className=' items-center  hidden group-hover:flex '>
                         <button onClick={(event) => {

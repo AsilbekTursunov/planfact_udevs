@@ -23,7 +23,7 @@ import { queryClient } from '../../../../../lib/queryClient'
 import { Loader2 } from 'lucide-react'
 import { appStore } from '../../../../../store/app.store'
 import { toJS } from 'mobx'
-import { formatNumber } from '../../../../../utils/helpers'
+import { formatDecimal, formatNumber, returnNumber } from '../../../../../utils/helpers'
 
 const TransferForm = observer(({ initialData, onClose }) => {
   const [title, setTitle] = useState({
@@ -60,10 +60,10 @@ const TransferForm = observer(({ initialData, onClose }) => {
       fromDate: formatDate(new Date()),
       confirmPayment: true,
       fromAccount: null,
-      fromAmount: 0,
+      fromAmount: '',
       toDate: formatDate(new Date()),
       toAccount: null,
-      toAmount: 0,
+      toAmount: '',
       purpose: '',
       currency_1: null,
       currency_2: null,
@@ -93,7 +93,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
   const onSubmit = async (data) => {
     const payload = {
       tip: ['Перемещение'],
-      summa: StringtoNumber(data.fromAmount),
+      summa: formatDecimal(StringtoNumber(data.fromAmount)),
       data_operatsii: data.fromDate,
       data_nachisleniya: data.toDate,
       payment_confirmed: data.confirmPayment,
@@ -103,7 +103,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
       opisanie: data.purpose,
       comment: data.purpose,
       legal_entity_id: authStore.userData?.legal_entity_id || null,
-      to_amount: StringtoNumber(data.toAmount) || StringtoNumber(data.fromAmount),
+      to_amount: formatDecimal(StringtoNumber(data.toAmount || data.fromAmount)),
       currenies_id: watchCurrency1,
       to_currenies_id: watchCurrency2
     }
@@ -239,7 +239,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
                     <Input
                       type="text"
                       value={formatNumber(field.value)}
-                      onChange={(e) => field.onChange(e.target.value)}
+                      onChange={(e) => field.onChange(formatNumber(e.target.value))}
                       placeholder="0"
                       className={cn('w-56', errors.fromAmount && "border - red - 500")}
                     />
@@ -320,7 +320,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
                       <Input
                         type="text"
                         value={formatNumber(field.value)}
-                        onChange={(e) => field.onChange((e.target.value))}
+                        onChange={(e) => field.onChange(formatNumber(e.target.value))}
                         placeholder="0"
                         className={cn("w-56", errors.toAmount && "border-red-500")}
                       />

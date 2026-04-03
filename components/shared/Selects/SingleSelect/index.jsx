@@ -13,7 +13,8 @@ const SingleSelect = ({
   className,
   dropdownClassName,
   hasError,
-  wrapperClassName
+  wrapperClassName,
+  disabled = false
 }) => {
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -83,12 +84,15 @@ const SingleSelect = ({
       <button
         ref={buttonRef}
         type="button"
+        disabled={disabled}
         className={cn(
-          'flex items-center cursor-pointer bg-neutral-50 h-[36px]! transition-all duration-200 justify-between w-full rounded-md  px-3 py-2 outline-none focus:border-primary/80',
+          'flex items-center bg-neutral-50 h-[36px]! transition-all duration-200 justify-between w-full rounded-md px-3 py-2 outline-none',
+          disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer focus:border-primary/80',
           className,
           hasError ? 'border-red-ucode! border!' : "border border-neutral-200"
         )}
         onClick={() => {
+          if (disabled) return;
           if (!open && buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect()
             const spaceBelow = window.innerHeight - rect.bottom
@@ -102,13 +106,13 @@ const SingleSelect = ({
 
         <span className={cn('text-start line-clamp-1 font-normal text-xss!', value ? 'text-gray-800' : 'text-gray-400')}>{getSelectedLabel()}</span>
         <div className="flex items-center">
-          {isClearable && value && (
+          {isClearable && value && !disabled && (
             <div
               role="button"
               tabIndex={0}
               onClick={(e) => {
                 e.stopPropagation();
-                onChange(null);
+                if (!disabled) onChange(null);
               }}
               className=" cursor-pointer"
             >

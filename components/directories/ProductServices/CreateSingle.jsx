@@ -1,26 +1,45 @@
 import Modal from '../../common/Modal/Modal'
 import styles from './style.module.scss'
 import { X } from 'lucide-react'
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useEffect } from 'react'
 import SegmentedControl from '../../shared/SegmentedControl'
 import Input from '../../shared/Input'
 import TextArea from '../../shared/TextArea'
 import Select from '../../common/Select'
-import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard' // refreshed import
+import { useUcodeDefaultApiQuery, useUcodeRequestMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import { queryClient } from '../../../lib/queryClient'
 import Loader from '../../shared/Loader'
 import { formatNumber } from '../../../utils/helpers'
-
+import { keepPreviousData } from '@tanstack/react-query'
+import SingleSelect from '../../shared/Selects/SingleSelect'
+import { useForm, Controller } from 'react-hook-form'
 
 const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = false }) => {
-  const [viewMode, setViewMode] = useState('product')
-
   const viewOptions = [
     { value: 'product', label: 'Товары' },
     { value: 'service', label: 'Услуги' }
   ]
 
   const { mutateAsync: mutateProductService, isPending } = useUcodeRequestMutation()
+
+  const { data: bankAccountsData } = useUcodeRequestQuery({
+    method: "get_my_accounts",
+    data: {
+      groupBy: "legal_entities"
+    },
+    querySetting: {
+      select: (response) => response?.data?.data?.data,
+      placeholderData: keepPreviousData,
+    }
+  })
+
+  const myCurrencies = useMemo(() => {
+    const result = new Map()
+    bankAccountsData?.map(item => item?.children).flat()?.forEach(item => {
+      result.set(item?.currenies_id, item?.currenies_kod)
+    })
+    return Array.from(result.entries()).map(([value, label]) => ({ value, label }))
+  }, [bankAccountsData])
 
   const { data: units, } = useUcodeDefaultApiQuery({
     queryKey: "get_product_services_units",
@@ -55,86 +74,61 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
     }))
   }, [units])
 
+  const defaultValues = useMemo(() => {
+    if (initialData) {
+      return {
+        viewMode: initialData?.status?.[0] === 'service' ? 'service' : 'product',
+        name: initialData?.naimenovanie || initialData?.Naimenovanie || '',
+        article: initialData?.artikul || initialData?.Artikul || '',
+        unit: initialData?.units_of_measurement_id || null,
+        group: initialData?.product_and_service_group_id || null, // Initial API does not return a matched group easily 
+        price: (initialData?.tsena_za_ed || initialData?.TSena_za_ed || '').toString(),
+        currency: initialData?.currenies_id || myCurrencies?.[0]?.value || '',
+        vat: (initialData?.nds || initialData?.NDS || '').toString(),
+        comment: initialData?.commentary || initialData?.kommentariy || '',
+        currency: initialData?.currenies_id || myCurrencies?.[0]?.value || '',
 
-  const currencyOptions = [
-    { value: 'rub', label: 'RUB' },
-    { value: 'usd', label: 'USD' }
-  ]
-
-  const [formData, setFormData] = useState({
-    name: '',
-    article: '',
-    unit: apiOptions?.[0],
-    group: [],
-    price: '',
-    currency: currencyOptions[0],
-    vat: '',
-    comment: ''
-  })
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      article: '',
-      unit: apiOptions?.[0],
-      group: [],
-      price: '',
-      currency: currencyOptions[0],
-      vat: '',
-      comment: ''
-    })
-    setViewMode('product')
-  }
-
-  useEffect(() => {
-
-    if (open) {
-      if (initialData) {
-        setViewMode(initialData?.status?.[0] === 'service' ? 'service' : 'product')
-        setFormData({
-          name: initialData?.naimenovanie || initialData?.Naimenovanie || '',
-          article: initialData?.artikul || initialData?.Artikul || '',
-          unit: apiOptions?.find(opt => opt.value === initialData?.units_of_measurement_id || opt.value === initialData?.unit_of_measurement_id) || apiOptions?.[0],
-          group: [],
-          price: (initialData?.tsena_za_ed || initialData?.TSena_za_ed || '').toString(),
-          currency: currencyOptions[0],
-          vat: (initialData?.nds || initialData?.NDS || '').toString(),
-          comment: initialData?.commentary || initialData?.kommentariy || ''
-        })
-      } else {
-        resetForm()
       }
     }
-    // eslint-disable-next-line
-  }, [open, initialData, apiOptions])
-
-  const [isSubmitted, setIsSubmitted] = useState(false)
-
-  const handleFieldChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
-
-  const handleSubmit = async () => {
-    setIsSubmitted(true)
-
-    if (!formData.name) {
-      return
+    return {
+      viewMode: 'product',
+      name: '',
+      article: '',
+      unit: apiOptions?.[0] || null,
+      group: null,
+      price: '',
+      currency: myCurrencies?.[0]?.value || '',
+      vat: '',
+      comment: ''
     }
+  }, [initialData, apiOptions, myCurrencies])
+
+  const { control, handleSubmit, reset, watch, formState: { errors } } = useForm({
+    defaultValues
+  })
+
+  const { viewMode } = watch()
+
+  useEffect(() => {
+    if (open) {
+      reset(defaultValues)
+    }
+  }, [open, defaultValues, reset])
+
+  const onSubmit = async (data) => {
     const payload = {
-      Naimenovanie: formData?.name,
-      TSena_za_ed: parseInt((formData?.price || '').replace(/\s/g, '').replace(/[^\d]/g, '')) || 0,
-      unit_of_measurement_id: formData?.unit?.value,
-      NDS: parseInt((formData?.vat || '').replace('%', '')) || 0,
-      product_and_service_group_id: formData?.group?.value,
-      Tip: viewMode,
-      kommentariy: formData?.comment,
+      Naimenovanie: data.name,
+      TSena_za_ed: parseInt((data.price || '').toString().replace(/\s/g, '').replace(/[^\d]/g, '')) || 0,
+      unit_of_measurement_id: data.unit?.value,
+      NDS: parseInt((data.vat || '').toString().replace('%', '')) || 0,
+      product_and_service_group_id: data.group,
+      Tip: data.viewMode,
+      kommentariy: data.comment,
+      currenies_id: data.currency,
     }
 
-    if (viewMode === 'product') {
-      payload.Artikul = formData.article;
+    if (data.viewMode === 'product') {
+      payload.Artikul = data.article;
     }
 
     if (isEditing && initialData?.guid) {
@@ -146,29 +140,13 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
         method: isEditing ? "update_product_and_service" : "create_product_and_service",
         data: payload
       })
-      resetForm()
-      setOpen(false) // Close modal after successful creation
+      setOpen(false)
       queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] })
       queryClient.invalidateQueries({ queryKey: ['list_products_and_services'] })
     } catch (error) {
       console.error('mutateProductService', error?.message)
     }
   }
-
-  // const handleDelete = async (guid) => {
-  //   try {
-  //     await mutateProductService({
-  //       urlMethod: "DELETE",
-  //       urlParams: "/items/product_and_service?from-ofs=true",
-  //       data: {
-  //         guid
-  //       }
-  //     })
-  //     queryClient.invalidateQueries({ queryKey: ['get_product_services_list'] })
-  //   } catch (error) {
-  //     console.error('mutateProductService', error?.message)
-  //   }
-  // }
 
   return (
     <Modal
@@ -191,142 +169,202 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
           </div>
         </div>
 
-        <div className={styles.body}>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full">
+          <div className={styles.body}>
 
-          <div className={styles.formRow}>
-            <div className={styles.label}>Тип</div>
-            <div className={styles.fieldContainer}>
-              <SegmentedControl
-                options={viewOptions}
-                value={viewMode}
-                onChange={setViewMode}
-              />
-            </div>
-          </div>
-
-          <div className={styles.formRow}>
-            <div className={styles.label}>Название товара</div>
-            <div className={styles.fieldContainer}>
-              <Input
-                placeholder="Например, кафельная плитка"
-                className={styles.fullWidth}
-                value={formData.name}
-                error={isSubmitted && !formData.name}
-                onChange={e => handleFieldChange('name', e.target.value)}
-              />
-              {isSubmitted && !formData.name && <span className={styles.errorMessage}>Укажите название</span>}
-            </div>
-          </div>
-
-          <div className={styles.formRow}>
-            {viewMode === 'product' && <>
-              <div className={styles.label}>Артикул</div>
+            <div className={styles.formRow}>
+              <div className={styles.label}>Тип</div>
               <div className={styles.fieldContainer}>
-                <Input
-                  placeholder="Введите артикул"
-                  style={{ width: '140px' }}
-                  value={formData.article}
-                  onChange={e => handleFieldChange('article', e.target.value)}
+                <Controller
+                  name="viewMode"
+                  control={control}
+                  render={({ field }) => (
+                    <SegmentedControl
+                      options={viewOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
                 />
               </div>
-            </>}
+            </div>
 
-            <div className={styles.label}>
-              Единица измерения
+            <div className={styles.formRow}>
+              <div className={styles.label}>Название товара</div>
+              <div className={styles.fieldContainer}>
+                <Controller
+                  name="name"
+                  control={control}
+                  rules={{ required: 'Укажите название' }}
+                  render={({ field }) => (
+                    <Input
+                      placeholder="Например, кафельная плитка"
+                      className={styles.fullWidth}
+                      value={field.value}
+                      error={!!errors.name}
+                      onChange={e => field.onChange(e.target.value)}
+                    />
+                  )}
+                />
+                {errors.name && <span className={styles.errorMessage}>{errors.name.message}</span>}
+              </div>
             </div>
-            <div className={`${styles.fieldContainer} ${viewMode === 'service' ? styles.service : ''}`}>
-              <Select
-                instanceId="create-single-unit-select"
-                options={apiOptions}
-                value={formData.unit}
-                onChange={val => handleFieldChange('unit', val)} 
-              />
+
+            <div className={styles.formRow}>
+              {viewMode === 'product' && <>
+                <div className={styles.label}>Артикул</div>
+                <div className={styles.fieldContainer}>
+                  <Controller
+                    name="article"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        placeholder="Введите артикул"
+                        style={{ width: '140px' }}
+                        value={field.value}
+                        onChange={e => field.onChange(e.target.value)}
+                      />
+                    )}
+                  />
+                </div>
+              </>}
+
+              <div className={styles.label}>
+                Единица измерения
+              </div>
+              <div className={`${styles.fieldContainer} ${viewMode === 'service' ? styles.service : ''}`}>
+                <Controller
+                  name="unit"
+                  control={control}
+                  render={({ field }) => (
+                    <SingleSelect
+                      data={apiOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Выберите единицу измерения"
+                      className={'bg-white'}
+                      isClearable={false}
+                    />
+                  )}
+                />
+              </div>
             </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.label}>Группа товаров</div>
+              <div className={styles.fieldContainer}>
+                <Controller
+                  name="group"
+                  control={control}
+                  render={({ field }) => (
+                    <SingleSelect
+                      data={groupsList}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Выберите группу" 
+                      className={'bg-white'}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.labelWithHelp}>
+                Цена продажи
+              </div>
+              <div className={styles.priceGroup}>
+                <Controller
+                  name="price"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      className={styles.priceInput}
+                      placeholder="0.00"
+                      value={formatNumber(field.value)}
+                      onChange={e => field.onChange(e.target.value)}
+                    />
+                  )}
+                />
+                <Controller
+                  name="currency"
+                  control={control}
+                  render={({ field }) => (
+                    <SingleSelect
+                      data={myCurrencies}
+                      value={field.value || myCurrencies?.[0]?.value}
+                      onChange={field.onChange}
+                      isClearable={false}
+                      withSearch={false}
+                      disabled={isEditing}
+                      className={'bg-white'}
+                    />
+                  )}
+                />
+              </div>
+
+              <div className={styles.label} style={{ marginLeft: 'auto', width: 'auto', marginRight: '1rem' }}>
+                НДС
+              </div>
+              <div className={styles.fieldContainer} style={{ width: '120px' }}>
+                <Controller
+                  name="vat"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      placeholder="0%"
+                      className={styles.fullWidth}
+                      value={field.value ? `${field.value}%` : ''}
+                      onChange={e => {
+                        const raw = e.target.value.replace(/%/g, '').replace(/\D/g, '').slice(0, 2);
+                        field.onChange(raw);
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Backspace') {
+                          e.preventDefault();
+                          const val = String(field.value || '');
+                          field.onChange(val.slice(0, -1));
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className={styles.formRowTop}>
+              <div className={styles.label}>Комментарий</div>
+              <div className={styles.fieldContainer}>
+                <Controller
+                  name="comment"
+                  control={control}
+                  render={({ field }) => (
+                    <TextArea
+                      placeholder="Добавьте комментарий к этому товару"
+                      className={styles.textArea}
+                      rows={4}
+                      value={field.value}
+                      hasError={false}
+                      onChange={e => field.onChange(e.target.value)}
+                    />
+                  )}
+                />
+              </div>
+            </div>
+
           </div>
 
-          <div className={styles.formRow}>
-            <div className={styles.label}>Группа товаров</div>
-            <div className={styles.fieldContainer}>
-              <Select
-                instanceId="create-single-group-select"
-                options={groupsList}
-                value={formData.group}
-                onChange={val => handleFieldChange('group', val)}
-                placeholder="Выберите группу"
-              />
+          <div className={styles.footer}>
+            <div className={styles.footerButtons}>
+              <button type="button" className={styles.cancelButton} onClick={() => setOpen(false)}>
+                Отменить
+              </button>
+              <button type="submit" className={styles.saveButton} disabled={isPending}>
+                {isPending ? <Loader /> : isEditing ? "Сохранить" : "Создать"}
+              </button>
             </div>
           </div>
-
-          <div className={styles.formRow}>
-            <div className={styles.labelWithHelp}>
-              Цена продажи
-            </div>
-            <div className={styles.priceGroup}>
-              <Input
-                className={styles.priceInput}
-                placeholder="0.00"
-                value={formatNumber(formData.price)}
-                onChange={e => handleFieldChange('price', e.target.value)}
-              />
-              <Select
-                instanceId="create-single-currency-select"
-                className={styles.currencySelect}
-                options={currencyOptions}
-                value={formData.currency}
-                onChange={val => handleFieldChange('currency', val)}
-                defaultValue={currencyOptions[0]}
-              />
-            </div>
-
-            <div className={styles.label} style={{ marginLeft: 'auto', width: 'auto', marginRight: '1rem' }}>
-              НДС
-            </div>
-            <div className={styles.fieldContainer} style={{ width: '120px' }}>
-              <Input
-                placeholder="0%"
-                className={styles.fullWidth}
-                value={formData.vat ? `${formData.vat}%` : ''}
-                onChange={e => {
-                  const raw = e.target.value.replace(/%/g, '').replace(/\D/g, '').slice(0, 2);
-                  handleFieldChange('vat', raw);
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Backspace') {
-                    e.preventDefault();
-                    const val = String(formData.vat || '');
-                    handleFieldChange('vat', val.slice(0, -1));
-                  }
-                }}
-              />
-            </div>
-          </div>
-
-          <div className={styles.formRowTop}>
-            <div className={styles.label}>Комментарий</div>
-            <div className={styles.fieldContainer}>
-              <TextArea
-                placeholder="Добавьте комментарий к этому товару"
-                className={styles.textArea}
-                rows={4}
-                value={formData.comment}
-                hasError={false}
-                onChange={e => handleFieldChange('comment', e.target.value)}
-              />
-            </div>
-          </div>
-
-        </div>
-
-        <div className={styles.footer}>
-          <div className={styles.footerButtons}>
-            <button type="button" className={styles.cancelButton} onClick={() => setOpen(false)}>
-              Отменить
-            </button>
-            <button type="button" className={styles.saveButton} onClick={handleSubmit} disabled={isPending}>
-              {isPending ? <Loader /> : isEditing ? "Сохранить" : "Создать"}
-            </button>
-          </div>
-        </div>
+        </form>
       </div>
     </Modal>
   )

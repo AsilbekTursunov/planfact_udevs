@@ -286,18 +286,7 @@ export default observer(function AccountsPage() {
         return value
     }
   }
-
-  const totalCurrentBalance = useMemo(() => {
-    return filteredBankAccountsItems.reduce((sum, item) => {
-      // For grouped data, sum total_balance. For individual items, sum current_balance.
-      if (item.isGroup) {
-        return sum + (item.total_balance != null ? Number(item.total_balance) : 0)
-      }
-      const balance = item.current_balance ?? item.balans ?? item.nachalьnyy_ostatok
-      return sum + (balance != null ? Number(balance) : 0)
-    }, 0)
-  }, [filteredBankAccountsItems])
-
+ 
   // Handle click outside menu
   useEffect(() => {
     const handleClickOutside = (event) => {
