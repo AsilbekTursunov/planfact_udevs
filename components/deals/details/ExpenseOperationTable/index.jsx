@@ -12,6 +12,7 @@ import { Loader2 } from 'lucide-react'
 
 import EmptyState from '../EmptyState'
 import { CreditIcon, DebitIcon } from '../../../../constants/icons'
+import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 /* ─── Main table component ────────────────────────────────── */
 const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
@@ -32,13 +33,17 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
       tip: ['Выплата'],
     },
     querySetting: {
-      select: (response) => response?.data?.data?.data,
+      select: (response) => response?.data?.data,
       placeholderData: keepPreviousData,
     }
   })
 
   const dealOperations = useMemo(() => {
-    return operationsDto(operations)
+    return operationsDto(operations?.data)
+  }, [operations])
+
+  const summury = useMemo(() => {
+    return operations?.totalSummary?.by_type?.payment
   }, [operations])
 
 
@@ -169,7 +174,7 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
         </div>
         <div className='flex justify-end'>
           <div className="p-4 text-right text-neutral-700 font-semibold">Итого:</div>
-          <div className={`p-4 text-right font-semibold text-red-600`}>{'-'}{formatAmount(dealOperations?.reduce((acc, item) => acc + item.summa, 0))} UZS</div>
+          <div className={`p-4 text-right font-semibold text-red-600`}>{'-'}{formatAmount(summury?.total_summa)} {GlobalCurrency.name}</div>
         </div>
       </>}
 

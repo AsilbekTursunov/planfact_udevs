@@ -196,10 +196,10 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
           </tbody>
         </table>
       </div>
-      <div className='flex justify-end'>
+      {/* <div className='flex justify-end'>
         <div className="p-4 text-right text-neutral-700 font-semibold">Итого:</div>
         <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(productServicesList?.reduce((acc, item) => acc + item.summa, 0))} UZS</div>
-      </div>
+      </div> */}
       <CustomModal isOpen={open} onClose={() => setOpen(false)}>
         <div className='p-4'>
           <h1 className='text-lg font-semibold text-neutral-900'>Удалить позиции из сделки</h1>

@@ -77,7 +77,7 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth,
 
   const tips = useMemo(() => {
     if (type === 'pnl') {
-      return { tip: ["Списание", "Зачисление", "Перемещение", "Выплата", "Поступление", "Отгрузка", "Дебет", "Кредит", "Начисление"] }
+      return true // returning truthy to keep the query enabled
     }
 
     if (!data) return null
@@ -135,11 +135,12 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth,
   const { data: cashflowData, isLoading } = useUcodeRequestQuery({
     method: 'find_operations',
     data: {
-      ...tips,
       ...(type === 'cashflow' ? {
+        ...tips,
         paymentConfirmed: true,
         paymentNotConfirmed: false,
       } : {
+        tip: ["Списание", "Зачисление", "Перемещение", "Выплата", "Поступление", "Отгрузка", "Дебет", "Кредит", "Начисление"],
         paymentAccural: true,
         paymentNotAccural: false,
         ...(chartOfAccountIds?.length > 0 ? { chart_of_accounts_ids: chartOfAccountIds } : {})

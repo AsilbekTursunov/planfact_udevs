@@ -41,7 +41,7 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
     },
     skip: !dealGuid,
     querySetting: {
-      select: (response) => response?.data?.data?.data?.items,
+      select: (response) => response?.data?.data?.data,
       placeholderData: keepPreviousData,
     }
   })
@@ -49,7 +49,11 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
   const { mutateAsync: deleteShipment, isPending: isDeleting } = useUcodeRequestMutation()
 
   const shipmentsList = useMemo(() => {
-    return shipmentsDto(shipments)
+    return shipmentsDto(shipments?.items)
+  }, [shipments])
+
+  const summury = useMemo(() => {
+    return shipments?.summary
   }, [shipments])
 
   const handleEditShipment = (shipment) => {
@@ -185,7 +189,7 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
       </div>
       <div className='flex justify-end'>
         <div className="p-4 text-right text-neutral-700 font-semibold">Итого:</div>
-        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(shipmentsList?.reduce((acc, item) => acc + item.summa, 0))} {GlobalCurrency.name}</div>
+        <div className={`p-4 text-right font-semibold text-neutral-600`}>{formatAmount(summury?.total_summa)} {GlobalCurrency.name}</div>
       </div>
 
       {showModal && (
