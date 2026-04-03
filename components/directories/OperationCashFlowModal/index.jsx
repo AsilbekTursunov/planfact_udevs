@@ -8,6 +8,7 @@ import { GlobalCurrency } from '../../../constants/globalCurrency'
 import { formatAmount, formatPeriod } from '../../../utils/helpers'
 import { cashFlowStore } from '../../reports/cashflow/cashflow.store'
 import { observer } from 'mobx-react-lite'
+import { toJS } from 'mobx'
 
 
 const returnSingleName = (name) => {
@@ -38,6 +39,8 @@ const OperationCashFlowModal = observer(({ isOpen, onClose, data, selectedMonth 
     cashFlowStore.filters.periodStartDate,
     cashFlowStore.filters.periodEndDate
   )
+
+  console.log('data', toJS(data))
 
   const dateRange = useMemo(() => {
     if (!selectedMonth?.key) return { start: null, end: null }

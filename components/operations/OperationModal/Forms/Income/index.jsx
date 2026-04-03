@@ -30,7 +30,7 @@ import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import { observer } from 'mobx-react-lite'
 import { authStore } from '../../../../../store/auth.store'
 import { queryClient } from '../../../../../lib/queryClient'
-import { StringtoNumber } from '../../../../../utils/helpers'
+import { formatNumber, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
 import { toJS } from 'mobx'
 
@@ -491,8 +491,8 @@ const IncomeForm = observer(({
                         <div className='flex items-center gap-2'>
                           <Input
                             type="text"
-                            value={formatAmount(field.value)}
-                            onChange={(e) => field.onChange(parseAmount(e.target.value))}
+                            value={formatNumber(field.value)}
+                            onChange={(e) => field.onChange(e.target.value)}
                             placeholder="0"
                             className={cn("w-[230px]", errors.amount && "border-red-500")}
                           />

@@ -20,6 +20,7 @@ import Loader from '../../../../components/shared/Loader'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
 import OperationCheckbox from '../../../../components/shared/Checkbox/operationCheckbox'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
+import ScreenLoader from '../../../../components/shared/ScreenLoader'
 
 
 export default function LegalEntitiesPage() {
@@ -373,6 +374,7 @@ export default function LegalEntitiesPage() {
 
   return (
     <>
+      {isLoading && <ScreenLoader />}
       <div className="flex fixed bg-white overflow-y-auto pb-20  left-[80px] top-[60px] flex-col flex-1 w-[calc(100%-80px)] h-[calc(100%-60px)]  gap-4">
         <div className="flex items-center sticky top-0 bg-white z-10 p-3 justify-between">
           <div className="flex items-center gap-3">
@@ -499,13 +501,7 @@ export default function LegalEntitiesPage() {
               </tr>
             </thead>
             <tbody className=' flex-1 overflow-y-auto'>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={9} className="p-8 text-center text-neutral-400">
-                    Загрузка...
-                  </td>
-                </tr>
-              ) : productServicesList.length === 0 ? (
+              {productServicesList.length === 0 ? (
                 <tr>
                     <td colSpan={9} className="p-8 text-center text-neutral-400">
                       Нет данных

@@ -107,7 +107,7 @@ const ProfitAndLossPage = observer(() => {
                   onClick={() => {
                     setSelectedColumn(item)
                     setSelectedMonth({ key: period.key, label: period.title })
-                    setIsModalOpen(true)
+                    setIsModalOpen(true) 
                   }}
                 >
                   {displayValue}

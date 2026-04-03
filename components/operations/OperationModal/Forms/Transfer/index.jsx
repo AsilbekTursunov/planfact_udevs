@@ -23,6 +23,7 @@ import { queryClient } from '../../../../../lib/queryClient'
 import { Loader2 } from 'lucide-react'
 import { appStore } from '../../../../../store/app.store'
 import { toJS } from 'mobx'
+import { formatNumber } from '../../../../../utils/helpers'
 
 const TransferForm = observer(({ initialData, onClose }) => {
   const [title, setTitle] = useState({
@@ -207,7 +208,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
                 rules={{ required: 'Выберите счет списания' }}
                 render={({ field }) => (
                   <SelectMyAccounts
-                    value={field.value}
+                    value={(field.value)}
                     selected={watchToAccount}
                     onChange={(value) => {
                       field.onChange(value)
@@ -237,7 +238,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
                   render={({ field }) => (
                     <Input
                       type="text"
-                      value={formatAmount(field.value)}
+                      value={formatNumber(field.value)}
                       onChange={(e) => field.onChange(e.target.value)}
                       placeholder="0"
                       className={cn('w-56', errors.fromAmount && "border - red - 500")}
@@ -318,8 +319,8 @@ const TransferForm = observer(({ initialData, onClose }) => {
                     render={({ field }) => (
                       <Input
                         type="text"
-                        value={formatAmount(field.value)}
-                        onChange={(e) => field.onChange(parseAmount(e.target.value))}
+                        value={formatNumber(field.value)}
+                        onChange={(e) => field.onChange((e.target.value))}
                         placeholder="0"
                         className={cn("w-56", errors.toAmount && "border-red-500")}
                       />

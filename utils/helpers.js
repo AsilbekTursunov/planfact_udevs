@@ -105,3 +105,18 @@ export const formatTotalSumma = (summa) => {
   const num = Number(summa).toFixed(1)
   return num.toLocaleString('ru-RU')
 }
+
+
+//  format number with thousand separators
+
+export function formatNumber(value) {
+  const str = String(value).trim();
+  const dotIndex = str.indexOf('.');
+  
+  const intPart = dotIndex !== -1 ? str.slice(0, dotIndex) : str;
+  const decimalPart = dotIndex !== -1 ? str.slice(dotIndex) : '';
+
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  
+  return formatted + decimalPart;
+}

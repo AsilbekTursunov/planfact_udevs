@@ -9,7 +9,7 @@ import SelectLegelEntitties from '../../ReadyComponents/SelectLegelEntitties'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import CustomModal from '../../shared/CustomModal'
 import Loader from '../../shared/Loader'
-import { returnNumber } from '../../../utils/helpers'
+import { formatNumber, returnNumber } from '../../../utils/helpers'
 import SelectMyAccoutGroup from '../../ReadyComponents/SelectMyAccoutGroup'
 import { queryClient } from '../../../lib/queryClient'
 import { appStore } from '../../../store/app.store'
@@ -145,7 +145,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
   const handleSubmit = async () => {
     if (!validateForm()) return
 
-    setIsSubmitting(true) 
+    setIsSubmitting(true)
     console.log('data', formData)
     try {
       const submitData = {
@@ -372,7 +372,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
                 <div className="flex items-center flex-1 gap-2">
                   <Input
                     type="text"
-                    value={returnNumber(formData.nachalьnyy_ostatok)}
+                    value={formatNumber(formData.nachalьnyy_ostatok)}
                     onChange={(e) => setFormData({ ...formData, nachalьnyy_ostatok: e.target.value })}
                     placeholder="0"
                     className="w-44"

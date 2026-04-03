@@ -456,8 +456,8 @@ const OperationsPage = observer(() => {
 			{/* Main Content */}
 			<div className="w-full overflow-auto bg-neutral-50">
 				{/* Header */}
-				<div className="sticky h-20 px-4 flex items-center justify-between top-0 z-40 bg-neutral-50 ">
-					<div className="flex h-16 items-center gap-4 ">
+				<div className="sticky h-16 px-4 flex items-center justify-between top-0 z-40 bg-neutral-50 ">
+					<div className="flex items-center gap-4 ">
 						<h1 className="text-xl font-semibold">Операции</h1>
 						<button
 							onClick={handleCreate}
@@ -499,7 +499,7 @@ const OperationsPage = observer(() => {
 				</div>
 
 				{/* Table */}
-				<div className="" >
+				<div className=" pb-10" >
 					{/* Refetch overlay spinner isLoadingOperations */}
 					{isLoadingOperations && <ScreenLoader className={'left-0!'} />}
 					{/* Selection Bar */}
@@ -554,7 +554,7 @@ const OperationsPage = observer(() => {
 
 					<div className="" ref={tableWrapperRef}>
 						<table className="w-full ">
-							<thead className="bg-neutral-50 sticky top-20  z-10">
+							<thead className="bg-neutral-50 sticky top-16  z-10">
 								<tr className="bg-neutral-100">
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>
 										<OperationCheckbox

@@ -7,7 +7,7 @@ import { ChevronsLeft, ChevronsRightIcon, Trash2 } from 'lucide-react'
 export function FilterSidebar({ isOpen, onClose, children, clearCount, onClear }) {
 
   return (
-    <div className={cn("flex flex-col bg-neutral-100 transition-all duration-300 overflow-hidden relative h-full shrink-0")} style={{ width: isOpen ? '240px' : "30px", padding: isOpen ? "" : "3px 0px" }}>
+    <div className={cn("flex flex-col bg-neutral-100 border-r transition-all duration-300 overflow-hidden relative h-full shrink-0")} style={{ width: isOpen ? '240px' : "30px", padding: isOpen ? "" : "3px 0px" }}>
       <div
         className={cn("absolute top-3 w-full left-0 flex justify-center cursor-pointer transition-opacity duration-200", isOpen ? "opacity-0 pointer-events-none" : "opacity-100 delay-150")}
         onClick={onClose}

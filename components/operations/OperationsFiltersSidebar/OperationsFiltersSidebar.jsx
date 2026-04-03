@@ -15,6 +15,7 @@ import SelectMyAccounts from '../../ReadyComponents/SelectMyAccounts'
 import { operationFilterStore } from '../../../store/operationFilter.store'
 import MultiSelectZdelka from '../../ReadyComponents/MultiZdelka'
 import { FilterSection, FilterSidebar } from '../../directories/FilterSidebar/FilterSidebar'
+import SingleSelect from '../../shared/Selects/SingleSelect'
 
 export const OperationsFiltersSidebar = observer(({
   isOpen, onClose, clearCount, onClear
@@ -204,6 +205,7 @@ export const OperationsFiltersSidebar = observer(({
               value={selectedLegalEntities}
               onChange={(val) => operationFilterStore.setSelectedLegalEntities(val)}
               placeholder="Юрлица и счета"
+              className={'bg-gray-ucode-25'}
             />
 
 
@@ -212,18 +214,17 @@ export const OperationsFiltersSidebar = observer(({
               value={selectedCounterAgents}
               onChange={(val) => operationFilterStore.setSelectedCounterAgents(val)}
               placeholder="Контрагенты"
+              className={'bg-gray-ucode-25'}
+
             />
 
             {/* Payment filter  */}
-            {appStore.isPayment && <GroupedSelect
+            {appStore.isPayment && <SingleSelect
               data={[{ label: 'Наличный', value: 'cash' }, { label: 'Карта', value: 'card' }, { value: 'transfer', label: 'Перечисление' }]}
               value={paymentType}
               onChange={(val) => operationFilterStore.setPaymentType(val)}
               placeholder='Выберите тип платежа...'
-              groupBy={false}
-              labelKey='label'
-              valueKey='value'
-              className={'flex-1'}
+              className={'bg-gray-ucode-25'}
             />}
 
 
@@ -234,6 +235,7 @@ export const OperationsFiltersSidebar = observer(({
               placeholder="Статьи учета"
               type=""
               dropdownClassName={'w-64'}
+              className={'bg-gray-ucode-25'}
             />
 
             <MultiSelectZdelka
@@ -251,7 +253,7 @@ export const OperationsFiltersSidebar = observer(({
                 placeholder="Сумма от"
                 value={localAmount.min}
                 onChange={(e) => handleAmountChange('min', e.target.value)}
-                className="h-[34px]! bg-neutral-50"
+                className="h-[34px]! bg-gray-ucode-25"
               />
               <span style={{ color: '#9ca3af', fontSize: '13px' }}>–</span>
               <Input
@@ -261,7 +263,7 @@ export const OperationsFiltersSidebar = observer(({
                 placeholder="до"
                 value={localAmount.max}
                 onChange={(e) => handleAmountChange('max', e.target.value)}
-                className="h-[34px]! bg-neutral-50"
+                className="h-[34px]! bg-gray-ucode-25"
               />
             </div>
           </div>

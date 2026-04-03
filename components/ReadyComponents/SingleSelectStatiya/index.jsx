@@ -22,12 +22,17 @@ const NOT_SELECTABLE = new Set([
   'Другие долгосрочные '
 ])
 
+const HIDDEN_VALES = new Set([
+  'Денежная',
+  'Неденежная'
+])
+
 
 const mapNode = (item, type, hiddenValue) => {
   const isDisabled = NOT_SELECTABLE.has(item.nazvanie)
   const idValue = item.guid || item.chart_of_accounts_id_2 || item.id || `fallback-key-${Math.random().toString(36).substring(2, 9)}`
 
-  if (item?.nazvanie === type || idValue === hiddenValue) return null
+  if (item?.nazvanie === type || idValue === hiddenValue || HIDDEN_VALES.has(item?.nazvanie)) return null
 
   return {
     value: idValue,
@@ -40,7 +45,7 @@ const mapNode = (item, type, hiddenValue) => {
 
 const mapTree = (data, type, hiddenValue) => {
   return data
-    ?.filter(item => item.nazvanie !== type) // 👈 filter root
+    ?.filter(item => item.nazvanie !== type && !HIDDEN_VALES.has(item?.nazvanie)) // 👈 filter root
     .map(item => mapNode(item, type, hiddenValue))
     .filter(Boolean)
 }

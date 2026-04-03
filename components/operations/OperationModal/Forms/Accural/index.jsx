@@ -13,7 +13,7 @@ import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import CustomDatePicker from '../../../../shared/DatePicker'
 import { isFuture } from '../../../../../utils/formatDate'
 import SelectLegelEntitties from '../../../../ReadyComponents/SelectLegelEntitties'
-import { formatAmount, getCurrencyIcon, StringtoNumber } from '../../../../../utils/helpers'
+import { formatAmount, formatNumber, getCurrencyIcon, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
 import MyAccountCurrensies from '../../../../ReadyComponents/MyAccountCurrensies'
 import { queryClient } from '../../../../../lib/queryClient'
@@ -123,7 +123,6 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
       if (!isNew) {
         requestData.guid = initialData.guid
       }
-      console.log('requestData', requestData);
 
       await createAccural({
         method: isNew ? 'create_operation' : 'update_operation',
@@ -292,7 +291,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
                   render={({ field }) => (
                     <Input
                       type="text"
-                      value={formatAmount(field.value)}
+                      value={formatNumber(field.value)}
                       onChange={(e) => field.onChange(e.target.value)}
                       placeholder="0"
                       className={cn("w-[200px]", errors.summa && "border-red-500")}

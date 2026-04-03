@@ -9,6 +9,7 @@ import Select from '../../common/Select'
 import { useUcodeDefaultApiQuery, useUcodeRequestMutation } from '../../../hooks/useDashboard' // refreshed import
 import { queryClient } from '../../../lib/queryClient'
 import Loader from '../../shared/Loader'
+import { formatNumber } from '../../../utils/helpers'
 
 
 const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = false }) => {
@@ -264,18 +265,8 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
               <Input
                 className={styles.priceInput}
                 placeholder="0.00"
-                value={formData.price}
-                onChange={e => {
-                  const raw = e.target.value.replace(/\s/g, '').replace(/[^0-9.]/g, '');
-                  if (raw === '' || raw === '.') {
-                    handleFieldChange('price', raw);
-                    return;
-                  }
-                  const num = parseFloat(raw);
-                  if (!isNaN(num)) {
-                    handleFieldChange('price', num.toLocaleString('ru-RU'));
-                  }
-                }}
+                value={formatNumber(formData.price)}
+                onChange={e => handleFieldChange('price', e.target.value)}
               />
               <Select
                 instanceId="create-single-currency-select"
