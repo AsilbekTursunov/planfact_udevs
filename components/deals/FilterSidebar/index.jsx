@@ -5,16 +5,12 @@ import { sealDeal } from '@/store/saleDeal.store'
 import debounce from 'lodash/debounce'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 import { formatDate } from '@/utils/formatDate'
-import Input from "../../shared/Input"
-import SingleSelect from "../../shared/Selects/SingleSelect"
+import Input from "../../shared/Input" 
 import SelectCounterParties from "../../ReadyComponents/SelectCounterParties"
 import { formatAmount } from "../../../utils/helpers"
-
-const statusOptions = [
-  { value: 'Новая', label: 'Новая' },
-  { value: 'В работе', label: 'В работе' },
-  { value: 'Завершена', label: 'Завершена' }
-]
+import { useUcodeDefaultApiQuery } from "../../../hooks/useDashboard"
+import { keepPreviousData } from "@tanstack/react-query"
+import MultiSelect from "../../shared/Selects/MultiSelect"
 
 const FilterSidebar = observer(({ onOpenChange }) => {
   const [isOpen, setIsOpen] = useState(true)
@@ -24,6 +20,27 @@ const FilterSidebar = observer(({ onOpenChange }) => {
     onOpenChange?.(val)
   }
 
+  // Fetch statuses
+  const { data: fetchedData } = useUcodeDefaultApiQuery({
+    queryKey: 'sales_status',
+    urlMethod: 'GET',
+    urlParams: '/items/sales_status?from-ofs=true',
+    data: {},
+    querySetting: {
+      select: (response) => response?.data?.data?.response,
+      staleTime: 1000 * 60 * 60,
+      placeholder: keepPreviousData,
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
+    }
+  })
+
+  const statuses = useMemo(() => {
+    return fetchedData?.map(status => ({
+      value: status.guid,
+      label: status.name
+    }))
+  }, [fetchedData])
 
   const filters = sealDeal.filters
 
@@ -63,7 +80,7 @@ const FilterSidebar = observer(({ onOpenChange }) => {
       ...sealDeal.filters,
       [field]: value
     }
-  } 
+  }
 
   return (
     <FilterSidebarComponent
@@ -73,13 +90,12 @@ const FilterSidebar = observer(({ onOpenChange }) => {
       onClear={() => sealDeal.resetFilters()}
     >
       <div className="flex flex-col gap-4">
-
         {/* status filter with singleSelect component */}
         <div className="flex flex-col gap-1.5 mt-2">
-          <SingleSelect
-            data={statusOptions}
-            value={filters.status?.[0] || ''}
-            onChange={(val) => updateFilters('status', val ? [val] : [])}
+          <MultiSelect
+            data={statuses}
+            value={filters.status || []}
+            onChange={(val) => updateFilters('status', val)}
             placeholder="Статус сделки"
           />
         </div>

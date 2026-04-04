@@ -6,8 +6,8 @@ import debounce from 'lodash/debounce';
 import { cn } from '@/app/lib/utils';
 import styles from './deals.module.scss';
 import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
-import { useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard';
-import { useQueryClient } from '@tanstack/react-query';
+import { useUcodeDefaultApiMutation, useUcodeDefaultApiQuery, useUcodeRequestQuery } from '../../../hooks/useDashboard';
+import { keepPreviousData, useQueryClient } from '@tanstack/react-query';
 import Input from '../../../components/shared/Input';
 import { ChevronDown, Search } from 'lucide-react';
 import { formatDateFormat } from '../../../utils/formatDate';
@@ -76,7 +76,7 @@ export default observer(function DealsPage() {
       profit_from: Number(filters?.profitFrom) || null,
       profit_to: Number(filters?.profitTo) || null,
       counterparty_ids: filters?.selectedCounterparties?.length > 0 ? filters.selectedCounterparties : null,
-      status: filters?.status || [],
+      status: filters?.status?.length > 0 ? filters.status : null,
       accounting_method: dealsMethod === 'accrual_method' ? 'Метод начисления' : 'Кассовый метод' || null,
       isCalculation: filters?.isCalculation || false,
     }
@@ -93,6 +93,9 @@ export default observer(function DealsPage() {
       refetchOnWindowFocus: false,
     }
   })
+
+
+
 
   const summary = useMemo(() => {
     return deals?.summary
@@ -341,7 +344,7 @@ export default observer(function DealsPage() {
               })}
             </tbody>
           </table>
-        </div> 
+        </div>
         {isFetching && <ScreenLoader className={'left-0!'} />}
       </main>
 
