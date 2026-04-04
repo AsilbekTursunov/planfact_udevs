@@ -1,141 +1,195 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useEffect, useCallback } from 'react'
 import styles from './OperationCashFlowModal.module.scss'
-import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
+import { useUcodeRequestInfinite } from '../../../hooks/useDashboard'
 import operationsDto from '../../../lib/dtos/operationsDto'
 import IncomePaymentTableRow from './CashFlowTablesRows/IncomePaymentRow'
 import { Loader2 } from 'lucide-react'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
-import { formatAmount } from '../../../utils/helpers'
+import { formatNumber, formatTotalSumma } from '../../../utils/helpers'
 import { observer } from 'mobx-react-lite'
+import CustomModal from '../../shared/CustomModal'
+import moment from 'moment/moment'
 
-const OperationCashFlowModal = observer(({ 
-  isOpen, 
-  onClose, 
-  filterData, 
-  title, 
-  summaryData, 
-  isTransfer 
+const OperationCashFlowModal = observer(({
+  isOpen,
+  onClose,
+  filterData,
+  title,
+  isTransfer
 }) => {
-  const { data: cashflowData, isLoading } = useUcodeRequestQuery({
+  const tableRef = useRef(null)
+
+  const {
+    data: infiniteData,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useUcodeRequestInfinite({
     method: 'find_operations',
-    data: filterData,
+    data: {
+      ...filterData,
+      limit: 50,
+    },
+    skip: !filterData || !isOpen,
     querySetting: {
-      enabled: !!filterData && !!isOpen,
-      select: response => response?.data?.data,
+      select: (response) => response,
       staleTime: 0,
       refetchOnMount: true,
-      refetchOnWindowFocus: true,
     }
   })
 
+  // Flatten all pages into a single array
+  const allOperations = useMemo(() => {
+    return infiniteData?.pages?.flatMap(page => page?.data?.data?.data || []) || []
+  }, [infiniteData])
+
+  const totalSummary = useMemo(() => {
+    return infiniteData?.pages?.[0]?.data?.data?.totalSummary
+  }, [infiniteData])
+
   const operationsList = useMemo(() => {
     return {
-      future: operationsDto(cashflowData?.data, 'future'),
-      today: operationsDto(cashflowData?.data, 'today'),
-      before: operationsDto(cashflowData?.data, 'before'),
+      future: operationsDto(allOperations, 'future'),
+      today: operationsDto(allOperations, 'today'),
+      before: operationsDto(allOperations, 'before'),
     }
-  }, [cashflowData])
+  }, [allOperations])
 
-  if (!isOpen) return null
+  const operationsPeriod = useMemo(() => {
+    if (filterData?.paymentDateStart && filterData?.paymentDateEnd) {
+      return <p className='text-neutral-600'>
+        {moment(filterData?.paymentDateStart).format("DD MMM, 'YY")}
+        <span className='mx-4'>-</span>
+        {moment(filterData?.paymentDateEnd).format("DD MMM, 'YY")}
+      </p>
+    }
+    return ''
+  }, [filterData])
+
+  const totalAmount = useMemo(() => {
+    if (['Перемещения', 'Списания', 'Зачисления']?.includes(title)) {
+      return totalSummary?.by_type?.transfer?.total_summa
+    }
+    return totalSummary?.net_cash_flow
+  }, [totalSummary, title])
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    const el = tableRef.current
+    if (!el) return
+    const { scrollTop, scrollHeight, clientHeight } = el
+    if (scrollHeight - scrollTop - clientHeight < 80 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  useEffect(() => {
+    const el = tableRef.current
+    if (!el) return
+    el.addEventListener('scroll', handleScroll)
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [handleScroll])
 
   return (
-    <>
-      <div className={styles.overlay} onClick={onClose} />
+    <CustomModal isOpen={isOpen} onClose={onClose} className="w-[800px] p-0">
+      {/* Header */}
+      <div className="text-lg font-semibold p-6 border-b">
+        {title || 'Операции'}
+      </div>
 
-      <div className={styles.modal}>
-        {/* Header */}
-        <div className={styles.header}>
-          <div className={styles.title}>
-            {title || 'Операции'}
-          </div>
-          <button onClick={onClose} className={styles.closeButton}>
-            <svg className={styles.closeIcon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+      {/* Summary */}
+      <div className="flex flex-col bg-neutral-50 py-10 border-b px-6 gap-2">
+        <div className="flex text-sm items-center gap-10">
+          <span className=" font-medium">Период отчета</span>
+          {operationsPeriod && <span className="">{operationsPeriod}</span>}
         </div>
-
-        {/* Summary */}
-        <div className="flex flex-col gap-2 p-4">
-          <div className="flex text-sm items-center gap-10">
-            <span className=" font-medium">Период отчета</span>
-            <span className="">{summaryData?.periodLabel}</span>
-          </div>
-          <div className="flex text-sm items-center gap-10">
-            <span className=" font-medium">Сумма операций</span>
-            <div className="flex items-center gap-2">
-              <span>{summaryData?.totalAmount !== undefined ? formatAmount(Number(summaryData.totalAmount).toFixed(2)) : '–'}</span>
-              <span>{GlobalCurrency.name}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className=" overflow-auto h-[500px]">
-          {isLoading ? (
-            <div className='w-full h-full flex items-center justify-center'>
-              <Loader2 className='animate-spin text-primary' size={30} />
-            </div>
-          ) : (
-            <table className="w-full relative">
-              <thead className="sticky top-0 z-10 h-10 bg-neutral-50 border-b box-content border-gray-300">
-                <tr className='text-xs text-neutral-600 '>
-                  <th className=" px-4 text-start">Дата ▾</th>
-                  <th className=" px-4 text-center">Тип</th>
-                  <th className=" px-2 text-start">{isTransfer ? 'Откуда' : 'Контрагент'}</th>
-                  <th className=" px-2 text-start">{isTransfer ? 'Куда' : 'Статья'}</th>
-                  <th className=" px-4 text-end">Сумма</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(!operationsList?.before?.length && !operationsList?.today?.length && !operationsList?.future?.length) ? (
-                  <tr>
-                    <td colSpan={5} className={styles.emptyCell}>Нет данных</td>
-                  </tr>
-                ) : (
-                  <>
-                    {operationsList?.future?.length > 0 && (
-                      <tr className=" border-y border-y-gray-100 bg-neutral-50">
-                        <td colSpan='5' className=" py-1 text-xs px-4">
-                          <h3 className="">После</h3>
-                        </td>
-                      </tr>
-                    )}
-                    {operationsList?.future?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={title} />)}
-
-                    {operationsList?.today?.length > 0 && (
-                      <tr className=" border-y border-y-gray-100 bg-neutral-50">
-                        <td colSpan='5' className=" py-1 text-xs px-4">
-                          <h3 className="">Сегодня</h3>
-                        </td>
-                      </tr>
-                    )}
-                    {operationsList?.today?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={title} />)}
-
-                    {operationsList?.before?.length > 0 && (
-                      <tr className=" border-y border-y-gray-100 bg-neutral-50">
-                        <td colSpan='5' className=" py-1 text-xs px-4">
-                          <h3 className="">До</h3>
-                        </td>
-                      </tr>
-                    )}
-                    {operationsList?.before?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={title} />)}
-                  </>
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="p-2 flex justify-end gap-3 border-t">
-          <button onClick={onClose} className="primary-btn px-4! py-2!">
-            Закрыть
-          </button>
+        <div className="flex text-sm items-center gap-10">
+          <span className=" font-medium">Сумма операций</span>
+          {totalAmount && <div className="flex items-center gap-1">
+            <span>{title === 'Списания' ? "-" : ""}{totalAmount !== undefined ? formatNumber(formatTotalSumma(totalAmount)) : ''}</span>
+            <span>{GlobalCurrency.name}</span>
+          </div>}
         </div>
       </div>
-    </>
+
+      {/* Table */}
+      <div className="overflow-auto h-[500px]" ref={tableRef}>
+        {isLoading ? (
+          <div className='w-full h-full flex items-center justify-center'>
+            <Loader2 className='animate-spin text-primary' size={30} />
+          </div>
+        ) : (
+          <table className="w-full relative">
+            <thead className="sticky top-0 z-10 h-10 bg-neutral-50 border-b box-content border-gray-300">
+              <tr className='text-xs text-neutral-600 '>
+                <th className=" px-4 text-start">Дата ▾</th>
+                <th className=" px-4 text-center">Тип</th>
+                <th className=" px-2 text-start">{isTransfer ? 'Откуда' : 'Контрагент'}</th>
+                <th className=" px-2 text-start">{isTransfer ? 'Куда' : 'Статья'}</th>
+                <th className=" px-4 text-end">Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(!operationsList?.before?.length && !operationsList?.today?.length && !operationsList?.future?.length) ? (
+                <tr>
+                  <td colSpan={5} className={styles.emptyCell}>Нет данных</td>
+                </tr>
+              ) : (
+                <>
+                  {operationsList?.future?.length > 0 && (
+                    <tr className=" border-y border-y-gray-100 bg-neutral-50">
+                      <td colSpan='5' className=" py-1 text-xs px-4">
+                        <h3 className="">После</h3>
+                      </td>
+                    </tr>
+                  )}
+                  {operationsList?.future?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={title} />)}
+
+                      {operationsList?.today?.length > 0 && (
+                        <tr className=" border-y border-y-gray-100 bg-neutral-50">
+                          <td colSpan='5' className=" py-1 text-xs px-4">
+                            <h3 className="">Сегодня</h3>
+                          </td>
+                        </tr>
+                      )}
+                      {operationsList?.today?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={title} />)}
+
+                      {operationsList?.before?.length > 0 && (
+                        <tr className=" border-y border-y-gray-100 bg-neutral-50">
+                          <td colSpan='5' className=" py-1 text-xs px-4">
+                            <h3 className="">До</h3>
+                          </td>
+                        </tr>
+                      )}
+                      {operationsList?.before?.map(op => <IncomePaymentTableRow key={op.id} op={op} tip={title} />)}
+
+                      {/* Bottom loader for next page */}
+                      {isFetchingNextPage && (
+                        <tr>
+                          <td colSpan={5} className="py-4 text-center">
+                            <Loader2 className='animate-spin text-primary inline-block' size={22} />
+                          </td>
+                        </tr>
+                      )}
+                  </>
+                )}
+
+            </tbody>
+          </table>
+        )}
+
+      </div>
+
+      {/* Footer */}
+      <div className="p-2 h-20 flex justify-end gap-3 items-center border-t">
+        <button onClick={onClose} className="primary-btn px-6! py-3!">
+          Закрыть
+        </button>
+      </div>
+    </CustomModal>
   )
 })
 
 export default OperationCashFlowModal
+

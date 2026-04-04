@@ -112,7 +112,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
 
   return (
     <>
-      <div className="overflow-y-auto flex-1 min-w-[935px] pb-10">
+      <div className="overflow-y-auto flex-1 min-w-full pb-10">
         <table className="w-full">
           <thead className='sticky top-0 z-10'>
             <tr className='bg-neutral-100  text-neutral-600 font-normal text-xs w-full border-b border-gray-200'>

@@ -112,8 +112,8 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
 
   return (
     <>
-      <div className="h-96 overflow-y-auto min-w-[935px]">
-        <table className="w-full">
+      <div className="h-96 overflow-auto min-w-full">
+        <table className="w-full overflow-auto">
           <thead className='sticky top-0 z-10'>
             <tr className='bg-neutral-100  text-neutral-600 font-normal text-xs w-full border-b border-gray-200'>
               <th className='px-3 py-2 text-left w-[150px]'>Дата</th>

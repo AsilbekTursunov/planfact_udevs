@@ -473,7 +473,7 @@ export default observer(function DealDetailPage() {
                   </button>
                 </div>
               </div>
-              <div className="">
+              <div className="overflow-hidden">
                 {activeTab === 'products' && <ProductServiceTable handleSelect={handleSelectProduct} sellingDealId={dealId} onAdd={() => setShowProductModal(true)} />}
 
                 {activeTab === 'receipts' && <IncomeOperationsTable type='Поступление' sellingDealId={dealId} onAdd={handleCreateOperation} />}

@@ -12,7 +12,6 @@ import {
 	useUcodeRequestMutation,
 } from '@/hooks/useDashboard'
 import { OperationsFiltersSidebar } from '@/components/operations/OperationsFiltersSidebar/OperationsFiltersSidebar'
-import { OperationsHeader } from '@/components/operations/OperationsHeader/OperationsHeader'
 import OperationModal from '@/components/operations/OperationModal/OperationModal'
 import CreateShipment from '@/components/deals/details/CreatingShipment'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
@@ -25,6 +24,7 @@ import { OperationsFooter } from '../../../components/operations/OperationsFoote
 import ScreenLoader from '../../../components/shared/ScreenLoader'
 import Input from '../../../components/shared/Input'
 import { EllipsisVertical, Search } from 'lucide-react'
+
 
 const OperationsPage = observer(() => {
 	const [isModalClosing, setIsModalClosing] = useState(false)
@@ -69,10 +69,14 @@ const OperationsPage = observer(() => {
 		amountRange,
 		selectedChartOfAccounts,
 		paymentType,
-		dateFilters,
-		dateStartFilters,
 		deals
 	} = operationFilterStore
+
+	// Destructure scalar booleans directly so each one is a reactive useMemo dependency
+	const paymentConfirmed = operationFilterStore.dateFilters.podtverzhdena
+	const paymentNotConfirmed = operationFilterStore.dateFilters.nePodtverzhdena
+	const accrualConfirmed = operationFilterStore.dateStartFilters.podtverzhdena
+	const accrualNotConfirmed = operationFilterStore.dateStartFilters.nePodtverzhdena
 
 	// Debounce search query
 	useEffect(() => {
@@ -107,7 +111,7 @@ const OperationsPage = observer(() => {
 		const accrualStartDate = safeFormatDate(selectedDateStartRange?.start);
 		const accrualEndDate = safeFormatDate(selectedDateStartRange?.end);
 
-		const result = {
+		const filters = {
 			limit,
 			...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
 			...(startDate && endDate && {
@@ -135,14 +139,14 @@ const OperationsPage = observer(() => {
 				chart_of_accounts_ids: toJS(selectedChartOfAccounts),
 			}),
 			...(paymentType && { payment_type: paymentType }),
-			paymentConfirmed: dateFilters.podtverzhdena,
-			paymentNotConfirmed: dateFilters.nePodtverzhdena,
-			accrualConfirmed: dateStartFilters.podtverzhdena,
-			accrualNotConfirmed: dateStartFilters.nePodtverzhdena,
+			paymentConfirmed,
+			paymentNotConfirmed,
+			accrualConfirmed,
+			accrualNotConfirmed,
 			sellingDealId: deals
 		};
 
-		return result;
+		return filters;
 	}, [
 		limit,
 		debouncedSearchQuery,
@@ -154,8 +158,10 @@ const OperationsPage = observer(() => {
 		amountRange,
 		selectedChartOfAccounts,
 		paymentType,
-		dateFilters,
-		dateStartFilters,
+		paymentConfirmed,
+		paymentNotConfirmed,
+		accrualConfirmed,
+		accrualNotConfirmed,
 		deals
 	])
 
@@ -164,7 +170,7 @@ const OperationsPage = observer(() => {
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
-		isLoading: isLoadingOperations,
+		isLoading: isLoadingOperations, 
 	} = useUcodeRequestInfinite({
 		method: 'find_operations',
 		data: requestOperationFilters,

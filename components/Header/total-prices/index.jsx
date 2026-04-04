@@ -6,7 +6,7 @@ import { cn } from '@/app/lib/utils'
 import styles from '../Header.module.scss'
 import { formatDateTime } from '../../../utils/formatDate'
 import { useMyAccountsBoard, useUcodeRequestQuery } from '../../../hooks/useDashboard'
-import { formatAmount, formatTotalSumma } from '../../../utils/helpers'
+import { formatAmount, formatNumber, formatTotalSumma } from '../../../utils/helpers'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
 import { observer } from 'mobx-react-lite'
 import { keepPreviousData } from '@tanstack/react-query'
@@ -152,7 +152,7 @@ const TotalPrice = observer(() => {
                             <div className="" />
                             <div className="flex items-center gap-2">
                                 <p className="text-white">
-                                    На счетах {mounted ? formatTotalSumma(Summary?.current_balance) : '0'} {mounted ? GlobalCurrency?.name : ''}
+                                    На счетах {mounted ? formatNumber(formatTotalSumma(Summary?.current_balance)) : '0'} {mounted ? GlobalCurrency?.name : ''}
                                 </p>
                             </div>
                             <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />

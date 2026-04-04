@@ -117,6 +117,14 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
   )
 }
 
+const nameMap = {
+  "Поступления": ["Поступление"],
+  "Выплаты": ["Выплата"],
+  "Списания": ["Списание", "Перемещение"],
+  "Зачисления": ["Зачисление", "Перемещение"],
+  "Перемещения": ["Списание", "Зачисление", "Перемещение"],
+}
+
 
 export default observer(function CashFlowReportPage() {
   const [expandedMap, setExpandedMap] = useState({})
@@ -131,7 +139,7 @@ export default observer(function CashFlowReportPage() {
   const didAutoExpand = useRef(false)
   const tableContainerRef = useRef(null)
 
-  const { reportData: cashFlowData, isLoading, isFetching } = cashFlowStore
+  const { reportData: cashFlowData, isLoading, isFetching, filters } = cashFlowStore
   const loading = isLoading || isFetching
 
   const currencies = toJS(cashFlowData)?.currencies?.map(item => ({
@@ -139,19 +147,19 @@ export default observer(function CashFlowReportPage() {
     label: item.code
   }))
 
-  useEffect(() => {
-    cashFlowStore.fetchReport()
+  // useEffect(() => {
+  //   cashFlowStore.fetchReport()
 
-    const container = tableContainerRef.current
-    if (!container) return
+  //   const container = tableContainerRef.current
+  //   if (!container) return
 
-    const handleScroll = () => {
-      setIsScrolled(container.scrollLeft > 0)
-    }
+  //   const handleScroll = () => {
+  //     setIsScrolled(container.scrollLeft > 0)
+  //   }
 
-    container.addEventListener('scroll', handleScroll)
-    return () => container.removeEventListener('scroll', handleScroll)
-  }, [])
+  //   container.addEventListener('scroll', handleScroll)
+  //   return () => container.removeEventListener('scroll', handleScroll)
+  // }, [])
 
   // Extract legend (month columns)
   const legend = useMemo(() => cashFlowData?.legend || [], [cashFlowData])
@@ -216,8 +224,32 @@ export default observer(function CashFlowReportPage() {
   }
 
   const handleCellClick = (row, monthObj) => {
+    const requestData = {}
+
+    if (monthObj?.key) {
+      const [year, month] = monthObj.key.split('-').map(Number)
+      const startDate = `01-${String(month).padStart(2, '0')}-${year}`
+      const lastDay = new Date(year, month, 0).getDate()
+      const endDate = `${String(lastDay).padStart(2, '0')}-${String(month).padStart(2, '0')}-${year}`
+      requestData.paymentDateStart = startDate
+      requestData.paymentDateEnd = endDate
+    } else {
+      requestData.paymentDateStart = filters.periodStartDate
+      requestData.paymentDateEnd = filters.periodEndDate
+    }
+    requestData.tip = nameMap[row.name]
     console.log('row', row)
     console.log('monthObj', monthObj)
+
+    if (['Перемещения', 'Списания', 'Зачисления'].includes(row.name)) {
+      requestData.paymentConfirmed = true
+      requestData.paymentNotConfirmed = true
+      requestData.accrualConfirmed = true
+      requestData.accrualNotConfirmed = true
+    }
+
+    console.log('requestData', requestData)
+
     // const filters = cashFlowStore.filters
     // let dateRange = { start: filters.periodStartDate, end: filters.periodEndDate }
 
@@ -238,13 +270,7 @@ export default observer(function CashFlowReportPage() {
     //   if (row.section === 'Списания') return { tip: ['Списание', 'Перемещение'] }
     //   if (row.section === 'Зачисления') return { tip: ['Зачисление', 'Перемещение'] }
 
-    //   const nameMap = {
-    //     "Поступления": ["Поступление"],
-    //     "Выплаты": ["Выплата"],
-    //     "Списания": ["Списание", "Перемещение"],
-    //     "Зачисления": ["Зачисление", "Перемещение"],
-    //     "Перемещения": ["Списание", "Зачисление", "Перемещение"],
-    //   }
+
     //   return nameMap[row.name] ? { tip: nameMap[row.name] } : {}
     // })()
 
@@ -257,18 +283,15 @@ export default observer(function CashFlowReportPage() {
     // }
 
     // const periodLabel = formatPeriod(dateRange.start, dateRange.end)
-    // const isTransfer = row.name === 'Зачисления' || row.name === 'Списания' || row.name === 'Перемещения'
+    const isTransfer = ['Зачисления', 'Списания', 'Перемещения'].includes(row.name)
 
-    // setModalConfig({
-    //   filterData,
-    //   summaryData: {
-    //     periodLabel,
-    //     totalAmount: monthObj ? (row.months?.[monthObj.key] || 0) : row.total
-    //   },
-    //   title: row.name,
-    //   isTransfer
-    // })
-    // setIsModalOpen(true)
+    setModalConfig({
+      filterData: requestData,
+      title: row.name,
+      isTransfer
+    })
+    setIsModalOpen(true)
+
   }
 
   return (
@@ -325,18 +348,18 @@ export default observer(function CashFlowReportPage() {
                 <tr>
                   <th
                     className={cn(
-                      "text-left  text-xs border-r border-neutral-200 font-medium sticky left-0 z-40 bg-neutral-100 transition-shadow duration-300",
+                      "text-left  text-xs font-medium sticky left-0 z-40 bg-neutral-100 transition-shadow duration-300",
                     )}
                     style={{ minWidth: 420 }}
                   >
                     <p className='px-4 w-full border-r py-2'> По статьям учета</p>
                   </th>
                   {legend.map(col => (
-                    <th key={col.key} className="text-right  text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium" >
-                      {col.title}
+                    <th key={col.key} className="text-right bg-neutral-100 border-none text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px]  text-xs border-r border-neutral-200  text-xss! font-medium" >
+                      <span className='line-clamp-1 border-l  px-4 py-2 '>{col.title}</span>
                     </th>
                   ))}
-                  <th className="text-right text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] shrink-0 border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium" >
+                  <th className="text-right bg-neutral-100 text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] shrink-0 border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium" >
                     Итого
                   </th>
                 </tr>

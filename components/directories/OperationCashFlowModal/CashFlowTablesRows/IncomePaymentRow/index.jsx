@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
-import { cn } from '@/app/lib/utils'
-import styles from './style.module.scss'
+import { cn } from '@/app/lib/utils' 
 import PriceStatus from '@/components/operations/PriceStatus'
 import { ExpendClose, ExpendOpen, TypeIncomeIcon, TypeExpenseIcon, TypeTransferIcon, ShipmentIcon } from '@/constants/icons'
 import { observer } from 'mobx-react-lite'
@@ -92,17 +91,17 @@ const IncomePaymentTableRow = observer(({
         </td>
         {/* price */}
         <td className={'pr-4'} onClick={e => e.stopPropagation()}>
-          <div className="flex flex-col items-end">
+          <div className="flex flex-col items-end text-xs">
             {(op?.tip === 'Перемещение') && (
               <>
-                <span className={cn('text-neutral-700', tip === 'Списания' && 'opacity-50', tip !== 'Перемещения' && 'text-red-700', tip === 'Зачисления' && 'hidden')}>- {formatAmount((op?.summa))} {op?.currency}</span>
+                <span className={cn('text-neutral-700', tip !== 'Перемещения' && 'text-red-500', tip === 'Зачисления' && 'hidden')}>- {formatAmount((op?.summa))} {op?.currency}</span>
                 <span className={cn('text-neutral-700', tip === 'Зачисления' && 'text-green-700', tip === 'Списания' && 'hidden')}>+ {formatAmount((op?.to_amount))} {op?.to_currenies_kod}</span>
               </>
             )}
 
             {(op?.tip === 'Поступление' || op?.tip === 'Выплата') && (
               <>
-                <span className={cn('text-neutral-700', op?.tip === 'Выплата' && 'text-red-700', op?.tip === 'Поступление' && 'text-green-700')}>{op?.tip === 'Выплата' ? '-' : '+'}{formatAmount((op?.summa))} {op?.currency}</span>
+                <span className={cn('text-neutral-700', op?.tip === 'Выплата' && 'text-red-600', op?.tip === 'Поступление' && 'text-green-700')}>{op?.tip === 'Выплата' ? '-' : '+'}{formatAmount((op?.summa))} {op?.currency}</span>
               </>
             )}
           </div>

@@ -122,7 +122,7 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
   return (
     <div className="flex flex-col gap-3 w-full relative" ref={wrapperRef}>
       <DropdownMenu open={open} onOpenChange={setOpen}>
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger>
           <div className="flex items-center gap-2 font-normal p-2 border border-gray-ucode-200 rounded-md bg-gray-ucode-25 relative cursor-pointer">
             <DesignCalenderIcon strokeWidth={1} />
             <input
