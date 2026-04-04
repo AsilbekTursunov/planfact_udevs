@@ -13,6 +13,7 @@ import SingleSelect from '@/components/shared/Selects/SingleSelect'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
 import { formatPeriod } from '../../../../utils/helpers'
+import { cn } from '@/app/lib/utils'
 
 const formatDateLocal = (date) => {
   if (!date) return null
@@ -100,7 +101,7 @@ const ProfitAndLossPage = observer(() => {
             className={`sticky left-0 z-10 p-0! box-border transition-shadow duration-300 ${item.level === 0 || isResultRow || isTotalRow ? 'bg-neutral-50' : 'bg-white'} hover:bg-neutral-100 transition-colors`}
           >
             <div
-              className={`flex items-center w-full border-r px-4 py-2 text-xss! gap-2 ${hasChildren ? 'cursor-pointer' : 'cursor-default'}`}
+              className={`flex items-center cursor-pointer! w-full border-r px-4 py-2 text-xss! gap-2 ${hasChildren ? '' : 'cursor-default'}`}
               style={{ paddingLeft: `${item.level * 1 + 1}rem` }}
               onClick={() => hasChildren && toggleRow(item.id)}
             >
@@ -109,7 +110,7 @@ const ProfitAndLossPage = observer(() => {
                   {isExpanded ? <ExpendClose /> : <ExpendOpen />}
                 </button>
               )}
-              <span className={item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : 'text-sm'}>
+              <span className={cn('cursor-pointer!', item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : 'text-sm')}>
                 {item.name}
               </span>
             </div>
@@ -119,20 +120,20 @@ const ProfitAndLossPage = observer(() => {
             const value = item.values?.[period.key] || 0
             const displayValue = value === 0 ? '' : isPercentRow ? `${value.toFixed(1)}%` : value.toLocaleString('ru-RU')
             return (
-              <td key={period.key} className="px-2 text-xs text-end border-r min-w-[150px] max-w-[150px]">
+              <td key={period.key} className="px-2 text-xs cursor-pointer text-end border-r min-w-[150px] max-w-[150px]">
                 <span
-                  className={`cursor-pointer ${item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : ''} hover:text-primary transition-colors`}
+                  className={`cursor-pointer! ${item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : ''} hover:text-primary transition-colors`}
                   onClick={() => handleCellClick(item, { key: period.key, label: period.title })}
                 >
-                  <span className='line-clamp-1 text-end w-full cursor-pointer'>{displayValue}</span>
+                  <span className='line-clamp-1 text-end w-full '>{displayValue}</span>
                 </span>
               </td>
             )
           })}
           {/* Total cell */}
-          <td className="px-2 text-right border-l min-w-[150px] max-w-[150px]">
+          <td className="px-2 cursor-pointer text-right border-l min-w-[150px] max-w-[150px]">
             <span
-              className={`text-xs line-clamp-1 ${item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : 'text-xs'} cursor-pointer hover:underline hover:text-primary transition-colors`}
+              className={`text-xs cursor-pointer! line-clamp-1 ${item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : 'text-xs'}  hover:underline hover:text-primary transition-colors`}
               onClick={() => handleCellClick(item, null)}
             >
               {item.totalValue === 0 ? '' : isPercentRow ? `${item.totalValue?.toFixed(1)}` : item.totalValue?.toLocaleString('ru-RU')}
@@ -206,94 +207,96 @@ const ProfitAndLossPage = observer(() => {
       {loading && <ScreenLoader />}
 
       {/* Main Content */}
-      <div className={"w-full relative bg-white overflow-auto pb-10"}>
-        <div className="flex h-16 items-center justify-between p-4 sticky top-0 z-50 bg-white">
-          <div className="flex items-center gap-4" >
-            <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о прибылях и убытках (P&L)</h1>
-            {
-              currencies && (
-                <SingleSelect
-                  data={currencies}
-                  value={pnlStore.selectedCurrency || GlobalCurrency.code}
-                  onChange={(value) => {
-                    pnlStore.setSelectedCurrency(value)
-                    pnlStore.fetchReport()
-                  }}
-                  isClearable={false}
-                  withSearch={false}
-                  className={'bg-white w-28'}
-                  dropdownClassName={'w-28'}
-                />
-              )
-            }
-          </div>
-          <div className="flex items-center gap-3">
-            <GroupedSelect
-              data={groupingOptions}
-              value={pnlStore.selectedGrouping}
-              onChange={(value) => {
-                pnlStore.setSelectedGrouping(value)
-                pnlStore.fetchReport()
-              }}
-              placeholder="Способ построения"
-              className="bg-white w-44"
-            />
-            <GroupedSelect
-              data={accountingMethodOptions}
-              value={pnlStore.isCalculation ? 'accrual' : 'cash'}
-              onChange={(value) => {
-                pnlStore.setIsCalculation(value === 'accrual')
-                pnlStore.fetchReport()
-              }}
-              placeholder="Метод учета"
-              className="bg-white w-44"
-              autoHeight={true}
-            />
-            <button className="flex items-center justify-center p-2 rounded-md hover:bg-neutral-100 text-neutral-600 transition-colors">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="3" r="1" fill="currentColor" />
-                <circle cx="8" cy="8" r="1" fill="currentColor" />
-                <circle cx="8" cy="13" r="1" fill="currentColor" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div className='px-4 mt-2 overflow-hidden'>
-          <div div className='overflow-x-auto' >
-            {!reportData && !loading ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ marginBottom: '16px', opacity: 0.3 }}>
-                  <path d="M8 16C8 11.5817 11.5817 8 16 8H48C52.4183 8 56 11.5817 56 16V48C56 52.4183 52.4183 56 48 56H16C11.5817 56 8 52.4183 8 48V16Z" stroke="currentColor" strokeWidth="2" />
-                  <path d="M16 24H48M16 32H48M16 40H32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <div className={"w-full bg-white overflow-auto px-4"}>
+        <div className='h-full flex flex-col'>
+          <div className="flex  h-16 items-center sticky z-50 top-0 bg-white justify-between shrink-0">
+            <div className="flex items-center gap-4" >
+              <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о прибылях и убытках (P&L)</h1>
+              {
+                currencies && (
+                  <SingleSelect
+                    data={currencies}
+                    value={pnlStore.selectedCurrency || GlobalCurrency.code}
+                    onChange={(value) => {
+                      pnlStore.setSelectedCurrency(value)
+                      pnlStore.fetchReport()
+                    }}
+                    isClearable={false}
+                    withSearch={false}
+                    className={'bg-white w-28'}
+                    dropdownClassName={'w-28'}
+                  />
+                )
+              }
+            </div>
+            <div className="flex items-center gap-3">
+              <GroupedSelect
+                data={groupingOptions}
+                value={pnlStore.selectedGrouping}
+                onChange={(value) => {
+                  pnlStore.setSelectedGrouping(value)
+                  pnlStore.fetchReport()
+                }}
+                placeholder="Способ построения"
+                className="bg-white w-44"
+              />
+              <GroupedSelect
+                data={accountingMethodOptions}
+                value={pnlStore.isCalculation ? 'accrual' : 'cash'}
+                onChange={(value) => {
+                  pnlStore.setIsCalculation(value === 'accrual')
+                  pnlStore.fetchReport()
+                }}
+                placeholder="Метод учета"
+                className="bg-white w-44"
+                autoHeight={true}
+              />
+              <button className="flex items-center justify-center p-2 rounded-md hover:bg-neutral-100 text-neutral-600 transition-colors">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="3" r="1" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1" fill="currentColor" />
                 </svg>
-                <p style={{ fontSize: '16px', color: '#667085', marginBottom: '8px' }}>Выберите период для отображения отчета</p>
-                <p style={{ fontSize: '14px', color: '#98A2B3' }}>Используйте фильтры слева для настройки параметров отчета</p>
-              </div>
-            ) : (
-                <table className="w-full border-collapse">
-                  <thead className={"bg-neutral-100  "}>
-                  <tr>
+              </button>
+            </div>
+          </div>
+          <div className='flex flex-1 overflow-hidden'>
+            <div div className='overflow-x-auto' >
+              {!reportData && !loading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ marginBottom: '16px', opacity: 0.3 }}>
+                    <path d="M8 16C8 11.5817 11.5817 8 16 8H48C52.4183 8 56 11.5817 56 16V48C56 52.4183 52.4183 56 48 56H16C11.5817 56 8 52.4183 8 48V16Z" stroke="currentColor" strokeWidth="2" />
+                    <path d="M16 24H48M16 32H48M16 40H32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                  <p style={{ fontSize: '16px', color: '#667085', marginBottom: '8px' }}>Выберите период для отображения отчета</p>
+                  <p style={{ fontSize: '14px', color: '#98A2B3' }}>Используйте фильтры слева для настройки параметров отчета</p>
+                </div>
+              ) : (
+                  <table className="w-full  mb-10">
+                    <thead className={"bg-neutral-100 sticky top-0 z-50 "}>
+                      <tr>
                       <th
                         className="text-left text-xs font-medium sticky left-0 z-40 bg-neutral-100"
                         style={{ minWidth: 420 }}
                       >
                         <p className='px-4 w-full border-r py-2'>Статья</p>
                       </th>
-                    {legend.map(period => (
-                      <th key={period.key} className="text-right bg-neutral-100 border-none text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] text-xs text-xss! font-medium">
-                        <span className='line-clamp-1 border-l px-4 py-2'>{period.title}</span>
-                      </th>
-                    ))}
+                        {legend.map(period => (
+                          <th key={period.key} className="text-right bg-neutral-100 border-none text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] text-xs text-xss! font-medium">
+                            <span className='line-clamp-1 border-l px-4 py-2'>{period.title}</span>
+                          </th>
+                        ))}
                       <th className="text-right bg-neutral-100 text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] shrink-0 border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium">
                         Итого
                       </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows?.map(row => renderRow(row))}
-                </tbody>
-              </table>
-            )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows?.map(row => renderRow(row))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -52,7 +52,7 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
           )}
         >
           <div
-            className={`flex items-center w-full border-r py-2 text-xss! gap-2 ${hasChildren ? "cursor-pointer" : "cursor-default"}`}
+            className={`flex items-center w-full border-r py-2 text-xss! gap-2 ${hasChildren ? "cursor-pointer!" : "cursor-default"}`}
             style={{ paddingLeft: `${depth * 1 + 1}rem` }}
             onClick={hasChildren ? () => onToggle(row.uniquePath) : undefined}
           >
@@ -70,9 +70,9 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
           const val = row.months?.[month] ?? 0
           const legendItem = legend.find(l => l.key === month)
           return (
-            <td key={month} className="px-2  text-xs text-end border-r min-w-[150px] max-w-[150px]">
+            <td key={month} className="px-2 cursor-pointer! text-xs text-end border-r min-w-[150px] max-w-[150px]">
               <span
-                className={` cursor-pointer ${isBold ? "font-semibold" : ""} ${!isEndingBalance ? ' hover:text-primary transition-colors' : ''}`}
+                className={`  ${isBold ? "font-semibold" : ""} ${!isEndingBalance ? ' hover:text-primary transition-colors' : ''}`}
                 onClick={() => {
                   if (isEndingBalance) return
                   onCellClick(row, { key: month, label: legendItem?.title || month })
@@ -87,9 +87,9 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
         })}
 
         {/* Total cell */}
-        <td className="px-2 text-right border-l min-w-[150px] max-w-[150px]">
+        <td className="px-2 text-right border-l min-w-[150px] max-w-[150px] cursor-pointer!">
           <span
-            className={`text-xs line-clamp-1 ${isBold ? "font-semibold" : "text-xs"} ${!isEndingBalance ? 'cursor-pointer hover:underline hover:text-primary transition-colors' : ''}`}
+            className={`text-xs line-clamp-1 ${isBold ? "font-semibold" : "text-xs"} ${!isEndingBalance ? ' hover:underline hover:text-primary transition-colors' : ''}`}
             onClick={() => {
               if (isEndingBalance) return
               onCellClick(row, null)
@@ -287,7 +287,7 @@ export default observer(function CashFlowReportPage() {
       {loading && <ScreenLoader />}
 
       <div className={"w-full bg-white overflow-auto px-4"}>
-        <div className=" h-full">
+        <div className="h-full flex flex-col">
           <div className="flex  h-16 items-center sticky z-50 top-0 bg-white justify-between shrink-0">
             <div className="flex items-center gap-4">
               <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
@@ -328,10 +328,10 @@ export default observer(function CashFlowReportPage() {
             </div>
           </div>
 
-          <div className='mt-2 overflow-hidden'>
-            <div className="overflow-auto mb-10">
-              <table className="w-full  ">
-                <thead className=" bg-neutral-100">
+          <div className='flex flex-1 overflow-hidden'>
+            <div className="overflow-x-auto">
+              <table className="w-full  mb-10">
+                <thead className=" bg-neutral-100 sticky top-0 z-50">
                   <tr>
                     <th
                       className={cn(
@@ -363,7 +363,7 @@ export default observer(function CashFlowReportPage() {
                       onToggle={handleToggle}
                       onCellClick={handleCellClick}
                     />
-                  ))}
+                  ))} 
                 </tbody>
               </table>
             </div>
