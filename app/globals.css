@@ -131,6 +131,8 @@
   }
 }
 
+
+
 :root {
   --padding-xs: 5px;
   --padding-sm: 18px;
@@ -365,7 +367,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground zoom-in-90!;
   }
   html {
     @apply font-sans;
@@ -377,4 +379,9 @@
 
 .active-row{
   @apply text-primary-dark!
+}
+
+
+body {
+  zoom: 0.9 !important;
 }

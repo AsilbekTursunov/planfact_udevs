@@ -1,3 +1,4 @@
+'use client'
 import { cn } from '@/app/lib/utils'
 import styles from './operationCheckbox.module.scss'
 import { LuCheck } from 'react-icons/lu'

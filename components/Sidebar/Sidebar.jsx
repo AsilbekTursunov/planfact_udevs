@@ -57,7 +57,7 @@ export function Sidebar() {
 
 
     return (
-        <aside className="bg-blue-950 w-[80px] flex flex-col gap-2 h-screen items-center justify-start fixed left-0 z-1000" ref={sidebarRef}>
+        <aside className="bg-blue-950 w-[80px] flex flex-col gap-2 h-full items-center justify-start fixed left-0 z-1000" ref={sidebarRef}>
             {/* <div className="flex items-center justify-center h-[60px] pl-1 pt-1"> */}
             <AppLogo size={44} strokeWidth={1.5} className='mt-2' />
             {/* </div> */}

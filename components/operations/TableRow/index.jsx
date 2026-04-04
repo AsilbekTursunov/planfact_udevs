@@ -81,6 +81,24 @@ const OperationTableRow = observer(({
   const isActive = !op?.payment_confirmed && !op?.payment_accrual
 
 
+  const textPrimary = useMemo(() => {
+    switch (op.tip) {
+      case 'Поступление':
+        return !op.payment_confirmed && !op.payment_accrual && 'text-primary'
+      case 'Выплата':
+        return !op.payment_confirmed && !op.payment_accrual && 'text-primary'
+      case 'Начисление':
+        return !op.payment_accrual && 'text-primary'
+      case 'Отгрузка':
+        return !op.payment_shipment && 'text-primary'
+      case 'Перемещение':
+        return !op.payment_confirmed && 'text-primary'
+      default:
+        return ''
+    }
+  }, [op])
+
+
   return (
     <>
       <tr
@@ -107,7 +125,7 @@ const OperationTableRow = observer(({
         </td>}
         {/* date */}
         <td className={cn(styles.tableCell, styles.dateCell, isActive && styles.activeRow)}>
-          <div className={cn(op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
+          <div className={cn(textPrimary)}>
             {op.operationParts?.length > 0 ? <>
               <div className={styles.childrenControl} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
                 {open ? <ExpendClose /> : <ExpendOpen />}
@@ -122,16 +140,16 @@ const OperationTableRow = observer(({
         {/* shot */}
         <td className={cn(styles.tableCell, styles.accountCell, isActive && styles.activeRow)}>
           {op?.tip == "Перемещение" && <>
-            <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
+            <div className={cn('flex flex-col items-start', textPrimary)}>
               <span>{op.my_account_name}</span>
               <span>{op.my_account_name2}</span>
             </div>
           </>}
-          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
+          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={cn('flex flex-col items-start', textPrimary)}>
             <span>{op.my_account_name}</span>
           </div>}
           {(op?.tip == "Начисление" || op?.tip == "Отгрузка") && <>
-            <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
+            <div className={cn('flex flex-col items-start', textPrimary)}>
               <span>[{op.legal_entity_name}]</span>
             </div>
           </>}
@@ -153,23 +171,23 @@ const OperationTableRow = observer(({
         </td>
         {/* counterparty */}
         <td className={cn(styles.tableCell, styles.counterpartyCell, isActive && styles.activeRow)}>
-          <p className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>{titleContragent}</p>
+          <p className={cn('flex flex-col items-start', textPrimary)}>{titleContragent}</p>
         </td>
         {/* statya */}
         <td className={cn(styles.tableCell, styles.statusCell, isActive && styles.activeRow)}>
-          {op?.tip == "Перемещение" && <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
+          {op?.tip == "Перемещение" && <div className={cn('flex flex-col items-start', textPrimary)}>
             <span className={`${isSpinasiya ? 'opacity-50' : ''}`}>[Перемещение - списание]</span>
             <span className={`${isZachisleniya ? 'opacity-50' : ''}`}>[Перемещение - зачисление]</span>
           </div>}
-          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
-            <span className={`text-neutral-700 ${!op.payment_confirmed && 'text-primary'}`}>{titleChartOfAccounts}</span>
+          {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={cn('flex flex-col items-start', textPrimary)}>
+            <span className={`text-neutral-700 ${textPrimary}`}>{titleChartOfAccounts}</span>
             <span className='text-neutral-400'>{op.opisanie}</span>
           </div>}
-          {op?.tip == "Начисление" && <div className={cn('flex flex-col items-start', op.tip !== 'Начисление' && !op.payment_confirmed && 'text-primary', op.tip === 'Начисление' && !op.payment_accrual && 'text-primary')}>
+          {op?.tip == "Начисление" && <div className={cn('flex flex-col items-start', textPrimary)}>
             <span className={`line-clamp-1 ${isDebit ? 'opacity-50' : ''}`}>{op.chartOfAccounts} [по дебету]</span>
             <span className={`line-clamp-1 ${isCredit ? 'opacity-50' : ''}`}>{op.chartOfAccounts2} [по кредиту]</span>
           </div>}
-          {(op?.tip == "Отгрузка") && <div className={`flex flex-col items-start ${!op.payment_confirmed && 'text-primary'}`}>
+          {(op?.tip == "Отгрузка") && <div className={`flex flex-col items-start ${textPrimary}`}>
             <span>{op.chartOfAccounts}</span>
           </div>}
         </td>
@@ -177,7 +195,7 @@ const OperationTableRow = observer(({
         {/* <td className={cn(styles.tableCell, isActive && styles.activeRow)}>{op?.project_name || '-'}</td> */}
         {/* zdelka */}
         <td className={cn(styles.tableCell, isActive && styles.activeRow)}>
-          {(op.tip === "Поступление" || op.tip === "Выплата" || op.tip === "Отгрузка") && <p className={`text-neutral-700 ${!op.payment_confirmed && 'text-primary'}`}>{op?.selling_deal_name || '-'}</p>}
+          {(op.tip === "Поступление" || op.tip === "Выплата" || op.tip === "Отгрузка") && <p className={`text-neutral-700 ${textPrimary}`}>{op?.selling_deal_name || '-'}</p>}
           {(op.tip === "Начисление") && <div className='flex flex-col items-start relative group text-neutral-700'>
             {titleDeals?.children?.length === 0 && <p className={`${!op.payment_accrual && 'text-primary'}`}>{titleDeals?.title || ''}</p>}
             {titleDeals?.children?.length > 0 && <>
@@ -224,7 +242,6 @@ const OperationTableRow = observer(({
             <tr
               key={part.id}
               className={`${styles.tableRow} ${styles.child} ${counterpartyGuid && counterpartyGuid !== part?.counterparties_id ? styles.disabled : ''}`}
-              // aria-disabled={counterpartyGuid && counterpartyGuid === part?.counterpartyId}
               onClick={e => {
                 if (!e.target.closest('input') && !e.target.closest('button') && counterpartyGuid === part?.counterparties_id) {
                   openOperationModal(part)
@@ -243,10 +260,7 @@ const OperationTableRow = observer(({
                     {part.tip === 'Поступление' ? (
                       <TypeIncomeIcon />
                     ) : part.tip === 'Выплата' ? (
-                      <TypeExpenseIcon />
-                      ) : part.tip === 'Перемещение' ||
-                        part.tip === 'Начисление' ? (
-                      <TypeTransferIcon />
+                        <TypeExpenseIcon />
                     ) : null}
                   </div>
                 ) : null}
@@ -255,17 +269,7 @@ const OperationTableRow = observer(({
                 {part.counterparty || ''}
               </td>
               <td className={cn(styles.tableCell, styles.statusCell)}>
-                {part?.type == 'Перемещение' ? (
-                  <div
-                    className={`${styles.doubleAccount} ${!part.paymentConfirmed && styles.confirmed
-                      }`}
-                  >
-                    <span>[Перемещение - списание]</span>
-                    <span>[Перемещение - зачисление]</span>
-                  </div>
-                ) : (
-                  part.chartOfAccounts || ''
-                )}
+                {part.chartOfAccounts}
               </td>
               {/* <td className={styles.tableCell}>{part?.project_name || '-'}</td> */}
               <td className={styles.tableCell}>{part?.selling_deal_name || '-'}</td>

@@ -170,7 +170,7 @@ const OperationsPage = observer(() => {
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
-		isLoading: isLoadingOperations, 
+		isLoading: isLoadingOperations,
 	} = useUcodeRequestInfinite({
 		method: 'find_operations',
 		data: requestOperationFilters,
@@ -178,6 +178,14 @@ const OperationsPage = observer(() => {
 			select: (response) => response
 		}
 	})
+
+	const paginationData = useMemo(() => {
+		return infiniteData?.pages?.[0]?.data?.data?.pagination
+	}, [infiniteData])
+
+	console.log('paginationData', paginationData)
+
+
 
 	const allOperations = useMemo(() => {
 		return infiniteData?.pages?.flatMap(page => page?.data?.data?.data || []) || []

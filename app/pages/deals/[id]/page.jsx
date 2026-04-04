@@ -234,7 +234,7 @@ export default observer(function DealDetailPage() {
         <div className={'bg-white rounded-xl p-4 xl:p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]'}>
           <div className="flex items-center justify-between">
             <p className='text-base xl:text-xl flex gap-1 font-semibold text-neutral-800 mt-2 truncate'>
-              <span className="truncate">{formatNumber(42342342342342)}</span> 
+              <span className="truncate">{formatNumber(summeryCards?.total_products_summa)}</span> 
               <span>{GlobalCurrency.name}</span>
             </p>
             <div className="shrink-0 ml-1">
