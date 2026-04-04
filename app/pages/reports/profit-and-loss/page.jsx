@@ -98,10 +98,10 @@ const ProfitAndLossPage = observer(() => {
           {/* Name cell — sticky left */}
           <td
             className={`sticky left-0 z-10 p-0! box-border transition-shadow duration-300 ${item.level === 0 || isResultRow || isTotalRow ? 'bg-neutral-50' : 'bg-white'} hover:bg-neutral-100 transition-colors`}
-            style={{ paddingLeft: `${indent}px` }}
           >
             <div
               className={`flex items-center w-full border-r px-4 py-2 text-xss! gap-2 ${hasChildren ? 'cursor-pointer' : 'cursor-default'}`}
+              style={{ paddingLeft: `${item.level * 1 + 1}rem` }}
               onClick={() => hasChildren && toggleRow(item.id)}
             >
               {hasChildren && (

@@ -50,10 +50,10 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
             depth === 0 ? "bg-neutral-50" : "bg-white",
             "hover:bg-neutral-100 transition-colors",
           )}
-          style={{ paddingLeft: `${depth * 1.5 + 1}rem` }}
         >
           <div
-            className={`flex items-center w-full  border-r px-4 py-2 text-xss! gap-2 ${hasChildren ? "cursor-pointer" : "cursor-default"}`}
+            className={`flex items-center w-full border-r py-2 text-xss! gap-2 ${hasChildren ? "cursor-pointer" : "cursor-default"}`}
+            style={{ paddingLeft: `${depth * 1 + 1}rem` }}
             onClick={hasChildren ? () => onToggle(row.uniquePath) : undefined}
           >
             {hasChildren && (
@@ -146,20 +146,6 @@ export default observer(function CashFlowReportPage() {
     value: item.code,
     label: item.code
   }))
-
-  // useEffect(() => {
-  //   cashFlowStore.fetchReport()
-
-  //   const container = tableContainerRef.current
-  //   if (!container) return
-
-  //   const handleScroll = () => {
-  //     setIsScrolled(container.scrollLeft > 0)
-  //   }
-
-  //   container.addEventListener('scroll', handleScroll)
-  //   return () => container.removeEventListener('scroll', handleScroll)
-  // }, [])
 
   // Extract legend (month columns)
   const legend = useMemo(() => cashFlowData?.legend || [], [cashFlowData])
@@ -300,7 +286,7 @@ export default observer(function CashFlowReportPage() {
 
       {loading && <ScreenLoader />}
 
-      <div className={"w-full bg-white overflow-hidden"}>
+      <div className={"w-full bg-white overflow-auto px-4"}>
         <div className=" h-full">
           <div className="flex  h-16 items-center sticky z-50 top-0 bg-white justify-between shrink-0">
             <div className="flex items-center gap-4">
@@ -342,43 +328,45 @@ export default observer(function CashFlowReportPage() {
             </div>
           </div>
 
-          <div className='mt-2 overflow-auto'>
-            <table className="w-full overflow-auto">
-              <thead className="sticky top-16 z-40 bg-neutral-100">
-                <tr>
-                  <th
-                    className={cn(
-                      "text-left  text-xs font-medium sticky left-0 z-40 bg-neutral-100 transition-shadow duration-300",
-                    )}
-                    style={{ minWidth: 420 }}
-                  >
-                    <p className='px-4 w-full border-r py-2'> По статьям учета</p>
-                  </th>
-                  {legend.map(col => (
-                    <th key={col.key} className="text-right bg-neutral-100 border-none text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px]  text-xs border-r border-neutral-200  text-xss! font-medium" >
-                      <span className='line-clamp-1 border-l  px-4 py-2 '>{col.title}</span>
+          <div className='mt-2 overflow-hidden'>
+            <div className="overflow-auto mb-10">
+              <table className="w-full  ">
+                <thead className=" bg-neutral-100">
+                  <tr>
+                    <th
+                      className={cn(
+                        "text-left  text-xs font-medium sticky left-0 z-40 bg-neutral-100 transition-shadow duration-300",
+                      )}
+                      style={{ minWidth: 420 }}
+                    >
+                      <p className='px-4 w-full border-r py-2'> По статьям учета</p>
                     </th>
+                    {legend.map(col => (
+                      <th key={col.key} className="text-right bg-neutral-100 border-none text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px]  text-xs border-r border-neutral-200  text-xss! font-medium" >
+                        <span className='line-clamp-1 border-l  px-4 py-2 '>{col.title}</span>
+                      </th>
+                    ))}
+                    <th className="text-right bg-neutral-100 text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] shrink-0 border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium" >
+                      Итого
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map(row => (
+                    <TableRow
+                      key={row.uniquePath}
+                      row={row}
+                      months={months}
+                      legend={legend}
+                      depth={0}
+                      expandedMap={expandedMap}
+                      onToggle={handleToggle}
+                      onCellClick={handleCellClick}
+                    />
                   ))}
-                  <th className="text-right bg-neutral-100 text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] shrink-0 border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium" >
-                    Итого
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map(row => (
-                  <TableRow
-                    key={row.uniquePath}
-                    row={row}
-                    months={months}
-                    legend={legend}
-                    depth={0}
-                    expandedMap={expandedMap}
-                    onToggle={handleToggle}
-                    onCellClick={handleCellClick}
-                  />
-                ))}
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
