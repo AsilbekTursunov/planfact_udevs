@@ -11,9 +11,9 @@ const TreeNode = ({ node, level = 0, selectedValue, onSelect, multi }) => {
     <div className='flex flex-col w-full'>
       <div
         className={cn(
-          "w-full px-4 py-2 h-[34px]! hover:bg-neutral-50 flex items-center justify-between text-xss! transition-colors",
-          isSelectable ? "cursor-pointer" : "cursor-default text-neutral-700",
-          node.bold && "font-bold",
+          "w-full  h-[34px]! px-4 py-2 hover:bg-neutral-50 flex items-center justify-between text-xss! transition-colors",
+          isSelectable ? "cursor-pointer" : "cursor-default   text-neutral-800 font-normal! text-base!",
+          node.bold && "font-medium! ",
           isSelected && "bg-neutral-100/60"
         )}
         style={{ paddingLeft: `${16 + level * 16}px` }}

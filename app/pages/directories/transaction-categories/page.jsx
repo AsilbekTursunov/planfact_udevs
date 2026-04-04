@@ -7,8 +7,10 @@ import CreateChartOfAccountsModal from '@/components/directories/CreateChartOfAc
 import EditChartOfAccountsModal from '@/components/directories/EditChartOfAccountsModal/EditChartOfAccountsModal'
 import { CategoryMenu } from '@/components/directories/CategoryMenu/CategoryMenu'
 import { DeleteCategoryConfirmModal } from '@/components/directories/DeleteCategoryConfirmModal/DeleteCategoryConfirmModal'
-import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
+import { showErrorNotification } from '@/lib/utils/notifications'
 import { useChartOfAccountsPlanFact } from '../../../../hooks/useDashboard'
+import Input from '../../../../components/shared/Input'
+import { Search } from 'lucide-react'
 
 // Map tab keys to root category names from API
 const TABS_TO_ROOT_NAME = {
@@ -325,22 +327,13 @@ export default function TransactionCategoriesPage() {
 						</button>
 					</div>
 					<div className="relative">
-						<input
-							type='text'
-							placeholder='Поиск по названию'
-							className="w-[280px] pl-9 pr-4 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+						<Input
+							leftIcon={<Search size={16} />}
 							value={searchQuery}
+							className='bg-white w-64'
+							placeholder='Поиск по названию'
 							onChange={(e) => setSearchQuery(e.target.value)}
 						/>
-						<svg
-							className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-							fill='none'
-							viewBox='0 0 24 24'
-							stroke='currentColor'
-						>
-							<circle cx='11' cy='11' r='8'></circle>
-							<path d='m21 21-4.35-4.35'></path>
-						</svg>
 					</div>
 				</div>
 
@@ -517,7 +510,7 @@ export default function TransactionCategoriesPage() {
 						</div>
 
 						{/* Right Column - 1 big card */}
-						<div className="flex-1">
+						<div className="flex-1 pb-10">
 							{/* Баланс */}
 							<div className="bg-white rounded-lg border border-primary p-4 h-full">
 								<h3 className="text-lg font-bold text-slate-900 mb-3 pb-3 border-b border-gray-200">Баланс</h3>
@@ -635,7 +628,7 @@ export default function TransactionCategoriesPage() {
 
 						</div>
 
-					</div> 
+					</div>
 				</div>
 			</div>
 

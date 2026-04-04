@@ -60,12 +60,12 @@ const SinglSelectStatiya = ({ selectedValue, setSelectedValue, placeholder = 'В
     },
     querySetting: {
       select: (res) => res?.data?.data?.data,
-      staleTime: 1000 * 60 * 30, // 30 minutes
+      staleTime: 1000 * 60 * 60, // 1 hour
       placeholder: keepPreviousData
     }
   })
 
-  const result = useMemo(() => {
+  const result = useMemo(() => { 
     return mapTree(chartOfAccountsData, type, hiddenValue)
   }, [chartOfAccountsData, type, hiddenValue])
 
