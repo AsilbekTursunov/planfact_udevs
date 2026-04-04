@@ -39,10 +39,10 @@ const ProfitAndLossPage = observer(() => {
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [isFilterOpen, setIsFilterOpen] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [modalConfig, setModalConfig] = useState({ 
-    filterData: null, 
-    summaryData: null, 
-    title: '' 
+  const [modalConfig, setModalConfig] = useState({
+    filterData: null,
+    summaryData: null,
+    title: ''
   })
 
   const { reportData, isLoading, isFetching } = pnlStore
@@ -94,10 +94,14 @@ const ProfitAndLossPage = observer(() => {
 
     return (
       <React.Fragment key={item.id}>
-        <tr className={`border-b border-neutral-200 transition-colors ${item.level === 0 || isResultRow || isTotalRow ? 'bg-neutral-50 font-semibold' : 'hover:bg-neutral-50'}`}>
-          <td className="px-4 py-2" style={{ paddingLeft: `${indent + 16}px` }}>
+        <tr className={`border-b box-content border-neutral-200 transition-colors ${item.level === 0 || isResultRow || isTotalRow ? 'bg-neutral-50 font-semibold' : 'hover:bg-neutral-50'}`}>
+          {/* Name cell — sticky left */}
+          <td
+            className={`sticky left-0 z-10 p-0! box-border transition-shadow duration-300 ${item.level === 0 || isResultRow || isTotalRow ? 'bg-neutral-50' : 'bg-white'} hover:bg-neutral-100 transition-colors`}
+            style={{ paddingLeft: `${indent}px` }}
+          >
             <div
-              className={`flex text-sm font-medium items-center gap-2 ${hasChildren ? 'cursor-pointer' : 'cursor-default'}`}
+              className={`flex items-center w-full border-r px-4 py-2 text-xss! gap-2 ${hasChildren ? 'cursor-pointer' : 'cursor-default'}`}
               onClick={() => hasChildren && toggleRow(item.id)}
             >
               {hasChildren && (
@@ -105,31 +109,33 @@ const ProfitAndLossPage = observer(() => {
                   {isExpanded ? <ExpendClose /> : <ExpendOpen />}
                 </button>
               )}
-              <span className={item.level === 0 || isResultRow || isTotalRow ? "font-semibold" : "text-sm"}>
+              <span className={item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : 'text-sm'}>
                 {item.name}
               </span>
             </div>
           </td>
+          {/* Period value cells */}
           {legend.map(period => {
             const value = item.values?.[period.key] || 0
             const displayValue = value === 0 ? '' : isPercentRow ? `${value.toFixed(1)}%` : value.toLocaleString('ru-RU')
             return (
-              <td key={period.key} className="px-4 py-2 text-xs text-center border-r">
+              <td key={period.key} className="px-2 text-xs text-end border-r min-w-[150px] max-w-[150px]">
                 <span
-                  className={`${item.level === 0 || isResultRow || isTotalRow ? "font-medium" : "text-xs"} cursor-pointer hover:underline hover:text-primary transition-colors`}
+                  className={`cursor-pointer ${item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : ''} hover:text-primary transition-colors`}
                   onClick={() => handleCellClick(item, { key: period.key, label: period.title })}
                 >
-                  {displayValue}
+                  <span className='line-clamp-1 text-end w-full cursor-pointer'>{displayValue}</span>
                 </span>
               </td>
             )
           })}
-          <td className="px-4 py-2 text-right text-sm">
+          {/* Total cell */}
+          <td className="px-2 text-right border-l min-w-[150px] max-w-[150px]">
             <span
-              className={`${item.level === 0 || isResultRow || isTotalRow ? "font-semibold" : "text-xs"} cursor-pointer hover:underline hover:text-primary transition-colors`}
+              className={`text-xs line-clamp-1 ${item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : 'text-xs'} cursor-pointer hover:underline hover:text-primary transition-colors`}
               onClick={() => handleCellClick(item, null)}
             >
-              {item.totalValue === 0 ? '–' : isPercentRow ? `${item.totalValue?.toFixed(1)}` : item.totalValue?.toLocaleString('ru-RU')}
+              {item.totalValue === 0 ? '' : isPercentRow ? `${item.totalValue?.toFixed(1)}` : item.totalValue?.toLocaleString('ru-RU')}
             </span>
           </td>
         </tr>
@@ -201,25 +207,26 @@ const ProfitAndLossPage = observer(() => {
 
       {/* Main Content */}
       <div className={"w-full relative bg-white overflow-auto pb-10"}>
-        <div className="flex px-4 h-16 items-center sticky top-0 z-20 bg-white justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex h-16 items-center justify-between p-4 sticky top-0 z-50 bg-white">
+          <div className="flex items-center gap-4" >
             <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о прибылях и убытках (P&L)</h1>
-            {currencies && (
-              <SingleSelect
-                data={currencies}
-                value={pnlStore.selectedCurrency || GlobalCurrency.code}
-                onChange={(value) => {
-                  pnlStore.setSelectedCurrency(value)
-                  pnlStore.fetchReport()
-                }}
-                isClearable={false}
-                withSearch={false}
-                className={'bg-white w-28'}
-                dropdownClassName={'w-28'}
-              />
-            )}
+            {
+              currencies && (
+                <SingleSelect
+                  data={currencies}
+                  value={pnlStore.selectedCurrency || GlobalCurrency.code}
+                  onChange={(value) => {
+                    pnlStore.setSelectedCurrency(value)
+                    pnlStore.fetchReport()
+                  }}
+                  isClearable={false}
+                  withSearch={false}
+                  className={'bg-white w-28'}
+                  dropdownClassName={'w-28'}
+                />
+              )
+            }
           </div>
-
           <div className="flex items-center gap-3">
             <GroupedSelect
               data={groupingOptions}
@@ -251,35 +258,43 @@ const ProfitAndLossPage = observer(() => {
             </button>
           </div>
         </div>
-
-        {/* Table with loading overlay */}
-        <div className='px-4 mt-2'>
-
-          {!reportData && !loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ marginBottom: '16px', opacity: 0.3 }}>
-                <path d="M8 16C8 11.5817 11.5817 8 16 8H48C52.4183 8 56 11.5817 56 16V48C56 52.4183 52.4183 56 48 56H16C11.5817 56 8 52.4183 8 48V16Z" stroke="currentColor" strokeWidth="2" />
-                <path d="M16 24H48M16 32H48M16 40H32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <p style={{ fontSize: '16px', color: '#667085', marginBottom: '8px' }}>Выберите период для отображения отчета</p>
-              <p style={{ fontSize: '14px', color: '#98A2B3' }}>Используйте фильтры слева для настройки параметров отчета</p>
-            </div>
-          ) : (
-              <table className="w-full">
-                <thead className={"bg-neutral-100 z-10 sticky top-16"}>
+        <div className='px-4 mt-2 overflow-hidden'>
+          <div div className='overflow-x-auto' >
+            {!reportData && !loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ marginBottom: '16px', opacity: 0.3 }}>
+                  <path d="M8 16C8 11.5817 11.5817 8 16 8H48C52.4183 8 56 11.5817 56 16V48C56 52.4183 52.4183 56 48 56H16C11.5817 56 8 52.4183 8 48V16Z" stroke="currentColor" strokeWidth="2" />
+                  <path d="M16 24H48M16 32H48M16 40H32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <p style={{ fontSize: '16px', color: '#667085', marginBottom: '8px' }}>Выберите период для отображения отчета</p>
+                <p style={{ fontSize: '14px', color: '#98A2B3' }}>Используйте фильтры слева для настройки параметров отчета</p>
+              </div>
+            ) : (
+                <table className="w-full border-collapse">
+                  <thead className={"bg-neutral-100  "}>
                   <tr>
-                    <th className="text-left px-4 py-2 text-xs font-medium" style={{ minWidth: 320 }}>Статья</th>
+                      <th
+                        className="text-left text-xs font-medium sticky left-0 z-40 bg-neutral-100"
+                        style={{ minWidth: 420 }}
+                      >
+                        <p className='px-4 w-full border-r py-2'>Статья</p>
+                      </th>
                     {legend.map(period => (
-                      <th key={period.key} className="text-center border-r border-neutral-300 px-4 py-2 text-xs font-medium" style={{ width: 110 }}>{period.title}</th>
+                      <th key={period.key} className="text-right bg-neutral-100 border-none text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] text-xs text-xss! font-medium">
+                        <span className='line-clamp-1 border-l px-4 py-2'>{period.title}</span>
+                      </th>
                     ))}
-                    <th className="text-center px-4 py-2 text-xs font-medium" style={{ width: 110 }}>Итого</th>
+                      <th className="text-right bg-neutral-100 text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] shrink-0 border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium">
+                        Итого
+                      </th>
                   </tr>
                 </thead>
-              <tbody>
-                {rows?.map(row => renderRow(row))}
-              </tbody>
-            </table>
-          )}
+                <tbody>
+                  {rows?.map(row => renderRow(row))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       </div>
       <OperationCashFlowModal
@@ -294,3 +309,12 @@ const ProfitAndLossPage = observer(() => {
 })
 
 export default ProfitAndLossPage
+
+// < div className = "flex px-4 h-16 items-center sticky top-0 z-20 bg-white justify-between" >
+
+
+
+//       </ >
+
+// {/* Table with loading overlay */ }
+

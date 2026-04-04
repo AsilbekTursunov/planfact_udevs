@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
       >
         <QueryClientProvider client={queryClient}>
           <AppProvider>
-            <div className="flex max-h-screen overflow-hidden max-w-dvw">
+            <div className="flex max-h-full overflow-hidden max-w-full">
               {!isLoginPage && <Sidebar />}
               <div className="flex flex-col flex-1 max-h-screen overflow-hidden">
                 {!isLoginPage && <Header />}

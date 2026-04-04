@@ -300,51 +300,51 @@ export default observer(function CashFlowReportPage() {
 
       {loading && <ScreenLoader />}
 
-      <div className={"w-full relative bg-white overflow-auto pb-10"}>
-        <div className="flex px-4 h-16 items-center sticky top-0 z-20 bg-white justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
-            <SingleSelect
-              data={currencies}
-              value={cashFlowStore.filters.currencyCode}
-              onChange={(value) => {
-                cashFlowStore.setCurrencyCode(value)
-                cashFlowStore.fetchReport()
-              }}
-              isClearable={false}
-              withSearch={false}
-              className={'bg-white w-28'}
-              dropdownClassName={'w-28'}
-            />
+      <div className={"w-full bg-white overflow-hidden"}>
+        <div className=" h-full">
+          <div className="flex  h-16 items-center sticky z-50 top-0 bg-white justify-between shrink-0">
+            <div className="flex items-center gap-4">
+              <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
+              <SingleSelect
+                data={currencies}
+                value={cashFlowStore.filters.currencyCode}
+                onChange={(value) => {
+                  cashFlowStore.setCurrencyCode(value)
+                  cashFlowStore.fetchReport()
+                }}
+                isClearable={false}
+                withSearch={false}
+                className={'bg-white w-28'}
+                dropdownClassName={'w-28'}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <SingleSelect
+                data={groupingOptions}
+                value={cashFlowStore.filters.periodType}
+                onChange={(value) => {
+                  cashFlowStore.setPeriodType(value)
+                  cashFlowStore.fetchReport()
+                }}
+                placeholder="Способ построения"
+                withSearch={false}
+                isClearable={false}
+                className="bg-white w-44"
+                dropdownClassName="bg-white"
+              />
+              <button className="flex items-center justify-center p-2 rounded-md hover:bg-neutral-100 text-neutral-600 transition-colors">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="3" r="1" fill="currentColor" />
+                  <circle cx="8" cy="8" r="1" fill="currentColor" />
+                  <circle cx="8" cy="13" r="1" fill="currentColor" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <SingleSelect
-              data={groupingOptions}
-              value={cashFlowStore.filters.periodType}
-              onChange={(value) => {
-                cashFlowStore.setPeriodType(value)
-                cashFlowStore.fetchReport()
-              }}
-              placeholder="Способ построения"
-              withSearch={false}
-              isClearable={false}
-              className="bg-white w-44"
-              dropdownClassName="bg-white"
-            />
-            <button className="flex items-center justify-center p-2 rounded-md hover:bg-neutral-100 text-neutral-600 transition-colors">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="3" r="1" fill="currentColor" />
-                <circle cx="8" cy="8" r="1" fill="currentColor" />
-                <circle cx="8" cy="13" r="1" fill="currentColor" />
-              </svg>
-            </button>
-          </div>
-        </div>
 
-        <div className='px-4 mt-2 overflow-hidden'>
-          <div ref={tableContainerRef} id="report-table-container" className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className={"bg-neutral-100 z-30 sticky top-0"}>
+          <div className='mt-2 overflow-auto'>
+            <table className="w-full overflow-auto">
+              <thead className="sticky top-16 z-40 bg-neutral-100">
                 <tr>
                   <th
                     className={cn(

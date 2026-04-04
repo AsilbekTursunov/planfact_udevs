@@ -236,7 +236,7 @@ export default function LoginPage() {
         }).catch((error) => {
           // Handle specific "already exists" error
           if (error.message && (
-            error.message.includes('already exists') || 
+            error.message.includes('already exists') ||
             error.message.includes('уже существует') ||
             error.message.includes('already registered') ||
             error.message.includes('уже зарегистрирован')
@@ -293,12 +293,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className={styles.loginPage}>
-      <div className={styles.logoContainer}>
+    <div className="fixed flex flex-col w-full h-full bg-linear-to-br from-[#456fad] to-[#022565]  items-center justify-center ">
+      <div className="absolute top-10 left-10">
         <AuthLogo color="#ffffff" width="114" height="27" />
       </div>
       {/* Login Card */}
-      <div className={styles.cardWrapper}>
+      <div className=" rounded-md p-6">
         <div className={styles.card}>
 
           {/* Logo/Title */}
@@ -326,11 +326,10 @@ export default function LoginPage() {
                       }}
                       onFocus={() => setFocusedField('branchName')}
                       onBlur={() => setFocusedField(null)}
-                      className={cn(
-                        styles.inputField,
-                        focusedField === 'branchName' && styles.focused,
-                        fieldErrors.branchName && styles.error
+                      className={cn('h-10! p-4!',
+                        focusedField === 'branchName' && 'focus:border-primary',
                       )}
+                      hasError={fieldErrors.branchName}
                       placeholder="Название организации"
                     />
                   </div>
@@ -351,11 +350,10 @@ export default function LoginPage() {
                       }}
                       onFocus={() => setFocusedField('name')}
                       onBlur={() => setFocusedField(null)}
-                      className={cn(
-                        styles.inputField,
-                        focusedField === 'name' && styles.focused,
-                        fieldErrors.name && styles.error
+                      className={cn('h-10! p-4!',
+                        focusedField === 'name' && 'focus:border-primary',
                       )}
+                      hasError={fieldErrors.name}
                       placeholder="ФИО пользователя"
                     />
                   </div>
@@ -376,11 +374,10 @@ export default function LoginPage() {
                       }}
                       onFocus={() => setFocusedField('email')}
                       onBlur={() => setFocusedField(null)}
-                      className={cn(
-                        styles.inputField,
-                        focusedField === 'email' && styles.focused,
-                        fieldErrors.email && styles.error
+                      className={cn('h-10! p-4!',
+                        focusedField === 'email' && 'focus:border-primary',
                       )}
+                      hasError={fieldErrors.email}
                       placeholder="Email"
                     />
                   </div>
@@ -399,11 +396,10 @@ export default function LoginPage() {
                       onChange={handlePhoneChange}
                       onFocus={() => setFocusedField('phone')}
                       onBlur={() => setFocusedField(null)}
-                      className={cn(
-                        styles.inputField,
-                        focusedField === 'phone' && styles.focused,
-                        fieldErrors.phone && styles.error
+                      className={cn('h-10! p-4!',
+                        focusedField === 'phone' && 'focus:border-primary',
                       )}
+                      hasError={fieldErrors.phone}
                       placeholder="+998 XX XXX XX XX"
                     />
                   </div>
@@ -427,11 +423,10 @@ export default function LoginPage() {
                     }}
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
-                    className={cn(
-                      styles.inputField,
-                      focusedField === 'email' && styles.focused,
-                      fieldErrors.email && styles.error
+                    className={cn('h-10! p-4!',
+                      focusedField === 'email' && 'focus:border-primary',
                     )}
+                    hasError={fieldErrors.email}
                     placeholder="Email"
                   />
                 </div>
@@ -450,12 +445,10 @@ export default function LoginPage() {
                   onChange={(e) => handlePasswordChange(e, 'password')}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
-                  className={cn(
-                    styles.inputField,
-                    styles.passwordField,
-                    focusedField === 'password' && styles.focused,
-                    fieldErrors.password && styles.error
+                  className={cn('h-10! p-4!',
+                    focusedField === 'password' && 'focus:border-primary',
                   )}
+                  hasError={fieldErrors.password}
                   placeholder={fromType === 'register' ? "Создать пароль" : "Пароль"}
                 />
                 <button
@@ -546,12 +539,10 @@ export default function LoginPage() {
                     onChange={(e) => handlePasswordChange(e, 'confirmPassword')}
                     onFocus={() => setFocusedField('confirmPassword')}
                     onBlur={() => setFocusedField(null)}
-                    className={cn(
-                      styles.inputField,
-                      styles.passwordField,
-                      focusedField === 'confirmPassword' && styles.focused,
-                      fieldErrors.confirmPassword && styles.error
+                    className={cn('h-10! p-4!',
+                      focusedField === 'confirmPassword' && 'focus:border-primary',
                     )}
+                    hasError={fieldErrors.confirmPassword}
                     placeholder="Подтвердить пароль"
                   />
                   <button
