@@ -282,12 +282,12 @@ export default observer(function CashFlowReportPage() {
     // const periodLabel = formatPeriod(dateRange.start, dateRange.end)
     const isTransfer = ['Зачисления', 'Списания', 'Перемещения'].includes(row.name)
 
-    // setModalConfig({
-    //   filterData: requestData,
-    //   title: row.name,
-    //   isTransfer
-    // })
-    // setIsModalOpen(true)
+    setModalConfig({
+      filterData: requestData,
+      title: row.name,
+      isTransfer
+    })
+    setIsModalOpen(true)
 
   }
 
