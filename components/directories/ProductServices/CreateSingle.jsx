@@ -5,7 +5,6 @@ import { useMemo, useEffect } from 'react'
 import SegmentedControl from '../../shared/SegmentedControl'
 import Input from '../../shared/Input'
 import TextArea from '../../shared/TextArea'
-import Select from '../../common/Select'
 import { useUcodeDefaultApiQuery, useUcodeRequestMutation, useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import { queryClient } from '../../../lib/queryClient'
 import Loader from '../../shared/Loader'
@@ -94,7 +93,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
       viewMode: 'product',
       name: '',
       article: '',
-      unit: apiOptions?.[0] || null,
+      unit: apiOptions?.[0].value || null,
       group: null,
       price: '',
       currency: myCurrencies?.[0]?.value || '',
@@ -119,7 +118,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
     const payload = {
       Naimenovanie: data.name,
       TSena_za_ed: formatDecimal(StringtoNumber(data.price)),
-      unit_of_measurement_id: data.unit?.value,
+      unit_of_measurement_id: data.unit,
       NDS: parseInt((data.vat || '').toString().replace('%', '')) || 0,
       product_and_service_group_id: data.group,
       Tip: data.viewMode,

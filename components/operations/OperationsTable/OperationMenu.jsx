@@ -3,28 +3,26 @@
 import { useState, useEffect } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './OperationsTable.module.scss'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { Button } from '@/components/ui/button'
-import { EllipseIcon, EllipsisVertical } from 'lucide-react'
+import { EllipsisVertical } from 'lucide-react'
 
 export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
   const [isOpen, setIsOpen] = useState(false)
 
   // Close popover when user starts scrolling
-  useEffect(() => {
-    if (!isOpen) return
+  // useEffect(() => {
+  //   if (!isOpen) return
 
-    const handleScroll = () => {
-      setIsOpen(false)
-    }
+  //   const handleScroll = () => {
+  //     setIsOpen(false)
+  //   }
 
-    // Using capture: true to catch scrolling events on all elements before they bubble
-    window.addEventListener('scroll', handleScroll, { capture: true, passive: true })
+  //   // Using capture: true to catch scrolling events on all elements before they bubble
+  //   window.addEventListener('scroll', handleScroll, { capture: true, passive: true })
 
-    return () => {
-      window.removeEventListener('scroll', handleScroll, { capture: true })
-    }
-  }, [isOpen])
+  //   return () => {
+  //     window.removeEventListener('scroll', handleScroll, { capture: true })
+  //   }
+  // }, [isOpen])
 
   const handleEdit = (e) => {
     e.stopPropagation()
@@ -45,17 +43,11 @@ export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
   }
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger
-        type="button"
-        onClick={(e) => e.stopPropagation()}
-        asChild
-      >
-        <Button className="bg-transparent border-none shadow-none cursor-pointer w-5">
-          <EllipsisVertical className='text-neutral-600' />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-[180px] p-1 flex shadow-md flex-col bg-white">
+    <div className='relative flex justify-center px-2'>
+      <div className="bg-transparent  shadow-none cursor-pointer w-full h-full flex items-center justify-center">
+        <EllipsisVertical className='text-neutral-600' />
+      </div>
+      <div align="end" className={cn("w-[180px] z-50 absolute ring-1 ring-gray-200 top-[80%] rounded-md right-[80%] p-1  shadow-md flex-col bg-white hidden group-hover:flex")}>
         <button
           className={cn(styles.menuItem, "w-full text-left")}
           onClick={handleEdit}
@@ -85,7 +77,7 @@ export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
           </svg>
           <span>Удалить</span>
         </button>
-      </PopoverContent>
-    </Popover>
+      </div>
+    </div>
   )
 }

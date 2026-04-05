@@ -225,7 +225,7 @@ const OperationTableRow = observer(({
           />
         </td>
         <td
-          className={cn(styles.tableCell, styles.tableCellActions)}
+          className={cn("group")}
           onClick={e => e.stopPropagation()}
         >
           <OperationMenu

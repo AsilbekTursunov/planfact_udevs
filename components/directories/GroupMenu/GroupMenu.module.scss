@@ -1,83 +1,27 @@
-.menuContainer {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.menuButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: #f3f4f6;
-    color: #334155;
-  }
-
-  &:active {
-    background: #e5e7eb;
-  }
-}
-
-.menuIcon {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.menuDropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.25rem;
-  min-width: 12rem;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-  z-index: 99999;
-  overflow: hidden;
-}
-
 .menuItem {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   width: 100%;
   padding: 0.625rem 1rem;
-  background: transparent;
+  font-size: 13px;
+  color: #334155;
+  background: none;
   border: none;
   text-align: left;
-  font-size: 0.875rem;
-  color: #334155;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.2s;
 
   &:hover {
-    background: #f9fafb;
+    background-color: #f9fafb;
   }
 
-  &:active {
-    background: #f3f4f6;
-  }
+  &.menuItemDanger {
+    color: #ef4444;
 
-  &:first-child {
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
-  }
-
-  &:last-child {
-    border-bottom-left-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
+    &:hover {
+      background-color: #fef2f2;
+    }
   }
 }
 
@@ -85,21 +29,4 @@
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  color: #6b7280;
-}
-
-.menuItemDanger {
-  color: #dc2626;
-
-  &:hover {
-    background: #fef2f2;
-  }
-
-  &:active {
-    background: #fee2e2;
-  }
-
-  .menuItemIcon {
-    color: #dc2626;
-  }
 }

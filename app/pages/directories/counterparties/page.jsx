@@ -43,6 +43,7 @@ import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import { formatAmount } from '../../../../utils/helpers'
 import { ChevronDown } from 'lucide-react'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
+import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
 
 const CounterpartiesPage = observer(() => {
 
@@ -541,75 +542,70 @@ const CounterpartiesPage = observer(() => {
       </FilterSidebar>
       {isFetching && !isLoadingCounterparties && <ScreenLoader className={'left-[250px]'} />}
 
-      <div ref={contentRef} className={`p-4 pb-40 w-full h-dvh overflow-y-auto flex-1 bg-white `}>
-        {/* Header */}
-        <div className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.titleRow}>
-              <div className='flex gap-5 flex-1'>
-                <h1 className={styles.title}>Контрагенты</h1>
-                <button
-                  className={styles.createButton}
-                  onClick={() => setIsCreateModalOpen(true)}
-                >
-                  Создать
-                </button>
-              </div>
-              <div className={styles.headerSearchContainer}>
-                {/* new filter */}
-                <div style={{ width: '250px' }}>
-                  <Select
-                    instanceId="counterparties-calculation-method"
-                    options={calculationOptions}
-                    value={calculationOptions.find(opt => opt.value === filters.calculationMethod) || null}
-                    onChange={(selected) => setFilters(prev => ({
-                      ...prev,
-                      calculationMethod: selected ? (prev.calculationMethod === selected.value ? "" : selected.value) : ""
-                    }))}
-                    placeholder="Выбирать"
-                    isSearchable={false}
-                    isClearable={true}
-                  />
-                </div>
-                <div className={styles.filterBox}>
-                  <button
-                    className={cn(styles.filterIcon, viewMode === 'list' && styles.active)}
-                    onClick={() => setViewMode('list')}
-                    title="Список"
-                  >
-                    <BsList size={18} />
-                  </button>
-                  <button
-                    className={cn(styles.filterIcon, viewMode === 'nested' && styles.active)}
-                    onClick={() => setViewMode('nested')}
-                    title="Вложенный вид"
-                  >
-                    <LuListTree size={18} />
-                  </button>
-                </div>
-                <div className={styles.searchContainer}>
-                  <SearchBar
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    placeholder={
-                      viewMode === 'list'
-                        ? "Поиск контрагентов"
-                        : viewMode === 'nested'
-                          ? "Поиск по группам"
-                          : "Поиск групп"
-                    }
-                  />
-                </div>
-              </div>
+      <div className={` px-3 pb-40 w-full h-full overflow-auto flex-1 bg-white `}>
+        <div className="sticky top-0 z-10 bg-white flex items-center justify-center h-16">
+          <div className='flex gap-5 flex-1'>
+            <h1 className="text-xl font-semibold">Контрагенты</h1>
+            <button
+              className="primary-btn"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Создать
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* new filter */}
+            <div className='w-[250px]'>
+              <SingleSelect
+                data={calculationOptions}
+                value={filters.calculationMethod}
+                onChange={(selected) => setFilters(prev => ({
+                  ...prev,
+                  calculationMethod: selected
+                }))}
+                className={'bg-white'}
+                placeholder="Выбирать"
+                withSearch={false}
+                isClearable={false}
+              />
+            </div>
+            <div className="flex items-center">
+              <button
+                className={cn("border-l border-t border-b border-neutral-200 cursor-pointer rounded-l-md py-2 px-2", viewMode === 'list' && 'border-primary border-r')}
+                onClick={() => setViewMode('list')}
+                title="Список"
+              >
+                <BsList size={18} strokeWidth={.5} />
+              </button>
+              <button
+                className={cn(" border-neutral-200 border-r border-t border-b cursor-pointer rounded-r-md py-2 px-2", viewMode === 'nested' && 'border-primary border-l')}
+                onClick={() => setViewMode('nested')}
+                title="Вложенный вид"
+              >
+                <LuListTree size={18} />
+              </button>
+            </div>
+            <div className={styles.searchContainer}>
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder={
+                  viewMode === 'list'
+                    ? "Поиск контрагентов"
+                    : viewMode === 'nested'
+                      ? "Поиск по группам"
+                      : "Поиск групп"
+                }
+              />
             </div>
           </div>
         </div>
 
         {/* Table Container */}
-        <div ref={tableWrapperRef} className="flex-1 w-full overflow-auto relative px-3">
+        <div ref={tableWrapperRef} className="flex-1  w-full relative">
           <table className="w-full relative text-xs text-left">
-            <thead className="sticky top-0 bg-neutral-100/95 shadow-[0_1px_2px_rgba(0,0,0,0.05)] z-10 text-neutral-500 font-medium">
-              <tr>
+            <thead className="sticky top-16 bg-neutral-100/95 z-10 text-neutral-500 font-medium">
+              <tr className='border-b'>
                 <th className="p-2 border-b border-neutral-200 w-10">
                   <OperationCheckbox checked={allSelected()} onChange={toggleSelectAll} />
                 </th>
@@ -642,7 +638,7 @@ const CounterpartiesPage = observer(() => {
                     <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Прибыль, {GlobalCurrency.name}</th>
                   </>
                 )}
-                <th className="p-2 border-b border-neutral-200 w-2"></th>
+                <th className="  border-neutral-200 "></th>
               </tr>
             </thead>
             <tbody>
@@ -668,7 +664,7 @@ const CounterpartiesPage = observer(() => {
                       const styleProfit = item.profit > 0 ? 'text-emerald-500 font-medium' : item.profit < 0 ? 'text-red-500 font-medium' : 'text-neutral-900 font-medium'
                       return (
                         <React.Fragment key={item.id}>
-                          <tr className="hover:bg-neutral-50 border-b border-neutral-100 group cursor-pointer bg-white" onClick={() => toggleGroup(item.guid)}>
+                          <tr className="hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white" onClick={() => toggleGroup(item.guid)}>
                             <td className="p-2" onClick={(e) => e.stopPropagation()}>
                               <OperationCheckbox checked={isRowSelected(item.id)} onChange={(e) => toggleRowSelection(item.id)} />
                             </td>
@@ -694,7 +690,7 @@ const CounterpartiesPage = observer(() => {
                                 ? (item.difference === 0 ? '0' : item.difference.toLocaleString('ru-RU'))
                                 : (item.profit === 0 ? '0' : item.profit.toLocaleString('ru-RU'))}
                             </td>
-                            <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                            <td className="p-2 group" onClick={(e) => e.stopPropagation()}>
                               <GroupMenu
                                 group={item}
                                 onEdit={(group) => setEditingGroup(group)}
@@ -718,7 +714,7 @@ const CounterpartiesPage = observer(() => {
                               <tr
                                 key={counterparty.id}
                                 className={cn(
-                                  "hover:bg-neutral-50 border-b border-neutral-100 group cursor-pointer bg-white",
+                                  "hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white",
                                   isRowSelected(counterparty.id) && "bg-blue-50/50"
                                 )}
                                 onClick={() => router.push(`/pages/directories/counterparties/${counterparty.guid}`)}
@@ -746,7 +742,7 @@ const CounterpartiesPage = observer(() => {
                                     ? (counterparty.difference === 0 ? '0' : counterparty.difference.toLocaleString('ru-RU'))
                                     : (counterparty.profit === 0 ? '0' : counterparty.profit.toLocaleString('ru-RU'))}
                                 </td>
-                                <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                                <td className="p-2 group" onClick={(e) => e.stopPropagation()}>
                                   <CounterpartyMenu
                                     counterparty={counterparty}
                                     onEdit={(cp) => setEditingCounterparty(cp)}
@@ -765,7 +761,7 @@ const CounterpartiesPage = observer(() => {
                         <tr
                           key={item.id}
                           className={cn(
-                            "hover:bg-neutral-50 border-b border-neutral-100 group cursor-pointer bg-white",
+                            "hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white",
                             isRowSelected(item.id) && "bg-blue-50/50"
                           )}
                           onClick={() => router.push(`/pages/directories/counterparties/${item.guid}`)}
@@ -794,7 +790,7 @@ const CounterpartiesPage = observer(() => {
                               ? (item.difference === 0 ? '0' : item.difference.toLocaleString('ru-RU'))
                               : (item.profit === 0 ? '0' : item.profit.toLocaleString('ru-RU'))}
                           </td>
-                          <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                          <td className="p-2 group" onClick={(e) => e.stopPropagation()}>
                             <CounterpartyMenu
                               counterparty={item}
                               onEdit={(cp) => setEditingCounterparty(cp)}
@@ -806,6 +802,7 @@ const CounterpartiesPage = observer(() => {
                     }
                   })
               )}
+
             </tbody>
           </table>
         </div>
