@@ -99,7 +99,7 @@ const OperationCashFlowModal = observer(({
       </div>
 
       {/* Summary */}
-      <div className="flex flex-col bg-neutral-50 py-10 border-b px-6 gap-2">
+      <div className="flex flex-col bg-neutral-50 py-4 border-b px-6 gap-2">
         <div className="flex text-sm items-center gap-10">
           <span className=" font-medium">Период отчета</span>
           {operationsPeriod && <span className="">{operationsPeriod}</span>}
@@ -114,7 +114,7 @@ const OperationCashFlowModal = observer(({
       </div>
 
       {/* Table */}
-      <div className="overflow-auto h-[500px]" ref={tableRef}>
+      <div className="overflow-auto h-[400px]" ref={tableRef}>
         {isLoading ? (
           <div className='w-full h-full flex items-center justify-center'>
             <Loader2 className='animate-spin text-primary' size={30} />

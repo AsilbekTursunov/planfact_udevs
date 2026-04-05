@@ -2,6 +2,7 @@ import { ChevronDown, Check, Search, X } from 'lucide-react'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
+import { getZoomAwareRect } from '@/utils/getZoomAwareRect'
 
 const CustomMultipleSelect = ({
     data = [],
@@ -25,7 +26,7 @@ const CustomMultipleSelect = ({
     useEffect(() => {
         if (open && buttonRef.current) {
             const updatePosition = () => {
-                const rect = buttonRef.current.getBoundingClientRect()
+                const rect = getZoomAwareRect(buttonRef.current)
                 const scrollY = window.scrollY
                 setPortalPosition({
                     top: openUpwards ? rect.top + scrollY : rect.bottom + scrollY,
@@ -103,7 +104,7 @@ const CustomMultipleSelect = ({
                 )}
                 onClick={() => {
                     if (!open && buttonRef.current) {
-                        const rect = buttonRef.current.getBoundingClientRect()
+                        const rect = getZoomAwareRect(buttonRef.current)
                         const spaceBelow = window.innerHeight - rect.bottom
                         const spaceAbove = rect.top
                         setOpenUpwards(spaceBelow < 256 && spaceAbove > spaceBelow)

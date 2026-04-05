@@ -2,6 +2,7 @@ import { ChevronUp, Check, Search, X } from 'lucide-react'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
+import { getZoomAwareRect } from '@/utils/getZoomAwareRect'
 
 const SingleSelect = ({
   data = [],
@@ -27,7 +28,7 @@ const SingleSelect = ({
   useEffect(() => {
     if (open && buttonRef.current) {
       const updatePosition = () => {
-        const rect = buttonRef.current.getBoundingClientRect()
+        const rect = getZoomAwareRect(buttonRef.current)
         setPortalPosition({
           top: openUpwards ? rect.top : rect.bottom,
           left: rect.left,
@@ -94,7 +95,7 @@ const SingleSelect = ({
         onClick={() => {
           if (disabled) return;
           if (!open && buttonRef.current) {
-            const rect = buttonRef.current.getBoundingClientRect()
+            const rect = getZoomAwareRect(buttonRef.current)
             const spaceBelow = window.innerHeight - rect.bottom
             const spaceAbove = rect.top
             setOpenUpwards(spaceBelow < 256 && spaceAbove > spaceBelow)

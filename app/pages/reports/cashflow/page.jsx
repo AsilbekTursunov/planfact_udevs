@@ -123,6 +123,9 @@ const nameMap = {
   "Списания": ["Списание", "Перемещение"],
   "Зачисления": ["Зачисление", "Перемещение"],
   "Перемещения": ["Списание", "Зачисление", "Перемещение"],
+  "Операционный поток": ["Поступление", "Выплата"],
+  "Инвестиционный поток": ["Поступление", "Выплата"],
+  "Финансовый поток": ["Поступление", "Выплата"],
 }
 
 
@@ -223,7 +226,7 @@ export default observer(function CashFlowReportPage() {
       requestData.paymentDateStart = filters.periodStartDate
       requestData.paymentDateEnd = filters.periodEndDate
     }
-    requestData.tip = nameMap[row.name]
+    requestData.tip = nameMap[row.name] || nameMap[row.section]
     console.log('row', row)
     console.log('monthObj', monthObj)
 
@@ -233,8 +236,16 @@ export default observer(function CashFlowReportPage() {
       requestData.accrualConfirmed = true
       requestData.accrualNotConfirmed = true
     }
+    if ("Операционный поток" === row?.name ||
+      "Инвестиционный поток" === row?.name ||
+      "Финансовый поток" === row?.name) {
+      requestData.paymentConfirmed = true
+      requestData.paymentNotConfirmed = false
+    }
 
-    console.log('requestData', requestData)
+    if (row?.subRows) {
+      requestData.chartOfAccounts = row?.subRows?.map(item => item.id)
+    }
 
     // const filters = cashFlowStore.filters
     // let dateRange = { start: filters.periodStartDate, end: filters.periodEndDate }
@@ -271,12 +282,12 @@ export default observer(function CashFlowReportPage() {
     // const periodLabel = formatPeriod(dateRange.start, dateRange.end)
     const isTransfer = ['Зачисления', 'Списания', 'Перемещения'].includes(row.name)
 
-    setModalConfig({
-      filterData: requestData,
-      title: row.name,
-      isTransfer
-    })
-    setIsModalOpen(true)
+    // setModalConfig({
+    //   filterData: requestData,
+    //   title: row.name,
+    //   isTransfer
+    // })
+    // setIsModalOpen(true)
 
   }
 
@@ -363,7 +374,7 @@ export default observer(function CashFlowReportPage() {
                       onToggle={handleToggle}
                       onCellClick={handleCellClick}
                     />
-                  ))} 
+                  ))}
                 </tbody>
               </table>
             </div>

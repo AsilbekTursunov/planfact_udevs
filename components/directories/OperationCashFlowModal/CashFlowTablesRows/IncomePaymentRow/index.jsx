@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { cn } from '@/app/lib/utils' 
+import { cn } from '@/app/lib/utils'
 import PriceStatus from '@/components/operations/PriceStatus'
 import { ExpendClose, ExpendOpen, TypeIncomeIcon, TypeExpenseIcon, TypeTransferIcon, ShipmentIcon } from '@/constants/icons'
 import { observer } from 'mobx-react-lite'
@@ -42,11 +42,28 @@ const IncomePaymentTableRow = observer(({
 
   const isDifferentDate = op?.accrualDate !== op?.operationDate
 
+  const textPrimary = useMemo(() => {
+    switch (op.tip) {
+      case 'Поступление':
+        return !op.payment_confirmed && !op.payment_accrual && 'text-primary'
+      case 'Выплата':
+        return !op.payment_confirmed && !op.payment_accrual && 'text-primary'
+      case 'Начисление':
+        return !op.payment_accrual && 'text-primary'
+      case 'Отгрузка':
+        return !op.payment_shipment && 'text-primary'
+      case 'Перемещение':
+        return !op.payment_confirmed && 'text-primary'
+      default:
+        return ''
+    }
+  }, [op])
+
   return (
     <>
       <tr key={op.guid} className=" text-xs! border-b ">
         {/* date */}
-        <td className=" px-4 py-4">
+        <td className={`px-4 py-4 ${textPrimary}`}>
           <div>
             {op.operationParts?.length > 0 ? <>
               <div className={"flex items-center gap-2 cursor-pointer"} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
@@ -75,17 +92,17 @@ const IncomePaymentTableRow = observer(({
           ) : null}
         </td>
         {/* counterparty */}
-        <td className={"text-xs px-2"}>
+        <td className={`text-xs px-2 ${textPrimary}`}>
           {op?.tip === 'Перемещение' ? op?.my_account_name : <>
             <p>{titleContragent}</p></>}
         </td>
         {/* statya */}
-        <td className={"text-xs px-2"}>
+        <td className={`text-xs px-2 ${textPrimary}`}>
           {op?.tip == "Перемещение" && <p >
             {op?.my_account_name2}
           </p>}
           {(op.tip === "Поступление" || op.tip === "Выплата") && <div className={`flex flex-col items-start `}>
-            <span className={`text-neutral-700 ${!op.payment_confirmed && 'text-primary'}`}>{titleChartOfAccounts}</span>
+            <span className={`text-neutral-700 ${textPrimary}`}>{titleChartOfAccounts}</span>
             <span className='text-neutral-400'>{op.opisanie}</span>
           </div>}
         </td>
@@ -134,17 +151,10 @@ const IncomePaymentTableRow = observer(({
                 {part.counterparty || ''}
               </td>
               <td className={"text-xs px-2"}>
-                {part?.type == 'Перемещение' ? (
-                  <div className={`flex flex-col items-start`}>
-                    <span>[Перемещение - списание]</span>
-                    <span>[Перемещение - зачисление]</span>
-                  </div>
-                ) : (
-                  <div className={`flex flex-col items-start`}>
-                    <span className='text-neutral-700'>{part.chartOfAccounts || ''}</span>
-                    <span className='text-neutral-400'>{op.opisanie}</span>
-                  </div>
-                )}
+                <div className={`flex flex-col items-start`}>
+                  <span className='text-neutral-700'>{part.chartOfAccounts || ''}</span>
+                  <span className='text-neutral-400'>{op.opisanie}</span>
+                </div>
               </td>
               <td colSpan={3} className={""} onClick={e => e.stopPropagation()}>
                 <PriceStatus

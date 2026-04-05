@@ -374,6 +374,10 @@
   }
 }
 
+html{
+  zoom: 0.85 !important;
+}
+
 
 /* operations table row active color */
 
