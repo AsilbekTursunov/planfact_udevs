@@ -32,13 +32,6 @@ export default function LoginPage() {
   const phoneInputRef = useRef(null)
   const branchDropdownRef = useRef(null)
 
-  // Mock branches data
-  const mockBranches = [
-    { id: 1, name: 'Филиал №1', email: 'branch1@example.com' },
-    { id: 2, name: 'Филиал №2', email: 'branch2@example.com' },
-    { id: 3, name: 'Филиал №3', email: 'branch3@example.com' },
-  ]
-
   // Close branch dropdown when clicking outside
   React.useEffect(() => {
     function handleClickOutside(event) {

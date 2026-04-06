@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { observer } from 'mobx-react-lite'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, ChevronRight, MoreHorizontal, PenLine, Trash2 } from 'lucide-react'
 import { useUcodeRequestMutation } from '@/hooks/useDashboard'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
@@ -100,8 +100,8 @@ const KontragentDetailPage = observer(() => {
       operationDateStart: filters.operationDateStart,
       operationDateEnd: filters.operationDateEnd,
       calculationMethod: filters.calculationMethod,
-      legalEntityId: selectedLegalEntities,
-      chartOfAccountId: selectedChartOfAccounts,
+      legal_entity_ids: selectedLegalEntities,
+      chartOfAccountsIds: selectedChartOfAccounts,
       sellingDealId: filters.deals,
       page: 1
     }
@@ -113,7 +113,8 @@ const KontragentDetailPage = observer(() => {
     data: filterCounterParty,
     skip: !counterpartyGuid,
     querySetting: {
-      refetchOnWindowFocus: false
+      refetchOnWindowFocus: false,
+      placeholder: keepPreviousData
     }
   })
 
@@ -152,7 +153,7 @@ const KontragentDetailPage = observer(() => {
       receiptArticle: counterparty.chart_of_accounts_name || (counterparty.chart_of_accounts_id ? '-' : null),
       paymentArticle: counterparty.chart_of_accounts_name_2 || (counterparty.chart_of_accounts_id_2 ? '-' : null),
       comment: counterparty.komentariy || null,
-      type: counterparty.tip || 'Не указан', 
+      type: counterparty.tip || 'Не указан',
       income: counterparty.income || 0,
       expense: counterparty.expense || 0,
       difference: counterparty.difference || 0,
@@ -810,10 +811,10 @@ const KontragentDetailPage = observer(() => {
                       {operationsList?.today?.map((op, index) => (
                       <OperationTableRow
                         key={op.guid}
-                          op={op}
+                        op={op}
                         selectedOperations={selectedOperations}
                         openOperationModal={handleEditOperation}
-                          counterpartyGuid={counterpartyInfo?.guid}
+                        counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
                         handleDeleteOperation={handleDeleteOperation}
                         handleCopyOperation={handleCopyOperation}
@@ -830,10 +831,10 @@ const KontragentDetailPage = observer(() => {
                       {operationsList?.before?.map((op, index) => (
                       <OperationTableRow
                         key={op.guid}
-                          op={op}
+                        op={op}
                         selectedOperations={selectedOperations}
                         openOperationModal={handleEditOperation}
-                          counterpartyGuid={counterpartyInfo?.guid}
+                        counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
                         handleDeleteOperation={handleDeleteOperation}
                         handleCopyOperation={handleCopyOperation}

@@ -31,7 +31,7 @@ import CommentChat from '../../../../components/deals/details/CommentChat';
 import { sealDeal } from '../../../../store/saleDeal.store';
 import ExpenseOperationsTable from '../../../../components/deals/details/ExpenseOperationTable';
 import IncomeOperationsTable from '../../../../components/deals/details/IncomeOperationsTable';
-import { calculatePercent, formatDateRu, formatNumber } from '../../../../utils/helpers';
+import { calculatePercent, formatDateRu, formatNumber, formatTotalSumma } from '../../../../utils/helpers';
 import { CreateDealModal } from '@/components/deals/CreateDealModal/CreateDealModal';
 import { DeleteDealModal } from '@/components/deals/DeleteDealModal/DeleteDealModal';
 import { useUcodeDefaultApiMutation } from '@/hooks/useDashboard';
@@ -228,13 +228,13 @@ export default observer(function DealDetailPage() {
         </Popover>
       </div>
 
-      {/* Info Cards */} 
+      {/* Info Cards */}
       <div className="min-w-[920px] max-w-[1920px] gap-2 xl:gap-4 px-3 grid grid-cols-4">
         {/* Card 1: Deal Amount */}
         <div className={'bg-white rounded-xl p-4 xl:p-6 flex flex-col shadow-[0_8px_18px_rgba(118,164,172,0.1)]'}>
           <div className="flex items-center justify-between">
             <p className='text-base xl:text-xl flex gap-1 font-semibold text-neutral-800 mt-2 truncate'>
-              <span className="truncate">{formatNumber(summeryCards?.total_products_summa)}</span> 
+              <span className="truncate">{formatNumber(formatTotalSumma(summeryCards?.total_products_summa))}</span>
               <span>{GlobalCurrency.name}</span>
             </p>
             <div className="shrink-0 ml-1">

@@ -42,9 +42,10 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
     },
     querySetting: {
       select: response => response?.data?.data,
-      enable: !!initialData?.guid,
+
       placeholder: keepPreviousData
-    }
+    },
+    skip: !initialData?.guid
   })
 
 
@@ -518,7 +519,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
                             onChange={(value) => handleSelectProductSerice(row?.id, value)}
                             placeholder="Выберите позицию"
                             className="bg-white border-none"
-                          /> 
+                          />
                         </div>
                       </td>
                       <td className="w-[80px] border-l">

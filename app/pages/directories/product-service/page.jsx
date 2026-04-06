@@ -667,8 +667,7 @@ export default function LegalEntitiesPage() {
               )}
             </tbody>
           </table>
-        </div>
-
+        </div> 
       </div>
       {/* Footer */}
       <div className="fixed bottom-0 left-[80px] py-4 px-3 right-0 bg-white border-t border-gray-200">
