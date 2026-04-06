@@ -106,6 +106,7 @@ const IncomeOperationsTable = ({ sellingDealId, onAdd }) => {
       setOperationToDelete(null)
       queryClient.invalidateQueries({ queryKey: ['get_sales_transaction_by_guid'] })
       queryClient.invalidateQueries({ queryKey: ['find_operations'] })
+      queryClient.invalidateQueries({ queryKey: ['get_counterparty_by_id'] })
     } catch (error) {
       console.error('Error deleting operation:', error)
     }

@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction } from 'mobx'
 import { getBalanceReport } from '@/lib/api/ucode/balance'
 import { legalEntitiesAPI } from '@/lib/api/ucode/legalEntities'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
+import moment from 'moment'
 
 const getDefaultDate = () => new Date().toISOString().split('T')[0]
 
@@ -77,12 +78,12 @@ class BalanceStore {
     })
     try {
       const response = await getBalanceReport({
-        as_of: this.selectedDate,
-        account_ids: this.selectedAccount ? [this.selectedAccount] : [],
-        legal_entity_id: this.selectedEntity,
-        user_currency_code: this.selectedCurrency,
-        contr_agent_ids: this.selectedCounterparties
-      })
+				as_of: moment(this.selectedDate).format('DD-MM-YYYY'),
+				account_ids: this.selectedAccount ? [this.selectedAccount] : [],
+				legal_entity_id: this.selectedEntity,
+				user_currency_code: this.selectedCurrency,
+				contr_agent_ids: this.selectedCounterparties,
+			})
 
       const apiData = response?.data?.data
       if (!apiData) throw new Error('Пустой ответ от сервера')

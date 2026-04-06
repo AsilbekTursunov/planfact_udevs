@@ -74,6 +74,8 @@ export default observer(function DealDetailPage() {
     commentary: summeryCards?.commentary
   }
 
+  console.log(deal)
+
   const handleUpdateStatus = async (status) => {
     try {
       await updateDeal({
@@ -496,7 +498,7 @@ export default observer(function DealDetailPage() {
         onClose={() => setShowShipmentModal(false)}
         dealName={summeryCards?.Nazvanie}
         dealGuid={dealId}
-        kontragentId={summeryCards?.counterparty_id}
+        kontragentId={summeryCards?.counterparties_id}
       />
 
 

@@ -23,7 +23,7 @@ import MultiSelectZdelka from '../../../../../components/ReadyComponents/MultiZd
 import operationsDto from '../../../../../lib/dtos/operationsDto'
 import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMyAccounts'
 import MultiSelectStatiya from '../../../../../components/ReadyComponents/MultiSelectStatiya'
-import { formatAmount } from '../../../../../utils/helpers'
+import { formatAmount, formatNumber, formatTotalSumma } from '../../../../../utils/helpers'
 import { GlobalCurrency } from '../../../../../constants/globalCurrency'
 import CreateShipment from '../../../../../components/deals/details/CreatingShipment'
 
@@ -158,6 +158,8 @@ const KontragentDetailPage = observer(() => {
       expense: counterparty.expense || 0,
       difference: counterparty.difference || 0,
       guid: counterparty.guid || null,
+      kreditorka: counterparty.kreditorka || 0,
+      debitorka: counterparty.debitorka || 0,
       receivables: counterparty.receivables || counterparty.debitorka || 0,
       payables: counterparty.payables || counterparty.kreditorka || 0,
       operationsCount: counterparty.operations_count || 0
@@ -491,8 +493,6 @@ const KontragentDetailPage = observer(() => {
 
   const hasInfo = counterpartyInfo?.inn === null && counterpartyInfo?.kpp?.length === 0 && counterpartyInfo?.accountNumber?.length === 0 && counterpartyInfo?.receiptArticle === null && counterpartyInfo?.paymentArticle === null && counterpartyInfo?.comment === null
 
-
-
   return (
     <div className="fixed h-[calc(100vh-60px)]  top-[60px] left-[80px] right-0 bottom-0 overflow-y-auto">
       {isDeletingCounterparty && (
@@ -624,7 +624,7 @@ const KontragentDetailPage = observer(() => {
               <div className={styles.debitCreditCard}>
                 <div className={styles.debitCreditTitle}>Дебиторка</div>
                 <div className={styles.debitCreditValue}>
-                  {counterpartyInfo?.receivables ? counterpartyInfo.receivables.toLocaleString('ru-RU') : 'Нет задолженности'}
+                  {counterpartyInfo?.debitorka ? formatNumber(formatTotalSumma(counterpartyInfo.debitorka)) : 'Нет задолженности'}
                 </div>
               </div>
 
@@ -632,7 +632,7 @@ const KontragentDetailPage = observer(() => {
               <div className={styles.debitCreditCard}>
                 <div className={styles.debitCreditTitle}>Кредиторка</div>
                 <div className={styles.debitCreditValue}>
-                  {counterpartyInfo?.payables ? counterpartyInfo.payables.toLocaleString('ru-RU') : 'Нет задолженности'}
+                  {counterpartyInfo?.kreditorka ? formatNumber(formatTotalSumma(counterpartyInfo.kreditorka)) : 'Нет задолженности'}
                 </div>
               </div>
             </div>
