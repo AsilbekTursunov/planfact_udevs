@@ -14,6 +14,8 @@ const sidebarItems = [
   { id: 'general', label: 'Общие настройки', icon: SettingsIcon, href: '/pages/settings' },
   { id: 'branches', label: 'Филиалы', icon: GitBranch, href: '/pages/settings/branches' },
   { id: 'currencies', label: 'Валюты', icon: Banknote, href: '/pages/settings/currencies' },
+  { id: 'role', label: 'Роли', icon: Banknote, href: '/pages/settings/role' },
+  { id: 'users', label: 'Пользователи', icon: Banknote, href: '/pages/settings/users' },
 ]
 
 export default function SettingLayouts({ children }) {

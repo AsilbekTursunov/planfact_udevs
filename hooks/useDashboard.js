@@ -1321,6 +1321,7 @@ export const useUcodeRequestInfinite = ({ method, data, skip = false, querySetti
       console.error('useUcodeRequestInfinite Error:', error)
       showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
     },
+    placeholderData: (prev) => prev,
     ...querySetting,
   })
 }

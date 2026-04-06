@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx'
 import { makePersistable } from 'mobx-persist-store'
 
 class OperationFilterStore {
-	limit = 30
+	limit = 10
 	searchQuery = ''
 	debouncedSearchQuery = ''
 	selectedDatePaymentRange = null

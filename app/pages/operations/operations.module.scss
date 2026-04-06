@@ -64,6 +64,24 @@
       transform: translateX(0);
     }
   }
+
+  @keyframes progress {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+}
+
+.animateProgress {
+  animation: progress 2s infinite linear;
+  width: 100%;
+  transform-origin: left;
 }
 
 .container {

@@ -6,7 +6,6 @@ import OperationCheckbox from '../../shared/Checkbox/operationCheckbox'
 import NewDateRangeComponent from '../../directories/NewDateRangeComponent'
 import { FaSortDown } from 'react-icons/fa'
 import Input from '../../shared/Input'
-import { GroupedSelect } from '../../common/GroupedSelect/GroupedSelect'
 import { appStore } from '../../../store/app.store'
 import { observer } from 'mobx-react-lite'
 import SelectCounterParties from '../../ReadyComponents/SelectCounterParties'
@@ -171,9 +170,7 @@ export const OperationsFiltersSidebar = observer(({
             onChange={(val) => operationFilterStore.setSelectedDatePaymentRange(val)}
           />
         </FilterSection>
-
-        {/* Дата начисления - упрощенная версия, полная версия будет в отдельном компоненте */}
-
+ 
         <FilterSection title="Дата начисления" className="mb-5">
           <div className="space-y-3">
             {[

@@ -10,6 +10,7 @@ import { toJS } from 'mobx'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
+import { formatNumber, formatTotalSumma } from '../../../../utils/helpers'
 
 export default observer(function BalancePage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
@@ -91,7 +92,7 @@ export default observer(function BalancePage() {
             <span className={isTotalRow ? styles.boldNumber : ''}>
               {(item.totalValue === 0 || item.totalValue == null)
                 ? '–'
-                : Number(item.totalValue).toLocaleString('ru-RU')}
+                : formatNumber(formatTotalSumma(item.totalValue))}
             </span>
           </td>
         </tr>

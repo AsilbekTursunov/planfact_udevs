@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { observer } from 'mobx-react-lite'
 import { toJS } from 'mobx'
 import { formatDate } from '../../../utils/formatDate'
@@ -23,7 +23,8 @@ import operationsDto from '../../../lib/dtos/operationsDto'
 import { OperationsFooter } from '../../../components/operations/OperationsFooter/OperationsFooter'
 import ScreenLoader from '../../../components/shared/ScreenLoader'
 import Input from '../../../components/shared/Input'
-import { EllipsisVertical, Search } from 'lucide-react'
+import { EllipsisVertical, Loader2, Search } from 'lucide-react'
+import InfiniteScroll from 'react-infinite-scroll-component'
 
 
 const OperationsPage = observer(() => {
@@ -58,7 +59,6 @@ const OperationsPage = observer(() => {
 	const [isFilterOpen, setIsFilterOpen] = useState(true)
 
 	const {
-		limit,
 		searchQuery,
 		debouncedSearchQuery,
 		selectedDatePaymentRange,
@@ -71,6 +71,8 @@ const OperationsPage = observer(() => {
 		paymentType,
 		deals
 	} = operationFilterStore
+
+	const LIMIT = 10
 
 	// Destructure scalar booleans directly so each one is a reactive useMemo dependency
 	const paymentConfirmed = operationFilterStore.dateFilters.podtverzhdena
@@ -89,8 +91,7 @@ const OperationsPage = observer(() => {
 
 
 
-	// Pagination state
-	const tableWrapperRef = useRef(null)
+	// Scrollable container id for InfiniteScroll: "operations-scrollable-container"
 
 
 	const requestOperationFilters = useMemo(() => {
@@ -112,7 +113,7 @@ const OperationsPage = observer(() => {
 		const accrualEndDate = safeFormatDate(selectedDateStartRange?.end);
 
 		const filters = {
-			limit,
+			limit: LIMIT,
 			...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
 			...(startDate && endDate && {
 				paymentDateStart: startDate,
@@ -148,7 +149,7 @@ const OperationsPage = observer(() => {
 
 		return filters;
 	}, [
-		limit,
+		LIMIT,
 		debouncedSearchQuery,
 		selectedDatePaymentRange,
 		selectedDateStartRange,
@@ -170,6 +171,7 @@ const OperationsPage = observer(() => {
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
+		isFetching: isFetchingOperations,
 		isLoading: isLoadingOperations,
 	} = useUcodeRequestInfinite({
 		method: 'find_operations',
@@ -183,7 +185,6 @@ const OperationsPage = observer(() => {
 		return infiniteData?.pages?.[0]?.data?.data?.pagination
 	}, [infiniteData])
 
-	console.log('paginationData', paginationData)
 
 
 
@@ -206,24 +207,7 @@ const OperationsPage = observer(() => {
 		}
 	}
 
-	// Infinite scroll handler
-	useEffect(() => {
-		const tableWrapper = tableWrapperRef.current
-		if (!tableWrapper) return
-
-		const handleScroll = () => {
-			const { scrollTop, scrollHeight, clientHeight } = tableWrapper
-			// Load more when scrolled to the bottom (with small threshold)
-			const isAtBottom = scrollTop + clientHeight >= scrollHeight - 30
-
-			if (isAtBottom && hasNextPage && !isLoadingOperations && !isFetchingNextPage) {
-				fetchNextPage()
-			}
-		}
-
-		tableWrapper.addEventListener('scroll', handleScroll)
-		return () => tableWrapper.removeEventListener('scroll', handleScroll)
-	}, [hasNextPage, isLoadingOperations, isFetchingNextPage, fetchNextPage])
+	// fetchNextPage is called by InfiniteScroll component directly
 
 
 
@@ -468,7 +452,7 @@ const OperationsPage = observer(() => {
 			/>
 
 			{/* Main Content */}
-			<div className="w-full overflow-auto bg-neutral-50">
+			<div id="operations-scrollable-container" className="w-full overflow-auto bg-neutral-50">
 				{/* Header */}
 				<div className="sticky h-16 px-4 flex items-center justify-between top-0 z-40 bg-white ">
 					<div className="flex items-center gap-4 ">
@@ -487,34 +471,17 @@ const OperationsPage = observer(() => {
 							placeholder="По счету, контрагенту, или статья"
 							value={searchQuery}
 							className="w-[300px]"
-							onChange={(e) => onSearchChange?.(e.target.value)}
+							onChange={(e) => operationFilterStore.setSearchQuery(e.target.value)}
 						/>
 						<button className=" bg-white rounded-md border  flex items-center justify-center p-2">
 							<EllipsisVertical size={20} className='text-neutral-500' />
 						</button>
 					</div>
-					{/* <OperationsHeader
-						isFilterOpen={isFilterOpen}
-						onFilterToggle={() => setIsFilterOpen(!isFilterOpen)}
-						onCreateClick={() => {
-							setOpenModal({ id: 'new', isNew: true })
-							setModalType('income')
-							setIsModalClosing(false)
-							setIsModalOpening(true)
-							document.body.style.overflow = 'hidden'
-							setTimeout(() => {
-								setIsModalOpening(false)
-							}, 50)
-						}}
-						selectedCount={selectedOperations.length}
-						searchQuery={searchQuery}
-						onSearchChange={(val) => operationFilterStore.setSearchQuery(val)}
-					/> */}
 				</div>
 
 				{/* Table */}
 				<div className=" pb-10" >
-					{/* Refetch overlay spinner isLoadingOperations */}
+					{/* Refetch overlay spinner - only on full load */}
 					{isLoadingOperations && <ScreenLoader className={'left-0!'} />}
 					{/* Selection Bar */}
 					{selectedOperations.length > 0 && (
@@ -566,7 +533,16 @@ const OperationsPage = observer(() => {
 						</div>
 					)}
 
-					<div className="" ref={tableWrapperRef}>
+					<InfiniteScroll
+						dataLength={allOperations.length}
+						next={fetchNextPage}
+						hasMore={!!hasNextPage}
+						loader={<div className='py-5 flex items-center justify-center'>
+							<Loader2 className='animate-spin text-primary' />
+						</div>}
+						scrollableTarget="operations-scrollable-container"
+						style={{ overflow: 'visible' }}
+					>
 						<table className="w-full ">
 							<thead className="bg-neutral-50 sticky top-16  z-10">
 								<tr className="bg-neutral-100">
@@ -594,10 +570,10 @@ const OperationsPage = observer(() => {
 									<th className={styles.tableHeaderCell}>Статья</th>
 									<th className={styles.tableHeaderCell}>Сделка</th>
 									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
-									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellActions)}></th>
+									<th className="w-5"></th>
 								</tr>
 							</thead>
-							<tbody >
+							<tbody>
 								{allOperations.length === 0 && !isLoadingOperations ? (
 									<tr className={styles.emptyRow}>
 										<td colSpan='9' className={styles.emptyCell}>
@@ -606,7 +582,6 @@ const OperationsPage = observer(() => {
 									</tr>
 								) : (
 										<>
-
 											{operationsList?.future?.map(op => (
 												<OperationTableRow
 													key={op.guid}
@@ -641,6 +616,7 @@ const OperationsPage = observer(() => {
 												handleCopyOperation={handleCopyOperation}
 											/>
 										))}
+
 										{/* Вчера и ранее - Section Header */}
 										{operationsList?.before?.length > 0 && (
 											<tr className={styles.sectionHeader}>
@@ -661,19 +637,18 @@ const OperationsPage = observer(() => {
 												handleCopyOperation={handleCopyOperation}
 											/>
 										))}
-
 									</>
 								)}
 							</tbody>
 						</table>
-					</div>
+					</InfiniteScroll>
 				</div>
 
 				<OperationsFooter totalSummary={totalSummary} isFilterOpen={isFilterOpen} />
 
 			</div>
 
-			{isFetchingNextPage && <ScreenLoader className={'left-0!'} />}
+
 
 			{/* Right Side Modal */}
 			{openModal && (

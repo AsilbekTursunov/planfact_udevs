@@ -36,11 +36,12 @@ const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
   const dateRangeValue = { start: balanceStore.selectedDate, end: balanceStore.selectedDate }
   const handleDateRangeChange = (range) => {
     if (range?.start) {
-      const dateStr =
-        range.start instanceof Date
-          ? range.start.toISOString().split('T')[0]
-          : range.start
-      balanceStore.setSelectedDate(dateStr)
+      const d = range.start instanceof Date ? range.start : new Date(range.start)
+      // Use local date components to avoid UTC timezone shift
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      balanceStore.setSelectedDate(`${year}-${month}-${day}`)
     }
   }
 

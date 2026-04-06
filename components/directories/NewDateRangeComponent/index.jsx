@@ -6,6 +6,7 @@ import { formatDate } from '../../../utils/formatDate'
 import { CgClose } from 'react-icons/cg'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu'
 import moment from 'moment/moment'
+import Input from '../../shared/Input'
 
 const getPresetRange = (key) => {
 
@@ -78,13 +79,7 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
   const [endDate, setEndDate] = useState(value?.end)
   const [activePreset, setActivePreset] = useState(value?.start ? null : 'year')
   const [dateType, setDateType] = useState()
-
-  // useEffect(() => {
-  //   if (!value?.start && !value?.end) {
-  //     onChange?.({ start: startDate, end: endDate })
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [])
+  
   const wrapperRef = useRef(null)
   const [open, setOpen] = useState(false)
 
@@ -103,6 +98,7 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
     setDateType(null)
     setActivePreset(null)
     onChange?.({ start: '', end: '' })
+    setOpen(false)
   }
 
   const handleApply = () => {
@@ -188,14 +184,14 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
           <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-2">
             <button
               type="button"
-              className="px-3! py-1.5! text-sm shadow-2xl cursor-pointer rounded-md border! border-gray-ucode-300!"
+              className="secondary-btn"
               onClick={handleReset}
             >
               Сбросить
             </button>
             <button
               type="button"
-              className="px-3! py-1.5! border border-primary! text-sm shadow-2xl bg-primary rounded-md  cursor-pointer  text-white!"
+              className="primary-btn"
               onClick={handleApply}
             >
               Применить

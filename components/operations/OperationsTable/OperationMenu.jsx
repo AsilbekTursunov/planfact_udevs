@@ -50,15 +50,15 @@ export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
 
   return (
     <DropdownMenu >
-      <DropdownMenuTrigger asChild>
-        <div className="bg-transparent  shadow-none cursor-pointer w-full h-full flex items-center justify-center">
+      <DropdownMenuTrigger asChild >
+        <div className="bg-transparent w-5 shadow-none cursor-pointer h-full flex items-center justify-center">
           <EllipsisVertical className='text-neutral-600' />
         </div>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-40" align="end">
+      <DropdownMenuContent className="w-40 p-2" align="end">
         <DropdownMenuItem asChild>
           <button
-            className={cn(styles.menuItem, "w-full text-left")}
+            className={cn("w-full flex items-center cursor-pointer text-sm gap-2 pb-2 justify-start")}
             onClick={handleEdit}
           >
             <Pencil size={16} />
@@ -67,7 +67,7 @@ export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <button
-            className={cn(styles.menuItem, "w-full text-left")}
+            className={cn("w-full flex items-center cursor-pointer text-sm gap-2 pb-2 justify-start")}
             onClick={handleCopy}
           >
             <Copy size={16} />
@@ -76,7 +76,7 @@ export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <button
-            className={cn(styles.menuItem, styles.menuItemDanger, "w-full text-left")}
+            className={cn("w-full flex items-center text-red-500 cursor-pointer text-sm gap-2 justify-start")}
             onClick={handleDelete}
           >
             <Trash2 size={16} className='text-red-500' />
