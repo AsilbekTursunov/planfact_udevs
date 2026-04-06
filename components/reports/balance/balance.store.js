@@ -78,7 +78,7 @@ class BalanceStore {
     })
     try {
       const response = await getBalanceReport({
-				as_of: moment(this.selectedDate).format('DD-MM-YYYY'),
+				as_of: moment(this.selectedDate).format('YYYY-MM-DD'),
 				account_ids: this.selectedAccount ? [this.selectedAccount] : [],
 				legal_entity_id: this.selectedEntity,
 				user_currency_code: this.selectedCurrency,

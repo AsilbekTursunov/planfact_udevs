@@ -8,14 +8,16 @@ import {
   GitBranch,
   Banknote,
 } from 'lucide-react'
+import { TbUsersPlus } from "react-icons/tb";
+import { LuUsers } from "react-icons/lu";
 import styles from './settings.module.scss'
 
 const sidebarItems = [
   { id: 'general', label: 'Общие настройки', icon: SettingsIcon, href: '/pages/settings' },
   { id: 'branches', label: 'Филиалы', icon: GitBranch, href: '/pages/settings/branches' },
   { id: 'currencies', label: 'Валюты', icon: Banknote, href: '/pages/settings/currencies' },
-  { id: 'role', label: 'Роли', icon: Banknote, href: '/pages/settings/role' },
-  { id: 'users', label: 'Пользователи', icon: Banknote, href: '/pages/settings/users' },
+  { id: 'role', label: 'Роли', icon: TbUsersPlus, href: '/pages/settings/role' },
+  { id: 'users', label: 'Пользователи', icon: LuUsers, href: '/pages/settings/users' },
 ]
 
 export default function SettingLayouts({ children }) {
@@ -23,7 +25,7 @@ export default function SettingLayouts({ children }) {
 
   return (
     <div className="fixed  top-[60px] flex left-[80px] w-[calc(100%-80px)] h-[calc(100%-60px)] ">
-      <aside className=" w-56 bg-white p-3 shadow-2xl shadow-gray-200">
+      <aside className=" w-56 bg-white p-3 shadow-2xl shadow-gray-200 border-r border-gray-200">
         <h2 className={styles.sidebarTitle}>Настройки</h2>
         <nav className={styles.sidebarNav}>
           {sidebarItems.map(item => {

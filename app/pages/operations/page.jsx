@@ -94,30 +94,29 @@ const OperationsPage = observer(() => {
 	// Scrollable container id for InfiniteScroll: "operations-scrollable-container"
 
 
+	const safeFormatDate = (date) => {
+		if (!date) return undefined
+		try {
+			const d = date instanceof Date ? date : new Date(date)
+			if (isNaN(d.getTime())) return undefined
+			return formatDate(d)
+		} catch {
+			return undefined
+		}
+	}
+
+	const paymentStartDate = safeFormatDate(selectedDatePaymentRange?.start)
+	const paymentEndDate = safeFormatDate(selectedDatePaymentRange?.end)
+	const accrualStartDate = safeFormatDate(selectedDateStartRange?.start)
+	const accrualEndDate = safeFormatDate(selectedDateStartRange?.end)
+
 	const requestOperationFilters = useMemo(() => {
-		const safeFormatDate = (date) => {
-			if (!date) return undefined;
-			try {
-				const d = date instanceof Date ? date : new Date(date);
-				if (isNaN(d.getTime())) return undefined;
-				return formatDate(d);
-			} catch {
-				return undefined;
-			}
-		};
-
-		const startDate = safeFormatDate(selectedDatePaymentRange?.start);
-		const endDate = safeFormatDate(selectedDatePaymentRange?.end);
-
-		const accrualStartDate = safeFormatDate(selectedDateStartRange?.start);
-		const accrualEndDate = safeFormatDate(selectedDateStartRange?.end);
-
 		const filters = {
 			limit: LIMIT,
 			...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
-			...(startDate && endDate && {
-				paymentDateStart: startDate,
-				paymentDateEnd: endDate,
+			...(paymentStartDate && paymentEndDate && {
+				paymentDateStart: paymentStartDate,
+				paymentDateEnd: paymentEndDate,
 			}),
 			...(accrualStartDate && accrualEndDate && {
 				accrualDateStart: accrualStartDate,
@@ -145,14 +144,16 @@ const OperationsPage = observer(() => {
 			accrualConfirmed,
 			accrualNotConfirmed,
 			sellingDealId: deals
-		};
+		}
 
-		return filters;
+		return filters
 	}, [
 		LIMIT,
 		debouncedSearchQuery,
-		selectedDatePaymentRange,
-		selectedDateStartRange,
+		paymentStartDate,
+		paymentEndDate,
+		accrualStartDate,
+		accrualEndDate,
 		selectedCounterAgents,
 		selectedLegalEntities,
 		selectedFilters,
@@ -177,15 +178,15 @@ const OperationsPage = observer(() => {
 		method: 'find_operations',
 		data: requestOperationFilters,
 		querySetting: {
-			select: (response) => response
+			select: (response) => response,
+			staleTime: 1000 * 60,
+			gcTime: 1000 * 60,
 		}
 	})
 
 	const paginationData = useMemo(() => {
 		return infiniteData?.pages?.[0]?.data?.data?.pagination
 	}, [infiniteData])
-
-
 
 
 	const allOperations = useMemo(() => {
@@ -482,7 +483,8 @@ const OperationsPage = observer(() => {
 				{/* Table */}
 				<div className=" pb-10" >
 					{/* Refetch overlay spinner - only on full load */}
-					{isLoadingOperations && <ScreenLoader className={'left-0!'} />}
+					{isLoadingOperations && allOperations.length === 0 && <ScreenLoader className={'left-0!'} />}
+					{(isFetchingNextPage || isFetchingOperations) && <ScreenLoader className={'left-0!'} />}
 					{/* Selection Bar */}
 					{selectedOperations.length > 0 && (
 						<div className={styles.selectionBar}>
@@ -541,7 +543,7 @@ const OperationsPage = observer(() => {
 							<Loader2 className='animate-spin text-primary' />
 						</div>}
 						scrollableTarget="operations-scrollable-container"
-						style={{ overflow: 'visible' }}
+						style={{ overflow: 'visible', paddingBottom: '50px' }}
 					>
 						<table className="w-full ">
 							<thead className="bg-neutral-50 sticky top-16  z-10">
