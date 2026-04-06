@@ -3,42 +3,44 @@ import { makePersistable } from "mobx-persist-store";
 
 
 class AppStore {
-  isPayment = false
-  currency = {
-    name: '',
-    guid: '',
-    code: ''
-  }
-  currencies = []
+	isPayment = false
+	currency = {
+		name: '',
+		guid: '',
+		code: '',
+	}
+	currencies = []
+	myCurrencies = []
 
-  constructor() {
-    makeAutoObservable(this);
-    if (typeof window !== 'undefined') {
-      makePersistable(this, {
-        name: "plan_fact_app",
-        properties: ["isPayment", "currency", "currencies"],
-        storage: window.localStorage,
-        debugMode: true,
-      });
+	constructor() {
+		makeAutoObservable(this)
+		if (typeof window !== 'undefined') {
+			makePersistable(this, {
+				name: 'plan_fact_app',
+				properties: ['isPayment', 'currency', 'currencies', 'myCurrencies'],
+				storage: window.localStorage,
+				debugMode: true,
+			})
+		}
+	}
 
-    }
-  }
+	setIsPayment(value) {
+		this.isPayment = value
+	}
 
-  setIsPayment(value) {
-    this.isPayment = value;
-  }
+	setCurrency(value) {
+		this.currency = value
+	}
 
-  setCurrency(value) {
-    this.currency = value;
-  }
+	setCurrencies(value) {
+		this.currencies = value
+	}
 
-  setCurrencies(value) {
-    this.currencies = value;
-  }
+	setMyCurrencies(value) {
+		this.myCurrencies = value
+	}
 
-
-  // Restore state from localStorage/cookies on init
-
+	// Restore state from localStorage/cookies on init
 }
 
 export const appStore = new AppStore();

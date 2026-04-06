@@ -145,8 +145,7 @@ export default function CreateMyAccountModal({ isOpen, onClose, account = null }
   const handleSubmit = async () => {
     if (!validateForm()) return
 
-    setIsSubmitting(true)
-    console.log('data', formData)
+    setIsSubmitting(true) 
     try {
       const submitData = {
         nazvanie: formData.nazvanie.trim(),

@@ -6,15 +6,13 @@ import BalanceFilterSidebar from '@/components/reports/balance/FilterSidebar'
 import { balanceStore } from '@/components/reports/balance/balance.store'
 import styles from './balance.module.scss'
 import { ExpendOpen, ExpendClose } from '@/constants/icons'
-import { toJS } from 'mobx'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
-import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
 import { formatNumber, formatTotalSumma } from '../../../../utils/helpers'
-import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import { useQuery } from '@tanstack/react-query'
 import moment from 'moment'
 import { apiClient } from '../../../../lib/api/ucode/base'
+import { appStore } from '../../../../store/app.store'
 
 export default observer(function BalancePage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
@@ -23,10 +21,7 @@ export default observer(function BalancePage() {
 
   const { error } = balanceStore
 
-  const currencies = toJS(balanceStore.balanceData.currencies)?.map(item => ({
-    value: item.code,
-    label: item.code
-  }))
+
 
   const filterData = {
     as_of: balanceStore.selectedDate ? moment(balanceStore.selectedDate).format('YYYY-MM-DD') : '',
@@ -135,10 +130,11 @@ export default observer(function BalancePage() {
           <div className="flex items-center gap-4">
             <h1 className='text-xl whitespace-nowrap font-semibold'>Балансовый отчет</h1>
             <SingleSelect
-              data={currencies}
-              value={balanceStore.selectedCurrency || GlobalCurrency.code}
+              data={appStore.myCurrencies}
+              value={balanceStore.selectedCurrency}
               onChange={(value) => {
                 balanceStore.setSelectedCurrency(value)
+                balanceStore.fetchBalance()
               }}
               isClearable={false}
               withSearch={false}

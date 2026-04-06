@@ -28,113 +28,109 @@ const getDefaultEndDate = () => {
 }
 
 class CashFlowStore {
-  // ── Filter state ────────────────────────────────────────────────────────────
-  filters = {
-    periodStartDate: getDefaultStartDate(),
-    periodEndDate: getDefaultEndDate(),
-    periodType: 'monthly',
-    currencyCode: GlobalCurrency.code, // Defaulting to RUB as seen in page
-    sellingDealId: [], // these are same values 
-    contrAgentId: [],
-    accountId: [],
-    dealId: [], // these are same values 
-  }
+	// ── Filter state ────────────────────────────────────────────────────────────
+	filters = {
+		periodStartDate: getDefaultStartDate(),
+		periodEndDate: getDefaultEndDate(),
+		periodType: 'monthly',
+		currencyCode: GlobalCurrency.code || 'UZS', // Defaulting to RUB as seen in page
+		sellingDealId: [], // these are same values
+		contrAgentId: [],
+		accountId: [],
+		dealId: [], // these are same values
+	}
 
-  // ── Report state ────────────────────────────────────────────────────────────
-  reportData = null
-  isLoading = false
-  isFetching = false
-  error = null
+	// ── Report state ────────────────────────────────────────────────────────────
+	reportData = null
+	isLoading = false
+	isFetching = false
+	error = null
 
-  constructor() {
-    makeAutoObservable(this)
-    if (typeof window !== 'undefined') {
-      makePersistable(this, {
-        name: "cashflow_store_v2",
-        properties: ["filters"],
-        storage: window.localStorage,
-        debugMode: true,
-      });
-    }
-  }
+	constructor() {
+		makeAutoObservable(this)
+		if (typeof window !== 'undefined') {
+			makePersistable(this, {
+				name: 'cashflow_store_v2',
+				properties: ['filters'],
+				storage: window.localStorage,
+				debugMode: true,
+			})
+		}
+	}
 
-  // ── Fetch Report ─────────────────────────────────────────────────────────────
-  async fetchReport() {
-    runInAction(() => {
-      if (!this.filters.periodStartDate) this.filters.periodStartDate = getDefaultStartDate()
-      if (!this.filters.periodEndDate) this.filters.periodEndDate = getDefaultEndDate()
+	// ── Fetch Report ─────────────────────────────────────────────────────────────
+	async fetchReport() {
+		runInAction(() => {
+			if (!this.filters.periodStartDate) this.filters.periodStartDate = getDefaultStartDate()
+			if (!this.filters.periodEndDate) this.filters.periodEndDate = getDefaultEndDate()
 
-      this.isFetching = true
-      this.error = null
-      if (!this.reportData) this.isLoading = true
-    })
+			this.isFetching = true
+			this.error = null
+			if (!this.reportData) this.isLoading = true
+		})
 
+		try {
+			const response = await ucodeRequest({
+				method: 'cash_flow',
+				data: this.filters,
+			})
 
-    try {
-      const response = await ucodeRequest({
-        method: 'cash_flow',
-        data: this.filters
-      })
+			runInAction(() => {
+				this.reportData = response?.data?.data?.data || null
+				this.isLoading = false
+				this.isFetching = false
+			})
+		} catch (err) {
+			console.error('Error fetching cashflow report:', err)
+			runInAction(() => {
+				this.error = err
+				this.isLoading = false
+				this.isFetching = false
+			})
+		}
+	}
 
-      runInAction(() => {
-        this.reportData = response?.data?.data?.data || null
-        this.isLoading = false
-        this.isFetching = false
-      })
-    } catch (err) {
-      console.error('Error fetching cashflow report:', err)
-      runInAction(() => {
-        this.error = err
-        this.isLoading = false
-        this.isFetching = false
-      })
-    }
-  }
+	// ── Setters ─────────────────────────────────────────────────────────────────
+	setPeriodStartDate(value) {
+		this.filters.periodStartDate = formatDate(value)
+	}
 
+	setPeriodEndDate(value) {
+		this.filters.periodEndDate = formatDate(value)
+	}
 
-  // ── Setters ─────────────────────────────────────────────────────────────────
-  setPeriodStartDate(value) {
-    this.filters.periodStartDate = formatDate(value)
-  }
+	setPeriodType(value) {
+		this.filters.periodType = value
+	}
 
-  setPeriodEndDate(value) {
-    this.filters.periodEndDate = formatDate(value)
-  }
+	setCurrencyCode(value) {
+		this.filters.currencyCode = value
+	}
 
-  setPeriodType(value) {
-    this.filters.periodType = value
-  }
+	setDeals(value) {
+		this.filters.sellingDealId = value
+	}
 
-  setCurrencyCode(value) {
-    this.filters.currencyCode = value
-  }
+	setCounterparties(value) {
+		this.filters.contrAgentId = value
+	}
 
-  setDeals(value) {
-    this.filters.sellingDealId = value
-  }
+	setAccounts(value) {
+		this.filters.accountId = value
+	}
 
-  setCounterparties(value) {
-    this.filters.contrAgentId = value
-  }
-
-  setAccounts(value) {
-    this.filters.accountId = value
-  }
-
-  resetFilters() {
-    this.filters = {
-      periodStartDate: getDefaultStartDate(),
-      periodEndDate: getDefaultEndDate(),
-      periodType: 'monthly',
-      currencyCode: GlobalCurrency.code,
-      sellingDealId: [],
-      contrAgentId: [],
-      accountId: [],
-      dealId: []
-    }
-  }
-
-
+	resetFilters() {
+		this.filters = {
+			periodStartDate: getDefaultStartDate(),
+			periodEndDate: getDefaultEndDate(),
+			periodType: 'monthly',
+			currencyCode: GlobalCurrency.code,
+			sellingDealId: [],
+			contrAgentId: [],
+			accountId: [],
+			dealId: [],
+		}
+	}
 }
 
 export const cashFlowStore = new CashFlowStore()

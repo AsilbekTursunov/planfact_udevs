@@ -10,6 +10,7 @@ import { formatAmount, formatNumber, formatTotalSumma } from '../../../utils/hel
 import { GlobalCurrency } from '../../../constants/globalCurrency'
 import { observer } from 'mobx-react-lite'
 import { keepPreviousData } from '@tanstack/react-query'
+import { appStore } from '../../../store/app.store'
 
 const TotalPrice = observer(() => {
     const [isBalanceOpen, setIsBalanceOpen] = useState(false)
@@ -39,6 +40,18 @@ const TotalPrice = observer(() => {
             placeholderData: keepPreviousData
         }
     })
+
+
+    useMemo(() => {
+        const result = new Map()
+        myaccounts?.data?.map(item => item?.children).flat()?.forEach(item => {
+            result.set(item?.currenies_id, item?.currenies_kod)
+        })
+        const all = Array.from(result.entries()).map(([, label]) => ({ value: label, label }))
+        appStore.setMyCurrencies(all)
+    }, [myaccounts])
+
+
 
     const Summary = myaccounts?.summary
     const Compactlist = useMemo(() => {
@@ -103,8 +116,6 @@ const TotalPrice = observer(() => {
             }
         })
     }, [myaccounts])
-
-    console.log('legalEntitiesData', legalEntitiesData)
 
 
     const totalBalance = useMemo(() => {

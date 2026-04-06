@@ -13,6 +13,7 @@ import ScreenLoader from '../../../../components/shared/ScreenLoader'
 import { cn } from '@/lib/utils'
 import { formatPeriod } from '../../../../utils/helpers'
 import CustomTooltip from '../../../../components/shared/Tooltip'
+import { appStore } from '../../../../store/app.store'
 
 const groupingOptions = [
   { value: 'monthly', label: 'По месяцам' },
@@ -139,8 +140,7 @@ export default observer(function CashFlowReportPage() {
     title: '',
     isTransfer: false
   })
-  const didAutoExpand = useRef(false)
-  const tableContainerRef = useRef(null)
+  const didAutoExpand = useRef(false) 
 
   const { reportData: cashFlowData, isLoading, isFetching, filters } = cashFlowStore
   const loading = isLoading || isFetching
@@ -303,7 +303,7 @@ export default observer(function CashFlowReportPage() {
             <div className="flex items-center gap-4">
               <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
               <SingleSelect
-                data={currencies}
+                data={appStore.myCurrencies}
                 value={cashFlowStore.filters.currencyCode}
                 onChange={(value) => {
                   cashFlowStore.setCurrencyCode(value)

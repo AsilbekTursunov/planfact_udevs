@@ -19,8 +19,8 @@ const getDefaultDateRange = () => {
 }
 
 class PnLStore {
-  // ── Filter state ──────────────────────────────────────────────────────────── 
-  //8600140261767694
+	// ── Filter state ────────────────────────────────────────────────────────────
+	//8600140261767694
 	dateRange = getDefaultDateRange()
 	selectedPeriod = 'all'
 	selectedGrouping = 'monthly'

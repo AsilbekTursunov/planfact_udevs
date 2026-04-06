@@ -14,6 +14,8 @@ import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
 import { formatPeriod } from '../../../../utils/helpers'
 import { cn } from '@/app/lib/utils'
+import { appStore } from '../../../../store/app.store'
+import { balanceStore } from '../../../../components/reports/balance/balance.store'
 
 const formatDateLocal = (date) => {
   if (!date) return null
@@ -25,14 +27,14 @@ const formatDateLocal = (date) => {
 }
 
 const accountingMethodOptions = [
-  { guid: 'accrual', label: 'Метод начисления' },
-  { guid: 'cash', label: 'Кассовый метод' }
+  { value: 'accrual', label: 'Метод начисления' },
+  { value: 'cash', label: 'Кассовый метод' }
 ]
 
 const groupingOptions = [
-  { guid: 'daily', label: 'День' },
-  { guid: 'weekly', label: 'Неделя' },
-  { guid: 'monthly', label: 'Месяц' }
+  { value: 'daily', label: 'День' },
+  { value: 'weekly', label: 'Неделя' },
+  { value: 'monthly', label: 'Месяц' }
 ]
 
 const ProfitAndLossPage = observer(() => {
@@ -49,10 +51,6 @@ const ProfitAndLossPage = observer(() => {
   const { reportData, isLoading, isFetching } = pnlStore
   const loading = isLoading || isFetching
 
-  const currencies = toJS(reportData)?.currencies?.map(item => ({
-    value: item.code,
-    label: item.code
-  }))
 
   const legend = useMemo(() => reportData?.legend || [], [reportData])
   const rows = useMemo(() => reportData?.rows || [], [reportData])
@@ -196,6 +194,7 @@ const ProfitAndLossPage = observer(() => {
     setIsModalOpen(true)
   }
 
+
   return (
     <div className="fixed left-[80px] w-[calc(100%-80px)] flex top-[60px] h-[calc(100%-60px)]">
       {/* P&L-specific Filter Sidebar */}
@@ -212,41 +211,42 @@ const ProfitAndLossPage = observer(() => {
           <div className="flex  h-16 items-center sticky z-50 top-0 bg-white justify-between shrink-0">
             <div className="flex items-center gap-4" >
               <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о прибылях и убытках (P&L)</h1>
-              {
-                currencies && (
-                  <SingleSelect
-                    data={currencies}
-                    value={pnlStore.selectedCurrency || GlobalCurrency.code}
-                    onChange={(value) => {
-                      pnlStore.setSelectedCurrency(value)
-                      pnlStore.fetchReport()
-                    }}
-                    isClearable={false}
-                    withSearch={false}
-                    className={'bg-white w-28'}
-                    dropdownClassName={'w-28'}
-                  />
-                )
-              }
+
+              <SingleSelect
+                data={appStore.myCurrencies}
+                value={pnlStore.selectedCurrency}
+                onChange={(value) => {
+                  pnlStore.setSelectedCurrency(value)
+                  pnlStore.fetchReport()
+                }}
+                isClearable={false}
+                withSearch={false}
+                className={'bg-white w-28'}
+                dropdownClassName={'w-28'}
+              />
             </div>
             <div className="flex items-center gap-3">
-              <GroupedSelect
+              <SingleSelect
                 data={groupingOptions}
                 value={pnlStore.selectedGrouping}
                 onChange={(value) => {
                   pnlStore.setSelectedGrouping(value)
                   pnlStore.fetchReport()
                 }}
+                isClearable={false}
+                withSearch={false}
                 placeholder="Способ построения"
                 className="bg-white w-44"
               />
-              <GroupedSelect
+              <SingleSelect
                 data={accountingMethodOptions}
                 value={pnlStore.isCalculation ? 'accrual' : 'cash'}
                 onChange={(value) => {
                   pnlStore.setIsCalculation(value === 'accrual')
                   pnlStore.fetchReport()
                 }}
+                isClearable={false}
+                withSearch={false}
                 placeholder="Метод учета"
                 className="bg-white w-44"
                 autoHeight={true}
@@ -272,20 +272,20 @@ const ProfitAndLossPage = observer(() => {
                   <p style={{ fontSize: '14px', color: '#98A2B3' }}>Используйте фильтры слева для настройки параметров отчета</p>
                 </div>
               ) : (
-                  <table className="w-full  mb-10">
-                    <thead className={"bg-neutral-100 sticky top-0 z-50 "}>
-                      <tr>
+                <table className="w-full  mb-10">
+                  <thead className={"bg-neutral-100 sticky top-0 z-50 "}>
+                    <tr>
                       <th
                         className="text-left text-xs font-medium sticky left-0 z-40 bg-neutral-100"
                         style={{ minWidth: 420 }}
                       >
                         <p className='px-4 w-full border-r py-2'>Статья</p>
                       </th>
-                        {legend.map(period => (
-                          <th key={period.key} className="text-right bg-neutral-100 border-none text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] text-xs text-xss! font-medium">
-                            <span className='line-clamp-1 border-l px-4 py-2'>{period.title}</span>
-                          </th>
-                        ))}
+                      {legend.map(period => (
+                        <th key={period.key} className="text-right bg-neutral-100 border-none text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] text-xs text-xss! font-medium">
+                          <span className='line-clamp-1 border-l px-4 py-2'>{period.title}</span>
+                        </th>
+                      ))}
                       <th className="text-right bg-neutral-100 text-nowrap whitespace-nowrap lowercase min-w-[80px] max-w-[80px] shrink-0 border-l border-neutral-200 px-4 text-xs py-2 text-xss! font-medium">
                         Итого
                       </th>
