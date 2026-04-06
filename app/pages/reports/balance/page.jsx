@@ -11,36 +11,54 @@ import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
 import { formatNumber, formatTotalSumma } from '../../../../utils/helpers'
+import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
+import { useQuery } from '@tanstack/react-query'
+import moment from 'moment'
+import { apiClient } from '../../../../lib/api/ucode/base'
 
 export default observer(function BalancePage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [isFilterOpen, setIsFilterOpen] = useState(true)
 
-  const { balanceData, isLoading, error } = balanceStore
+  const { error } = balanceStore
 
-  const currencies = toJS(balanceData.currencies)?.map(item => ({
+  const currencies = toJS(balanceStore.balanceData.currencies)?.map(item => ({
     value: item.code,
     label: item.code
   }))
 
+  const filterData = {
+    as_of: balanceStore.selectedDate ? moment(balanceStore.selectedDate).format('YYYY-MM-DD') : '',
+    account_ids: balanceStore.selectedAccount ? [balanceStore.selectedAccount] : [],
+    legal_entity_id: balanceStore.selectedEntity,
+    user_currency_code: balanceStore.selectedCurrency,
+    contr_agent_ids: balanceStore.selectedCounterparties,
+  }
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["balance_report", filterData],
+    queryFn: () => apiClient.invokeFunction({ method: "balance_report", data: filterData }),
+    select: (res) => res?.data?.data
+  })
+
   // Auto-expand first two levels on initial data load
   useEffect(() => {
-    if (!isInitialLoad) return
+    if (!isInitialLoad || !data) return
     const hasData =
-      balanceData.assets.length > 0 ||
-      balanceData.liabilities.length > 0 ||
-      balanceData.equity.length > 0
+      (data.assets && data.assets.length > 0) ||
+      (data.liabilities && data.liabilities.length > 0) ||
+      (data.equity && data.equity.length > 0)
 
     if (!hasData) return
 
     const firstLevelIds = new Set()
     const addFirstLevel = (items) => {
       items.forEach(item => {
-        if (item.details && item.details.length > 0) {
+        if (item.children && item.children.length > 0) {
           firstLevelIds.add(item.id)
-          item.details.forEach(child => {
-            if (child.details && child.details.length > 0) {
+          item.children.forEach(child => {
+            if (child.children && child.children.length > 0) {
               firstLevelIds.add(child.id)
             }
           })
@@ -48,13 +66,13 @@ export default observer(function BalancePage() {
       })
     }
 
-    addFirstLevel(balanceData.assets)
-    addFirstLevel(balanceData.liabilities)
-    addFirstLevel(balanceData.equity)
+    addFirstLevel(data.assets || [])
+    addFirstLevel(data.liabilities || [])
+    addFirstLevel(data.equity || [])
 
     setExpandedRows(firstLevelIds)
     setIsInitialLoad(false)
-  }, [balanceData, isInitialLoad])
+  }, [data, isInitialLoad])
 
   const toggleRow = (id) => {
     setExpandedRows(prev => {
@@ -64,13 +82,14 @@ export default observer(function BalancePage() {
     })
   }
 
-  const renderRow = (item, parentExpanded = true) => {
+  const renderRow = (item, level = 0, parentExpanded = true) => {
     if (!parentExpanded) return null
 
-    const hasChildren = item.details && item.details.length > 0
+    const children = item.children || item.details
+    const hasChildren = children && children.length > 0
     const isExpanded = expandedRows.has(item.id)
-    const indent = item.level * 24
-    const isTotalRow = item.level === 0
+    const indent = level * 24
+    const isTotalRow = level === 0
 
     return (
       <React.Fragment key={item.id}>
@@ -90,13 +109,13 @@ export default observer(function BalancePage() {
           </td>
           <td className={styles.td}>
             <span className={isTotalRow ? styles.boldNumber : ''}>
-              {(item.totalValue === 0 || item.totalValue == null)
+              {(item.value === 0 || item.value == null)
                 ? '–'
-                : formatNumber(formatTotalSumma(item.totalValue))}
+                : formatNumber(formatTotalSumma(item.value))}
             </span>
           </td>
         </tr>
-        {hasChildren && isExpanded && item.details.map(child => renderRow(child, true))}
+        {hasChildren && isExpanded && children.map(child => renderRow(child, level + 1, true))}
       </React.Fragment>
     )
   }
@@ -120,7 +139,6 @@ export default observer(function BalancePage() {
               value={balanceStore.selectedCurrency || GlobalCurrency.code}
               onChange={(value) => {
                 balanceStore.setSelectedCurrency(value)
-                balanceStore.fetchBalance()
               }}
               isClearable={false}
               withSearch={false}
@@ -156,9 +174,9 @@ export default observer(function BalancePage() {
                 </tr>
               </thead>
               <tbody className={styles.tbody}>
-                {balanceData.assets.map(row => renderRow(row))}
-                {balanceData.liabilities.map(row => renderRow(row))}
-                {balanceData.equity.map(row => renderRow(row))}
+                  {data?.assets?.map(row => renderRow(row))}
+                  {data?.liabilities?.map(row => renderRow(row))}
+                  {data?.equity?.map(row => renderRow(row))}
               </tbody>
             </table>
           )}

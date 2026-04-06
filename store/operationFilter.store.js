@@ -36,6 +36,39 @@ class OperationFilterStore {
 	accrualDateStart = ''
 	accrualDateEnd = ''
 	deals = []
+	//  my new filters fields
+	limit = 20
+	search = ''
+	tip = [
+		'Поступление',
+		'Выплата',
+		'Списание',
+		'Зачисление',
+		'Перемещение',
+		'Дебет',
+		'Кредит',
+		'Начисление',
+		'Отгрузка',
+	]
+	//  date payment filters
+	paymentConfirmed = true
+	paymentUnconfirmed = true
+	paymentStartDate = ''
+	paymentEndDate = ''
+
+	//  date accrual filters
+	accrualConfirmed = true
+	accrualUnconfirmed = true
+	accrualStartDate = ''
+	accrualEndDate = ''
+
+	legal_entites = []
+	counterparties = []
+	chart_of_accounts = []
+	deals = []
+	fromAmount = ''
+	toAmount = ''
+	paymentType = null
 
 	constructor() {
 		makeAutoObservable(this)

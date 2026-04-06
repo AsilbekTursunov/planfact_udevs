@@ -54,7 +54,7 @@ const getPresetRange = (key) => {
       return [start, end]
     }
     case 'year':
-      return [new Date(y, 0, 1), today]
+      return [new Date(y, 0, 1), `${y}-12-31`]
     default:
       return [null, null]
   }

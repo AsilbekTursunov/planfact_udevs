@@ -5,7 +5,7 @@ import { ChevronDown, MoreVertical, Maximize2 } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import styles from '../Header.module.scss'
 import { formatDateTime } from '../../../utils/formatDate'
-import { useMyAccountsBoard, useUcodeRequestQuery } from '../../../hooks/useDashboard'
+import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import { formatAmount, formatNumber, formatTotalSumma } from '../../../utils/helpers'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
 import { observer } from 'mobx-react-lite'
@@ -84,26 +84,14 @@ const TotalPrice = observer(() => {
         return () => { document.body.style.overflow = 'auto' }
     }, [isBalanceOpen])
 
-    const accountFilterData = useMemo(() => {
-        return {
-            viewMode: "legal_entities",
-            includeEmptyGroups: true,
-            includeUngrouped: true
-        }
-    }, [])
-
-    const { data: accountsData } = useMyAccountsBoard(accountFilterData)
-
-    console.log('myaccounts', myaccounts)
-
     const legalEntitiesData = useMemo(() => {
-        return (myaccounts?.data || [])?.map((item) => {
+        return myaccounts?.data?.map((item) => {
             return {
                 id: item?.legal_entity_id,
                 name: item?.legal_entity_name,
                 balance: item?.current_balance,
                 total_items: item?.items_count,
-                accounts: (item?.childs || [])?.map((child) => {
+                accounts: (item?.children || [])?.map((child) => {
                     return {
                         id: child?.guid,
                         name: child?.nazvanie,
@@ -114,7 +102,9 @@ const TotalPrice = observer(() => {
                 })
             }
         })
-    }, [accountsData])
+    }, [myaccounts])
+
+    console.log('legalEntitiesData', legalEntitiesData)
 
 
     const totalBalance = useMemo(() => {
@@ -127,16 +117,12 @@ const TotalPrice = observer(() => {
     ];
 
 
-
     const toggleExpandGroup = (id) => {
         setExpandedGroups(prev =>
             prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
         )
         setActiveGroupMenu(null)
     }
-
-
-
 
     return (
         <div ref={balanceRef} style={{ position: 'relative', zIndex: 10000 }}>
@@ -317,7 +303,7 @@ const TotalPrice = observer(() => {
                                                         </div>
                                                         {acc?.balance && (
                                                             <span className={styles.balanceAccountValue} style={{ fontSize: '14px', color: '#334155' }}>
-                                                                {acc?.balance} <span className={styles.balanceAccountCurrency} style={{ color: '#94a3b8' }}>{acc?.currency}</span>
+                                                                {formatAmount(acc?.balance)} <span className={styles.balanceAccountCurrency} style={{ color: '#94a3b8' }}>{acc?.currency?.toLocaleString('ru-RU')}</span>
                                                             </span>
                                                         )}
                                                     </div>

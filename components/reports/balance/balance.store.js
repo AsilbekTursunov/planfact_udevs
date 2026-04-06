@@ -4,11 +4,9 @@ import { legalEntitiesAPI } from '@/lib/api/ucode/legalEntities'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
 import moment from 'moment'
 
-const getDefaultDate = () => new Date().toISOString().split('T')[0]
-
 class BalanceStore {
   // ── Filter state ────────────────────────────────────────────────────────────
-  selectedDate = getDefaultDate()
+  selectedDate = '';
   selectedEntity = ''
   selectedCurrency = GlobalCurrency.code || 'UZS'
   selectedCounterparties = []
