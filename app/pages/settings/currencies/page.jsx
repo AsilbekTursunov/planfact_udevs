@@ -13,11 +13,7 @@ const CurrenciesPage = observer(() => {
       <div className="max-w-7xl mx-auto bg-gray-50">
         <h1 className="text-2xl font-semibold px-6 h-16 sticky top-0 z-10 bg-gray-50 flex items-center">
           Курсы валют по ЦБ (обновлено {moment(currentDate).format('DD.MM.YYYY')})
-        </h1>
-
-
-
-
+        </h1> 
         <div className="w-full px-6 pb-6 text-left border-collapse">
           <div className="bg-neutral-100 sticky  top-16 flex border-b border-gray-200">
             <div className="px-6 py-3 w-64 text-sm capitalize font-semibold text-gray-500 tracking-wider">
