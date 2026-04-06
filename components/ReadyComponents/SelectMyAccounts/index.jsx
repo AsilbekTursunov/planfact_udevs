@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
-import { formatAmount } from '../../../utils/helpers'
+import { formatNumber, formatTotalSumma } from '../../../utils/helpers'
 import { keepPreviousData } from '@tanstack/react-query'
 
 const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите счет", className, dropdownClassName, multi = true, type, selected, hasError, extraValue, returnValue }) => {
@@ -19,7 +19,7 @@ const SelectMyAccounts = ({ value, onChange, placeholder = "Выберите с�
   const mappedData = useMemo(() => {
     const data = (accountsData || []).map(item => ({
       value: item.guid,
-      label: type === "show" ? `${item?.nazvanie} [${item?.legal_entity_name}] ${formatAmount(item?.balans)} ${item?.currenies_kod}` : item.nazvanie
+      label: type === "show" ? `${item?.nazvanie} [${item?.legal_entity_name}] ${formatNumber(formatTotalSumma(item?.balans))} ${item?.currenies_kod}` : item.nazvanie
     }))
 
     if (selected) {

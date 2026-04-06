@@ -470,7 +470,7 @@ const OperationsPage = observer(() => {
 			{/* Main Content */}
 			<div className="w-full overflow-auto bg-neutral-50">
 				{/* Header */}
-				<div className="sticky h-16 px-4 flex items-center justify-between top-0 z-40 bg-neutral-50 ">
+				<div className="sticky h-16 px-4 flex items-center justify-between top-0 z-40 bg-white ">
 					<div className="flex items-center gap-4 ">
 						<h1 className="text-xl font-semibold">Операции</h1>
 						<button
