@@ -1,13 +1,6 @@
-"use client"
-
 import { Roboto } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar/Sidebar";
-import { Header } from "@/components/Header/Header";
-import { usePathname } from "next/navigation";
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
-import AppProvider from "../providers/AppProvider";
+import ClientLayout from "./ClientLayout";
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -15,29 +8,22 @@ const roboto = Roboto({
   variable: "--font-roboto",
 });
 
-export default function RootLayout({ children }) {
-  const pathname = usePathname()
-  const isLoginPage = pathname === '/pages/auth'
+export const metadata = {
+  title: "UFinance",
+  description: "UFinance",
+  icons: {
+    icon: '/assets/images/logo.svg',
+  },
+}
 
+export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={` ${roboto.className} antialiased bg-slate-50 text-slate-900`}
+        className={`${roboto.className} antialiased bg-slate-50 text-slate-900`}
       >
-        <QueryClientProvider client={queryClient}>
-          <AppProvider>
-            <div className="flex max-h-full overflow-hidden max-w-full">
-              {!isLoginPage && <Sidebar />}
-              <div className="flex flex-col flex-1 max-h-screen overflow-hidden">
-                {!isLoginPage && <Header />}
-                <main className={isLoginPage ? "" : "flex-1 overflow-hidden bg-white"}>
-                  {children}
-                </main>
-              </div>
-            </div>
-          </AppProvider>
-        </QueryClientProvider>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

@@ -4,7 +4,6 @@ import { useState, useCallback } from 'react'
 import { cn } from '@/app/lib/utils'
 import { useDeleteChartOfAccounts } from '@/hooks/useDashboard'
 import CreateChartOfAccountsModal from '@/components/directories/CreateChartOfAccountsModal/CreateChartOfAccountsModal'
-import EditChartOfAccountsModal from '@/components/directories/EditChartOfAccountsModal/EditChartOfAccountsModal'
 import { CategoryMenu } from '@/components/directories/CategoryMenu/CategoryMenu'
 import { DeleteCategoryConfirmModal } from '@/components/directories/DeleteCategoryConfirmModal/DeleteCategoryConfirmModal'
 import { showErrorNotification } from '@/lib/utils/notifications'
@@ -221,9 +220,9 @@ export default function TransactionCategoriesPage() {
 	const [closingCategories, setClosingCategories] = useState([])
 	const [selectedCategory, setSelectedCategory] = useState(null)
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 	const [categoryToEdit, setCategoryToEdit] = useState(null)
+	const [isEditMode, setIsEditMode] = useState(false)
 	const [categoryToDelete, setCategoryToDelete] = useState(null)
 	const [searchQuery, setSearchQuery] = useState('')
 
@@ -388,7 +387,8 @@ export default function TransactionCategoriesPage() {
 							onSelectCategory={setSelectedCategory}
 							onEditCategory={cat => {
 								setCategoryToEdit(cat)
-								setIsEditModalOpen(true)
+								setIsEditMode(true)
+								setIsCreateModalOpen(true)
 							}}
 							onDeleteCategory={cat => {
 								setCategoryToDelete(cat)
@@ -396,6 +396,7 @@ export default function TransactionCategoriesPage() {
 							}}
 							onAddChild={cat => {
 								setCategoryToEdit(cat)
+								setIsEditMode(false)
 								setIsCreateModalOpen(true)
 							}}
 							isLast={categoryIndex === categories.length - 1}
@@ -632,25 +633,17 @@ export default function TransactionCategoriesPage() {
 				</div>
 			</div>
 
-			{/* Create Modal */}
+			{/* Create / Edit Modal */}
 			<CreateChartOfAccountsModal
 				isOpen={isCreateModalOpen}
 				onClose={() => {
 					setIsCreateModalOpen(false)
 					setCategoryToEdit(null)
+					setIsEditMode(false)
 				}}
 				initialTab={activeTab}
-				parentCategory={categoryToEdit}
-			/>
-
-			{/* Edit Modal */}
-			<EditChartOfAccountsModal
-				isOpen={isEditModalOpen}
-				onClose={() => {
-					setIsEditModalOpen(false)
-					setCategoryToEdit(null)
-				}}
-				category={categoryToEdit}
+				parentCategory={!isEditMode ? categoryToEdit : null}
+				category={isEditMode ? categoryToEdit : null}
 			/>
 
 			{/* Delete Confirmation Modal */}

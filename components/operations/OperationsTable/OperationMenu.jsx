@@ -6,16 +6,8 @@ import styles from './OperationsTable.module.scss'
 import { Copy, CopyPlus, EllipsisVertical, Pencil, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
+  DropdownMenuContent, 
+  DropdownMenuItem,  
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
