@@ -11,7 +11,7 @@ import { AppLogo } from '../../constants/icons'
 import { IoSettingsOutline } from 'react-icons/io5'
 
 const navItems = [
-    { icon: ChartLine, label: 'Показатели', href: '/pages/indicators', hasPage: true },
+    // { icon: ChartLine, label: 'Показатели', href: '/pages/indicators', hasPage: true },
     { icon: RefreshCw, label: 'Операции', href: '/pages/operations', hasPage: true },
     { icon: UsersIcon, label: 'Контрагенты', href: '/pages/directories/counterparties', hasPage: true },
     { icon: DealIcon, label: 'Сделки', href: '/pages/deals', hasPage: true },
