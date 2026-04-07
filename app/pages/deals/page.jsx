@@ -89,8 +89,6 @@ export default observer(function DealsPage() {
     data: dealsFilters,
     querySetting: {
       select: (response) => response?.data?.data,
-      refetchOnMount: true,
-      refetchOnWindowFocus: false,
     }
   })
 
