@@ -1,12 +1,12 @@
 "use client"
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { FilterSidebar, FilterSection } from '@/components/directories/FilterSidebar/FilterSidebar'
 import SelectCounterParties from '@/components/ReadyComponents/SelectCounterParties'
 import MultiSelectStatiya from '@/components/ReadyComponents/MultiSelectStatiya'
 import { SearchBar } from '@/components/directories/SearchBar/SearchBar'
-import { useDeleteCounterparties, useDeleteCounterpartiesGroups, useCounterpartiesPlanFact } from '@/hooks/useDashboard'
+import { useDeleteCounterparties, useDeleteCounterpartiesGroups } from '@/hooks/useDashboard'
 import CreateCounterpartyModal from '@/components/directories/CreateCounterpartyModal/CreateCounterpartyModal'
 import EditCounterpartyGroupModal from '@/components/directories/EditCounterpartyGroupModal/EditCounterpartyGroupModal'
 import { CounterpartyMenu } from '@/components/directories/CounterpartyMenu/CounterpartyMenu'
@@ -14,27 +14,8 @@ import { GroupMenu } from '@/components/directories/GroupMenu/GroupMenu'
 import { DeleteCounterpartyConfirmModal } from '@/components/directories/DeleteCounterpartyConfirmModal/DeleteCounterpartyConfirmModal'
 import { DeleteGroupConfirmModal } from '@/components/directories/DeleteGroupConfirmModal/DeleteGroupConfirmModal'
 import { cn } from '@/app/lib/utils'
-import styles from './counterparties.module.scss'
-import { BsList } from 'react-icons/bs'
-import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
-import { LuListTree } from 'react-icons/lu'
-import { ExpendClose, ExpendOpen } from '@/constants/icons'
 import { formatDate } from '@/utils/formatDate'
-import Select from '@/components/common/Select'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
-
-const calculationOptions = [
-  { value: "Cashflow", label: 'Учет по денежному потоку' },
-  { value: "Cash", label: 'Учет кассовым методом' },
-  { value: "Calculation", label: 'Учет методом начисления' },
-]
-
-const tipOptions = [
-  { value: "Плательщик", label: 'Плательщик' },
-  { value: "Получатель", label: 'Получатель' },
-  { value: "Смешанный", label: 'Смешанный' },
-]
-
 import counterpartiesStore from '@/store/counterparties.store'
 import { observer } from 'mobx-react-lite'
 import MultiSelectZdelka from '../../../../components/ReadyComponents/MultiZdelka'
@@ -44,9 +25,20 @@ import { formatAmount } from '../../../../utils/helpers'
 import { ChevronDown } from 'lucide-react'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
+import { useUcodeRequestInfinite } from '../../../../hooks/useDashboard'
+import { BsList } from 'react-icons/bs'
+import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
+import { LuListTree } from 'react-icons/lu'
+import { ExpendClose, ExpendOpen } from '@/constants/icons'
+import InfiniteScroll from 'react-infinite-scroll-component'
+
+const calculationOptions = [
+  { value: "Cashflow", label: 'Учет по денежному потоку' },
+  { value: "Cash", label: 'Учет кассовым методом' },
+  { value: "Calculation", label: 'Учет методом начисления' },
+]
 
 const CounterpartiesPage = observer(() => {
-
   const router = useRouter()
   const queryClient = useQueryClient()
   const [isFilterOpen, setIsFilterOpen] = useState(true)
@@ -55,18 +47,11 @@ const CounterpartiesPage = observer(() => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedRows, setSelectedRows] = useState([])
   const [viewMode, setViewMode] = useState('list') // 'list' | 'nested' | 'groups'
-  const [tip, setTip] = useState('')
-
-  // Pagination state
-  const [page, setPage] = useState(1)
-  const [allCounterparties, setAllCounterparties] = useState([])
-  const [hasMore, setHasMore] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [totalFromAPI, setTotalFromAPI] = useState(0)
-  const contentRef = useRef(null)
-  const tableWrapperRef = useRef(null)
-  const isLoadingRef = useRef(false) // Prevent duplicate requests
-  const lastPageRef = useRef(1) // Track last loaded page
+  const [editingCounterparty, setEditingCounterparty] = useState(null)
+  const [deletingCounterparty, setDeletingCounterparty] = useState(null)
+  const [editingGroup, setEditingGroup] = useState(null)
+  const [deletingGroup, setDeletingGroup] = useState(null)
+  const [preselectedGroupId, setPreselectedGroupId] = useState(null)
 
   const filters = counterpartiesStore.filters
   const setFilters = (updater) => {
@@ -81,226 +66,68 @@ const CounterpartiesPage = observer(() => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery)
-    }, 500) // 500ms debounce
+    }, 500)
 
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  // Build filters object for API request
-  const filtersForAPI = useMemo(() => {
-    const apiFilters = {}
 
-    // Дебиторка filter
-    if (filters.debitorka && filters.debitorka.length > 0 && filters.debitorka.length < 3) {
-      apiFilters.debitorka = filters.debitorka
+
+  const filterData = useMemo(() => {
+    return {
+      limit: 15,
+      debitPaymentTypes: filters.debitPaymentTypes,
+      creditPaymentTypes: filters.creditPaymentTypes,
+      operationDateStart: filters.operationDateStart,
+      operationDateEnd: filters.operationDateEnd,
+      calculationMethod: filters.calculationMethod,
+      contrAgentId: filters.selectedCounterparties,
+      operationCategoryId: filters.selectedChartOfAccounts,
+      sellingDealId: filters.deals,
+      legalEntitiesId: filters.selectedLegalEntities,
+      searchString: viewMode === 'list' ? debouncedSearchQuery : '',
     }
+  }, [filters, debouncedSearchQuery, viewMode])
 
-    // Кредиторка filter
-    if (filters.kreditorka && filters.kreditorka.length > 0 && filters.kreditorka.length < 3) {
-      apiFilters.kreditorka = filters.kreditorka
-    }
+  // Fetch counterparties using infinite scroll API
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching,
+    isLoading: isLoadingCounterparties
+  } = useUcodeRequestInfinite({
+    method: 'get_counterparties',
+    data: filterData,
+    querySetting: {
+      select: response => response,
+      staleTime: 1000 * 60,
+    },
+  })
 
-    // Counterparties groups filter
-    if (filters.selectedGroups && filters.selectedGroups.length > 0) {
-      apiFilters.counterparties_group_id = filters.selectedGroups
-    }
+  const allCounterparties = useMemo(() => {
+    return infiniteData?.pages?.flatMap(page => page?.data?.data?.data || []) || []
+  }, [infiniteData])
 
-    // Selected counterparties filter - фильтруем по guid (массив GUID)
-    if (filters.selectedCounterparties && filters.selectedCounterparties.length > 0) {
-      apiFilters.guid = filters.selectedCounterparties
-    }
+  const totalCountData = useMemo(() => {
+    return infiniteData?.pages?.[0]?.data?.data?.pagination?.total || allCounterparties.length
+  }, [infiniteData, allCounterparties])
 
-    // Selected chart of accounts filter - фильтруем по chart_of_accounts_id
-    if (filters.selectedChartOfAccounts && filters.selectedChartOfAccounts.length > 0) {
-      apiFilters.chart_of_accounts_id = filters.selectedChartOfAccounts
-    }
-
-    if (filters.calculationMethod) {
-      apiFilters.calculationMethod = filters.calculationMethod
-    }
-
-    if (filters.deals && filters.deals.length > 0) {
-      apiFilters.sellingDealId = filters.deals
-    }
-
-    if (filters.selectedLegalEntities && filters.selectedLegalEntities.length > 0) {
-      apiFilters.legal_entities_ids = filters.selectedLegalEntities
-    }
-
-    return apiFilters
-  }, [filters])
-
-  // Fetch counterparties using new invoke_function API with pagination
-  const { data: counterpartiesData, isLoading: isLoadingCounterparties, isFetching } = useCounterpartiesPlanFact({
-    page: page,
-    limit: 50,
-    debitPaymentTypes: filters.debitPaymentTypes,
-    creditPaymentTypes: filters.creditPaymentTypes,
-    operationDateStart: filters.operationDateStart,
-    operationDateEnd: filters.operationDateEnd,
-    calculationMethod: filters.calculationMethod,
-    contrAgentId: filters.selectedCounterparties,
-    operationCategoryId: filters.selectedChartOfAccounts,
-    sellingDealId: filters.deals,
-    legalEntitiesId: filters.selectedLegalEntities,
-    searchString: viewMode === 'list' ? debouncedSearchQuery : '',
-  }, true) // Always enable the query
 
 
   const SummaryTotal = useMemo(() => {
-    if (!counterpartiesData?.data?.data?.data) return {}
-    return counterpartiesData.data.data.summary
-  }, [counterpartiesData])
-
-  const allCounterpartiesList = useMemo(() => {
-    if (!counterpartiesData?.data?.data?.data) return []
-    return counterpartiesData.data.data.data
-  }, [counterpartiesData])
-  console.log('allCounterpartiesList', allCounterpartiesList)
-
-
-  // Update counterparties when new data arrives
-  useEffect(() => {
-
-    // Skip if still fetching or no data
-    if (isFetching || !counterpartiesData?.data?.data?.data) {
-      return
-    }
-
-    const newItems = counterpartiesData.data.data.data
-    const total = counterpartiesData.data.data.total
-
-    // Update total from API
-    if (total !== undefined) {
-      setTotalFromAPI(total)
-    }
-
-    console.log('✅ New items received:', newItems.length, 'for page', page)
-    console.log('📊 Total from API:', total)
-
-    // Only update if we actually have new data
-    if (newItems.length === 0) {
-      console.log('⚠️ No new items, stopping pagination')
-      setHasMore(false)
-      setIsLoadingMore(false)
-      isLoadingRef.current = false
-      return
-    }
-
-    if (page === 1) {
-      // First page - replace all
-      console.log('🔄 First page - setting items')
-      setAllCounterparties(newItems)
-      // Reset refs for fresh start
-      lastPageRef.current = 1
-      isLoadingRef.current = false
-    } else {
-      // Subsequent pages - append
-      console.log('➕ Appending to existing list')
-      setAllCounterparties(prev => {
-        // If prev is empty but we're on page > 1, something went wrong - reset to page 1
-        if (prev.length === 0) {
-          console.log('⚠️ Empty list on page', page, '- resetting to page 1')
-          setPage(1)
-          return prev
-        }
-
-        const existingGuids = new Set(prev.map(item => item.guid))
-        const uniqueNewItems = newItems.filter(item => !existingGuids.has(item.guid))
-
-        console.log('  - Existing:', prev.length, 'New unique:', uniqueNewItems.length)
-
-        // Only append if we have new unique items
-        if (uniqueNewItems.length > 0) {
-          return [...prev, ...uniqueNewItems]
-        }
-        return prev
-      })
-    }
-
-    // Check if there are more items
-    if (newItems.length < 50) {
-      console.log('📊 Last page reached (received', newItems.length, '< 50)')
-      setHasMore(false)
-    } else {
-      console.log('📊 More pages available')
-    }
-
-    // Reset loading flags with a small delay to prevent immediate re-trigger
-    console.log('✓ Resetting loading flags')
-    setIsLoadingMore(false)
-
-    // Add delay before allowing next load to prevent double-trigger on fast scroll
-    setTimeout(() => {
-      isLoadingRef.current = false
-    }, 300)
-  }, [counterpartiesData, page, isFetching])
+    return infiniteData?.pages?.[0]?.data?.data?.summary || {}
+  }, [infiniteData])
 
   // Reset state when component mounts (e.g., when returning from detail page)
   useEffect(() => {
-    console.log('🔄 CounterpartiesPage mounted - resetting state')
-    setPage(1)
-    setAllCounterparties([])
-    setHasMore(true)
-    setIsLoadingMore(false)
-    setTotalFromAPI(0)
-    isLoadingRef.current = false
-    lastPageRef.current = 1
-
+    console.log('🔄 CounterpartiesPage mounted - resetting queries')
     // Invalidate queries to force fresh data fetch
-    queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
+    queryClient.invalidateQueries({ queryKey: ['get_counterparties'] })
   }, [queryClient]) // Empty dependency array - runs only on mount
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setPage(1)
-    setAllCounterparties([])
-    setHasMore(true)
-    setIsLoadingMore(false)
-    setTotalFromAPI(0)
-    isLoadingRef.current = false
-    lastPageRef.current = 1
-  }, [filtersForAPI, debouncedSearchQuery])
-
-  // Infinite scroll handler
-  useEffect(() => {
-    const tableWrapper = tableWrapperRef.current
-    if (!tableWrapper) return
-
-    let scrollTimeout = null
-
-    const handleScroll = () => {
-      // Clear previous timeout
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
-      }
-
-      // Debounce scroll events
-      scrollTimeout = setTimeout(() => {
-        const { scrollTop, scrollHeight, clientHeight } = tableWrapper
-        const distanceFromBottom = scrollHeight - scrollTop - clientHeight
-
-        // Load more when scrolled near bottom (with 10px threshold)
-        if (distanceFromBottom < 10 && hasMore && !isLoadingRef.current) {
-          const nextPage = lastPageRef.current + 1
-          console.log('🚀 TRIGGERING LOAD - Next page:', nextPage)
-          isLoadingRef.current = true
-          lastPageRef.current = nextPage
-          setIsLoadingMore(true)
-          setPage(nextPage)
-        }
-      }, 100) // 100ms debounce
-    }
-
-    tableWrapper.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout)
-      }
-      tableWrapper.removeEventListener('scroll', handleScroll)
-    }
-  }, [hasMore])
+  const [expandedGroups, setExpandedGroups] = useState(new Set())
 
 
   // Fetch counterparties groups using new invoke_function API
@@ -339,7 +166,7 @@ const CounterpartiesPage = observer(() => {
 
   // Convert counterparties API data to component format with grouping
   const { groupedCounterparties, flatCounterparties } = useMemo(() => {
-    const items = allCounterpartiesList.map((item, index) => ({
+    const items = allCounterparties.map((item, index) => ({
       id: item.guid || `counterparty-${index}`,
       guid: item.guid,
       nazvanie: item.nazvanie || 'Без названия',
@@ -409,11 +236,11 @@ const CounterpartiesPage = observer(() => {
       groupedCounterparties: groupedData,
       flatCounterparties: items
     }
-  }, [allCounterpartiesList])
+  }, [allCounterparties])
 
   // Create array of only groups for 'groups' view mode
   const counterpartiesGroups = useMemo(() => {
-    return groupedCounterparties.map((group, index) => ({
+    return groupedCounterparties.map((group) => ({
       id: group.id,
       guid: group.guid,
       nazvanie: group.nazvanie,
@@ -423,15 +250,6 @@ const CounterpartiesPage = observer(() => {
       items: []
     }))
   }, [groupedCounterparties])
-
-
-
-  const [expandedGroups, setExpandedGroups] = useState(new Set())
-  const [editingCounterparty, setEditingCounterparty] = useState(null)
-  const [deletingCounterparty, setDeletingCounterparty] = useState(null)
-  const [editingGroup, setEditingGroup] = useState(null)
-  const [deletingGroup, setDeletingGroup] = useState(null)
-  const [preselectedGroupId, setPreselectedGroupId] = useState(null)
   const deleteMutation = useDeleteCounterparties()
   const deleteGroupMutation = useDeleteCounterpartiesGroups()
 
@@ -524,15 +342,6 @@ const CounterpartiesPage = observer(() => {
             {[{ label: 'Денежная', value: 'Cash' }, { label: 'Неденежная', value: 'NonCash' }, { label: 'Без кредиторки', value: 'WithoutCash' }].map(item => (
               <OperationCheckbox
                 key={`kred-${item.value}`}
-                checked={filters.creditPaymentTypes?.includes(item.value)}
-                onChange={() => {
-                  setFilters(prev => ({
-                    ...prev,
-                    creditPaymentTypes: prev.creditPaymentTypes?.includes(item.value)
-                      ? prev.creditPaymentTypes?.filter(v => v !== item.value)
-                      : [...prev.creditPaymentTypes, item.value]
-                  }))
-                }}
                 label={item.label}
               />
             ))}
@@ -540,21 +349,20 @@ const CounterpartiesPage = observer(() => {
         </FilterSection>
 
       </FilterSidebar>
-      {isFetching && !isLoadingCounterparties && <ScreenLoader className={'left-[250px]'} />}
 
-      <div className={` px-3 pb-40 w-full h-full overflow-auto flex-1 bg-white `}>
-        <div className="sticky top-0 z-10 bg-white flex items-center justify-center h-16">
-          <div className='flex gap-5 flex-1'>
+
+      <div id="scrollableDiv" className={` px-3 pb-40 w-full h-full overflow-auto flex-1 bg-white `}>
+        <div className="sticky top-0 z-40 bg-white flex items-center justify-between h-16">
+          <div className='flex items-center gap-4 '>
             <h1 className="text-xl font-semibold">Контрагенты</h1>
             <button
-              className="primary-btn"
               onClick={() => setIsCreateModalOpen(true)}
+              className="primary-btn"
             >
               Создать
             </button>
           </div>
           <div className="flex items-center gap-2">
-            {/* new filter */}
             <div className='w-[250px]'>
               <SingleSelect
                 data={calculationOptions}
@@ -585,230 +393,238 @@ const CounterpartiesPage = observer(() => {
                 <LuListTree size={18} />
               </button>
             </div>
-            <div className={styles.searchContainer}>
-              <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder={
-                  viewMode === 'list'
-                    ? "Поиск контрагентов"
-                    : viewMode === 'nested'
-                      ? "Поиск по группам"
-                      : "Поиск групп"
-                }
-              />
-            </div>
+          </div>
+          <div className=" flex items-center justify-self-center gap-2">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <button className=" bg-white rounded-md border  flex items-center justify-center p-2">
+              <BsList size={20} className='text-neutral-500' />
+            </button>
           </div>
         </div>
 
-        {/* Table Container */}
-        <div ref={tableWrapperRef} className="flex-1  w-full relative">
-          <table className="w-full relative text-xs text-left">
-            <thead className="sticky top-16 bg-neutral-100/95 z-10 text-neutral-500 font-medium">
-              <tr className='border-b'>
-                <th className="p-2 border-b border-neutral-200 w-10">
-                  <OperationCheckbox checked={allSelected()} onChange={toggleSelectAll} />
-                </th>
-                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">
-                  <button className="flex items-center hover:text-neutral-700">
-                    {viewMode === 'nested' ? 'Группа контрагентов' : 'Контрагент'}
-                    <ChevronDown className='size-4' />
-                  </button>
-                </th>
-                {/* <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Тип</th> */}
-                {viewMode !== 'nested' && (
-                  <th className="p-3 border-b border-neutral-200 whitespace-nowrap">Группа</th>
-                )}
-                {filters.calculationMethod !== 'Cashflow' && (
-                  <th className="p-3 border-b border-neutral-200 whitespace-nowrap">ИНН</th>
-                )}
-                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Операций</th>
-                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Дебиторка, {GlobalCurrency.name}</th>
-                <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Кредиторка, {GlobalCurrency.name}</th>
-                {filters.calculationMethod === 'Cashflow' ? (
-                  <>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Поступления, {GlobalCurrency.name}</th>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Выплаты, {GlobalCurrency.name}</th>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Разница, {GlobalCurrency.name}</th>
-                  </>
-                ) : (
-                  <>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Доходы, {GlobalCurrency.name}</th>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Расходы, {GlobalCurrency.name}</th>
-                    <th className="p-2 border-b border-neutral-200 whitespace-nowrap">Прибыль, {GlobalCurrency.name}</th>
-                  </>
-                )}
-                <th className="  border-neutral-200 "></th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoadingCounterparties && page === 1 ? (
-                <tr>
-                  <td colSpan={15} className="p-8 text-center text-neutral-500">
-                    <div className="flex items-center justify-center gap-2">
+        {/* Column Headers */}
+        <div className='flex h-12 sticky top-16 z-30 text-sm gap-1 font-medium text-neutral-500 items-center bg-neutral-100 border-b border-neutral-200'>
+          <div className='w-10 flex items-center justify-center'>
+            <OperationCheckbox checked={allSelected()} onChange={toggleSelectAll} />
+          </div>
+          <div className='flex-1 min-w-[200px] flex px-3 items-center justify-start cursor-pointer hover:text-neutral-700'>
+            {viewMode === 'nested' ? 'Группа контрагентов' : 'Контрагент'}
+            <ChevronDown className='size-4' />
+          </div>
+          {viewMode !== 'nested' && (
+            <div className='w-40 flex px-2 items-center justify-start'>Группа</div>
+          )}
+          {filters.calculationMethod !== 'Cashflow' && (
+            <div className='w-32 flex px-2 items-center justify-start'>ИНН</div>
+          )}
+          <div className='w-24 flex px-2 items-center justify-center'>Операций</div>
+          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>Дебит., {GlobalCurrency.name}</div>
+          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>Кредит., {GlobalCurrency.name}</div>
+          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
+            {filters.calculationMethod === 'Cashflow' ? 'Поступ. ' : 'Доходы '}
+          </div>
+          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
+            {filters.calculationMethod === 'Cashflow' ? 'Выплаты ' : 'Расходы '}
+          </div>
+          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
+            {filters.calculationMethod === 'Cashflow' ? 'Разница ' : 'Прибыль '}
+          </div>
+          <div className='w-10 flex px-2 items-center justify-center'>&nbsp;</div>
+        </div>
 
-                    </div>
-                  </td>
-                </tr>
-              ) : (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).length === 0 && !isLoadingCounterparties ? (
-                <tr>
-                  <td colSpan={15} className="p-8 text-center text-neutral-500">
+        {allCounterparties.length === 0 && !isLoadingCounterparties && (
+          <div className="py-20 text-center text-neutral-500 bg-white">
+            Нет данных
+          </div>
+        )}
 
-                    </td>
-                  </tr>
-                ) : (
-                    (viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item, itemIndex) => {
-                    if (item.isGroup) {
-                      const isExpanded = expandedGroups.has(item.guid)
-                      const styleDifference = item.difference > 0 ? 'text-emerald-500 font-medium' : item.difference < 0 ? 'text-red-500 font-medium' : 'text-neutral-900 font-medium'
-                      const styleProfit = item.profit > 0 ? 'text-emerald-500 font-medium' : item.profit < 0 ? 'text-red-500 font-medium' : 'text-neutral-900 font-medium'
-                      return (
-                        <React.Fragment key={item.id}>
-                          <tr className="hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white" onClick={() => toggleGroup(item.guid)}>
-                            <td className="p-2" onClick={(e) => e.stopPropagation()}>
-                              <OperationCheckbox checked={isRowSelected(item.id)} onChange={(e) => toggleRowSelection(item.id)} />
-                            </td>
-                            <td className="p-2">
-                              <div className="flex items-center gap-2 font-medium">
-                                <button className="text-neutral-400 hover:text-neutral-600 outline-none flex items-center justify-center" onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid) }}>
-                                  {isExpanded ? <ExpendClose /> : <ExpendOpen />}
-                                </button>
-                                <span className="text-slate-900">{item.nazvanie} ({item.items?.length || 0})</span>
-                              </div>
-                            </td>
-                            {/* <td className="p-2 text-neutral-900 font-medium">{item.rawData?.type_name || item.rawData?.tip_kontragenta || 'Смешанный'}</td> */}
-                            {filters.calculationMethod !== 'Cashflow' && (
-                              <td className="p-2 text-neutral-500">–</td>
-                            )}
-                            <td className="p-2 text-neutral-900 font-medium">{item.operationsCount > 0 ? item.operationsCount.toLocaleString('ru-RU') : '0'}</td>
-                            <td className="p-2 text-neutral-900 font-medium">{item.debitorka > 0 ? item.debitorka.toLocaleString('ru-RU') : '0'}</td>
-                            <td className="p-2 text-neutral-900 font-medium">{item.kreditorka > 0 ? item.kreditorka.toLocaleString('ru-RU') : '0'}</td>
-                            <td className="p-2 text-neutral-900 font-medium">{filters.calculationMethod === 'Cashflow' ? (item?.income > 0 ? item?.income.toLocaleString('ru-RU') : '0') : (item?.income?.toLocaleString('ru-RU') || '0')}</td>
-                            <td className="p-2 text-neutral-900 font-medium">{filters.calculationMethod === 'Cashflow' ? (item.expenses > 0 ? item.expenses.toLocaleString('ru-RU') : '0') : (item?.expenses?.toLocaleString('ru-RU') || '0')}</td>
-                            <td className={cn("p-2", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
-                              {filters.calculationMethod === 'Cashflow'
-                                ? (item.difference === 0 ? '0' : item.difference.toLocaleString('ru-RU'))
-                                : (item.profit === 0 ? '0' : item.profit.toLocaleString('ru-RU'))}
-                            </td>
-                            <td className="p-2 group" onClick={(e) => e.stopPropagation()}>
-                              <GroupMenu
-                                group={item}
-                                onEdit={(group) => setEditingGroup(group)}
-                                onDelete={(group) => setDeletingGroup(group)}
-                                onCreateCounterparty={(group) => {
-                                  setPreselectedGroupId(group.guid)
-                                  setIsCreateModalOpen(true)
-                                }}
-                              />
-                            </td>
-                          </tr>
-                          {isExpanded && item.items?.length === 0 && (
-                            <tr className="bg-neutral-50/50">
-                              <td colSpan={15} className="p-4 text-center text-neutral-400 text-xs text-medium">Нет контрагентов</td>
-                            </tr>
-                          )}
-                          {isExpanded && item.items?.map((counterparty, childIndex) => {
-                            const styleDifference = counterparty.difference > 0 ? 'text-emerald-500' : counterparty.difference < 0 ? 'text-red-500' : 'text-neutral-500'
-                            const styleProfit = counterparty.profit > 0 ? 'text-emerald-500' : counterparty.profit < 0 ? 'text-red-500' : 'text-neutral-500'
-                            return (
-                              <tr
-                                key={counterparty.id}
-                                className={cn(
-                                  "hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white",
-                                  isRowSelected(counterparty.id) && "bg-blue-50/50"
-                                )}
-                                onClick={() => router.push(`/pages/directories/counterparties/${counterparty.guid}`)}
-                              >
-                                <td className="p-2 pl-8" onClick={(e) => e.stopPropagation()}>
-                                  <OperationCheckbox checked={isRowSelected(counterparty.id)} onChange={(e) => toggleRowSelection(counterparty.id)} />
-                                </td>
-                                <td className="p-2 text-neutral-600">
-                                  <div className="flex flex-col">
-                                    <span className="text-slate-900 font-medium">{counterparty.nazvanie}</span>
-                                    {counterparty.komentariy && <span className="text-neutral-400 text-xs mt-0.5">{counterparty.komentariy}</span>}
-                                  </div>
-                                </td>
-                                {/* <td className="p-2 text-neutral-500">{counterparty.rawData?.type_name || counterparty.rawData?.tip_kontragenta || '–'}</td> */}
-                                {filters.calculationMethod !== 'Cashflow' && (
-                                  <td className="p-2 text-neutral-500">{counterparty.inn || '–'}</td>
-                                )}
-                                <td className="p-2 text-neutral-500">0</td>
-                                <td className="p-2 text-neutral-500">{counterparty.debitorka > 0 ? counterparty.debitorka.toLocaleString('ru-RU') : '0'}</td>
-                                <td className="p-2 text-neutral-500">{counterparty.kreditorka > 0 ? counterparty.kreditorka.toLocaleString('ru-RU') : '0'}</td>
-                                <td className="p-2 text-neutral-500">{counterparty.income > 0 ? counterparty.income.toLocaleString('ru-RU') : '0'}</td>
-                                <td className="p-2 text-neutral-500">{counterparty.expenses > 0 ? counterparty.expenses.toLocaleString('ru-RU') : '0'}</td>
-                                <td className={cn("p-2", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
-                                  {filters.calculationMethod === 'Cashflow'
-                                    ? (counterparty.difference === 0 ? '0' : counterparty.difference.toLocaleString('ru-RU'))
-                                    : (counterparty.profit === 0 ? '0' : counterparty.profit.toLocaleString('ru-RU'))}
-                                </td>
-                                <td className="p-2 group" onClick={(e) => e.stopPropagation()}>
-                                  <CounterpartyMenu
-                                    counterparty={counterparty}
-                                    onEdit={(cp) => setEditingCounterparty(cp)}
-                                    onDelete={(cp) => setDeletingCounterparty(cp)}
-                                  />
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </React.Fragment>
-                      )
-                    } else {
-                      const styleDifference = item.difference > 0 ? 'text-emerald-500' : item.difference < 0 ? 'text-red-500' : 'text-neutral-500'
-                      const styleProfit = item.profit > 0 ? 'text-emerald-500' : item.profit < 0 ? 'text-red-500' : 'text-neutral-500'
-                      return (
-                        <tr
-                          key={item.id}
-                          className={cn(
-                            "hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white",
-                            isRowSelected(item.id) && "bg-blue-50/50"
-                          )}
-                          onClick={() => router.push(`/pages/directories/counterparties/${item.guid}`)}
+        <InfiniteScroll
+          dataLength={allCounterparties.length}
+          next={fetchNextPage}
+          hasMore={hasNextPage}
+          scrollableTarget="scrollableDiv"
+        >
+          <div className="flex flex-col">
+            {(viewMode === 'groups' ? counterpartiesGroups : viewMode === 'nested' ? groupedCounterparties : flatCounterparties).map((item) => {
+              if (item.isGroup) {
+                const isExpanded = expandedGroups.has(item.guid)
+                const styleDifference = item.difference > 0 ? 'text-emerald-500 font-medium' : item.difference < 0 ? 'text-red-500 font-medium' : 'text-neutral-900 font-medium'
+                const styleProfit = item.profit > 0 ? 'text-emerald-500 font-medium' : item.profit < 0 ? 'text-red-500 font-medium' : 'text-neutral-900 font-medium'
+
+                return (
+                  <React.Fragment key={item.id}>
+                    <div
+                      className="flex min-h-[48px] items-center gap-1 hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white text-sm"
+                      onClick={() => toggleGroup(item.guid)}
+                    >
+                      <div className="w-10 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        <OperationCheckbox checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} />
+                      </div>
+                      <div className="flex-1 min-w-[200px] flex px-3 items-center gap-2 font-medium">
+                        <button
+                          className="text-neutral-400 hover:text-neutral-600 outline-none flex items-center justify-center p-1"
+                          onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid) }}
                         >
-                          <td className="p-2" onClick={(e) => e.stopPropagation()}>
-                            <OperationCheckbox checked={isRowSelected(item.id)} onChange={(e) => toggleRowSelection(item.id)} />
-                          </td>
-                          <td className="p-2">
-                            <div className="flex flex-col">
-                              <span className="text-slate-900 font-medium">{item.nazvanie}</span>
-                              {item.komentariy && <span className="text-neutral-400 text-xs mt-0.5">{item.komentariy}</span>}
-                            </div>
-                          </td>
-                          {/* <td className="p-2 text-neutral-500">{item.rawData?.type_name || item.rawData?.tip_kontragenta || 'Плательщик'}</td> */}
-                          <td className="p-2 text-neutral-500">{item.gruppa || '–'}</td>
-                          {filters.calculationMethod !== 'Cashflow' && (
-                            <td className="p-2 text-neutral-500">{item.inn || '–'}</td>
+                          {isExpanded ? <ExpendClose /> : <ExpendOpen />}
+                        </button>
+                        <span className="text-slate-900 truncate">{item.nazvanie} ({item.items?.length || 0})</span>
+                      </div>
+                      {filters.calculationMethod !== 'Cashflow' && (
+                        <div className="w-32 flex px-2 items-center text-neutral-500">–</div>
+                      )}
+                      <div className="w-24 flex px-2 items-center justify-center text-neutral-900 font-medium">
+                        {item.operationsCount > 0 ? item.operationsCount.toLocaleString('ru-RU') : '0'}
+                      </div>
+                      <div className="w-32 flex px-2 items-center justify-end text-neutral-900 font-medium">
+                        {item.debitorka > 0 ? item.debitorka.toLocaleString('ru-RU') : '0'}
+                      </div>
+                      <div className="w-32 flex px-2 items-center justify-end text-neutral-900 font-medium">
+                        {item.kreditorka > 0 ? item.kreditorka.toLocaleString('ru-RU') : '0'}
+                      </div>
+                      <div className="w-32 flex px-2 items-center justify-end text-neutral-900 font-medium">
+                        {filters.calculationMethod === 'Cashflow'
+                          ? (item?.income > 0 ? item?.income.toLocaleString('ru-RU') : '0')
+                          : (item?.income?.toLocaleString('ru-RU') || '0')}
+                      </div>
+                      <div className="w-32 flex px-2 items-center justify-end text-neutral-900 font-medium">
+                        {filters.calculationMethod === 'Cashflow'
+                          ? (item.expenses > 0 ? item.expenses.toLocaleString('ru-RU') : '0')
+                          : (item?.expenses?.toLocaleString('ru-RU') || '0')}
+                      </div>
+                      <div className={cn("w-32 flex px-2 items-center justify-end", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
+                        {filters.calculationMethod === 'Cashflow'
+                          ? (item.difference === 0 ? '0' : item.difference.toLocaleString('ru-RU'))
+                          : (item.profit === 0 ? '0' : item.profit.toLocaleString('ru-RU'))}
+                      </div>
+                      <div className="w-10 flex px-2 items-center justify-center group" onClick={(e) => e.stopPropagation()}>
+                        <GroupMenu
+                          group={item}
+                          onEdit={(group) => setEditingGroup(group)}
+                          onDelete={(group) => setDeletingGroup(group)}
+                          onCreateCounterparty={(group) => {
+                            setPreselectedGroupId(group.guid)
+                            setIsCreateModalOpen(true)
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {isExpanded && item.items?.length === 0 && (
+                      <div className="bg-neutral-50/50 p-4 text-center text-neutral-400 text-xs font-medium border-b border-neutral-100">
+                        Нет контрагентов
+                      </div>
+                    )}
+
+                    {isExpanded && item.items?.map((counterparty) => {
+                      const styleDifference = counterparty.difference > 0 ? 'text-emerald-500' : counterparty.difference < 0 ? 'text-red-500' : 'text-neutral-500'
+                      const styleProfit = counterparty.profit > 0 ? 'text-emerald-500' : counterparty.profit < 0 ? 'text-red-500' : 'text-neutral-500'
+
+                      return (
+                        <div
+                          key={counterparty.id}
+                          className={cn(
+                            "flex min-h-[48px] items-center gap-1 hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white text-sm",
+                            isRowSelected(counterparty.id) && "bg-blue-50/50"
                           )}
-                          <td className="p-2 text-neutral-500">0</td>
-                          <td className="p-2 text-neutral-500">{item.debitorka > 0 ? item.debitorka.toLocaleString('ru-RU') : '0'}</td>
-                          <td className="p-2 text-neutral-500">{item.kreditorka > 0 ? item.kreditorka.toLocaleString('ru-RU') : '0'}</td>
-                          <td className="p-2 text-neutral-500">{item.income > 0 ? item.income.toLocaleString('ru-RU') : '0'}</td>
-                          <td className="p-2 text-neutral-500">{item.expenses > 0 ? item.expenses.toLocaleString('ru-RU') : '0'}</td>
-                          <td className={cn("p-2", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
+                          onClick={() => router.push(`/pages/directories/counterparties/${counterparty.guid}`)}
+                        >
+                          <div className="w-10 flex items-center justify-center pl-4" onClick={(e) => e.stopPropagation()}>
+                            <OperationCheckbox checked={isRowSelected(counterparty.id)} onChange={() => toggleRowSelection(counterparty.id)} />
+                          </div>
+                          <div className="flex-1 min-w-[200px] flex flex-col px-3 pl-8 justify-center">
+                            <span className="text-slate-900 font-medium truncate">{counterparty.nazvanie}</span>
+                            {counterparty.komentariy && <span className="text-neutral-400 text-mini truncate">{counterparty.komentariy}</span>}
+                          </div>
+                          {filters.calculationMethod !== 'Cashflow' && (
+                            <div className="w-32 flex px-2 items-center text-neutral-500 truncate">{counterparty.inn || '–'}</div>
+                          )}
+                          <div className="w-24 flex px-2 items-center justify-center text-neutral-500">0</div>
+                          <div className="w-32 flex px-2 items-center justify-end text-neutral-500">
+                            {counterparty.debitorka > 0 ? counterparty.debitorka.toLocaleString('ru-RU') : '0'}
+                          </div>
+                          <div className="w-32 flex px-2 items-center justify-end text-neutral-500">
+                            {counterparty.kreditorka > 0 ? counterparty.kreditorka.toLocaleString('ru-RU') : '0'}
+                          </div>
+                          <div className="w-32 flex px-2 items-center justify-end text-neutral-500">
+                            {counterparty.income > 0 ? counterparty.income.toLocaleString('ru-RU') : '0'}
+                          </div>
+                          <div className="w-32 flex px-2 items-center justify-end text-neutral-500">
+                            {counterparty.expenses > 0 ? counterparty.expenses.toLocaleString('ru-RU') : '0'}
+                          </div>
+                          <div className={cn("w-32 flex px-2 items-center justify-end", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
                             {filters.calculationMethod === 'Cashflow'
-                              ? (item.difference === 0 ? '0' : item.difference.toLocaleString('ru-RU'))
-                              : (item.profit === 0 ? '0' : item.profit.toLocaleString('ru-RU'))}
-                          </td>
-                          <td className="p-2 group" onClick={(e) => e.stopPropagation()}>
+                              ? (counterparty.difference === 0 ? '0' : counterparty.difference.toLocaleString('ru-RU'))
+                              : (counterparty.profit === 0 ? '0' : counterparty.profit.toLocaleString('ru-RU'))}
+                          </div>
+                          <div className="w-10 flex px-2 items-center justify-center group" onClick={(e) => e.stopPropagation()}>
                             <CounterpartyMenu
-                              counterparty={item}
+                              counterparty={counterparty}
                               onEdit={(cp) => setEditingCounterparty(cp)}
                               onDelete={(cp) => setDeletingCounterparty(cp)}
                             />
-                          </td>
-                        </tr>
+                          </div>
+                        </div>
                       )
-                    }
-                  })
-              )}
+                    })}
+                  </React.Fragment>
+                )
+              } else {
+                const styleDifference = item.difference > 0 ? 'text-emerald-500' : item.difference < 0 ? 'text-red-500' : 'text-neutral-500'
+                const styleProfit = item.profit > 0 ? 'text-emerald-500' : item.profit < 0 ? 'text-red-500' : 'text-neutral-500'
 
-            </tbody>
-          </table>
-        </div>
-
-
-
+                return (
+                  <div
+                    key={item.id}
+                    className={cn(
+                      "flex min-h-[48px] items-center gap-1 hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white text-sm",
+                      isRowSelected(item.id) && "bg-blue-50/50"
+                    )}
+                    onClick={() => router.push(`/pages/directories/counterparties/${item.guid}`)}
+                  >
+                    <div className="w-10 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                      <OperationCheckbox checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} />
+                    </div>
+                    <div className="flex-1 min-w-[200px] flex flex-col px-3 justify-center">
+                      <span className="text-slate-900 font-medium truncate">{item.nazvanie}</span>
+                      {item.komentariy && <span className="text-neutral-400 text-mini truncate">{item.komentariy}</span>}
+                    </div>
+                    {viewMode !== 'nested' && (
+                      <div className="w-40 flex px-2 items-center text-neutral-500 truncate">{item.gruppa || '–'}</div>
+                    )}
+                    {filters.calculationMethod !== 'Cashflow' && (
+                      <div className="w-32 flex px-2 items-center text-neutral-500 truncate">{item.inn || '–'}</div>
+                    )}
+                    <div className="w-24 flex px-2 items-center justify-center text-neutral-500">0</div>
+                    <div className="w-32 flex px-2 items-center justify-end text-neutral-500">
+                      {item.debitorka > 0 ? item.debitorka.toLocaleString('ru-RU') : '0'}
+                    </div>
+                    <div className="w-32 flex px-2 items-center justify-end text-neutral-500">
+                      {item.kreditorka > 0 ? item.kreditorka.toLocaleString('ru-RU') : '0'}
+                    </div>
+                    <div className="w-32 flex px-2 items-center justify-end text-neutral-500">
+                      {item.income > 0 ? item.income.toLocaleString('ru-RU') : '0'}
+                    </div>
+                    <div className="w-32 flex px-2 items-center justify-end text-neutral-500">
+                      {item.expenses > 0 ? item.expenses.toLocaleString('ru-RU') : '0'}
+                    </div>
+                    <div className={cn("w-32 flex px-2 items-center justify-end", filters.calculationMethod === 'Cashflow' ? styleDifference : styleProfit)}>
+                      {filters.calculationMethod === 'Cashflow'
+                        ? (item.difference === 0 ? '0' : item.difference.toLocaleString('ru-RU'))
+                        : (item.profit === 0 ? '0' : item.profit.toLocaleString('ru-RU'))}
+                    </div>
+                    <div className="w-10 flex px-2 items-center justify-center group" onClick={(e) => e.stopPropagation()}>
+                      <CounterpartyMenu
+                        counterparty={item}
+                        onEdit={(cp) => setEditingCounterparty(cp)}
+                        onDelete={(cp) => setDeletingCounterparty(cp)}
+                      />
+                    </div>
+                  </div>
+                )
+              }
+            })}
+          </div>
+        </InfiniteScroll>
 
         {/* Footer */}
         <div className={cn(
@@ -817,7 +633,7 @@ const CounterpartiesPage = observer(() => {
         )}>
           <div className="text-sm text-slate-900">
             <span className="font-semibold text-slate-900 whitespace-nowrap">
-              {totalFromAPI} {totalFromAPI === 1 ? 'контрагент' : totalFromAPI < 5 ? 'контрагента' : 'контрагентов'}
+              {totalCountData} {totalCountData === 1 ? 'контрагент' : totalCountData < 5 ? 'контрагента' : 'контрагентов'}
             </span>
           </div>
 
@@ -881,6 +697,9 @@ const CounterpartiesPage = observer(() => {
         </div>
       </div>
 
+      {isLoadingCounterparties && allCounterparties.length === 0 && <ScreenLoader className={'left-[250px]'} />}
+      {(isFetchingNextPage || isFetching) && <ScreenLoader className={'left-[250px]'} />}
+
       {/* Unified Create/Edit Modal */}
       <CreateCounterpartyModal
         isOpen={isCreateModalOpen || !!editingCounterparty}
@@ -889,8 +708,7 @@ const CounterpartiesPage = observer(() => {
           setEditingCounterparty(null)
           setPreselectedGroupId(null)
           // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
-          queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
+          queryClient.invalidateQueries({ queryKey: ['get_counterparties'] })
         }}
         preselectedGroupId={preselectedGroupId}
         counterpartyData={editingCounterparty}
@@ -900,8 +718,7 @@ const CounterpartiesPage = observer(() => {
         onClose={() => {
           setEditingGroup(null)
           // Invalidate queries to refresh data
-          queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
-          queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
+          queryClient.invalidateQueries({ queryKey: ['get_counterparties'] })
         }}
         group={editingGroup}
       />
@@ -916,16 +733,8 @@ const CounterpartiesPage = observer(() => {
               // Reset search to show all groups after deletion
               setSearchQuery('')
               setDebouncedSearchQuery('')
-              // Reset local state
-              setPage(1)
-              setAllCounterparties([])
-              setHasMore(true)
-              setTotalFromAPI(0)
               // Invalidate queries to refresh data
-              queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsV2'] })
-              queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
-              queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
-              queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
+              queryClient.invalidateQueries({ queryKey: ['get_counterparties'] })
             } catch (error) {
               console.error('Error deleting group:', error)
             }
@@ -947,15 +756,8 @@ const CounterpartiesPage = observer(() => {
               // Reset search to show all counterparties after deletion
               setSearchQuery('')
               setDebouncedSearchQuery('')
-              // Reset local state
-              setPage(1)
-              setAllCounterparties([])
-              setHasMore(true)
-              setTotalFromAPI(0)
               // Invalidate queries to refresh data
-              queryClient.invalidateQueries({ queryKey: ['counterpartiesV2'] })
-              queryClient.invalidateQueries({ queryKey: ['counterpartiesPlanFact'] })
-              queryClient.invalidateQueries({ queryKey: ['counterpartiesGroupsPlanFact'] })
+              queryClient.invalidateQueries({ queryKey: ['get_counterparties'] })
             } catch (error) {
               console.error('Error deleting counterparty:', error)
             }

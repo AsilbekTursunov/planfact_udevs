@@ -6,6 +6,7 @@ import RangeMonthPicker from "../../shared/RangeMonthPicker"
 import SingleSelect from "../../shared/Selects/SingleSelect"
 import SingleZdelka from "../../ReadyComponents/SingleZdelka"
 import SelectMyAccounts from "../../ReadyComponents/SelectMyAccounts"
+import moment from 'moment/moment'
 
 const IndicatorsNavbar = () => {
     const [displayMode, setDisplayMode] = useState('monthly')
@@ -28,8 +29,12 @@ const IndicatorsNavbar = () => {
     const hasFilters = selectedAccount || selectedDeal || displayMode !== 'monthly'
 
     return (
-        <div className="flex items-center justify-between bg-white h-14 px-4 border-b border-neutral-200">
-            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2">
+        <div className="flex items-center justify-between bg-white h-18 px-4 border-b border-neutral-200">
+            <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-2">
+                <div>
+                    <h1 className='text-2xl font-semibold whitespace-nowrap overflow-hidden text-ellipsis'>Моя компания</h1>
+                    <p className='text-xs text-gray-400 whitespace-nowrap capitalize'>{moment(new Date()).format('DD MMMM YYYY dddd')}</p>
+                </div>
                 <div className="w-[180px] shrink-0">
                     <RangeMonthPicker className="h-9 px-3" format="MMM, 'YY" />
                 </div>
@@ -39,6 +44,8 @@ const IndicatorsNavbar = () => {
                         data={displayOptions}
                         value={displayMode}
                         onChange={setDisplayMode}
+                        isClearable={false}
+                        withSearch={false}
                         placeholder="Отображение"
                         className="bg-neutral-50/50"
                     />

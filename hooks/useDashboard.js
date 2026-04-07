@@ -1299,10 +1299,9 @@ export const useUcodeRequestQuery = ({ queryKey, method, data, skip = false, que
 				error.details?.description || error.message || 'Ошибка при выполнении запроса',
 			)
 		},
-		...querySetting,
 		refetchOnMount: 'always',
 		staleTime: 0,
-		refetchOnWindowFocus: false,
+		...querySetting,
 	})
 }
 
@@ -1311,22 +1310,27 @@ export const useUcodeRequestQuery = ({ queryKey, method, data, skip = false, que
  */
 export const useUcodeRequestInfinite = ({ method, data, skip = false, querySetting = {} }) => {
   return useInfiniteQuery({
-    queryKey: [method, data],
-    queryFn: ({ pageParam = 1 }) => ucodeRequest({ method, data: { ...data, page: pageParam } }),
-    getNextPageParam: (lastPage) => {
-      console.log('lastPage', lastPage)
-      const pagination = lastPage?.data?.data?.pagination || lastPage?.data?.pagination;
-      if (!pagination) return undefined;
-      return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
-    },
-    enabled: !skip,
-    onError: (error) => {
-      console.error('useUcodeRequestInfinite Error:', error)
-      showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
-    },
-    placeholderData: (prev) => prev,
-    ...querySetting,
-  })
+		queryKey: [method, data],
+		queryFn: ({ pageParam = 1 }) => ucodeRequest({ method, data: { ...data, page: pageParam } }),
+		getNextPageParam: lastPage => {
+			const pagination = lastPage?.data?.data?.pagination || {
+				page: lastPage?.data?.data?.page,
+				totalPages: lastPage?.data?.data?.total,
+			}
+
+			if (!pagination) return undefined
+			return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined
+		},
+		enabled: !skip,
+		onError: error => {
+			console.error('useUcodeRequestInfinite Error:', error)
+			showErrorNotification(
+				error.details?.description || error.message || 'Ошибка при выполнении запроса',
+			)
+		},
+		placeholderData: prev => prev,
+		...querySetting,
+	})
 }
 
 
@@ -1344,15 +1348,15 @@ export const useUcodeDefaultApiMutation = ({ mutationKey = '' }) => {
 
 export const useUcodeDefaultApiQuery = ({ queryKey = '', urlMethod, urlParams, data, querySetting = {} }) => {
   return useQuery({
-    queryKey: [queryKey, data],
-    queryFn: () => defaultUcodeApiRequest({ urlMethod, urlParams, data }),
-    onError: (error) => {
-      console.error('useUcodeDefaultApiQuery Error:', error)
-    },
-    ...querySetting,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  })
+		queryKey: [queryKey, data],
+		queryFn: () => defaultUcodeApiRequest({ urlMethod, urlParams, data }),
+		onError: error => {
+			console.error('useUcodeDefaultApiQuery Error:', error)
+		},
+		refetchOnMount: true,
+		refetchOnWindowFocus: false,
+		...querySetting,
+	})
 }
 
 
