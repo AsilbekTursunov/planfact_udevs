@@ -23,6 +23,17 @@ const MultiSelect = ({
     const dropdownRef = useRef(null)
     const [portalPosition, setPortalPosition] = useState({ top: 0, left: 0, width: 0 })
 
+    const inputRef = useRef(null)
+
+    useEffect(() => {
+        if (open && withSearch && inputRef.current) {
+            const timer = setTimeout(() => {
+                inputRef.current.focus()
+            }, 0)
+            return () => clearTimeout(timer)
+        }
+    }, [open, withSearch])
+
     useEffect(() => {
         if (open && buttonRef.current) {
             const updatePosition = () => {
@@ -145,6 +156,7 @@ const MultiSelect = ({
                             <div className='p-2 border-b border-gray-100 flex items-center gap-2 relative'>
                                 <Search size={16} className='absolute left-4 text-neutral-400' />
                                 <input
+                                    ref={inputRef}
                                     type='text'
                                     className='w-full h-9 border border-primary/40 rounded-md pl-8 pr-2 py-1.5 text-sm outline-none placeholder:text-neutral-400'
                                     placeholder='Поиск по списку'

@@ -92,6 +92,9 @@
            margin: 1px;
           padding: 10px;
           height: 100%; 
+          &:hover {
+              background-color: #B6B6B6;
+            }
           &.rmdp-today {
             span {
               background-color: #f3f4f6;

@@ -90,7 +90,7 @@ const TableRow = observer(({
       case 'Начисление':
         return !op.payment_accrual && 'text-primary'
       case 'Отгрузка':
-        return !op.payment_shipment && 'text-primary'
+        return op.payment_shipment && 'text-primary'
       case 'Перемещение':
         return !op.payment_confirmed && 'text-primary'
       default:
@@ -158,7 +158,7 @@ const TableRow = observer(({
             ) : (op.tip === "Поступление" || op.tip === "Выплата") ? (
               <span className="truncate w-full text-sm">{op.my_account_name}</span>
             ) : (op?.tip === "Начисление" || op?.tip === "Отгрузка") ? (
-              <span className="truncate w-full text-sm text-neutral-500 font-normal">[{op.legal_entity_name}]</span>
+                  <span className={cn("truncate w-full text-sm text-neutral-500 font-normal", textPrimary)}>[{op.legal_entity_name}]</span>
             ) : null}
           </div>
         </div>
