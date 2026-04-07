@@ -71,7 +71,7 @@ const OperationsPage = observer(() => {
 		deals
 	} = operationFilterStore
 
-	const LIMIT = 15
+	const LIMIT = 10
 
 	// Destructure scalar booleans directly so each one is a reactive useMemo dependency
 	const paymentConfirmed = operationFilterStore.dateFilters.podtverzhdena
@@ -173,9 +173,7 @@ const OperationsPage = observer(() => {
 
 
 
-	const paginationData = useMemo(() => {
-		return infiniteData?.pages?.[0]?.data?.data?.pagination
-	}, [infiniteData])
+
 
 	// paginationData
 	// {
@@ -206,10 +204,6 @@ const OperationsPage = observer(() => {
 			setSelectedOperations(allOperations.map(op => op.id))
 		}
 	}
-
-	// fetchNextPage is called by InfiniteScroll component directly
-
-	// InfiniteScroll ni olib tashlang, sentinelRef qo'shing
 
 
 
@@ -484,30 +478,37 @@ const OperationsPage = observer(() => {
 							onChange={toggleSelectAll}
 						/>
 					</div>
-					<div className='w-32 flex px-3 items-center justify-start '>
-						Дата
-					</div>
-					<div className='w-40 flex px-2 items-center justify-start '>
-						Счет
-					</div>
-					<div className='w-14  flex px-2 items-center justify-center '>
-						Тип
-					</div>
-					<div className='w-52 flex px-2 items-center justify-start '>
-						Контрагент
-					</div>
-					<div className='flex-1  text-start  px-2 items-center justify-start '>
-						Статья
-					</div>
-					<div className='flex-1 flex px-2 items-center justify-center '>
-						Сделка
-					</div>
-					<div className='w-40 flex px-2 items-center justify-end '>
-						Сумма
-					</div>
-					<div className='w-8 flex px-2 items-center justify-center'>
-						&nbsp;
-					</div>
+					{isAllSelected && selectedOperations.length > 0 && <div className="flex items-center gap-2">
+						<p>{selectedOperations.length}</p>
+						<button className="primary-btn">Удалить</button>
+						<button className="primary-btn">Экспорт</button>
+					</div>}
+					{!isAllSelected && <>
+						<div className='w-32 flex px-3 items-center justify-start '>
+							Дата
+						</div>
+						<div className='w-40 flex px-2 items-center justify-start '>
+							Счет
+						</div>
+						<div className='w-14  flex px-2 items-center justify-center '>
+							Тип
+						</div>
+						<div className='w-52 flex px-2 items-center justify-start '>
+							Контрагент
+						</div>
+						<div className='flex-1  text-start  px-2 items-center justify-start '>
+							Статья
+						</div>
+						<div className='flex-1 flex px-2 items-center justify-center '>
+							Сделка
+						</div>
+						<div className='w-40 flex px-2 items-center justify-end '>
+							Сумма
+						</div>
+						<div className='w-8 flex px-2 items-center justify-center'>
+							&nbsp;
+						</div>
+					</>}
 				</div>
 				{allOperations.length === 0 && !isLoadingOperations &&
 					<div className="py-20 text-center text-neutral-500 bg-white">
@@ -515,8 +516,8 @@ const OperationsPage = observer(() => {
 					</div>
 				}
 				<InfiniteScroll
-					dataLength={paginationData?.total || 0}
-					hasMore={hasNextPage} 
+					dataLength={allOperations.length}
+					hasMore={hasNextPage}
 					next={fetchNextPage}
 					scrollableTarget="scrollableDiv"
 				>

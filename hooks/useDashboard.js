@@ -1312,14 +1312,32 @@ export const useUcodeRequestInfinite = ({ method, data, skip = false, querySetti
   return useInfiniteQuery({
 		queryKey: [method, data],
 		queryFn: ({ pageParam = 1 }) => ucodeRequest({ method, data: { ...data, page: pageParam } }),
-		getNextPageParam: lastPage => {
-			const pagination = lastPage?.data?.data?.pagination || {
-				page: lastPage?.data?.data?.page,
-				totalPages: lastPage?.data?.data?.total,
+    getNextPageParam: lastPage => {
+			// Support both nested data.data.pagination and flat data.pagination structures
+			const pagination = lastPage?.data?.data?.pagination || lastPage?.data?.pagination || {
+				page: lastPage?.data?.data?.page || lastPage?.data?.page,
+				totalPages: lastPage?.data?.data?.totalPages || 
+						   lastPage?.data?.data?.total_pages || 
+						   lastPage?.data?.data?.page_count ||
+						   lastPage?.data?.totalPages ||
+						   lastPage?.data?.total_pages
 			}
 
-			if (!pagination) return undefined
-			return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined
+			if (!pagination || pagination.page === undefined) return undefined
+
+			const currentPage = Number(pagination.page)
+			let totalPages = Number(pagination.totalPages || pagination.total_pages || pagination.page_count)
+
+			// Fallback: Calculate totalPages from total and limit if totalPages is missing but total is present
+			if (isNaN(totalPages) || totalPages === 0) {
+				const total = Number(lastPage?.data?.data?.total || lastPage?.data?.total || 0)
+				const limit = Number(pagination.limit || 15) // Default limit fallback
+				if (total > 0) {
+					totalPages = Math.ceil(total / limit)
+				}
+			}
+
+			return currentPage < totalPages ? currentPage + 1 : undefined
 		},
 		enabled: !skip,
 		onError: error => {
