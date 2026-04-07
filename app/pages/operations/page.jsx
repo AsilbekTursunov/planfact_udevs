@@ -516,10 +516,7 @@ const OperationsPage = observer(() => {
 				}
 				<InfiniteScroll
 					dataLength={paginationData?.total || 0}
-					hasMore={hasNextPage}
-					loader={<div className='bg-white py-5 flex items-center justify-center'>
-						<Loader2 size={20} className='text-primary animate-spin' />
-					</div>}
+					hasMore={hasNextPage} 
 					next={fetchNextPage}
 					scrollableTarget="scrollableDiv"
 				>

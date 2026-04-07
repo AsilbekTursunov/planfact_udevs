@@ -334,6 +334,8 @@ const PaymentForm = observer(({
   const watchAmount = watch('amount')
   const watchSalesDeal = watch('salesDeal')
   const watchPaymentDate = watch('paymentDate')
+
+  console.log(!!watchSalesDeal, 'watchSalesDeal')
   const watchAccrualDate = watch('accrualDate')
   const watchConfirmPayment = watch('confirmPayment')
   const watchConfirmAccrual = watch('confirmAccrual')
@@ -429,6 +431,9 @@ const PaymentForm = observer(({
                       onChange={(val) => {
                         field.onChange(val)
                         setValue('confirmPayment', !isFuture(val))
+                        if (watchSalesDeal) {
+                          setValue('accrualDate', val)
+                        }
                       }}
                       placeholder="Выберите дату"
                       format='YYYY-MM-DD'
@@ -535,7 +540,7 @@ const PaymentForm = observer(({
           <div className="flex flex-col gap-5 mt-4">
 
             {!showDate && (
-              <div className={cn("flex items-center gap-4")}>
+              <div className={cn("flex items-center gap-4", watchSalesDeal && "opacity-50")}>
                 <label className="w-[150px] text-xss!">Дата начисления</label>
                 <div className="flex-1 flex gap-2 max-w-[600px]">
                   <Controller
@@ -543,8 +548,10 @@ const PaymentForm = observer(({
                     control={control}
                     render={({ field }) => (
                       <CustomDatePicker
-                        value={field.value}
+                        value={watchSalesDeal ? watchPaymentDate : field.value}
+                        disabled={!!watchSalesDeal}
                         onChange={(val) => {
+                          if (watchSalesDeal) return
                           field.onChange(val)
                           setValue('confirmAccrual', !isFuture(val))
                         }}
@@ -559,10 +566,11 @@ const PaymentForm = observer(({
                     control={control}
                     render={({ field }) => (
                       <OperationCheckbox
-                        checked={field.value}
+                        checked={watchSalesDeal ? false : field.value}
+                        disabled={!!watchSalesDeal}
                         label="Подтвердить начисление"
                         onChange={(e) => {
-                          if (isFuture(watchAccrualDate)) return
+                          if (watchSalesDeal || isFuture(watchAccrualDate)) return
                           field.onChange(e.target.checked)
                         }}
                       />

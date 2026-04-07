@@ -283,8 +283,7 @@ const IncomeForm = observer(({
       purpose: '',
       currency: null,
     }
-  }, [initialData])
-  //  isNew, chart_of_accounts_id, preselectedCounterparty, defaultDealGuid
+  }, [initialData, isNew, chart_of_accounts_id, preselectedCounterparty, defaultDealGuid])
 
   const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues
@@ -430,6 +429,9 @@ const IncomeForm = observer(({
                       onChange={(val) => {
                         field.onChange(val)
                         setValue('confirmPayment', !isFuture(val))
+                        if (!!watchSalesDeal) {
+                          setValue('accrualDate', val)
+                        }
                       }}
                       placeholder="Выберите дату"
                       format='YYYY-MM-DD'
@@ -545,7 +547,7 @@ const IncomeForm = observer(({
                     control={control}
                     render={({ field }) => (
                       <CustomDatePicker
-                        value={watchSalesDeal ? null : field.value}
+                        value={watchSalesDeal ? watchPaymentDate : field.value}
                         disabled={!!watchSalesDeal}
                         onChange={(val) => {
                           if (watchSalesDeal) return

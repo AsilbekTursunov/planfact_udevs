@@ -1290,18 +1290,20 @@ export const useUcodeRequestMutation = ({ mutationSetting = {} } = {}) => {
  */
 export const useUcodeRequestQuery = ({ queryKey, method, data, skip = false, querySetting = {} }) => {
   return useQuery({
-    queryKey: [queryKey || method, data],
-    queryFn: () => ucodeRequest({ method, data }),
-    enabled: !skip,
-    onError: (error) => {
-      console.error('useUcodeRequestQuery Error:', error)
-      showErrorNotification(error.details?.description || error.message || 'Ошибка при выполнении запроса')
-    },
-    ...querySetting,
-    refetchOnMount: 'always',
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-  })
+		queryKey: [queryKey || method, data],
+		queryFn: () => ucodeRequest({ method, data }),
+		enabled: !skip,
+		onError: error => {
+			console.error('useUcodeRequestQuery Error:', error)
+			showErrorNotification(
+				error.details?.description || error.message || 'Ошибка при выполнении запроса',
+			)
+		},
+		...querySetting,
+		refetchOnMount: 'always',
+		staleTime: 0,
+		refetchOnWindowFocus: false,
+	})
 }
 
 /**
