@@ -70,7 +70,7 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
     setShowModal(true)
   }
 
-  const handleDeleteShipment = (shipment) => { 
+  const handleDeleteShipment = (shipment) => {
     setShipmentToDelete(shipment)
     setShowDeleteModal(true)
   }
@@ -103,10 +103,10 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
 
   if (shipmentsList?.length === 0) {
     return (
-      <EmptyState 
-        title="Добавьте отгрузки в сделку" 
-        subtitle="Учитывайте отгрузки товара/услуг, чтобы контролировать выполнение обязательств по сделке" 
-        onAdd={onAdd} 
+      <EmptyState
+        title="Добавьте отгрузки в сделку"
+        subtitle="Учитывайте отгрузки товара/услуг, чтобы контролировать выполнение обязательств по сделке"
+        onAdd={onAdd}
       />
     )
   }
@@ -126,9 +126,9 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
             </tr>
           </thead>
           <tbody className='w-full'>
-            {shipmentsList?.map((item) => { 
+            {shipmentsList?.map((item) => {
               return (
-                <tr key={item?.guid} className="bg-white hover:bg-gray-50 text-xs font-normal group text-neutral-900 cursor-pointer border-b group border-gray-200">
+                <tr key={item?.guid} className={`bg-white  hover:bg-gray-50 text-xs font-normal group  cursor-pointer border-b group border-gray-200 ${item?.planned_shipment ? 'text-primary' : 'text-neutral-900'}`}>
                   <td className="px-4 py-3 text-left">{item.operationDate}</td>
                   <td className="px-4 py-3 text-left w-[50px]">{item?.legal_entity_name || 'Юрлицо'}</td>
                   <td className="px-4 py-3 text-left">{item.counterparty}</td>
