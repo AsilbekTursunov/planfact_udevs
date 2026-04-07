@@ -75,7 +75,7 @@ const CounterpartiesPage = observer(() => {
 
   const filterData = useMemo(() => {
     return {
-      limit: 15,
+      limit: 50,
       debitPaymentTypes: filters.debitPaymentTypes,
       creditPaymentTypes: filters.creditPaymentTypes,
       operationDateStart: filters.operationDateStart,

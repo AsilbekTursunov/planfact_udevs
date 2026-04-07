@@ -71,7 +71,7 @@ const OperationsPage = observer(() => {
 		deals
 	} = operationFilterStore
 
-	const LIMIT = 10
+	const LIMIT = 50
 
 	// Destructure scalar booleans directly so each one is a reactive useMemo dependency
 	const paymentConfirmed = operationFilterStore.dateFilters.podtverzhdena
