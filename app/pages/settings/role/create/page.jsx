@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
+import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import Input from '@/components/shared/Input'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
@@ -21,12 +22,12 @@ const PERMISSIONS_DATA = [
       { id: 'delivery', label: 'Поставка' },
     ],
   },
-  { id: 'deals', label: 'Сделки', hasSubmenu: false, allowedActions: ['edit'] },
+  { id: 'deals', label: 'Сделки', hasSubmenu: false, allowedActions: ['read', 'add', 'edit', 'delete'] },
   {
     id: 'reports',
     label: 'Отчёты',
     hasSubmenu: true,
-    allowedActions: ['read'],
+    allowedActions: ['read', 'add', 'edit', 'delete'],
     children: [
       { id: 'cashflow', label: 'Движение денег (ДДС)' },
       { id: 'pnl', label: 'Прибыли и убытки (ОПУ)' },
@@ -37,7 +38,7 @@ const PERMISSIONS_DATA = [
     id: 'directories',
     label: 'Справочники',
     hasSubmenu: true,
-    allowedActions: ['add'],
+    allowedActions: ['read', 'add', 'edit', 'delete'],
     children: [
       { id: 'counterparties', label: 'Контрагенты' },
       { id: 'categories', label: 'Учётные статьи' },
@@ -51,7 +52,7 @@ const PERMISSIONS_DATA = [
     id: 'settings',
     label: 'Настройки',
     hasSubmenu: true,
-    allowedActions: ['edit'],
+    allowedActions: ['read', 'add', 'edit', 'delete'],
     children: [
       { id: 'general', label: 'Общие настройки' },
       { id: 'users', label: 'Пользователи' },
@@ -63,33 +64,39 @@ const PERMISSIONS_DATA = [
 
 const CreateRole = () => {
   const router = useRouter()
-  const [roleName, setRoleName] = useState('')
-  const [permissions, setPermissions] = useState({})
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+    defaultValues: {
+      roleName: '',
+      permissions: {}
+    }
+  })
+
+  // Watch permissions to update checkbox UI
+  const permissions = watch('permissions') || {}
 
   const handleCheckboxChange = (id, action) => {
-    setPermissions((prev) => ({
-      ...prev,
-      [`${id}_${action}`]: !prev[`${id}_${action}`],
-    }))
+    const key = `permissions.${id}_${action}`
+    setValue(key, !permissions[`${id}_${action}`])
   }
 
   const handleParentCheckboxChange = (parent, action) => {
+    const key = `permissions.${parent.id}_${action}`
     const newValue = !permissions[`${parent.id}_${action}`]
-    const updates = { [`${parent.id}_${action}`]: newValue }
+
+    setValue(key, newValue)
 
     if (parent.children) {
       parent.children.forEach((child) => {
-        updates[`${child.id}_${action}`] = newValue
+        setValue(`permissions.${child.id}_${action}`, newValue)
       })
     }
-
-    setPermissions((prev) => ({
-      ...prev,
-      ...updates,
-    }))
   }
 
-  const renderRow = (item, isChild = false) => {
+  const onSubmit = (data) => {
+    console.log('Submit', data)
+  }
+
+  const renderRow = (item, isChild = false, parent = null) => {
     const id = item.id
     const actions = ['read', 'add', 'edit', 'delete']
     const isActionAllowed = (action) => {
@@ -97,21 +104,31 @@ const CreateRole = () => {
       return item.allowedActions?.includes(action)
     }
 
+    const isActionDisabled = (action) => {
+      if (!isChild) return false
+      if (!parent) return false
+      // Child is disabled if parent column is not checked
+      return !permissions[`${parent.id}_${action}`]
+    }
+
     return (
       <tr key={id} className={cn('bg-white', isChild ? '' : 'font-medium')}>
-        <td className={cn('px-4 py-3 text-[13px] text-[#344054] border-b border-[#f2f4f7]', isChild ? 'pl-10' : '')}>
+        <td className={cn('px-4 py-3 text-sm text-[#344054] border-b border-[#f2f4f7]', isChild ? 'pl-10' : '')}>
           {!isChild ? item.label : ''}
         </td>
-        <td className="px-4 py-3 text-[13px] text-[#344054] border-b border-[#f2f4f7]">
+        <td className="px-4 py-3 text-sm text-[#344054] border-b border-[#f2f4f7]">
           {isChild ? item.label : ''}
         </td>
         {actions.map((action) => (
-          <td key={action} className="px-4 py-3 text-[13px] text-[#344054] border-b border-[#f2f4f7] text-center w-[100px]">
+          <td key={action} className="px-4 py-3 text-sm text-[#344054] border-b border-[#f2f4f7] text-center w-[100px]">
             {isActionAllowed(action) && (
               <div className="flex justify-center items-center">
                 <OperationCheckbox
+                  disabled={isActionDisabled(action)}
                   checked={!!permissions[`${id}_${action}`]}
                   onChange={() => {
+                    if (isActionDisabled(action)) return
+
                     if (item.children) {
                       handleParentCheckboxChange(item, action)
                     } else {
@@ -128,23 +145,28 @@ const CreateRole = () => {
   }
 
   return (
-    <div className="p-[30px] bg-white h-full flex flex-col">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className=" bg-white w-full h-full flex flex-col overflow-auto"
+    >
       {/* Header Section */}
-      <div className="flex items-center gap-[80px] mb-[30px]">
-        <h1 className="text-[18px] font-semibold text-[#1a1a1a] m-0">Должность</h1>
+      <h1 className="text-[18px] p-4 font-semibold text-[#1a1a1a] m-0 sticky top-0 z-10 bg-white">Добавить новую должность</h1>
+      <div className="flex flex-col gap-2 mb-[30px] p-4">
+        <h1 className="text-sm  text-[#1a1a1a] m-0">Название должности</h1>
         <div className="w-[320px]">
           <Input
-            placeholder="Введите email"
-            value={roleName}
-            onChange={(e) => setRoleName(e.target.value)}
+            placeholder="Введите название"
+            hasError={!!errors.roleName}
+            {...register('roleName', { required: true })}
           />
+          {errors.roleName && <span className="text-xs text-red-500">Это поле обязательно</span>}
         </div>
       </div>
 
       {/* Permissions Table — Scrollable Table Wrapper */}
-      <div className="border border-[#f2f4f7] rounded-[8px] overflow-hidden mb-[30px]">
-        <table className="w-full border-collapse">
-          <thead className="bg-[#f9fafb]">
+      <div className=" rounded-[8px] mx-4 mb-[30px]">
+        <table className="w-fit border-collapse">
+          <thead className="bg-gray-ucode-50">
             <tr>
               <th className="px-4 py-3 text-left text-[11px] font-semibold capitalize text-[#344054] border-b border-[#f2f4f7]">Меню</th>
               <th className="px-4 py-3 text-left text-[11px] font-semibold capitalize text-[#344054] border-b border-[#f2f4f7]">Подменю</th>
@@ -158,29 +180,28 @@ const CreateRole = () => {
             {PERMISSIONS_DATA.map((item) => (
               <React.Fragment key={item.id}>
                 {renderRow(item)}
-                {item.children?.map((child) => renderRow(child, true))}
+                {item.children?.map((child) => renderRow(child, true, item))}
               </React.Fragment>
             ))}
           </tbody>
         </table>
+        <div className="flex  gap-[12px] mt-auto pt-[20px]">
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={() => router.back()}
+          >
+            Отмена
+          </button>
+          <button
+            type="submit"
+            className="primary-btn"
+          >
+            Добавить
+          </button>
+        </div>
       </div>
-
-      {/* Footer Actions */}
-      <div className="flex justify-end gap-[12px] mt-auto pt-[20px]">
-        <button
-          className="px-[24px] py-[10px] rounded-[8px] bg-white border border-[#d0d5dd] text-[#344054] text-[14px] font-semibold cursor-pointer transition-all duration-200 hover:bg-[#f9fafb]"
-          onClick={() => router.back()}
-        >
-          Отмена
-        </button>
-        <button
-          className="px-[24px] py-[10px] rounded-[8px] bg-[#155eef] border border-[#155eef] text-white text-[14px] font-semibold cursor-pointer transition-all duration-200 hover:bg-[#124bab]"
-          onClick={() => console.log('Submit', { roleName, permissions })}
-        >
-          Добавить
-        </button>
-      </div>
-    </div>
+    </form>
   )
 }
 

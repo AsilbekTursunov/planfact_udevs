@@ -131,15 +131,15 @@ const TableRow = observer(({
         )}
 
         {/* Date */}
-        <div className={cn('w-32 flex px-3 py-1 items-center justify-start ', isActive && styles.activeRow)}>
+        <div className={cn('w-32 flex  py-1 items-center justify-start ', isActive && styles.activeRow)}>
           <div className={cn(textPrimary, 'w-full')}>
             {op.operationParts?.length > 0 ? (
-              <div className={"flex items-center gap-1 relative"} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
-                <span className="absolute left-[-20px]"> {open ? <ExpendClose /> : <ExpendOpen />}</span>
-                <span className="text-sm">{op?.operationDate}</span>
+              <div className={"flex items-center gap-1 px-1 relative"} onClick={(event) => { event.stopPropagation(); setOpen(!open) }}>
+                <span className=""> {open ? <ExpendClose /> : <ExpendOpen />}</span>
+                <span className="text-sm flex-1">{op?.operationDate}</span>
               </div>
             ) : (
-              <div className='flex flex-col items-start leading-tight'>
+                <div className='flex flex-col px-3 items-start leading-tight'>
                 <span className='text-sm'>{op?.operationDate}</span>
                 {isDifferentDate && <span className="text-sm text-neutral-400">{op?.accrualDate}</span>}
               </div>
@@ -275,7 +275,7 @@ const TableRow = observer(({
           }}
         >
           {/* Empty Space for Checkbox + padding for index */}
-          <div className="w-10" />
+          <div className={!toggleOperation ? "w-24" : "w-36"} />
 
           {/* Date Part */}
           <div className="w-32 flex px-2 py-1 items-center justify-start  pl-4">
@@ -283,7 +283,7 @@ const TableRow = observer(({
           </div>
 
           {/* Empty Account (Part inherits parent account) */}
-          <div className="w-52 " />
+          <div className="w-15 " />
 
           {/* Type Icon Part */}
           <div className="w-14 flex px-1 items-center justify-center ">

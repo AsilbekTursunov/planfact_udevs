@@ -5,8 +5,7 @@ import CustomCalendar from '../../shared/Calendar'
 import { formatDate } from '../../../utils/formatDate'
 import { CgClose } from 'react-icons/cg'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu'
-import moment from 'moment/moment'
-import Input from '../../shared/Input'
+import moment from 'moment/moment' 
 
 const getPresetRange = (key) => {
 
@@ -40,13 +39,33 @@ const getPresetRange = (key) => {
     case 'month':
       return [new Date(y, m, 1), today]
     case 'prev_quarter': {
-      const qStart = new Date(y, Math.floor(m / 3) * 3 - 3, 1)
-      const qEnd = new Date(y, Math.floor(m / 3) * 3 - 1, 0)
-      return [qStart, qEnd]
+      // Seasonal: Winter(11,0,1), Spring(2,3,4), Summer(5,6,7), Autumn(8,9,10)
+      let qStartMonth;
+      let qYear = y;
+      if (m === 11 || m === 0 || m === 1) { // Winter
+        qStartMonth = 11;
+        if (m < 2) qYear -= 1;
+      } else if (m >= 2 && m <= 4) qStartMonth = 2; // Spring
+      else if (m >= 5 && m <= 7) qStartMonth = 5; // Summer
+      else qStartMonth = 8; // Autumn
+
+      const start = new Date(qYear, qStartMonth - 3, 1)
+      const end = new Date(qYear, qStartMonth, 0)
+      return [start, end]
     }
     case 'quarter': {
-      const qStart = new Date(y, Math.floor(m / 3) * 3, 1)
-      return [qStart, today]
+      let qStartMonth;
+      let qYear = y;
+      if (m === 11 || m === 0 || m === 1) { // Winter
+        qStartMonth = 11;
+        if (m < 2) qYear -= 1;
+      } else if (m >= 2 && m <= 4) qStartMonth = 2; // Spring
+      else if (m >= 5 && m <= 7) qStartMonth = 5; // Summer
+      else qStartMonth = 8; // Autumn
+
+      const start = new Date(qYear, qStartMonth, 1)
+      const end = new Date(qYear, qStartMonth + 3, 0)
+      return [start, end]
     }
     case 'prev_year': {
       const start = new Date(y - 1, 0, 1)

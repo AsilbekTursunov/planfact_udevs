@@ -12,7 +12,7 @@ import { toJS } from 'mobx'
 import SingleSelect from '@/components/shared/Selects/SingleSelect'
 import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
-import { formatPeriod } from '../../../../utils/helpers'
+import { formatNumber, formatPeriod, formatTotalSumma } from '../../../../utils/helpers'
 import { cn } from '@/app/lib/utils'
 import { appStore } from '../../../../store/app.store'
 import { balanceStore } from '../../../../components/reports/balance/balance.store'
@@ -116,7 +116,7 @@ const ProfitAndLossPage = observer(() => {
           {/* Period value cells */}
           {legend.map(period => {
             const value = item.values?.[period.key] || 0
-            const displayValue = value === 0 ? '' : isPercentRow ? `${value.toFixed(1)}%` : value.toLocaleString('ru-RU')
+            const displayValue = value === 0 ? '' : isPercentRow ? `${formatNumber(value)}%` : `${formatNumber(value)}`
             return (
               <td key={period.key} className="px-2 text-xs cursor-pointer text-end border-r min-w-[150px] max-w-[150px]">
                 <span
@@ -134,7 +134,7 @@ const ProfitAndLossPage = observer(() => {
               className={`text-xs cursor-pointer! line-clamp-1 ${item.level === 0 || isResultRow || isTotalRow ? 'font-semibold' : 'text-xs'}  hover:underline hover:text-primary transition-colors`}
               onClick={() => handleCellClick(item, null)}
             >
-              {item.totalValue === 0 ? '' : isPercentRow ? `${item.totalValue?.toFixed(1)}` : item.totalValue?.toLocaleString('ru-RU')}
+              {item.totalValue === 0 ? '' : isPercentRow ? `${formatNumber(item.totalValue)}%` : formatNumber(item.totalValue)}
             </span>
           </td>
         </tr>

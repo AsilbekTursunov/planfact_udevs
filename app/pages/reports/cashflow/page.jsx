@@ -145,11 +145,6 @@ export default observer(function CashFlowReportPage() {
   const { reportData: cashFlowData, isLoading, isFetching, filters } = cashFlowStore
   const loading = isLoading || isFetching
 
-  const currencies = toJS(cashFlowData)?.currencies?.map(item => ({
-    value: item.code,
-    label: item.code
-  }))
-
   // Extract legend (month columns)
   const legend = useMemo(() => cashFlowData?.legend || [], [cashFlowData])
   const months = useMemo(() => legend.map(l => l.key), [legend])

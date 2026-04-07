@@ -6,7 +6,24 @@ import moment from 'moment'
 
 class BalanceStore {
   // ── Filter state ────────────────────────────────────────────────────────────
-  selectedDate = '';
+  dateRange = (() => {
+    const today = new Date()
+    const y = today.getFullYear()
+    const m = today.getMonth()
+    let qStartMonth;
+    let qYear = y;
+    if (m === 11 || m === 0 || m === 1) { // Winter
+      qStartMonth = 11;
+      if (m < 2) qYear -= 1;
+    } else if (m >= 2 && m <= 4) qStartMonth = 2; // Spring
+    else if (m >= 5 && m <= 7) qStartMonth = 5; // Summer
+    else qStartMonth = 8; // Autumn
+
+    return {
+      start: new Date(qYear, qStartMonth, 1),
+      end: new Date(qYear, qStartMonth + 3, 0)
+    };
+  })();
   selectedEntity = ''
   selectedCurrency = GlobalCurrency.code || 'UZS'
   selectedCounterparties = []
@@ -26,8 +43,8 @@ class BalanceStore {
   }
 
   // ── Setters ─────────────────────────────────────────────────────────────────
-  setSelectedDate(date) {
-    this.selectedDate = date
+  setDateRange(range) {
+    this.dateRange = range
   }
 
   setSelectedEntity(entity) {
@@ -76,8 +93,8 @@ class BalanceStore {
     })
     try {
       const response = await getBalanceReport({
-				as_of: moment(this.selectedDate).format('YYYY-MM-DD'),
-				account_ids: this.selectedAccount ? [this.selectedAccount] : [],
+        as_of: moment(this.dateRange.end).format('YYYY-MM-DD'),
+        account_ids: this.selectedAccount ? [this.selectedAccount] : [],
 				legal_entity_id: this.selectedEntity,
 				user_currency_code: this.selectedCurrency,
 				contr_agent_ids: this.selectedCounterparties,

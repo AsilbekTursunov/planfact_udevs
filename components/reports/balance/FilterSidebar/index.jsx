@@ -10,10 +10,9 @@ import '@/styles/report-filters.css'
 
 const BalanceFilterSidebar = observer(({ isOpen, onClose }) => {
 
-  const dateRangeValue = { start: balanceStore.selectedDate, end: balanceStore.selectedDate }
+  const dateRangeValue = balanceStore.dateRange
   const handleDateRangeChange = (range) => {
-    balanceStore.setSelectedDate(range.end)
-    console.log('range', range)
+    balanceStore.setDateRange(range)
   }
 
   return (

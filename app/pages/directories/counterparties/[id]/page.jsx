@@ -18,7 +18,8 @@ import CreateCounterpartyModal from '@/components/directories/CreateCounterparty
 import OperationModal from '../../../../../components/operations/OperationModal/OperationModal'
 import { useUcodeRequestQuery } from '../../../../../hooks/useDashboard'
 import { formatDate } from '../../../../../utils/formatDate'
-import OperationTableRow from '../../../../../components/operations/TableRow'
+import OperationTableRow from '@/components/operations/TableRow/new'
+import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
 import MultiSelectZdelka from '../../../../../components/ReadyComponents/MultiZdelka'
 import operationsDto from '../../../../../lib/dtos/operationsDto'
 import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMyAccounts'
@@ -231,6 +232,18 @@ const KontragentDetailPage = observer(() => {
         )}
       </div>
     );
+  }
+
+  const isAllSelected = useMemo(() => {
+    return operations.length > 0 && selectedOperations.length >= operations.length
+  }, [operations, selectedOperations])
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedOperations([])
+    } else {
+      setSelectedOperations(operations.map(op => op.id))
+    }
   }
 
   const toggleOperation = (id) => {
@@ -764,34 +777,49 @@ const KontragentDetailPage = observer(() => {
               </div>
             ) : (
                 <div className="pb-56">
-                  <table className="w-full">
-                    <thead className={`bg-neutral-100 text-neutral-600 text-sm h-9 sticky ${isFiltersOpen ? 'top-[140px]' : 'top-[96px]'} z-10 font-normal`}>
-                    <tr>
-                        {/* <th className={""}>№</th> */}
-                        <th className={"text-start px-2"}>Дата</th>
-                        <th className={"text-start px-2"}>Счет</th>
-                        <th className={"text-start px-2"}>Тип</th>
-                        <th className={"text-start px-2"}>Контрагент</th>
-                        <th className={"text-start px-2"}>Статья</th>
-                        <th className={"text-start px-2"}>Сделка</th>
-                        <th className={" text-end"}>Сумма</th>
-                        <th className={""}></th>
-                    </tr>
-                  </thead>
-                  <tbody className={styles.tableBody}>
+                  {/* Table Header */}
+                  <div className={cn(
+                    'flex h-10 text-sm gap-1 font-medium text-neutral-500 items-center bg-neutral-100 border-b border-neutral-200 sticky z-10',
+                    isFiltersOpen ? 'top-[132px]' : 'top-[96px]'
+                  )}>
+                    <div className='w-32 flex px-3 items-center justify-start '>
+                      Дата
+                    </div>
+                    <div className='w-40 flex px-2 items-center justify-start '>
+                      Счет
+                    </div>
+                    <div className='w-14  flex px-2 items-center justify-center '>
+                      Тип
+                    </div>
+                    <div className='w-52 flex px-2 items-center justify-start '>
+                      Контрагент
+                    </div>
+                    <div className='flex-1  text-start  px-2 items-center justify-start '>
+                      Статья
+                    </div>
+                    <div className='flex-1 flex px-2 items-center justify-center '>
+                      Сделка
+                    </div>
+                    <div className='w-40 flex px-2 items-center justify-end '>
+                      Сумма
+                    </div>
+                    <div className='w-8 flex px-2 items-center justify-center'>
+                      &nbsp;
+                    </div>
+                  </div>
+
+                  <div className={styles.tableBody}>
                       {operationsList?.future?.length > 0 && (
-                        <tr className=" border-y border-y-gray-100 bg-white">
-                          <td colSpan='9' className=" py-2 text-sm px-4">
-                            <h3 className="">После</h3>
-                          </td>
-                        </tr>
+                      <div className="border-y border-y-gray-100 bg-white py-2 text-sm px-4">
+                        <h3 className="font-medium">После</h3>
+                      </div>
                       )}
 
-                      {operationsList?.future?.map((op, index) => (
+                    {operationsList?.future?.map((op) => (
                         <OperationTableRow
                           key={op.guid}
                           op={op}
-                          selectedOperations={selectedOperations}
+                        selectedOperations={selectedOperations} 
                           openOperationModal={handleEditOperation}
                           counterpartyGuid={counterpartyInfo?.guid}
                           handleEditOperation={handleEditOperation}
@@ -799,20 +827,19 @@ const KontragentDetailPage = observer(() => {
                           handleCopyOperation={handleCopyOperation}
                         />
                       ))}
+
                     {/* Today — Section Header */}
                     {operationsList?.today?.length > 0 && (
-                        <tr className=" border-y border-y-gray-100 bg-white">
-                          <td colSpan='9' className=" py-2 text-sm px-4">
-                            <h3 className="">Сегодня</h3>
-                        </td>
-                      </tr>
+                      <div className="border-y border-y-gray-100 bg-white py-2 text-sm px-4">
+                        <h3 className="font-medium">Сегодня</h3>
+                      </div>
                     )}
 
-                      {operationsList?.today?.map((op, index) => (
+                    {operationsList?.today?.map((op) => (
                       <OperationTableRow
                         key={op.guid}
                         op={op}
-                        selectedOperations={selectedOperations}
+                        selectedOperations={selectedOperations} 
                         openOperationModal={handleEditOperation}
                         counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
@@ -820,19 +847,18 @@ const KontragentDetailPage = observer(() => {
                         handleCopyOperation={handleCopyOperation}
                       />
                     ))}
+
                     {/* Вчера и ранее - Section Header */}
                     {operationsList?.before?.length > 0 && (
-                        <tr className=" border-y border-y-gray-100 bg-white">
-                          <td colSpan='9' className=" py-2 text-sm px-4">
-                            <h3 className="">Вчера и ранее</h3>
-                        </td>
-                      </tr>
+                      <div className="border-y border-y-gray-100 bg-white py-2 text-sm px-4">
+                        <h3 className="font-medium">Вчера и ранее</h3>
+                      </div>
                     )}
-                      {operationsList?.before?.map((op, index) => (
+                    {operationsList?.before?.map((op) => (
                       <OperationTableRow
                         key={op.guid}
                         op={op}
-                        selectedOperations={selectedOperations}
+                        selectedOperations={selectedOperations} 
                         openOperationModal={handleEditOperation}
                         counterpartyGuid={counterpartyInfo?.guid}
                         handleEditOperation={handleEditOperation}
@@ -840,8 +866,7 @@ const KontragentDetailPage = observer(() => {
                         handleCopyOperation={handleCopyOperation}
                       />
                     ))}
-                  </tbody>
-                </table>
+                  </div>
               </div>
             )}
           </div>

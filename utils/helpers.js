@@ -113,7 +113,7 @@ export const formatTotalSumma = (summa) => {
 
 export function formatNumber(value) {
 	// strip everything except digits and dot
-	const clean = String(value).replace(/[^\d.]/g, '')
+	const clean = String(value).replace(/[^\d.-]/g, '')
 
 	// keep only the first dot
 	const parts = clean.split('.')
@@ -123,7 +123,7 @@ export function formatNumber(value) {
 	// add thousand separators to the integer part only
 	const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
 
-	return formatted + decPart
+	return formatted + decPart.slice(0, 3)
 }
 
 export function handleInput(e) {

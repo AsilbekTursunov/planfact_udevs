@@ -32,10 +32,26 @@
   }
 }
 
+.hiddenInput:disabled+.customCheckbox {
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+
+  &:hover {
+    border-color: #e5e7eb;
+  }
+}
+
 .hiddenInput:checked+.customCheckbox {
   border: 1px solid $primary;
     background-color: $primary;
     border-color: $primary;
+}
+
+.hiddenInput:checked:disabled+.customCheckbox {
+  background-color: #9ca3af;
+  border-color: #9ca3af;
+  opacity: 0.6;
 }
 
 .checkmark {
@@ -56,5 +72,14 @@
 
   &:hover {
     color: #0f172a;
+  }
+}
+
+.hiddenInput:disabled~.label {
+  color: #9ca3af;
+  cursor: not-allowed;
+
+  &:hover {
+    color: #9ca3af;
   }
 }

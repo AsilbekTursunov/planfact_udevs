@@ -149,7 +149,7 @@ const TotalPrice = observer(() => {
                             <div className="" />
                             <div className="flex items-center gap-2">
                                 <p className="text-white">
-                                    На счетах {mounted ? formatNumber(formatTotalSumma(Summary?.current_balance)) : '0'} {mounted ? GlobalCurrency?.name : ''}
+                                    На счетах {mounted ? `${formatNumber(Summary?.current_balance)} ${GlobalCurrency?.name}` : '0'}
                                 </p>
                             </div>
                             <ChevronDown size={14} className={cn(styles.balanceChevron, isBalanceOpen && styles.open)} />
