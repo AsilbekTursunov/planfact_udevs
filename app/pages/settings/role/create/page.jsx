@@ -151,8 +151,8 @@ const CreateRole = () => {
     >
       {/* Header Section */}
       <h1 className="text-[18px] p-4 font-semibold text-[#1a1a1a] m-0 sticky top-0 z-10 bg-white">Добавить новую должность</h1>
-      <div className="flex flex-col gap-2 mb-[30px] p-4">
-        <h1 className="text-sm  text-[#1a1a1a] m-0">Название должности</h1>
+      <div className="flex items-center gap-5 mb-[30px] p-4">
+        <h1 className="text-sm  text-[#1a1a1a] m-0">Должности</h1>
         <div className="w-[320px]">
           <Input
             placeholder="Введите название"
@@ -164,7 +164,7 @@ const CreateRole = () => {
       </div>
 
       {/* Permissions Table — Scrollable Table Wrapper */}
-      <div className=" rounded-[8px] mx-4 mb-[30px]">
+      <div className="w-fit rounded-[8px] mx-4 mb-[30px]">
         <table className="w-fit border-collapse">
           <thead className="bg-gray-ucode-50">
             <tr>
@@ -185,7 +185,7 @@ const CreateRole = () => {
             ))}
           </tbody>
         </table>
-        <div className="flex  gap-[12px] mt-auto pt-[20px]">
+        <div className="flex  justify-end gap-[12px] mt-auto pt-[20px]">
           <button
             type="button"
             className="secondary-btn"

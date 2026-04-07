@@ -1,0 +1,233 @@
+.month_picker_wrapper {
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid $gray-200 !important;
+  display: flex;
+  width: 100%;
+  min-width: 100px;
+  align-items: center;
+  padding: 0 4px;
+  background-color: white !important;
+
+  .rmdp-container {
+    .rmdp-input {
+      width: 100% !important;
+      border-color: 1px solid gray !important;
+      box-shadow: none !important;
+      color: $gray-500 !important;
+      font-weight: 500 !important;
+      font-size: 12px !important;
+      padding: 7px 10px !important;
+      height: 30px !important;
+    }
+
+    width: 100% !important;
+  }
+
+  .rmdp-ep-arrow {
+    display: none;
+  }
+
+  .rmdp-wrapper {
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+
+    .rmdp-calendar {
+      width: 100%;
+      height: 310px;
+
+
+      .rmdp-header {
+        .rmdp-header-values {
+          font-weight: 600;
+          color: #374151;
+        }
+
+        .rmdp-arrow-container {
+          border: 1px solid $gray-300 !important;
+          border-radius: 4px;
+          display: flex;
+          width: 25px;
+          height: 25px;
+          align-items: center;
+          justify-content: center;
+
+          &:hover {
+            background-color: $gray-100 !important;
+            box-shadow: none !important;
+            border-radius: 0px;
+            overflow: hidden;
+            border-radius: 4px;
+          }
+
+          &.rmdp-left {
+            &::before {
+              content: "«";
+              font-size: 18px;
+              position: absolute;
+              z-index: 100;
+              color: $gray-500 !important;
+            }
+          }
+
+          &.rmdp-right {
+            &::before {
+              content: "»";
+              font-size: 18px;
+              position: absolute;
+
+              z-index: 100;
+              color: $gray-500 !important;
+
+            }
+          }
+        }
+      }
+
+      .rmdp-ym{
+        margin: 2px;
+        .rmdp-day {
+           margin: 1px;
+          padding: 10px;
+          height: 100%; 
+          &.rmdp-today {
+            span {
+              background-color: #f3f4f6;
+              color: #111827;
+            }
+          }
+  
+          &.rmdp-selected {
+            span {
+              background-color: #0062FF !important;
+              box-shadow: 0 0 8px #136BF9 !important;
+            }
+          }
+  
+          &.rmdp-range {
+            background-color: #B6D5FF !important;
+            box-shadow: none !important;
+            color: #0545F4 !important;
+  
+            &.start {
+              border-top-left-radius: 4px;
+              border-bottom-left-radius: 4px;
+            }
+  
+            &.end {
+              border-top-right-radius: 4px;
+              border-bottom-right-radius: 4px;
+            }
+          }
+  
+          &:hover:not(.rmdp-disabled):not(.rmdp-day-hidden) {
+            span {
+              background-color: #f9fafb;
+            }
+          }
+        }
+      }
+
+ 
+    }
+
+    .sd {
+      background-color: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .rmdp-arrow {
+      display: none;
+    }
+
+
+
+
+    /* Styling for the DatePanel plugin */
+    .rmdp-panel {
+      border-left: 1px solid #e5e7eb;
+      background-color: #ffffff;
+      min-width: 150px;
+
+      .rmdp-panel-header {  
+        font-size: 10px; 
+        height: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 700;
+        color: #6b7280;
+      }
+
+      .rmdp-panel-body {
+        padding: 8px 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        li {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background-color: #f3f4f6;
+          border-radius: 6px;
+          padding: 4px 8px;
+          transition: all 0.2s ease;
+          border: 1px solid transparent;
+
+          &:hover {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+          }
+
+          .b-date {
+            background: none;
+            border: none;
+            color: #374151;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 0;
+            cursor: pointer;
+            text-align: left;
+            flex: 1;
+
+            &:hover {
+              color: #2563eb;
+            }
+          }
+
+          .b-deselect {
+            background: #d1d5db;
+            border: none;
+            color: #4b5563;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+            padding: 0;
+
+            span {
+              font-size: 14px;
+              line-height: 1;
+              transform: rotate(45deg);
+              display: inline-block;
+              margin-bottom: 1px;
+            }
+
+            &:hover {
+              background-color: #ef4444;
+              color: white;
+            }
+          }
+        }
+      }
+    }
+  }
+
+}

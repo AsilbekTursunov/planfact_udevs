@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -8,16 +7,16 @@ import {
   GitBranch,
   Banknote,
 } from 'lucide-react'
-import { TbUsersPlus } from "react-icons/tb";
-import { LuUsers } from "react-icons/lu";
+// import { TbUsersPlus } from "react-icons/tb";
+// import { LuUsers } from "react-icons/lu";
 import styles from './settings.module.scss'
 
 const sidebarItems = [
   { id: 'general', label: 'Общие настройки', icon: SettingsIcon, href: '/pages/settings' },
   { id: 'branches', label: 'Филиалы', icon: GitBranch, href: '/pages/settings/branches' },
   { id: 'currencies', label: 'Валюты', icon: Banknote, href: '/pages/settings/currencies' },
-  { id: 'role', label: 'Роли', icon: TbUsersPlus, href: '/pages/settings/role' },
-  { id: 'users', label: 'Пользователи', icon: LuUsers, href: '/pages/settings/users' },
+  // { id: 'role', label: 'Роли', icon: TbUsersPlus, href: '/pages/settings/role' },
+  // { id: 'users', label: 'Пользователи', icon: LuUsers, href: '/pages/settings/users' },
 ]
 
 export default function SettingLayouts({ children }) {

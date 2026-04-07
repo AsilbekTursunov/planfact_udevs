@@ -4427,6 +4427,11 @@ moment@^2.30.1:
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.30.1.tgz#f8c91c07b7a786e30c59926df530b4eac96974ae"
   integrity sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==
 
+month-range-picker-react@^1.1.6:
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/month-range-picker-react/-/month-range-picker-react-1.1.6.tgz#e32f82f0b22a2f31090173e6ebf02f06a7fd09a5"
+  integrity sha512-7XwFLKafxTwGTUclPpfd7Ug81IPLLO+/DfBYqtMR9A5oP3EGEtOdAEDFjFPe4y+3arzx3dKHJC0RXKJd1dttaQ==
+
 ms@^2.1.1, ms@^2.1.3:
   version "2.1.3"
   resolved "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz"

@@ -3,19 +3,15 @@
 import { useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { RefreshCw, ClipboardList, Library, DivideCircle } from 'lucide-react'
+import { RefreshCw, ClipboardList, Library, ChartLine } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import { UsersIcon, DealIcon } from '@/constants/icons'
 import { AppLogo } from '../../constants/icons'
 
-import {
-    HoverCard,
-    HoverCardContent,
-    HoverCardTrigger,
-} from "@/components/ui/hover-card"
 import { IoSettingsOutline } from 'react-icons/io5'
 
 const navItems = [
+    { icon: ChartLine, label: 'Показатели', href: '/pages/indicators', hasPage: true },
     { icon: RefreshCw, label: 'Операции', href: '/pages/operations', hasPage: true },
     { icon: UsersIcon, label: 'Контрагенты', href: '/pages/directories/counterparties', hasPage: true },
     { icon: DealIcon, label: 'Сделки', href: '/pages/deals', hasPage: true },
