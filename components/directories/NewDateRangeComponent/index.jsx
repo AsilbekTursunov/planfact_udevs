@@ -64,13 +64,13 @@ const PRESETS = {
   day: [{ key: 'yesterday', label: 'Вчера' },
   { key: 'today', label: 'Сегодня' },],
   week: [{ key: 'prev_week', label: 'Прошлая неделя' },
-  { key: 'week', label: 'Текущая неделя' },],
+    { key: 'week', label: 'Эта неделя' },],
   month: [{ key: 'prev_month', label: 'Прошлый месяц' },
-  { key: 'month', label: 'Текущий месяц' },],
+    { key: 'month', label: 'Этот месяц' },],
   quarter: [{ key: 'prev_quarter', label: 'Прошлый квартал' },
-  { key: 'quarter', label: 'Текущий квартал' },],
+    { key: 'quarter', label: 'Этот квартал' },],
   year: [{ key: 'prev_year', label: 'Прошлый год' },
-  { key: 'year', label: 'Текущий год' },]
+    { key: 'year', label: 'Этот год' },]
 }
 
 export default function NewDateRangeComponent({ value, onChange, singleDateMode = false }) {
@@ -97,7 +97,7 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
     setEndDate(null)
     setDateType(null)
     setActivePreset(null)
-    onChange?.({ start: '', end: '' })
+    onChange?.({ start: null, end: null })
     setOpen(false)
   }
 

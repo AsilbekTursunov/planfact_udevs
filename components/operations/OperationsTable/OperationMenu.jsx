@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useEffect } from 'react'
 import { cn } from '@/app/lib/utils'
 import styles from './OperationsTable.module.scss'
 import { Copy, CopyPlus, EllipsisVertical, Pencil, Trash2 } from 'lucide-react'
@@ -12,39 +11,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function OperationMenu({ operation, onEdit, onDelete, onCopy }) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  // Close popover when user starts scrolling
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleScroll = () => {
-      setIsOpen(false)
-    }
-
-    // Using capture: true to catch scrolling events on all elements before they bubble
-    window.addEventListener('scroll', handleScroll, { capture: true, passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, { capture: true })
-    }
-  }, [isOpen])
-
-  const handleEdit = (e) => {
-    e.stopPropagation()
-    setIsOpen(false)
+  const handleEdit = () => {
     onEdit(operation)
   }
 
-  const handleDelete = (e) => {
-    e.stopPropagation()
-    setIsOpen(false)
+  const handleDelete = () => {
     onDelete(operation)
   }
 
-  const handleCopy = (e) => {
-    e.stopPropagation()
-    setIsOpen(false)
+  const handleCopy = () => {
     if (onCopy) onCopy(operation)
   }
 

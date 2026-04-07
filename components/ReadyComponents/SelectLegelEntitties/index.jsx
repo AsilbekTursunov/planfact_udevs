@@ -4,7 +4,7 @@ import MultiSelect from '../../shared/Selects/MultiSelect'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 import { keepPreviousData } from '@tanstack/react-query'
 
-const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите юрлицо", className, childFieldName, returnFieldValue, dropdownClassName, multi = false, hasError }) => {
+const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите юрлицо", className, childFieldName, returnFieldValue, dropdownClassName, multi = false, hasError, isClearable = true }) => {
 
   const { data: legalEntitiesData, isLoading } = useUcodeRequestQuery({
     method: "get_legal_entities",
@@ -38,6 +38,7 @@ const SelectLegelEntitties = ({ value, onChange, placeholder = "Выберите
       className={className}
       dropdownClassName={dropdownClassName}
       hasError={hasError}
+      isClearable={isClearable}
     />
   )
 }

@@ -50,6 +50,12 @@ export const OperationsFiltersSidebar = observer(({
   }, [])
 
 
+  const handleChangeFilter = () => {
+    // control all filters values here adter that call find_operations with queryClient.invalidateQueries
+    
+  }
+
+
   return (
     <>
       <FilterSidebar isOpen={isOpen} onClose={onClose} clearCount={clearCount} onClear={onClear}>

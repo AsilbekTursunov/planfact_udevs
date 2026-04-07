@@ -49,9 +49,10 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
         repeatUnit: raw.repeat_unit || null,
         repeatUntil: raw.repeat_until || null,
         repeatCount: raw.repeat_count || null,
-        currency: raw.currenies_id || '',
+        currency: raw.currencyId || '',
       }
     }
+
     return {
       accuralDate: formatDate(new Date()),
       confirmAccrual: true,
@@ -71,6 +72,9 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
       currency: null,
     }
   }, [initialData, isNew])
+
+  console.log('initialData', initialData)
+
 
   const { getValues, control, handleSubmit, setValue, watch, formState: { errors, } } = useForm({
     defaultValues
@@ -225,6 +229,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
                         setValue('currency', '')
                       }
                     }}
+                    isClearable={false}
                     placeholder="Выберите юрлицо..."
                     className="bg-white border rounded-md flex-1 h-[36px]!"
                     hasError={errors.legalEntity}
@@ -233,7 +238,17 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
               />
               {errors.legalEntity && <span className="text-xs text-red-500">{errors.legalEntity.message}</span>}
             </div>
-            <MyAccountCurrensies guid={legalEntityGuid} value={watch('currency')} onChange={handleSelectCurrency} className="w-40 bg-white " wrapperClassName={'w-40'} />
+            <div className={'w-40'} >
+              <Controller
+                name="currency"
+                control={control}
+                rules={{ required: 'Выберите валюту' }}
+                render={({ field }) => (
+                  <MyAccountCurrensies isClearable={false} guid={legalEntityGuid} value={field.value} onChange={field.onChange} className="w-40 bg-white " wrapperClassName={'w-40'} />
+                )}
+              />
+              {errors.currency && <span className="text-xs text-red-500">{errors.currency.message}</span>}
+            </div>
           </div>
 
           {/* Статья списания */}
@@ -252,6 +267,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
                     className="flex-1 bg-white border rounded-md"
                     type="Доходы"
                     parent="Расходы"
+                    isClearable={false}
                     returnIsChild={setIsFromRasxodChild}
                     hasError={errors.chartOfAccountWriteOff}
                   />
@@ -343,6 +359,7 @@ const AccuralForm = observer(({ onCancel, onClose, initialData }) => {
                     placeholder="Выберите статью по кредиту..."
                     className="flex-1 bg-white border rounded-md"
                     type=""
+                    isClearable={false}
                     parent="Расходы"
                     returnIsChild={setIsToRasxodChild}
                     hiddenValue={getValues("chartOfAccountWriteOff")}

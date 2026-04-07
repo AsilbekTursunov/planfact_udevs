@@ -8,7 +8,7 @@ import { useBankAccountsPlanFact, useUcodeRequestMutation } from '../../../../..
 
 // Helpers
 import { formatDate, isFuture } from '@/utils/formatDate'
-import { formatAmount, returnNumber as parseAmount, StringtoNumber } from '@/utils/helpers'
+import { StringtoNumber } from '@/utils/helpers'
 
 // Components
 import CustomDatePicker from '../../../../shared/DatePicker'
@@ -23,7 +23,7 @@ import { queryClient } from '../../../../../lib/queryClient'
 import { Loader2 } from 'lucide-react'
 import { appStore } from '../../../../../store/app.store'
 import { toJS } from 'mobx'
-import { formatDecimal, formatNumber, returnNumber } from '../../../../../utils/helpers'
+import { formatDecimal, formatNumber } from '../../../../../utils/helpers'
 
 const TransferForm = observer(({ initialData, onClose }) => {
   const [title, setTitle] = useState({
@@ -245,7 +245,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
                     />
                   )}
                 />
-                {title.currency_1 && <span className="text-sm font-medium whitespace-nowrap flex-1 text-gray-800">{title.currency_1}</span>}
+                {title.currency_1 && <span className="text-sm font-medium whitespace-nowrap flex-1 text-gray-800 line-clamp-1">{title.currency_1}</span>}
               </div>
             </div>
           </div>
@@ -326,7 +326,7 @@ const TransferForm = observer(({ initialData, onClose }) => {
                       />
                     )}
                   />
-                  <span className="text-sm font-medium whitespace-nowrap flex-1 text-gray-800">{title.currency_2}</span>
+                  <span className="text-sm font-medium whitespace-nowrap flex-1 text-gray-800 line-clamp-1">{title.currency_2}</span>
                 </div>
                 {errors.toAmount && <span className="text-xs text-red-500">{errors.toAmount.message}</span>}
               </div>

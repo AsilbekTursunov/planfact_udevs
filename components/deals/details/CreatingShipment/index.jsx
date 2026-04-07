@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { X, TrashIcon } from 'lucide-react'
 import styles from './style.module.scss'
 import { DatePicker } from '@/components/common/DatePicker/DatePicker'
-import { formatAmount, formatDecimal, formatNumber, StringtoNumber } from '../../../../utils/helpers'
+import { formatDecimal, formatNumber, StringtoNumber } from '../../../../utils/helpers'
 import OperationCheckbox from '../../../shared/Checkbox/operationCheckbox'
 import { useUcodeRequestMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import Loader from '../../../shared/Loader'
@@ -18,6 +18,7 @@ import { observer } from 'mobx-react-lite'
 import { cn } from '@/app/lib/utils'
 import { toJS } from 'mobx'
 import { keepPreviousData } from '@tanstack/react-query'
+import { GlobalCurrency } from '../../../../constants/globalCurrency'
 
 const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragentId, initialData = null, isEditing = false, isCopying = false, onSuccess }) => {
   const today = useMemo(() => new Date(), [])
@@ -56,7 +57,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
       setLegalEntity(SingleShipment.legal_entity_id || '')
       setClient(SingleShipment.partners_id || kontragentId || '')
       setChartOfAccounts(SingleShipment.chart_of_accounts_id || '')
-      setCurrency(SingleShipment.currencies_id || '')
+      setCurrency(SingleShipment.currencies_id || SingleShipment.currencyId || GlobalCurrency.guid)
 
       const currencies = toJS(appStore.currencies)
       const icon = currencies?.find(item => item.guid === SingleShipment.currencies_id)?.icon

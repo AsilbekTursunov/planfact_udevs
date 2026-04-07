@@ -36,20 +36,20 @@ const PriceStatus = observer(({ amount, type, tab, confirmed, accrual, currency,
       <div className={styles.amountText}>
         {tab == "Перемещение" && <>
           <div className={`${styles.doubleAccount} flex flex-col `}>
-            <span className={`flex items-center gap-0.5 text-xs text-neutral-500 ${isSpinasiya ? 'opacity-50' : ''}`}>-{formatAmount(amount)} <span className=" text-neutral-500">{currency}</span></span>
-            <span className={`flex items-center gap-0.5 text-xs text-neutral-500 ${isZachisleniya ? 'opacity-50' : ''}`}>+{formatAmount(toAmount)} <span className=" text-neutral-500">{toCurrency}</span></span>
+            <span className={`flex items-center gap-0.5 text-sm text-neutral-500 ${isSpinasiya ? 'opacity-50' : ''}`}>-{formatAmount(amount)} <span className=" text-neutral-500">{currency}</span></span>
+            <span className={`flex items-center gap-0.5 text-sm text-neutral-500 ${isZachisleniya ? 'opacity-50' : ''}`}>+{formatAmount(toAmount)} <span className=" text-neutral-500">{toCurrency}</span></span>
           </div>
         </>}
         {(tab === 'Поступление' || tab === 'Выплата' || tab === 'Отгрузка') && <>
           <div>
-            <span className='flex items-center text-xs justify-end gap-0.5'>{type == 'Поступление' ? '+' : type == 'Выплата' ? '-' : ''}{formatAmount(amount)} {currency} {percent ? `(${percent?.toFixed(0)}%)` : ''}
+            <span className='flex items-center text-sm justify-end gap-0.5'>{type == 'Поступление' ? '+' : type == 'Выплата' ? '-' : ''}{formatAmount(amount)} {currency} {percent ? `(${percent?.toFixed(0)}%)` : ''}
             </span>
           </div></>
         }
         {tab == "Начисление" && <>
           <div className={` flex flex-1     flex-col `}>
-            <span className={`flex items-center justify-end gap-0.5 text-xs text-neutral-500 ${isDebit ? 'opacity-50' : ''}`}>-{formatAmount(amount)} <span className=" text-neutral-500">{currency}</span></span>
-            <span className={`flex items-center justify-end gap-0.5 text-xs text-neutral-500 ${isCredit ? 'opacity-50' : ''}`}>+{formatAmount(amount)} <span className=" text-neutral-500">{currency}</span></span>
+            <span className={`flex items-center justify-end gap-0.5 text-sm text-neutral-500 ${isDebit ? 'opacity-50' : ''}`}>-{formatAmount(amount)} <span className=" text-neutral-500">{currency}</span></span>
+            <span className={`flex items-center justify-end gap-0.5 text-sm text-neutral-500 ${isCredit ? 'opacity-50' : ''}`}>+{formatAmount(amount)} <span className=" text-neutral-500">{currency}</span></span>
           </div>
         </>
         }

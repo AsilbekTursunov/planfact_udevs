@@ -5,7 +5,6 @@ import { observer } from 'mobx-react-lite'
 import { toJS } from 'mobx'
 import { formatDate } from '../../../utils/formatDate'
 import { operationFilterStore } from '../../../store/operationFilter.store'
-import { cn } from '@/app/lib/utils'
 import {
 	useUcodeRequestInfinite,
 	useDeleteOperation,
@@ -15,8 +14,7 @@ import { OperationsFiltersSidebar } from '@/components/operations/OperationsFilt
 import OperationModal from '@/components/operations/OperationModal/OperationModal'
 import CreateShipment from '@/components/deals/details/CreatingShipment'
 import { DeleteConfirmModal } from '@/components/operations/OperationsTable/DeleteConfirmModal'
-import OperationTableRow from '@/components/operations/TableRow'
-import styles from './operations.module.scss'
+import OperationTableRow from '@/components/operations/TableRow/new'
 import OperationCheckbox from '../../../components/shared/Checkbox/operationCheckbox'
 import { useQueryClient } from '@tanstack/react-query'
 import operationsDto from '../../../lib/dtos/operationsDto'
@@ -25,6 +23,7 @@ import ScreenLoader from '../../../components/shared/ScreenLoader'
 import Input from '../../../components/shared/Input'
 import { EllipsisVertical, Loader2, Search } from 'lucide-react'
 import InfiniteScroll from 'react-infinite-scroll-component'
+
 
 
 const OperationsPage = observer(() => {
@@ -72,7 +71,7 @@ const OperationsPage = observer(() => {
 		deals
 	} = operationFilterStore
 
-	const LIMIT = 10
+	const LIMIT = 15
 
 	// Destructure scalar booleans directly so each one is a reactive useMemo dependency
 	const paymentConfirmed = operationFilterStore.dateFilters.podtverzhdena
@@ -113,32 +112,20 @@ const OperationsPage = observer(() => {
 	const requestOperationFilters = useMemo(() => {
 		const filters = {
 			limit: LIMIT,
-			...(debouncedSearchQuery && { search: debouncedSearchQuery.toLowerCase() }),
-			...(paymentStartDate && paymentEndDate && {
-				paymentDateStart: paymentStartDate,
-				paymentDateEnd: paymentEndDate,
-			}),
-			...(accrualStartDate && accrualEndDate && {
-				accrualDateStart: accrualStartDate,
-				accrualDateEnd: accrualEndDate,
-			}),
-			...(selectedCounterAgents.length > 0 && {
-				counterparties_ids: toJS(selectedCounterAgents),
-			}),
-			...(selectedLegalEntities.length > 0 && {
-				my_accounts_ids: toJS(selectedLegalEntities),
-			}),
-			...(selectedFilters.length > 0 && { tip: toJS(selectedFilters) }),
-			...((amountRange.min !== "" || amountRange.max !== "") && {
-				amount_range: {
-					...(amountRange.min !== "" && { min: Number(amountRange.min) }),
-					...(amountRange.max !== "" && { max: Number(amountRange.max) }),
-				},
-			}),
-			...(selectedChartOfAccounts.length > 0 && {
-				chart_of_accounts_ids: toJS(selectedChartOfAccounts),
-			}),
-			...(paymentType && { payment_type: paymentType }),
+			search: debouncedSearchQuery.toLowerCase(),
+			paymentDateStart: paymentStartDate,
+			paymentDateEnd: paymentEndDate,
+			accrualDateStart: accrualStartDate,
+			accrualDateEnd: accrualEndDate,
+			counterparties_ids: toJS(selectedCounterAgents),
+			my_accounts_ids: toJS(selectedLegalEntities),
+			tip: toJS(selectedFilters),
+			amount_range: {
+				min: Number(amountRange.min),
+				max: Number(amountRange.max),
+			},
+			chart_of_accounts_ids: toJS(selectedChartOfAccounts),
+			payment_type: paymentType,
 			paymentConfirmed,
 			paymentNotConfirmed,
 			accrualConfirmed,
@@ -184,9 +171,19 @@ const OperationsPage = observer(() => {
 		}
 	})
 
+
+
 	const paginationData = useMemo(() => {
 		return infiniteData?.pages?.[0]?.data?.data?.pagination
 	}, [infiniteData])
+
+	// paginationData
+	// {
+	// 	"limit": 10,
+	// 		"page": 1,
+	// 			"total": 19,
+	// 				"totalPages": 2
+	// }
 
 
 	const allOperations = useMemo(() => {
@@ -196,6 +193,8 @@ const OperationsPage = observer(() => {
 	const totalSummary = useMemo(() => {
 		return infiniteData?.pages?.[0]?.data?.data?.totalSummary
 	}, [infiniteData])
+
+
 
 
 	const isAllSelected = allOperations.length > 0 && selectedOperations.length === allOperations.length
@@ -210,7 +209,7 @@ const OperationsPage = observer(() => {
 
 	// fetchNextPage is called by InfiniteScroll component directly
 
-
+	// InfiniteScroll ni olib tashlang, sentinelRef qo'shing
 
 
 
@@ -453,8 +452,7 @@ const OperationsPage = observer(() => {
 			/>
 
 			{/* Main Content */}
-			<div id="operations-scrollable-container" className="w-full overflow-auto bg-neutral-50">
-				{/* Header */}
+			<div id="scrollableDiv" className="overflow-auto  h-full w-full px-2 bg-white">
 				<div className="sticky h-16 px-4 flex items-center justify-between top-0 z-40 bg-white ">
 					<div className="flex items-center gap-4 ">
 						<h1 className="text-xl font-semibold">Операции</h1>
@@ -479,177 +477,114 @@ const OperationsPage = observer(() => {
 						</button>
 					</div>
 				</div>
-
-				{/* Table */}
-				<div className=" pb-10" >
-					{/* Refetch overlay spinner - only on full load */}
-					{isLoadingOperations && allOperations.length === 0 && <ScreenLoader className={'left-0!'} />}
-					{(isFetchingNextPage || isFetchingOperations) && <ScreenLoader className={'left-0!'} />}
-					{/* Selection Bar */}
-					{selectedOperations.length > 0 && (
-						<div className={styles.selectionBar}>
-							<div className={styles.selectionBarLeft}>
-								<button
-									onClick={() => setSelectedOperations([])}
-									className={styles.selectionBarClose}
-								>
-									✕
-								</button>
-								<span className={styles.selectionBarText}>
-									Выбрано:{' '}
-									<strong className={styles.selectionBarTextBold}>
-										{selectedOperations.length}
-									</strong>{' '}
-									на сумму{' '}
-									<strong
-										className={cn(
-											styles.selectionBarTextBold,
-											selectedTotal >= 0
-												? styles.selectionBarTextPositive
-												: styles.selectionBarTextNegative,
-										)}
-									>
-										{selectedTotal >= 0 ? '+' : ''}
-										{selectedTotal.toLocaleString('ru-RU')}
-									</strong>
-								</span>
-							</div>
-							<div className={styles.selectionBarRight}>
-								<button className={styles.selectionBarExport}>
-									<svg
-										className={styles.selectionBarExportIcon}
-										fill='none'
-										viewBox='0 0 24 24'
-										stroke='currentColor'
-									>
-										<path
-											strokeLinecap='round'
-											strokeLinejoin='round'
-											strokeWidth='2'
-											d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-										/>
-									</svg>
-									Экспорт выбранных
-								</button>
-							</div>
-						</div>
-					)}
-
-					<InfiniteScroll
-						dataLength={allOperations.length}
-						next={fetchNextPage}
-						hasMore={!!hasNextPage}
-						loader={<div className='py-5 flex items-center justify-center'>
-							<Loader2 className='animate-spin text-primary' />
-						</div>}
-						scrollableTarget="operations-scrollable-container"
-						style={{ overflow: 'visible', paddingBottom: '50px' }}
-					>
-						<table className="w-full ">
-							<thead className="bg-neutral-50 sticky top-16  z-10">
-								<tr className="bg-neutral-100">
-									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellIndex)}>
-										<OperationCheckbox
-											checked={isAllSelected}
-											onChange={toggleSelectAll}
-										/>
-									</th>
-									<th className={styles.tableHeaderCell}>
-										<button className={styles.tableHeaderButton}>
-											Дата
-											<svg
-												className={styles.tableHeaderIcon}
-												fill='currentColor'
-												viewBox='0 0 20 20'
-											>
-												<path d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' />
-											</svg>
-										</button>
-									</th>
-									<th className={styles.tableHeaderCell}>Счет</th>
-									<th className={styles.tableHeaderCell}>Тип</th>
-									<th className={styles.tableHeaderCell}>Контрагент</th>
-									<th className={styles.tableHeaderCell}>Статья</th>
-									<th className={styles.tableHeaderCell}>Сделка</th>
-									<th className={cn(styles.tableHeaderCell, styles.tableHeaderCellRight)}>Сумма</th>
-									<th className="w-5"></th>
-								</tr>
-							</thead>
-							<tbody>
-								{allOperations.length === 0 && !isLoadingOperations ? (
-									<tr className={styles.emptyRow}>
-										<td colSpan='9' className={styles.emptyCell}>
-											Нет данных
-										</td>
-									</tr>
-								) : (
-										<>
-											{operationsList?.future?.map(op => (
-												<OperationTableRow
-													key={op.guid}
-													op={op}
-													selectedOperations={selectedOperations}
-													toggleOperation={toggleOperation}
-													openOperationModal={openOperationModal}
-													handleEditOperation={handleEditOperation}
-													handleDeleteOperation={handleDeleteOperation}
-													handleCopyOperation={handleCopyOperation}
-												/>
-											))}
-
-										{/* Сегодня - Section Header */}
-										{operationsList?.today?.length > 0 && (
-											<tr className={styles.sectionHeader}>
-												<td colSpan='9' className={styles.sectionHeaderCell}>
-													<h3 className={styles.sectionHeaderTitle}>Сегодня</h3>
-												</td>
-											</tr>
-										)}
-
-										{operationsList?.today?.map(op => (
-											<OperationTableRow
-												key={op.guid}
-												op={op}
-												selectedOperations={selectedOperations}
-												toggleOperation={toggleOperation}
-												openOperationModal={openOperationModal}
-												handleEditOperation={handleEditOperation}
-												handleDeleteOperation={handleDeleteOperation}
-												handleCopyOperation={handleCopyOperation}
-											/>
-										))}
-
-										{/* Вчера и ранее - Section Header */}
-										{operationsList?.before?.length > 0 && (
-											<tr className={styles.sectionHeader}>
-												<td colSpan='9' className={styles.sectionHeaderCell}>
-													<h3 className={styles.sectionHeaderTitle}>Вчера и ранее</h3>
-												</td>
-											</tr>
-										)}
-										{operationsList?.before?.map(op => (
-											<OperationTableRow
-												key={op.guid}
-												op={op}
-												selectedOperations={selectedOperations}
-												toggleOperation={toggleOperation}
-												openOperationModal={openOperationModal}
-												handleEditOperation={handleEditOperation}
-												handleDeleteOperation={handleDeleteOperation}
-												handleCopyOperation={handleCopyOperation}
-											/>
-										))}
-									</>
-								)}
-							</tbody>
-						</table>
-					</InfiniteScroll>
+				<div className='flex h-12 sticky top-16 z-30 text-sm gap-1 font-medium text-neutral-500 items-center bg-neutral-100 border-b border-neutral-200'>
+					<div className='w-10 flex items-center justify-center'>
+						<OperationCheckbox
+							checked={isAllSelected}
+							onChange={toggleSelectAll}
+						/>
+					</div>
+					<div className='w-32 flex px-3 items-center justify-start '>
+						Дата
+					</div>
+					<div className='w-40 flex px-2 items-center justify-start '>
+						Счет
+					</div>
+					<div className='w-14  flex px-2 items-center justify-center '>
+						Тип
+					</div>
+					<div className='w-52 flex px-2 items-center justify-start '>
+						Контрагент
+					</div>
+					<div className='flex-1  text-start  px-2 items-center justify-start '>
+						Статья
+					</div>
+					<div className='flex-1 flex px-2 items-center justify-center '>
+						Сделка
+					</div>
+					<div className='w-40 flex px-2 items-center justify-end '>
+						Сумма
+					</div>
+					<div className='w-8 flex px-2 items-center justify-center'>
+						&nbsp;
+					</div>
 				</div>
+				{allOperations.length === 0 && !isLoadingOperations &&
+					<div className="py-20 text-center text-neutral-500 bg-white">
+						Нет данных
+					</div>
+				}
+				<InfiniteScroll
+					dataLength={paginationData?.total || 0}
+					hasMore={hasNextPage}
+					loader={<div className='bg-white py-5 flex items-center justify-center'>
+						<Loader2 size={20} className='text-primary animate-spin' />
+					</div>}
+					next={fetchNextPage}
+					scrollableTarget="scrollableDiv"
+				>
+
+					{<div className="flex flex-col pb-10">
+						{operationsList?.future?.map(op => (
+							<OperationTableRow
+								key={op.guid}
+								op={op}
+								selectedOperations={selectedOperations}
+								toggleOperation={toggleOperation}
+								openOperationModal={openOperationModal}
+								handleEditOperation={handleEditOperation}
+								handleDeleteOperation={handleDeleteOperation}
+								handleCopyOperation={handleCopyOperation}
+							/>
+						))}
+
+						{/* Сегодня - Section Header */}
+						{operationsList?.today?.length > 0 && (
+							<div className="bg-neutral-50 px-4 py-2 border-b border-neutral-200">
+								<h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Сегодня</h3>
+							</div>
+						)}
+
+						{operationsList?.today?.map(op => (
+							<OperationTableRow
+								key={op.guid}
+								op={op}
+								selectedOperations={selectedOperations}
+								toggleOperation={toggleOperation}
+								openOperationModal={openOperationModal}
+								handleEditOperation={handleEditOperation}
+								handleDeleteOperation={handleDeleteOperation}
+								handleCopyOperation={handleCopyOperation}
+							/>
+						))}
+
+						{/* Вчера и ранее - Section Header */}
+						{operationsList?.before?.length > 0 && (
+							<div className="bg-neutral-50 px-4 py-2 border-b border-neutral-200">
+								<h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Вчера и ранее</h3>
+							</div>
+						)}
+						{operationsList?.before?.map(op => (
+							<OperationTableRow
+								key={op.guid}
+								op={op}
+								selectedOperations={selectedOperations}
+								toggleOperation={toggleOperation}
+								openOperationModal={openOperationModal}
+								handleEditOperation={handleEditOperation}
+								handleDeleteOperation={handleDeleteOperation}
+								handleCopyOperation={handleCopyOperation}
+							/>
+						))}
+					</div>
+					}
+				</InfiniteScroll>
 
 				<OperationsFooter totalSummary={totalSummary} isFilterOpen={isFilterOpen} />
 
 			</div>
-
+			{isLoadingOperations && allOperations.length === 0 && <ScreenLoader className={'left-0!'} />}
+			{(isFetchingNextPage || isFetchingOperations) && <ScreenLoader className={'left-0!'} />}
 
 
 			{/* Right Side Modal */}

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +9,6 @@ import {
 import { EllipsisVertical, Pencil, Plus, Trash2 } from 'lucide-react'
 
 export function CategoryMenu({ category, onEdit, onDelete, onAddChild }) {
-  const [isOpen, setIsOpen] = useState(false)
   const isStatic = category?.isStatic === true
 
   const handleEdit = () => {
@@ -38,7 +36,7 @@ export function CategoryMenu({ category, onEdit, onDelete, onAddChild }) {
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <div className='p-2 cursor-pointer hover:bg-neutral-50 rounded-full transition-colors'>
           <EllipsisVertical size={16} />

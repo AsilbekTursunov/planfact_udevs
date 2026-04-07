@@ -10,7 +10,6 @@ import {
 
 // Helpers
 import { formatDate, isFuture } from '@/utils/formatDate'
-import { formatAmount, returnNumber as parseAmount } from '@/utils/helpers'
 
 // Components
 import CustomDatePicker from '../../../../shared/DatePicker'
@@ -30,9 +29,10 @@ import { useUcodeRequestMutation } from '../../../../../hooks/useDashboard'
 import { observer } from 'mobx-react-lite'
 import { authStore } from '../../../../../store/auth.store'
 import { queryClient } from '../../../../../lib/queryClient'
-import { formatDecimal, formatNumber, returnNumber, StringtoNumber } from '../../../../../utils/helpers'
+import { formatDecimal, formatNumber, StringtoNumber } from '../../../../../utils/helpers'
 import { Loader2 } from 'lucide-react'
 import { toJS } from 'mobx'
+import moment from 'moment'
 
 // ── Reducer Logic ──────────────────────────────────────────
 
@@ -366,8 +366,8 @@ const PaymentForm = observer(({
       payload.items = divivedAmounts.map(item => ({
         summa: formatDecimal(StringtoNumber(item?.value)),
         percent: Number(item?.percent),
-        data_nachisleniya: showDate && !watchSalesDeal ? (item?.calculationDate || null) : null,
-        payment_accrual: showDate && !watchSalesDeal ? (item?.isCalculationCommitted ?? false) : false,
+        data_nachisleniya: moment(showDate && !watchSalesDeal ? (item?.calculationDate) : data?.accrualDate).format('YYYY-MM-DD'),
+        payment_accrual: showDate && !watchSalesDeal ? item?.isCalculationCommitted : data?.confirmAccrual,
         counterparties_id: showAgent ? (item?.contrAgentId || null) : null,
         chart_of_accounts_id: showStatya ? (item?.operationCategoryId || null) : null,
       }))
@@ -506,7 +506,7 @@ const PaymentForm = observer(({
                         </div>
                       )}
                     />
-                    <p className='text-xss text-black font-medium text-end w-full'>{title}</p>
+                    <p className='text-xss text-black font-medium text-end w-full line-clamp-1'>{title}</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <SplitAmount

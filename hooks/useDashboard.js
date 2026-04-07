@@ -1312,6 +1312,7 @@ export const useUcodeRequestInfinite = ({ method, data, skip = false, querySetti
     queryKey: [method, data],
     queryFn: ({ pageParam = 1 }) => ucodeRequest({ method, data: { ...data, page: pageParam } }),
     getNextPageParam: (lastPage) => {
+      console.log('lastPage', lastPage)
       const pagination = lastPage?.data?.data?.pagination || lastPage?.data?.pagination;
       if (!pagination) return undefined;
       return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;

@@ -3,7 +3,7 @@ import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
 import { currencyInfo } from '../../../constants/globalCurrency'
 import SingleSelect from '../../shared/Selects/SingleSelect'
 
-const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, className, dropDownClassName, placeholder = 'Выберите валюту', wrapperClassName }) => {
+const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, className, dropDownClassName, placeholder = 'Выберите валюту', wrapperClassName, isClearable = true }) => {
 
   const { data: myAccounts, isLoading } = useUcodeRequestQuery({
     method: 'get_my_accounts',
@@ -18,8 +18,8 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
   })
 
 
+
   const selectOptions = useMemo(() => {
-    console.log(myAccounts)
     if (!myAccounts) return []
     const unique = new Map();
     myAccounts.forEach((account) => {
@@ -33,6 +33,7 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
     });
     return Array.from(unique.values());
   }, [myAccounts])
+
 
   useEffect(() => {
     if (selectOptions?.length === 1 && value !== selectOptions[0].value) {
@@ -52,6 +53,7 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
       value={value}
       withSearch={withSearch}
       onChange={onChange}
+      isClearable={isClearable}
       className={className}
       dropDownClassName={dropDownClassName}
       placeholder={actualPlaceholder}
