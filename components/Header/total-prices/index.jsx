@@ -36,7 +36,7 @@ const TotalPrice = observer(() => {
             nalichnye: true,
         },
         querySetting: {
-            select: (response) => response?.data?.data,
+            select: (response) => response?.data,
             placeholderData: keepPreviousData
         }
     })

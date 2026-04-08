@@ -12,9 +12,9 @@ export const OperationsFooter = observer(({ isFilterOpen = false, totalSummary }
   if (!mounted) return null
 
   return (
-    <div className={cn('fixed bg-neutral-100 p-2  border-neutral-200 border-t items-center justify-center bottom-0 left-0 right-0 py-2 z-30 transition-all duration-300', isFilterOpen ? 'left-[320px]' : 'left-[110px]')}>
+    <div className={cn('fixed bg-neutral-100 p-2  border-neutral-200 border-t items-center justify-center bottom-0 left-0 right-0 py-1 z-30 transition-all duration-300', isFilterOpen ? 'left-[320px]' : 'left-[110px]')}>
       <div className="flex items-center">
-        <div className="flex items-center text-sm ">
+        <div className="flex items-center text-sm">
           <div className='flex flex-col border-r border-neutral-400 px-4'>
             <p className=' capitalize'>операций</p>
             <strong className={styles.footerText}>

@@ -27,7 +27,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
       groupBy: "legal_entities"
     },
     querySetting: {
-      select: (response) => response?.data?.data?.data,
+      select: (response) => response?.data?.data,
       placeholderData: keepPreviousData,
     }
   })
@@ -147,6 +147,8 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
     }
   }
 
+  console.log('myCurrencies', myCurrencies)
+
   return (
     <Modal
       open={open}
@@ -260,7 +262,7 @@ const CreateSingle = ({ open = true, setOpen, initialData = null, isEditing = fa
                       data={groupsList}
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder="Выберите группу" 
+                      placeholder="Выберите группу"
                       className={'bg-white'}
                     />
                   )}

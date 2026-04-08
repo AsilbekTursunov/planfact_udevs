@@ -12,7 +12,7 @@ const MyAccountCurrensies = ({ value, onChange, guid, withSearch = false, classN
     },
     querySetting: {
       enabled: !!guid,
-      select: (data) => data?.data?.data?.data,
+      select: (data) => data?.data?.data,
       slateTime: 0,
     }
   })

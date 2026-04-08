@@ -316,7 +316,7 @@ export default function BranchesPage() {
     method: 'get_branch_users',
     data: { page: 1, limit: 50, search: '', include_owner: true },
   })
-  const branches = branchesData?.data?.data?.data ?? []
+  const branches = branchesData?.data?.data ?? []
 
   const [branchModalOpen, setBranchModalOpen] = useState(false)
   const [editingBranch, setEditingBranch] = useState(null)
