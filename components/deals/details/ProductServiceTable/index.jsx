@@ -28,7 +28,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
       sales_transactions_id: sellingDealId,
     },
     querySetting: {
-      select: data => data?.data?.data?.data
+      select: data => data?.data?.data
     }
   })
 

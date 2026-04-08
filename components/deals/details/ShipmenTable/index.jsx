@@ -41,7 +41,7 @@ const ShipmenTable = ({ dealName = '', dealGuid = '', onAdd }) => {
     },
     skip: !dealGuid,
     querySetting: {
-      select: (response) => response?.data?.data?.data,
+      select: (response) => response?.data?.data,
       placeholderData: keepPreviousData,
     }
   })

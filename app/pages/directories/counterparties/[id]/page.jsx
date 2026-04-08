@@ -18,8 +18,7 @@ import CreateCounterpartyModal from '@/components/directories/CreateCounterparty
 import OperationModal from '../../../../../components/operations/OperationModal/OperationModal'
 import { useUcodeRequestQuery } from '../../../../../hooks/useDashboard'
 import { formatDate } from '../../../../../utils/formatDate'
-import OperationTableRow from '@/components/operations/TableRow/new'
-import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
+import OperationTableRow from '@/components/operations/TableRow/new' 
 import MultiSelectZdelka from '../../../../../components/ReadyComponents/MultiZdelka'
 import operationsDto from '../../../../../lib/dtos/operationsDto'
 import SelectMyAccounts from '../../../../../components/ReadyComponents/SelectMyAccounts'
@@ -120,7 +119,7 @@ const KontragentDetailPage = observer(() => {
   })
 
   // Response structure: { data: { data: { data: { counterparty: {...}, operations: [...] } } } }
-  const responseData = counterpartyData?.data?.data?.data
+  const responseData = counterpartyData?.data?.data
   const counterparty = responseData?.counterparty || null
   const summary = responseData?.summary || null
   const counterpartyOperations = useMemo(() => {

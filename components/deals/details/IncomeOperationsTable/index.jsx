@@ -34,7 +34,7 @@ const IncomeOperationsTable = ({ sellingDealId, onAdd }) => {
       tip: ['Поступление'],
     },
     querySetting: {
-      select: (response) => response?.data?.data,
+      select: (response) => response?.data,
       placeholderData: keepPreviousData,
     }
   })

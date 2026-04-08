@@ -42,7 +42,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
       guid: initialData?.guid
     },
     querySetting: {
-      select: response => response?.data?.data,
+      select: response => response?.data,
 
       placeholder: keepPreviousData
     },

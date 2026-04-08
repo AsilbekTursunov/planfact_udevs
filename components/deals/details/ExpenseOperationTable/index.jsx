@@ -33,7 +33,7 @@ const ExpenseOperationsTable = ({ sellingDealId, onAdd }) => {
       tip: ['Выплата'],
     },
     querySetting: {
-      select: (response) => response?.data?.data,
+      select: (response) => response?.data,
       placeholderData: keepPreviousData,
     }
   })
