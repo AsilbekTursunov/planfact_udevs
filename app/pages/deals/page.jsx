@@ -88,12 +88,9 @@ export default observer(function DealsPage() {
     method: "get_sales_list_simple",
     data: dealsFilters,
     querySetting: {
-      select: (response) => response?.data?.data,
+      select: (response) => response?.data,
     }
   })
-
-
-
 
   const summary = useMemo(() => {
     return deals?.summary

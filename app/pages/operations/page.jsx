@@ -171,25 +171,12 @@ const OperationsPage = observer(() => {
 		}
 	})
 
-
-
-
-
-	// paginationData
-	// {
-	// 	"limit": 10,
-	// 		"page": 1,
-	// 			"total": 19,
-	// 				"totalPages": 2
-	// }
-
-
 	const allOperations = useMemo(() => {
-		return infiniteData?.pages?.flatMap(page => page?.data?.data?.data || []) || []
+		return infiniteData?.pages?.flatMap(page => page?.data?.data || []) || []
 	}, [infiniteData])
 
 	const totalSummary = useMemo(() => {
-		return infiniteData?.pages?.[0]?.data?.data?.totalSummary
+		return infiniteData?.pages?.[0]?.data?.totalSummary
 	}, [infiniteData])
 
 

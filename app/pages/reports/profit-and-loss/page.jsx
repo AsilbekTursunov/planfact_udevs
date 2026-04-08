@@ -2,19 +2,15 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { observer } from 'mobx-react-lite'
-import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import PnLFilterSidebar from '@/components/reports/profit-and-loss/FilterSidebar'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
-import { toJS } from 'mobx'
 import SingleSelect from '@/components/shared/Selects/SingleSelect'
-import { GlobalCurrency } from '../../../../constants/globalCurrency'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
-import { formatNumber, formatPeriod, formatTotalSumma } from '../../../../utils/helpers'
+import { formatNumber, formatPeriod } from '../../../../utils/helpers'
 import { cn } from '@/app/lib/utils'
 import { appStore } from '../../../../store/app.store'
-import { balanceStore } from '../../../../components/reports/balance/balance.store'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '../../../../lib/api/ucode/base'
 import { pnlStore } from '../../../../components/reports/profit-and-loss/pnl.store'
@@ -74,7 +70,7 @@ const ProfitAndLossPage = observer(() => {
   const { data: profitAndLossDataList, isLoading: isLoadingProfitAndLoss, isFetching: isFetchingProfitAndLoss } = useQuery({
     queryKey: ["profit_and_loss", filterData],
     queryFn: () => apiClient.invokeFunction({ method: "profit_and_loss", data: filterData }),
-    select: (res) => res?.data?.data?.data,
+    select: (res) => res?.data?.data,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   })

@@ -159,7 +159,7 @@ export default observer(function CashFlowReportPage() {
   const { data: cashFlowDataList, isLoading: isLoadingCashFlow, isFetching: isFetchingCashFlow } = useQuery({
     queryKey: ["cash_flow", filterData],
     queryFn: () => apiClient.invokeFunction({ method: "cash_flow", data: filterData }),
-    select: (res) => res?.data?.data?.data,
+    select: (res) => res?.data?.data,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,

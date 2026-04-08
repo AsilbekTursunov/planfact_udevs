@@ -32,14 +32,13 @@ export default observer(function BalancePage() {
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["balance_report", filterData],
     queryFn: () => apiClient.invokeFunction({ method: "balance_report", data: filterData }),
-    select: (res) => res?.data?.data,
+    select: (res) => res?.data,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
     gcTime: 0
   })
 
-  // Auto-expand first two levels on initial data load
   useEffect(() => {
     if (!isInitialLoad || !data) return
     const hasData =
@@ -87,7 +86,6 @@ export default observer(function BalancePage() {
     const isExpanded = expandedRows.has(item.id)
     const indent = level * 24
     const isTotalRow = level === 0
-    console.log(item.name, indent)
 
     return (
       <React.Fragment key={item.id}>

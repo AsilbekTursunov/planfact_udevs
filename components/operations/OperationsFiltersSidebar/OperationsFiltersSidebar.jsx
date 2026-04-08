@@ -304,6 +304,7 @@ export const OperationsFiltersSidebar = observer(({
                 handleChangeFilter()
               }}
               placeholder="Сделки"
+              className={'bg-gray-ucode-25'}
             />
 
             {/* Price */}

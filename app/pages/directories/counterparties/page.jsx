@@ -107,17 +107,17 @@ const CounterpartiesPage = observer(() => {
   })
 
   const allCounterparties = useMemo(() => {
-    return infiniteData?.pages?.flatMap(page => page?.data?.data?.data || []) || []
+    return infiniteData?.pages?.flatMap(page => page?.data?.data || []) || []
   }, [infiniteData])
 
   const totalCountData = useMemo(() => {
-    return infiniteData?.pages?.[0]?.data?.data?.pagination?.total || allCounterparties.length
+    return infiniteData?.pages?.[0]?.data?.pagination?.total || allCounterparties.length
   }, [infiniteData, allCounterparties])
 
 
 
   const SummaryTotal = useMemo(() => {
-    return infiniteData?.pages?.[0]?.data?.data?.summary || {}
+    return infiniteData?.pages?.[0]?.data?.summary || {}
   }, [infiniteData])
 
   useEffect(() => {
@@ -393,7 +393,7 @@ const CounterpartiesPage = observer(() => {
 
         {/* Column Headers */}
         <div className='flex h-12 sticky top-16 z-30 text-sm gap-1 font-medium text-neutral-500 items-center bg-neutral-100 border-b border-neutral-200'>
-          <div className='w-10 flex items-center justify-center'>
+          <div className='w-12 flex items-center justify-center'>
             <OperationCheckbox checked={allSelected()} onChange={toggleSelectAll} />
           </div>
           {selectedRows.length > 0 && <>
@@ -453,7 +453,7 @@ const CounterpartiesPage = observer(() => {
                       className="flex min-h-[48px] items-center gap-1 hover:bg-neutral-50 border-b border-neutral-100 cursor-pointer bg-white text-sm"
                       onClick={() => toggleGroup(item.guid)}
                     >
-                      <div className="w-10 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                      <div className="w-12 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                         <OperationCheckbox checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} />
                       </div>
                       <div className="flex-1 min-w-[200px] flex px-3 items-center gap-2 font-medium">
@@ -577,7 +577,7 @@ const CounterpartiesPage = observer(() => {
                     )}
                     onClick={() => router.push(`/pages/directories/counterparties/${item.guid}`)}
                   >
-                    <div className="w-10 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                    <div className="w-12 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                       <OperationCheckbox checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} />
                     </div>
                     <div className="flex-1 min-w-[200px] flex flex-col px-2 justify-center">

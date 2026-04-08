@@ -10,6 +10,8 @@ import { showErrorNotification } from '@/lib/utils/notifications'
 import { useChartOfAccountsPlanFact } from '../../../../hooks/useDashboard'
 import Input from '../../../../components/shared/Input'
 import { Search } from 'lucide-react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { apiClient } from '../../../../lib/api/ucode/base'
 
 // Map tab keys to root category names from API
 const TABS_TO_ROOT_NAME = {
@@ -226,22 +228,26 @@ export default function TransactionCategoriesPage() {
 	const [categoryToDelete, setCategoryToDelete] = useState(null)
 	const [searchQuery, setSearchQuery] = useState('')
 
-	const {
-		data: chartOfAccountsData,
-		isLoading: isLoadingChartOfAccounts,
-		error: chartOfAccountsError,
-	} = useChartOfAccountsPlanFact({
-		page: 1,
-		limit: 100,
-		search: searchQuery.trim() || undefined,
+	// get_chart_of_accounts
+	const { data: chartOfAccountsData, isLoading: isLoadingChartOfAccounts, error: chartOfAccountsError } = useQuery({
+		queryKey: ['get_chart_of_accounts'],
+		queryFn: () => apiClient.invokeFunction({
+			method: 'get_chart_of_accounts', data: {
+				page: 1,
+				limit: 100,
+				search: searchQuery.trim() || undefined,
+			}
+		}),
+		placeholderData: keepPreviousData,
+		select: (response) => response?.data?.data
 	})
 
 	const isLoadingChartOfAccountsV2 = isLoadingChartOfAccounts
 	const chartOfAccountsErrorV2 = chartOfAccountsError
 
-	const chartOfAccountsTree = chartOfAccountsData?.data?.data?.data || []
+	const chartOfAccountsTree = chartOfAccountsData || []
 
-	// Get the root node for active tab and convert its children to display format
+
 	const categories = (() => {
 		if (!Array.isArray(chartOfAccountsTree) || chartOfAccountsTree.length === 0) {
 			return []

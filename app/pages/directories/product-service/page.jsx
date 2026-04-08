@@ -6,8 +6,7 @@ import { useLegalEntitiesPlanFact } from '@/hooks/useDashboard'
 import styles from './style.module.scss'
 import CreateGroup from '../../../../components/directories/ProductServices/CreateGroup'
 import CreateSingle from '../../../../components/directories/ProductServices/CreateSingle'
-import { ChevronDown, ChevronUp, Search, MoreVertical, Download, ArrowRightLeft, PlusCircle } from 'lucide-react'
-import Select from '../../../../components/common/Select'
+import { ChevronDown, ChevronUp, Search, MoreVertical } from 'lucide-react'
 import Input from '../../../../components/shared/Input'
 import { useUcodeDefaultApiQuery, useUcodeDefaultApiMutation, useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import { showSuccessNotification, showErrorNotification } from '@/lib/utils/notifications'
@@ -95,32 +94,12 @@ export default function LegalEntitiesPage() {
       from_date: "",
       to_date: "",
       search: debouncedSearchQuery,
-      type: filters?.type?.value,
+      type: filters?.type,
     },
     querySetting: {
-      select: data => data?.data?.data?.data
+      select: data => data?.data?.data
     }
   })
-
-  // const filterProductServiceGroups = useMemo(() => {
-  //   return {
-  //     page: 1,
-  //     limit: 100,
-  //     search: "",
-  //     type: filters.type.value,
-  //     root_only: false
-  //   }
-  // }, [filters])
-
-  // const { data: productServicesGroups, } = useUcodeRequestQuery({
-  //   method: "list_product_and_service_groups",
-  //   data: filterProductServiceGroups,
-  //   querySetting: {
-  //     select: data => data?.data?.data
-  //   }
-  // })
-
-
 
   const { data: productServicesGrouped } = useUcodeDefaultApiQuery({
     queryKey: 'product-services-grouped',
@@ -130,7 +109,6 @@ export default function LegalEntitiesPage() {
       select: data => data?.data?.data?.response
     }
   });
-
 
   const productServicesList = useMemo(() => {
     const rawList = productServices?.filter(item => filters?.type === 'Все' ? true : item?.Status?.includes(filters?.type)).map(item => {
@@ -374,8 +352,8 @@ export default function LegalEntitiesPage() {
 
   return (
     <>
-      {isLoading && <ScreenLoader />}
       <div className="flex fixed bg-white overflow-y-auto pb-20  left-[80px] top-[60px] flex-col flex-1 w-[calc(100%-80px)] h-[calc(100%-60px)]  gap-4">
+        {isLoading && <ScreenLoader />}
         <div className="flex items-center sticky top-0 bg-white z-10 p-3 justify-between">
           <div className="flex items-center gap-3">
             <h1 className="h1 text-xl text-neutral-700 font-semibold">Товары & Услуги</h1>
@@ -406,7 +384,7 @@ export default function LegalEntitiesPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2 "> 
+          <div className="flex items-center gap-2 ">
             <div className="w-32 h-10">
               <SingleSelect
                 data={[
@@ -503,71 +481,71 @@ export default function LegalEntitiesPage() {
             <tbody className=' flex-1 overflow-y-auto'>
               {productServicesList.length === 0 ? (
                 <tr>
-                    <td colSpan={9} className="p-8 text-center text-neutral-400">
-                      Нет данных
-                    </td>
-                  </tr>
-                ) : (
-                  productServicesList.map((item, index) => {
-                    if (item.isGroup) {
-                      const isExpanded = expandedGroups.has(item.guid);
-                      const isAllChildsSelected = item?.items?.length > 0 && item.items.every(child => selectedItems.has(child.guid));
-                      return (
-                        <React.Fragment key={item.guid}>
-                          <tr
-                            className="hover:bg-neutral-50 bg-neutral-50/50 font-medium cursor-pointer border-b border-gray-200"
-                            onClick={() => toggleGroup(item.guid)}
-                          >
-                            <td className="p-3 text-center">
-                              <div className="flex items-center justify-center">
-                                <OperationCheckbox checked={isAllChildsSelected} onChange={() => handleSelectChilds(item)} />
-                              </div>
-                            </td>
-                            <td colSpan={6} className="p-3">
-                              <div className="flex items-center gap-2">
+                  <td colSpan={9} className="p-8 text-center text-neutral-400">
+                    Нет данных
+                  </td>
+                </tr>
+              ) : (
+                productServicesList.map((item, index) => {
+                  if (item.isGroup) {
+                    const isExpanded = expandedGroups.has(item.guid);
+                    const isAllChildsSelected = item?.items?.length > 0 && item.items.every(child => selectedItems.has(child.guid));
+                    return (
+                      <React.Fragment key={item.guid}>
+                        <tr
+                          className="hover:bg-neutral-50 bg-neutral-50/50 font-medium cursor-pointer border-b border-gray-200"
+                          onClick={() => toggleGroup(item.guid)}
+                        >
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center">
+                              <OperationCheckbox checked={isAllChildsSelected} onChange={() => handleSelectChilds(item)} />
+                            </div>
+                          </td>
+                          <td colSpan={6} className="p-3">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid); }}
+                                className="p-1 hover:bg-neutral-100 rounded"
+                              >
+                                {isExpanded ? <ExpendClose /> : <ExpendOpen />}
+                              </button>
+                              <span className="font-semibold text-neutral-800 text-sm">
+                                {item.name} ({item.items.length})
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-3 text-center">
+                            <p className='text-xs font-normal text-neutral-500'>{item.type}</p>
+                          </td>
+                          <td className="p-3 text-center">
+                            <p className='text-xs font-normal text-neutral-500'>{item.commentary}</p>
+                          </td>
+                          <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                            {item.guid !== 'no-group' && (
+                              <div className="relative inline-block" ref={openRowMenuId === item.guid ? rowMenuRef : null}>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); toggleGroup(item.guid); }}
-                                  className="p-1 hover:bg-neutral-100 rounded"
+                                  className="p-1 hover:bg-neutral-200 cursor-pointer rounded-full"
+                                  onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}
                                 >
-                                  {isExpanded ? <ExpendClose /> : <ExpendOpen />}
+                                  <MoreVertical size={16} />
                                 </button>
-                                <span className="font-semibold text-neutral-800 text-sm">
-                                  {item.name} ({item.items.length})
-                                </span>
+                                {openRowMenuId === item.guid && (
+                                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 w-36 p-1 flex flex-col font-normal text-sm">
+                                    <button className="flex items-center gap-2 p-1.5 text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => {
+                                      setOpenRowMenuId(null); setItemToEdit(item.raw || item); setIsCopying(false); setIsCreateGroupOpen(true);
+                                      setEditGroup(item)
+                                    }}>
+                                      <MdOutlineModeEdit size={14} className="text-neutral-500" /> Редактировать
+                                    </button>
+                                    <button className="flex items-center gap-2 p-1.5 text-red-600 hover:bg-red-50 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
+                                      <GoTrash size={14} className="text-red-500" /> Удалить
+                                    </button>
+                                  </div>
+                                )}
                               </div>
-                            </td>
-                            <td className="p-3 text-center">
-                              <p className='text-xs font-normal text-neutral-500'>{item.type}</p>
-                            </td>
-                            <td className="p-3 text-center">
-                              <p className='text-xs font-normal text-neutral-500'>{item.commentary}</p>
-                            </td>
-                            <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
-                              {item.guid !== 'no-group' && (
-                                <div className="relative inline-block" ref={openRowMenuId === item.guid ? rowMenuRef : null}>
-                                  <button
-                                    className="p-1 hover:bg-neutral-200 cursor-pointer rounded-full"
-                                    onClick={() => setOpenRowMenuId(openRowMenuId === item.guid ? null : item.guid)}
-                                  >
-                                    <MoreVertical size={16} />
-                                  </button>
-                                  {openRowMenuId === item.guid && (
-                                    <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 w-36 p-1 flex flex-col font-normal text-sm">
-                                      <button className="flex items-center gap-2 p-1.5 text-neutral-700 hover:bg-neutral-100 rounded cursor-pointer" onClick={() => {
-                                        setOpenRowMenuId(null); setItemToEdit(item.raw || item); setIsCopying(false); setIsCreateGroupOpen(true);
-                                        setEditGroup(item)
-                                      }}>
-                                        <MdOutlineModeEdit size={14} className="text-neutral-500" /> Редактировать
-                                      </button>
-                                      <button className="flex items-center gap-2 p-1.5 text-red-600 hover:bg-red-50 rounded cursor-pointer" onClick={() => { setOpenRowMenuId(null); setItemToDelete(item); }}>
-                                        <GoTrash size={14} className="text-red-500" /> Удалить
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </td>
-                          </tr>
+                            )}
+                          </td>
+                        </tr>
 
                         {isExpanded && item.items.length === 0 && (
                           <tr>
@@ -667,7 +645,7 @@ export default function LegalEntitiesPage() {
               )}
             </tbody>
           </table>
-        </div> 
+        </div>
       </div>
       {/* Footer */}
       <div className="fixed bottom-0 left-[80px] py-4 px-3 right-0 bg-white border-t border-gray-200">
