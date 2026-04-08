@@ -30,9 +30,7 @@ const ProductServiceTable = ({ handleSelect, sellingDealId, onAdd }) => {
     querySetting: {
       select: data => data?.data?.data
     }
-  })
-
-
+  }) 
 
 
   const productServicesList = useMemo(() => {

@@ -97,7 +97,7 @@ export default function LegalEntitiesPage() {
       type: filters?.type,
     },
     querySetting: {
-      select: data => data?.data?.data
+      select: data => data?.data
     }
   })
 
@@ -111,7 +111,7 @@ export default function LegalEntitiesPage() {
   });
 
   const productServicesList = useMemo(() => {
-    const rawList = productServices?.filter(item => filters?.type === 'Все' ? true : item?.Status?.includes(filters?.type)).map(item => {
+    const rawList = productServices?.data?.filter(item => filters?.type === 'Все' ? true : item?.Status?.includes(filters?.type)).map(item => {
       const price = Number(item?.TSena_za_ed) || 0;
       const vatStr = item?.NDS || '';
       const vatNum = parseFloat(vatStr) || 0;
@@ -231,7 +231,7 @@ export default function LegalEntitiesPage() {
 
   // Extract legal entities from response - correct path is data.data.data
   const legalEntitiesItems = useMemo(() => {
-    const items = legalEntitiesData?.data?.data?.data || []
+    const items = legalEntitiesData?.data?.data || []
     return Array.isArray(items) ? items : []
   }, [legalEntitiesData])
 
@@ -293,11 +293,8 @@ export default function LegalEntitiesPage() {
   };
 
   const totalItemsCount = useMemo(() => {
-    if (filters.type === 'group') {
-      return productServicesList.reduce((acc, group) => acc + (group.items?.length || 0), 0)
-    }
-    return productServicesList.length
-  }, [productServicesList, filters.type])
+    return productServices.total
+  }, [productServices])
 
   // Block body scroll when page is mounted
   useEffect(() => {
@@ -646,14 +643,11 @@ export default function LegalEntitiesPage() {
             </tbody>
           </table>
         </div>
-      </div>
-      {/* Footer */}
+      </div> 
       <div className="fixed bottom-0 left-[80px] py-4 px-3 right-0 bg-white border-t border-gray-200">
-        <div className={styles.footerText}>
-          <span className={styles.footerCount}>
-            {isLoadingLegalEntities ? 'Загрузка...' : `${legalEntitiesItems.length} ${legalEntitiesItems.length === 1 ? 'юрлицо' : legalEntitiesItems.length < 5 ? 'юрлица' : 'юрлиц'}`}
-          </span>
-        </div>
+        <span className={' lowercase'}>
+          {totalItemsCount} Товары & Услуги
+        </span>
       </div>
 
       <CreateSingle

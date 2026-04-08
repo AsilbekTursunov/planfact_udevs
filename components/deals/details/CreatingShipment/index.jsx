@@ -91,7 +91,7 @@ const CreateShipment = observer(({ open, onClose, dealName, dealGuid, kontragent
   const { data: productServices } = useUcodeRequestQuery({
     method: "list_products_and_services",
     querySetting: {
-      select: data => data?.data?.data?.data
+      select: data => data?.data?.data
     }
   })
 
