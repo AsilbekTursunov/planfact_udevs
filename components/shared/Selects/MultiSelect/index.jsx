@@ -13,7 +13,8 @@ const MultiSelect = ({
     isClearable = true,
     className,
     dropdownClassName,
-    hasError
+    hasError,
+    onSearch = () => { }
 }) => {
     const [open, setOpen] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
@@ -161,7 +162,10 @@ const MultiSelect = ({
                                     className='w-full h-9 border border-primary/40 rounded-md pl-8 pr-2 py-1.5 text-sm outline-none placeholder:text-neutral-400'
                                     placeholder='Поиск по списку'
                                     value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value)
+                                        onSearch(e.target.value)
+                                    }}
                                 />
                             </div>
                         )}

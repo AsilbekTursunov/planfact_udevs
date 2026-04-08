@@ -1,77 +1,22 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
-import { autorun } from 'mobx'
 import { observer } from 'mobx-react-lite'
-import { pnlStore } from '@/components/reports/profit-and-loss/pnl.store'
-import { MultiSelect } from '@/components/common/MultiSelect/MultiSelect'
 import NewDateRangeComponent from '@/components/directories/NewDateRangeComponent'
 import OperationCheckbox from '@/components/shared/Checkbox/operationCheckbox'
 import { FilterSidebar } from '@/components/directories/FilterSidebar/FilterSidebar'
-import { useUcodeRequestQuery } from '../../../../hooks/useDashboard'
 import { FilterSection } from '../../../directories/FilterSidebar/FilterSidebar'
+import SelectMyAccounts from '../../../ReadyComponents/SelectMyAccounts'
+import SelectCounterParties from '../../../ReadyComponents/SelectCounterParties'
+import { pnlStore } from '../pnl.store'
 
 const PnLFilterSidebar = observer(({ isOpen, onClose }) => {
-  // ── Load accounts & counterparties via React Query (cached) ─────────────────
-  const { data: myAccountsData } = useUcodeRequestQuery({
-    method: 'get_my_accounts',
-    data: { limit: 1000, page: 1 }
-  })
 
-  const { data: counterpartiesGroupData } = useUcodeRequestQuery({
-    method: 'get_counterparties_group',
-    data: { limit: 1000, page: 1 }
-  })
 
-  // ── Build options ─────────────────────────────────────────────────────────
-  const accountOptions = useMemo(() => {
-    if (!myAccountsData) return []
-    const raw = myAccountsData?.data?.data?.data || []
-    const flatten = (items) => {
-      let result = []
-      items.forEach(item => {
-        result.push(item)
-        if (item.children?.length > 0) result = result.concat(flatten(item.children))
-      })
-      return result
-    }
-    return flatten(Array.isArray(raw) ? raw : []).map(item => ({
-      value: item.guid,
-      label: item.nazvanie || 'Без названия',
-      group: (Array.isArray(item.tip) && item.tip.length > 0) ? item.tip[0] : 'Без группы'
-    }))
-  }, [myAccountsData])
-
-  const counterpartyOptions = useMemo(() => {
-    if (!counterpartiesGroupData) return []
-    const groups = counterpartiesGroupData?.data?.data?.data || []
-    return groups
-      .filter(item => item.children?.length > 0)
-      .flatMap(item => [
-        { value: '', label: item.nazvanie_gruppy, group: item.nazvanie_gruppy },
-        ...item.children.map(child => ({
-          value: child.guid,
-          label: child.nazvanie || '',
-          group: item.nazvanie_gruppy
-        }))
-      ])
-  }, [counterpartiesGroupData])
-
-  // ── Fetch report reactively on filter changes ──────────────────────────────
-  useEffect(() => {
-    const dispose = autorun(() => {
-      void pnlStore.dateRange
-      void pnlStore.selectedPeriod
-      void pnlStore.selectedGrouping
-      void pnlStore.isCalculation
-      void pnlStore.profitTypes
-      void pnlStore.selectedAccounts
-      void pnlStore.selectedCounterparties
-      void pnlStore.selectedCurrency
-      pnlStore.fetchReport()
-    })
-    return dispose
-  }, [])
+  const handleDateRangeChange = (range) => {
+    pnlStore.setDateRange(range)
+    console.log(range)
+    // queryClient.invalidateQueries({ queryKey: ['profit_and_loss'] })
+  }
 
   return (
     <FilterSidebar
@@ -83,71 +28,55 @@ const PnLFilterSidebar = observer(({ isOpen, onClose }) => {
         <FilterSection title="Период">
           <NewDateRangeComponent
             value={pnlStore.dateRange}
-            onChange={(val) => pnlStore.setDateRange(val)}
+            onChange={handleDateRangeChange}
+            clearable={false}
+            defaultValue={pnlStore.defaultDate}
           />
         </FilterSection>
 
         {/* Accounts */}
         <div>
-          {accountOptions.length > 0 ? (
-            <MultiSelect
-              data={accountOptions}
-              value={pnlStore.selectedAccounts}
-              onChange={(val) => pnlStore.setSelectedAccounts(val)}
-              placeholder="Юрлица и счета"
-              hideSelectAll={true}
-              valueKey="value"
-            />
-          ) : (
-            <MultiSelect
-              data={[]}
-              value={[]}
-              onChange={() => { }}
-              placeholder="Загрузка..."
-              loading={true}
-            />
-          )}
+          <SelectMyAccounts
+            value={pnlStore.selectedAccounts}
+            onChange={(val) => pnlStore.setSelectedAccounts(val)}
+            placeholder="Юрлица и счета"
+            valueKey="value"
+          />
         </div>
 
         {/* Counterparties */}
         <div>
-          {counterpartyOptions.length > 0 ? (
-            <MultiSelect
-              data={counterpartyOptions}
-              value={pnlStore.selectedCounterparties}
-              onChange={(val) => pnlStore.setSelectedCounterparties(val)}
-              hideSelectAll={true}
-              placeholder="Все контрагенты"
-              valueKey="value"
-            />
-          ) : (
-            <MultiSelect
-              data={[]}
-              value={[]}
-              onChange={() => { }}
-              placeholder="Загрузка..."
-              loading={true}
-            />
-          )}
+          <SelectCounterParties
+            value={pnlStore.selectedCounterparties}
+            onChange={(val) => pnlStore.setSelectedCounterparties(val)}
+            placeholder="Все контрагенты"
+            valueKey="value"
+          />
         </div>
 
         {/* Profit types */}
         <FilterSection title="Виды прибыли">
-          <div className="space-y-2">
-            {[
-              { key: 'operational', label: 'Операционная' },
-              { key: 'ebitda', label: 'EBITDA' },
-              { key: 'ebit', label: 'EBIT' },
-              { key: 'ebt', label: 'EBT' }
-            ].map(({ key, label }) => (
-              <label key={key} className="flex items-center gap-2 cursor-pointer">
-                <OperationCheckbox
-                  checked={pnlStore.profitTypes[key]}
-                  onChange={() => pnlStore.toggleProfitType(key)}
-                  label={label}
-                />
-              </label>
-            ))}
+          <div className="space-y-2 flex flex-col gap-2 justify-start items-start">
+            <OperationCheckbox
+              checked={pnlStore.operational}
+              onChange={(value) => pnlStore.setOperational(value.target.checked)}
+              label={"Операционная"}
+            />
+            <OperationCheckbox
+              checked={pnlStore.ebitda}
+              onChange={(value) => pnlStore.setEbitDa(value.target.checked)}
+              label={"EBITDA"}
+            />
+            <OperationCheckbox
+              checked={pnlStore.ebit}
+              onChange={(value) => pnlStore.setEbit(value.target.checked)}
+              label={"EBIT"}
+            />
+            <OperationCheckbox
+              checked={pnlStore.ebt}
+              onChange={(value) => pnlStore.setEbt(value.target.checked)}
+              label={"EBT"}
+            />
           </div>
         </FilterSection>
       </div>

@@ -1,5 +1,4 @@
 import { useMemo, useRef, useEffect, useCallback } from 'react'
-import styles from './OperationCashFlowModal.module.scss'
 import { useUcodeRequestInfinite } from '../../../hooks/useDashboard'
 import operationsDto from '../../../lib/dtos/operationsDto'
 import IncomePaymentTableRow from './CashFlowTablesRows/IncomePaymentRow'
@@ -133,7 +132,7 @@ const OperationCashFlowModal = observer(({
             <tbody>
               {(!operationsList?.before?.length && !operationsList?.today?.length && !operationsList?.future?.length) ? (
                 <tr>
-                  <td colSpan={5} className={styles.emptyCell}>Нет данных</td>
+                    <td colSpan={5} className="">Нет данных</td>
                 </tr>
               ) : (
                 <>

@@ -1,11 +1,26 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import MultiSelect from '@/components/shared/Selects/MultiSelect'
-import { useCounterpartiesPlanFact } from '@/hooks/useDashboard'
+import { useUcodeRequestQuery } from '../../../hooks/useDashboard'
+import { debounce } from 'lodash'
 
 const SelectCounterParties = ({ value = [], onChange, placeholder = "Выберите контрагентов", dropdownClassName, className, hasError }) => {
-  const { data: counterpartiesFilterData, isLoading } = useCounterpartiesPlanFact({
-    page: 1,
-    limit: 1000,
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+
+  const handleSearch = useMemo(() => 
+    debounce((val) => setDebouncedSearch(val), 500),
+  [])
+
+  useEffect(() => {
+    return () => handleSearch.cancel()
+  }, [handleSearch])
+
+  const { data: counterpartiesFilterData, isLoading } = useUcodeRequestQuery({
+    method: "get_counterparties",
+    data: {
+      page: 1,
+      limit: 100,
+      search: debouncedSearch
+    }
   })
 
   const counterpartiesOptions = useMemo(() => {
@@ -22,6 +37,7 @@ const SelectCounterParties = ({ value = [], onChange, placeholder = "Выбер�
   return (
     <MultiSelect
       data={counterpartiesOptions}
+      onSearch={handleSearch}
       value={value}
       onChange={onChange}
       className={className}

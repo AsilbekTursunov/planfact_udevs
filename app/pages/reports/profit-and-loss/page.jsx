@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { observer } from 'mobx-react-lite'
 import { GroupedSelect } from '@/components/common/GroupedSelect/GroupedSelect'
 import PnLFilterSidebar from '@/components/reports/profit-and-loss/FilterSidebar'
-import { pnlStore } from '@/components/reports/profit-and-loss/pnl.store'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
@@ -16,6 +15,10 @@ import { formatNumber, formatPeriod, formatTotalSumma } from '../../../../utils/
 import { cn } from '@/app/lib/utils'
 import { appStore } from '../../../../store/app.store'
 import { balanceStore } from '../../../../components/reports/balance/balance.store'
+import { useQuery } from '@tanstack/react-query'
+import { apiClient } from '../../../../lib/api/ucode/base'
+import { pnlStore } from '../../../../components/reports/profit-and-loss/pnl.store'
+import moment from 'moment'
 
 const formatDateLocal = (date) => {
   if (!date) return null
@@ -48,16 +51,42 @@ const ProfitAndLossPage = observer(() => {
     title: ''
   })
 
-  const { reportData, isLoading, isFetching } = pnlStore
-  const loading = isLoading || isFetching
+  const { dateRange, selectedPeriod,
+    selectedCurrency,
+    ebitda,
+    ebit,
+    ebt } = pnlStore
 
 
-  const legend = useMemo(() => reportData?.legend || [], [reportData])
-  const rows = useMemo(() => reportData?.rows || [], [reportData])
+  const filterData = {
+    periodStartDate: moment(dateRange?.start).format('YYYY-MM-DD'),
+    periodEndDate: moment(dateRange?.end).format('YYYY-MM-DD'),
+    periodType: selectedPeriod,
+    userCurrencyCode: selectedCurrency,
+    isEbitda: ebitda,
+    isEbit: ebit,
+    isEbt: ebt,
+    limit: 100,
+    page: 1,
+  }
+
+  const { data: profitAndLossDataList, isLoading: isLoadingProfitAndLoss, isFetching: isFetchingProfitAndLoss } = useQuery({
+    queryKey: ["profit_and_loss", filterData],
+    queryFn: () => apiClient.invokeFunction({ method: "profit_and_loss", data: filterData }),
+    select: (res) => res?.data?.data?.data,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  })
+
+  const loading = isLoadingProfitAndLoss || isFetchingProfitAndLoss
+
+
+  const legend = useMemo(() => profitAndLossDataList?.legend || [], [profitAndLossDataList])
+  const rows = useMemo(() => profitAndLossDataList?.rows || [], [profitAndLossDataList])
 
   // Auto-expand first level on initial load
   useEffect(() => {
-    if (!isInitialLoad || !reportData) return
+    if (!isInitialLoad || !profitAndLossDataList) return
 
     const firstLevelIds = new Set()
     rows.forEach(row => {
@@ -70,7 +99,7 @@ const ProfitAndLossPage = observer(() => {
       setExpandedRows(firstLevelIds)
       setIsInitialLoad(false)
     }
-  }, [reportData, isInitialLoad, rows])
+  }, [profitAndLossDataList, isInitialLoad, rows])
 
   const toggleRow = (id) => {
     setExpandedRows(prev => {
@@ -262,8 +291,8 @@ const ProfitAndLossPage = observer(() => {
           </div>
           <div className='flex flex-1 overflow-hidden'>
             <div div className='overflow-x-auto' >
-              {!reportData && !loading ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
+              {!profitAndLossDataList && !loading ? (
+                <div className="flex mx-auto flex-col items-center justify-center py-20 text-center">
                   <svg width="64" height="64" viewBox="0 0 64 64" fill="none" style={{ marginBottom: '16px', opacity: 0.3 }}>
                     <path d="M8 16C8 11.5817 11.5817 8 16 8H48C52.4183 8 56 11.5817 56 16V48C56 52.4183 52.4183 56 48 56H16C11.5817 56 8 52.4183 8 48V16Z" stroke="currentColor" strokeWidth="2" />
                     <path d="M16 24H48M16 32H48M16 40H32" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

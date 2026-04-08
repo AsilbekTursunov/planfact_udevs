@@ -4,16 +4,17 @@ import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { observer } from 'mobx-react-lite'
 import SingleSelect from '@/components/shared/Selects/SingleSelect'
 import CashFlowFilterSidebar from '@/components/reports/cashflow/FilterSidebar'
-import { cashFlowStore } from '@/components/reports/cashflow/cashflow.store'
 import '@/styles/report-filters.css'
 import OperationCashFlowModal from '@/components/directories/OperationCashFlowModal'
 import { ExpendClose, ExpendOpen } from '../../../../constants/icons'
-import { toJS } from 'mobx'
 import ScreenLoader from '../../../../components/shared/ScreenLoader'
 import { cn } from '@/lib/utils'
-import { formatPeriod } from '../../../../utils/helpers'
-import CustomTooltip from '../../../../components/shared/Tooltip'
 import { appStore } from '../../../../store/app.store'
+import { useQuery } from '@tanstack/react-query'
+import { apiClient } from '../../../../lib/api/ucode/base'
+import moment from 'moment'
+import { cashFlowStore } from '../../../../components/reports/cashflow/cashflow.store'
+import { formatNumber, formatTotalSumma } from '../../../../utils/helpers'
 
 const groupingOptions = [
   { value: 'monthly', label: 'По месяцам' },
@@ -21,14 +22,7 @@ const groupingOptions = [
   { value: 'yearly', label: 'По годам' }
 ]
 
-// Format number: empty string for zero, otherwise locale-formatted
-const formatNumber = (value) => {
-  if (value === 0 || value === null || value === undefined) return ''
-  return new Intl.NumberFormat('ru-RU', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value)
-}
+// Format number: empty string for zero, otherwise locale-formatte
 
 // Recursive row renderer
 function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCellClick }) {
@@ -80,7 +74,7 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
                 }}
               >
                 {/* <CustomTooltip> */}
-                <span className='line-clamp-1 text-end w-full cursor-pointer'>{formatNumber(val)}</span>
+                <span className='line-clamp-1 text-end w-full cursor-pointer'>{formatNumber(formatTotalSumma(val))}</span>
                 {/* </CustomTooltip> */}
               </span>
             </td>
@@ -96,7 +90,7 @@ function TableRow({ row, months, legend, depth = 0, expandedMap, onToggle, onCel
               onCellClick(row, null)
             }}
           >
-            {formatNumber(row.total || totalMonthSum)}
+            {formatNumber(formatTotalSumma(row.total || totalMonthSum))}
           </span>
         </td>
       </tr>
@@ -140,18 +134,44 @@ export default observer(function CashFlowReportPage() {
     title: '',
     isTransfer: false
   })
-  const didAutoExpand = useRef(false) 
-
-  const { reportData: cashFlowData, isLoading, isFetching, filters } = cashFlowStore
-  const loading = isLoading || isFetching
+  const didAutoExpand = useRef(false)
 
   // Extract legend (month columns)
-  const legend = useMemo(() => cashFlowData?.legend || [], [cashFlowData])
+  const { periodStartDate, periodEndDate, periodType, currencyCode, sellingDealId, contrAgentId, accountId, dealId } = cashFlowStore
+
+
+  // const filterData = useMemo(() => {
+  //   return {
+  // }, [periodStartDate, periodEndDate, periodType, currencyCode, sellingDealId, contrAgentId, accountId, dealId])
+
+  const filterData = {
+    periodStartDate: periodStartDate ? moment(periodStartDate).format('YYYY-MM-DD') : null,
+    periodEndDate: periodEndDate ? moment(periodEndDate).format('YYYY-MM-DD') : null,
+    periodType: periodType,
+    currencyCode: currencyCode, // Defaulting to RUB as seen in page
+    sellingDealId: sellingDealId, // these are same values
+    contrAgentId: contrAgentId,
+    accountId: accountId,
+    dealId: dealId, // these are same values
+  }
+
+
+  const { data: cashFlowDataList, isLoading: isLoadingCashFlow, isFetching: isFetchingCashFlow } = useQuery({
+    queryKey: ["cash_flow", filterData],
+    queryFn: () => apiClient.invokeFunction({ method: "cash_flow", data: filterData }),
+    select: (res) => res?.data?.data?.data,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+  })
+
+  const legend = useMemo(() => cashFlowDataList?.legend || [], [cashFlowDataList])
   const months = useMemo(() => legend.map(l => l.key), [legend])
 
   // Transform rows into tree structure with section context
   const data = useMemo(() => {
-    if (!cashFlowData?.rows) return []
+    if (!cashFlowDataList?.rows) return []
 
     const transformRow = (row, depth = 0, sectionName = null, parentPath = '') => {
       const monthData = {}
@@ -187,8 +207,8 @@ export default observer(function CashFlowReportPage() {
       return node
     }
 
-    return cashFlowData.rows.map(row => transformRow(row, 0, null, ''))
-  }, [cashFlowData, months])
+    return cashFlowDataList.rows.map(row => transformRow(row, 0, null, ''))
+  }, [cashFlowDataList, months])
 
   // Auto-expand top-level rows on first load
   useEffect(() => {
@@ -222,8 +242,6 @@ export default observer(function CashFlowReportPage() {
       requestData.paymentDateEnd = filters.periodEndDate
     }
     requestData.tip = nameMap[row.name] || nameMap[row.section]
-    console.log('row', row)
-    console.log('monthObj', monthObj)
 
     if (['Перемещения', 'Списания', 'Зачисления'].includes(row.name)) {
       requestData.paymentConfirmed = true
@@ -290,7 +308,7 @@ export default observer(function CashFlowReportPage() {
     <div className="fixed left-[80px] w-[calc(100%-80px)]  flex top-[60px] h-[calc(100%-60px)]">
       <CashFlowFilterSidebar isOpen={isFilterOpen} onClose={() => setIsFilterOpen(!isFilterOpen)} />
 
-      {loading && <ScreenLoader />}
+      {(isLoadingCashFlow || isFetchingCashFlow) && <ScreenLoader />}
 
       <div className={"w-full bg-white overflow-auto px-4"}>
         <div className="h-full flex flex-col">
@@ -299,10 +317,9 @@ export default observer(function CashFlowReportPage() {
               <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о движении денежных средств</h1>
               <SingleSelect
                 data={appStore.myCurrencies}
-                value={cashFlowStore.filters.currencyCode}
+                value={currencyCode}
                 onChange={(value) => {
                   cashFlowStore.setCurrencyCode(value)
-                  cashFlowStore.fetchReport()
                 }}
                 isClearable={false}
                 withSearch={false}
@@ -313,10 +330,9 @@ export default observer(function CashFlowReportPage() {
             <div className="flex items-center gap-3">
               <SingleSelect
                 data={groupingOptions}
-                value={cashFlowStore.filters.periodType}
+                value={periodType}
                 onChange={(value) => {
                   cashFlowStore.setPeriodType(value)
-                  cashFlowStore.fetchReport()
                 }}
                 placeholder="Способ построения"
                 withSearch={false}

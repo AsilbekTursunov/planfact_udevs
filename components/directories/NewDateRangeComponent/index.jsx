@@ -5,7 +5,7 @@ import CustomCalendar from '../../shared/Calendar'
 import { formatDate } from '../../../utils/formatDate'
 import { CgClose } from 'react-icons/cg'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu'
-import moment from 'moment/moment' 
+import moment from 'moment/moment'
 
 const getPresetRange = (key) => {
 
@@ -73,7 +73,7 @@ const getPresetRange = (key) => {
       return [start, end]
     }
     case 'year':
-      return [new Date(y, 0, 1), `${y}-12-31`]
+      return [new Date(y, 0, 1), new Date(y, 11, 31)]
     default:
       return [null, null]
   }
@@ -92,13 +92,12 @@ const PRESETS = {
     { key: 'year', label: 'Этот год' },]
 }
 
-export default function NewDateRangeComponent({ value, onChange, singleDateMode = false }) {
-
+export default function NewDateRangeComponent({ value, onChange, singleDateMode = false, clearable = true, defaultValue = { start: null, end: null } }) {
   const [startDate, setStartDate] = useState(value?.start)
   const [endDate, setEndDate] = useState(value?.end)
   const [activePreset, setActivePreset] = useState(value?.start ? null : 'year')
   const [dateType, setDateType] = useState()
-  
+
   const wrapperRef = useRef(null)
   const [open, setOpen] = useState(false)
 
@@ -112,11 +111,11 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
   }
 
   const handleReset = () => {
-    setStartDate(null)
-    setEndDate(null)
+    setStartDate(defaultValue?.start)
+    setEndDate(defaultValue?.end)
     setDateType(null)
     setActivePreset(null)
-    onChange?.({ start: null, end: null })
+    onChange?.({ start: defaultValue?.start, end: defaultValue?.end })
     setOpen(false)
   }
 
@@ -150,7 +149,7 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
               placeholder={singleDateMode ? "Выберите дату" : "Укажите период"}
               readOnly
             />
-            {(startDate || endDate) && <CgClose onClick={(e) => { e.stopPropagation(); handleReset(); }} className="cursor-pointer absolute right-3 text-gray-400 hover:text-gray-600" />}
+            {(startDate || endDate) && clearable && <CgClose onClick={(e) => { e.stopPropagation(); handleReset(); }} className="cursor-pointer absolute right-3 text-gray-400 hover:text-gray-600" />}
           </div>
         </DropdownMenuTrigger>
 
@@ -178,10 +177,10 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
             <div className="flex items-center gap-2 p-1.5 border border-gray-200 rounded-md bg-gray-50/50 w-full">
               <DesignCalenderIcon />
               <input
-                type="text" 
+                type="text"
                 value={startDate ? formatDate(startDate) : (singleDateMode ? 'Выберите дату' : 'Начало')}
                 onClick={() => handleDateType('startDate')}
-                readOnly 
+                readOnly
                 className="border-none outline-none bg-transparent text-gray-600 text-[11px] w-full"
               />
             </div>
@@ -189,10 +188,10 @@ export default function NewDateRangeComponent({ value, onChange, singleDateMode 
               <div className="flex items-center gap-2 p-1.5 border border-gray-200 rounded-md bg-gray-50/50 w-full">
                 <DesignCalenderIcon />
                 <input
-                  type="text" 
+                  type="text"
                   value={endDate ? formatDate(endDate) : 'Конец'}
                   onClick={() => handleDateType('endDate')}
-                  readOnly 
+                  readOnly
                   className="border-none outline-none bg-transparent text-gray-600 text-[11px] w-full"
                 />
               </div>

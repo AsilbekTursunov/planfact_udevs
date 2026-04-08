@@ -120,22 +120,11 @@ const CounterpartiesPage = observer(() => {
     return infiniteData?.pages?.[0]?.data?.data?.summary || {}
   }, [infiniteData])
 
-  // Reset state when component mounts (e.g., when returning from detail page)
   useEffect(() => {
-    console.log('🔄 CounterpartiesPage mounted - resetting queries')
-    // Invalidate queries to force fresh data fetch
     queryClient.invalidateQueries({ queryKey: ['get_counterparties'] })
-  }, [queryClient]) // Empty dependency array - runs only on mount
+  }, [queryClient])
 
   const [expandedGroups, setExpandedGroups] = useState(new Set())
-
-
-  // Fetch counterparties groups using new invoke_function API
-
-
-
-
-  // Fetch chart of accounts for filter
 
 
   const toggleRowSelection = (id) => {
@@ -407,29 +396,36 @@ const CounterpartiesPage = observer(() => {
           <div className='w-10 flex items-center justify-center'>
             <OperationCheckbox checked={allSelected()} onChange={toggleSelectAll} />
           </div>
-          <div className='flex-1 min-w-[200px] flex px-3 items-center justify-start cursor-pointer hover:text-neutral-700'>
-            {viewMode === 'nested' ? 'Группа контрагентов' : 'Контрагент'}
-            <ChevronDown className='size-4' />
-          </div>
-          {viewMode !== 'nested' && (
-            <div className='w-40 flex px-2 items-center justify-start'>Группа</div>
-          )}
-          {filters.calculationMethod !== 'Cashflow' && (
-            <div className='w-32 flex px-2 items-center justify-start'>ИНН</div>
-          )}
-          <div className='w-24 flex px-2 items-center justify-center'>Операций</div>
-          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>Дебит., {GlobalCurrency.name}</div>
-          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>Кредит., {GlobalCurrency.name}</div>
-          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
-            {filters.calculationMethod === 'Cashflow' ? 'Поступ. ' : 'Доходы '}
-          </div>
-          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
-            {filters.calculationMethod === 'Cashflow' ? 'Выплаты ' : 'Расходы '}
-          </div>
-          <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
-            {filters.calculationMethod === 'Cashflow' ? 'Разница ' : 'Прибыль '}
-          </div>
-          <div className='w-10 flex px-2 items-center justify-center'>&nbsp;</div>
+          {selectedRows.length > 0 && <>
+            <div className='flex-1 px-3 items-center justify-center'>
+              Выбрано: {selectedRows.length}
+            </div>
+          </>}
+          {selectedRows.length === 0 && <>
+            <div className='flex-1 min-w-[200px] flex px-3 items-center justify-start cursor-pointer hover:text-neutral-700'>
+              {viewMode === 'nested' ? 'Группа контрагентов' : 'Контрагент'}
+              <ChevronDown className='size-4' />
+            </div>
+            {viewMode !== 'nested' && (
+              <div className='w-40 flex px-2 items-center justify-start'>Группа</div>
+            )}
+            {filters.calculationMethod !== 'Cashflow' && (
+              <div className='w-32 flex px-2 items-center justify-start'>ИНН</div>
+            )}
+            <div className='w-24 flex px-2 items-center justify-center'>Операций</div>
+            <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>Дебит., {GlobalCurrency.name}</div>
+            <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>Кредит., {GlobalCurrency.name}</div>
+            <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
+              {filters.calculationMethod === 'Cashflow' ? 'Поступ. ' : 'Доходы '}
+            </div>
+            <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
+              {filters.calculationMethod === 'Cashflow' ? 'Выплаты ' : 'Расходы '}
+            </div>
+            <div className='w-32 flex px-2 items-center justify-end whitespace-nowrap'>
+              {filters.calculationMethod === 'Cashflow' ? 'Разница ' : 'Прибыль '}
+            </div>
+            <div className='w-10 flex px-2 items-center justify-center'>&nbsp;</div>
+          </>}
         </div>
 
         {allCounterparties.length === 0 && !isLoadingCounterparties && (
@@ -584,7 +580,7 @@ const CounterpartiesPage = observer(() => {
                     <div className="w-10 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                       <OperationCheckbox checked={isRowSelected(item.id)} onChange={() => toggleRowSelection(item.id)} />
                     </div>
-                    <div className="flex-1 min-w-[200px] flex flex-col px-3 justify-center">
+                    <div className="flex-1 min-w-[200px] flex flex-col px-2 justify-center">
                       <span className="text-slate-900 font-medium truncate">{item.nazvanie}</span>
                       {item.komentariy && <span className="text-neutral-400 text-mini truncate">{item.komentariy}</span>}
                     </div>

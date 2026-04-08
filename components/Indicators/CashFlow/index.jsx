@@ -6,16 +6,18 @@ import { HelpCircle } from 'lucide-react'
 import { cn } from '@/app/lib/utils'
 import CustomMonthSlider from '../shared/CustomMonthSlider'
 
-// Static Mock Data based on the provided image
+// Static Mock Data for CashFlow
 const months = ['янв', 'фев', 'мар', 'апр', 'апр\n(план)', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
-const incomeData = [20000, 25000, 22000, 30000, 50000, 35000, 38000, 42000, 40000, 45000, 48000, 52000, 55000]
-const expenseData = [15000, 18000, 16000, 20000, 5000, 25000, 26000, 28000, 27000, 30000, 32000, 35000, 38000]
-const netProfitData = incomeData.map((val, idx) => val - expenseData[idx])
-const dividendData = [0, 0, 0, 0, 0, 5000, 0, 0, 0, 0, 0, 0, 10000]
+const receiptsData = [25000, 30000, 28000, 35000, 55000, 40000, 42000, 45000, 43000, 48000, 50000, 55000, 58000]
+const paymentsData = [18000, 22000, 20000, 25000, 5000, 28000, 30000, 32000, 31000, 34000, 36000, 38000, 40000]
+const differenceData = receiptsData.map((val, idx) => val - paymentsData[idx])
 
-const Profit = () => {
-  const chartRef = useRef(null);
-  const [zoomRange, setZoomRange] = useState([0, 50]); // [start, end] percentage
+const CashFlow = () => {
+  const chartRef = useRef(null)
+  const [zoomRange, setZoomRange] = useState([0, 50])
+  const [activeTab, setActiveTab] = useState('Общий')
+
+  const tabs = ['Общий', 'Операционный', 'Инвестиционный', 'Финансовый']
 
   const options = useMemo(() => ({
     tooltip: {
@@ -24,7 +26,7 @@ const Profit = () => {
       borderColor: '#e5e7eb',
       borderWidth: 1,
       textStyle: { color: '#111827', fontSize: 12 },
-      shadowColor: 'rgba(255 26 26 / 0.1)',
+      shadowColor: 'rgba(0, 0, 0, 0.1)',
       shadowBlur: 10,
       formatter: (params) => {
         let res = `<div class="p-1 font-semibold border-b border-gray-100 mb-1">${params[0].name}</div>`
@@ -54,7 +56,7 @@ const Profit = () => {
       itemWidth: 14,
       itemHeight: 14,
       textStyle: { color: '#6b7280', fontSize: 12 },
-      data: ['Доходы', 'Расходы', 'Чистая прибыль', 'Дивиденды']
+      data: ['Поступления', 'Выплаты', 'Разница']
     },
     dataZoom: [{
       type: 'slider',
@@ -84,85 +86,80 @@ const Profit = () => {
     },
     series: [
       {
-        name: 'Доходы',
+        name: 'Поступления',
         type: 'bar',
-        data: incomeData,
+        data: receiptsData,
         barWidth: 20,
         itemStyle: {
           borderRadius: [4, 4, 0, 0],
-          color: '#38bdf8' // Cyan-blue
+          color: '#3b82f6'
         },
-        // Special highlighting for "Apr (plan)"
         markArea: {
           data: [[{
             xAxis: 'апр\n(план)',
-            itemStyle: { color: 'rgba(56, 189, 248, 0.1)' }
+            itemStyle: { color: 'rgba(59, 130, 246, 0.1)' }
           }, {
             xAxis: 'апр\n(план)'
           }]]
         }
       },
       {
-        name: 'Расходы',
+        name: 'Выплаты',
         type: 'bar',
-        data: expenseData,
+        data: paymentsData,
         barWidth: 20,
         itemStyle: {
           borderRadius: [4, 4, 0, 0],
-          color: '#fbab7e' // Orange
+          color: '#fb923c'
         }
       },
       {
-        name: 'Чистая прибыль',
+        name: 'Разница',
         type: 'line',
-        data: netProfitData,
+        data: differenceData,
         smooth: true,
         showSymbol: true,
         symbolSize: 8,
         lineStyle: { width: 3, color: '#10b981', type: 'dashed' },
         itemStyle: { color: '#10b981', borderWidth: 2, borderColor: '#fff' }
-      },
-      {
-        name: 'Дивиденды',
-        type: 'line',
-        data: dividendData,
-        smooth: true,
-        showSymbol: true,
-        symbolSize: 6,
-        lineStyle: { width: 2, color: '#c084fc' },
-        itemStyle: { color: '#920DF8', borderWidth: 2, borderColor: '#fff' }
       }
     ]
   }), [zoomRange])
 
   const stats = [
-    { label: 'Доходы', value: '100', plan: '50 793', color: 'text-slate-900', planColor: 'text-blue-500' },
-    { label: 'Расходы', value: '40', plan: '180', color: 'text-slate-900', planColor: 'text-blue-500' },
-    { label: 'Чистая прибыль', value: '60', plan: '50 613', color: 'text-slate-900', planColor: 'text-blue-500' },
-    { label: 'Рентабельность, %', value: '60%', plan: '99.65%', color: 'text-slate-900', planColor: 'text-blue-500' },
-    { label: 'Дивиденды', value: '0', plan: '0', color: 'text-slate-900', planColor: 'text-blue-500' },
+    { label: 'Поступления', value: '100', plan: '50 793', color: 'text-slate-900', planColor: 'text-blue-500' },
+    { label: 'Выплаты', value: '40', plan: '180', color: 'text-slate-900', planColor: 'text-blue-500' },
+    { label: 'Разница', value: '60', plan: '50 613', color: 'text-slate-900', planColor: 'text-blue-500' },
   ]
 
   return (
-    <div className="w-full bg-white p-6">
-      <div className="flex justify-between items-center mb-8">
+    <div className="w-full bg-white p-6 mt-6">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-8">
         <div className="flex items-center gap-2">
-          <h2 className="text-[22px] font-bold text-[#111827]">Прибыль, $</h2>
+          <h2 className="text-[22px] font-bold text-[#111827]">Денежный поток, $</h2>
           <div className="flex items-center justify-center size-5 bg-neutral-100 rounded-full cursor-help">
             <HelpCircle className="size-3 text-neutral-400" />
           </div>
         </div>
-        <div className="flex bg-[#f3f4f624] border border-neutral-200 rounded-md p-[3px]">
-          <button className="px-4 py-1.5 text-sm font-medium text-neutral-500 hover:text-slate-900 rounded transition-colors whitespace-nowrap">
-            Метод начисления
-          </button>
-          <button className="px-4 py-1.5 text-sm font-medium bg-white text-[#38bdf8] shadow-sm border border-neutral-200 rounded transition-colors whitespace-nowrap">
-            Кассовый метод
-          </button>
+        <div className="flex flex-wrap bg-[#f3f4f624] border border-neutral-200 rounded-md p-1">
+          {tabs.map(tab => (
+            <button 
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                "px-4 py-1.5 text-sm font-medium transition-all rounded whitespace-nowrap",
+                activeTab === tab 
+                  ? "bg-white text-[#38bdf8] shadow-sm border border-neutral-200" 
+                  : "text-neutral-500 hover:text-slate-900"
+              )}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 overflow-x-auto">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Statistics panel */}
         <div className="w-full lg:w-[320px] shrink-0 space-y-7 pr-4 mt-4">
           {stats.map((stat, idx) => (
@@ -174,7 +171,7 @@ const Profit = () => {
                 <span className={cn("text-[28px] font-bold leading-none mb-1", stat.color)}>
                   {stat.value}
                 </span>
-                <div className="flex items-center gap-1.5 text-[13px]">
+                <div className="flex items-center gap-1.5 text-xss">
                   <span className={cn("font-semibold", stat.planColor)}>{stat.plan}</span>
                   <span className="text-neutral-400">— по плану</span>
                 </div>
@@ -184,10 +181,10 @@ const Profit = () => {
         </div>
 
         {/* Chart container */}
-        <div className="flex-1">
+        <div className="flex-1 ">
           <div className="mb-4 pt-4 px-2">
-            <CustomMonthSlider
-              value={zoomRange}
+            <CustomMonthSlider 
+              value={zoomRange} 
               onChange={setZoomRange}
             />
           </div>
@@ -205,4 +202,4 @@ const Profit = () => {
   )
 }
 
-export default Profit
+export default CashFlow

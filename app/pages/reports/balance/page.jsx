@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import { observer } from 'mobx-react-lite'
 import BalanceFilterSidebar from '@/components/reports/balance/FilterSidebar'
-import { balanceStore } from '@/components/reports/balance/balance.store'
 import styles from './balance.module.scss'
 import { ExpendOpen, ExpendClose } from '@/constants/icons'
 import SingleSelect from '../../../../components/shared/Selects/SingleSelect'
@@ -13,28 +12,31 @@ import { useQuery } from '@tanstack/react-query'
 import moment from 'moment'
 import { apiClient } from '../../../../lib/api/ucode/base'
 import { appStore } from '../../../../store/app.store'
+import { balanceStore } from '../../../../components/reports/balance/balance.store'
 
 export default observer(function BalancePage() {
   const [expandedRows, setExpandedRows] = useState(new Set())
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [isFilterOpen, setIsFilterOpen] = useState(true)
 
-  const { error } = balanceStore
-
-
+  const { dateRange, selectedEntity, selectedCurrency, selectedCounterparties, selectedAccount } = balanceStore
 
   const filterData = {
-    as_of: balanceStore.selectedDate ? moment(balanceStore.selectedDate).format('YYYY-MM-DD') : '',
-    account_ids: balanceStore.selectedAccount ? [balanceStore.selectedAccount] : [],
-    legal_entity_id: balanceStore.selectedEntity,
-    user_currency_code: balanceStore.selectedCurrency,
-    contr_agent_ids: balanceStore.selectedCounterparties,
+    as_of: dateRange ? moment(dateRange.end).format('YYYY-MM-DD') : '',
+    account_ids: selectedAccount ? selectedAccount : [],
+    legal_entity_id: selectedEntity,
+    user_currency_code: selectedCurrency,
+    contr_agent_ids: selectedCounterparties,
   }
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["balance_report", filterData],
     queryFn: () => apiClient.invokeFunction({ method: "balance_report", data: filterData }),
-    select: (res) => res?.data?.data
+    select: (res) => res?.data?.data,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    staleTime: 0,
+    gcTime: 0
   })
 
   // Auto-expand first two levels on initial data load
@@ -85,6 +87,7 @@ export default observer(function BalancePage() {
     const isExpanded = expandedRows.has(item.id)
     const indent = level * 24
     const isTotalRow = level === 0
+    console.log(item.name, indent)
 
     return (
       <React.Fragment key={item.id}>
@@ -123,7 +126,7 @@ export default observer(function BalancePage() {
         onClose={() => setIsFilterOpen(false)}
       />
 
-      {isLoading && <ScreenLoader />}
+      {(isLoading || isFetching) && <ScreenLoader />}
       {/* Main Content */}
       <div className={"w-full relative bg-white overflow-auto pb-10"}>
         <div className="flex px-4 h-16 items-center sticky top-0 z-20 bg-white justify-between">
@@ -153,8 +156,7 @@ export default observer(function BalancePage() {
         <div className='px-4'>
           {/* Spinner overlay on filter change (data already present) */}
 
-
-          {error && !isLoading ? (
+          {error && !isLoading && !isFetching ? (
             <div className={styles.tableError}>
               <p>Ошибка загрузки данных: {error.message}</p>
               <button onClick={() => balanceStore.fetchBalance()} className={styles.retryButton}>

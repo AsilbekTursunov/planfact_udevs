@@ -1,135 +1,90 @@
-import { makeAutoObservable, runInAction } from 'mobx'
+import { makeAutoObservable } from 'mobx'
 import { makePersistable } from 'mobx-persist-store'
-import { ucodeRequest } from '@/lib/api/ucode/base'
 import { GlobalCurrency } from '../../../constants/globalCurrency'
 
-const formatDate = (date) => {
-  if (!date) return ''
-  const d = typeof date === 'string' ? new Date(date) : date
-  if (isNaN(d.getTime())) return ''
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+const currentYear = new Date().getFullYear()
 
 const getDefaultStartDate = () => {
-  const currentYear = new Date().getFullYear()
-  return `${currentYear - 1}-10-01`
+	return new Date(currentYear, 0, 1) // January 1st of current year
 }
 
 const getDefaultEndDate = () => {
-  const today = new Date()
-  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-  const year = lastDay.getFullYear()
-  const month = String(lastDay.getMonth() + 1).padStart(2, '0')
-  const day = String(lastDay.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+	return new Date() // today
 }
 
 class CashFlowStore {
 	// ── Filter state ────────────────────────────────────────────────────────────
-	filters = {
-		periodStartDate: getDefaultStartDate(),
-		periodEndDate: getDefaultEndDate(),
-		periodType: 'monthly',
-		currencyCode: GlobalCurrency.code || 'UZS', // Defaulting to RUB as seen in page
-		sellingDealId: [], // these are same values
-		contrAgentId: [],
-		accountId: [],
-		dealId: [], // these are same values
-	}
-
-	// ── Report state ────────────────────────────────────────────────────────────
-	reportData = null
-	isLoading = false
-	isFetching = false
-	error = null
+	periodStartDate = getDefaultStartDate()
+	periodEndDate = getDefaultEndDate()
+	periodType = 'monthly'
+	currencyCode = GlobalCurrency.code || 'UZS' // Defaulting to RUB as seen in page
+	sellingDealId = [] // these are same values
+	contrAgentId = []
+	defaultDate = { start: new Date(currentYear - 1, 0, 1), end: new Date() }
+	accountId = []
+	dealId = [] // these are same values
 
 	constructor() {
 		makeAutoObservable(this)
 		if (typeof window !== 'undefined') {
 			makePersistable(this, {
 				name: 'cashflow_store_v2',
-				properties: ['filters'],
+				properties: [
+					'periodStartDate',
+					'periodEndDate',
+					'periodType',
+					'currencyCode',
+					'sellingDealId',
+					'contrAgentId',
+					'accountId',
+					'dealId',
+				],
 				storage: window.localStorage,
 				debugMode: true,
 			})
 		}
 	}
 
-	// ── Fetch Report ─────────────────────────────────────────────────────────────
-	async fetchReport() {
-		runInAction(() => {
-			if (!this.filters.periodStartDate) this.filters.periodStartDate = getDefaultStartDate()
-			if (!this.filters.periodEndDate) this.filters.periodEndDate = getDefaultEndDate()
-
-			this.isFetching = true
-			this.error = null
-			if (!this.reportData) this.isLoading = true
-		})
-
-		try {
-			const response = await ucodeRequest({
-				method: 'cash_flow',
-				data: this.filters,
-			})
-
-			runInAction(() => {
-				this.reportData = response?.data?.data?.data || null
-				this.isLoading = false
-				this.isFetching = false
-			})
-		} catch (err) {
-			console.error('Error fetching cashflow report:', err)
-			runInAction(() => {
-				this.error = err
-				this.isLoading = false
-				this.isFetching = false
-			})
-		}
-	}
-
 	// ── Setters ─────────────────────────────────────────────────────────────────
-	setPeriodStartDate(value) {
-		this.filters.periodStartDate = formatDate(value)
-	}
-
-	setPeriodEndDate(value) {
-		this.filters.periodEndDate = formatDate(value)
+	setPeriodDateRange(range) {
+		if (!range.start || !range.end) {
+			this.periodStartDate = new Date(currentYear, 0, 1)
+			this.periodEndDate = new Date()
+		} else {
+			this.periodStartDate = range.start
+			this.periodEndDate = range.end
+		}
 	}
 
 	setPeriodType(value) {
-		this.filters.periodType = value
+		this.periodType = value
 	}
 
 	setCurrencyCode(value) {
-		this.filters.currencyCode = value
+		this.currencyCode = value
 	}
 
 	setDeals(value) {
-		this.filters.sellingDealId = value
+		this.sellingDealId = value
 	}
 
 	setCounterparties(value) {
-		this.filters.contrAgentId = value
+		this.contrAgentId = value
 	}
 
 	setAccounts(value) {
-		this.filters.accountId = value
+		this.accountId = value
 	}
 
 	resetFilters() {
-		this.filters = {
-			periodStartDate: getDefaultStartDate(),
-			periodEndDate: getDefaultEndDate(),
-			periodType: 'monthly',
-			currencyCode: GlobalCurrency.code,
-			sellingDealId: [],
-			contrAgentId: [],
-			accountId: [],
-			dealId: [],
-		}
+		this.periodStartDate = new Date(currentYear, 0, 1)
+		this.periodEndDate = new Date()
+		this.periodType = 'monthly'
+		this.currencyCode = GlobalCurrency.code
+		this.sellingDealId = []
+		this.contrAgentId = []
+		this.accountId = []
+		this.dealId = []
 	}
 }
 
