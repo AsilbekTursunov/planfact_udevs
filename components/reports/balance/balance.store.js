@@ -17,7 +17,7 @@ class BalanceStore {
 	selectedCurrency = GlobalCurrency.code || 'UZS'
 	selectedCounterparties = []
 	selectedAccount = []
-	defaultDate = { start: new Date(currentYear - 1, 0, 1), end: new Date() }
+	defaultDate = { start: new Date(currentYear, 0, 1), end: new Date() }
 
 	constructor() {
 		makeAutoObservable(this)

@@ -51,18 +51,19 @@ const ProfitAndLossPage = observer(() => {
     title: ''
   })
 
-  const { dateRange, selectedPeriod,
+  const { dateRange, selectedGrouping,
     selectedCurrency,
     ebitda,
     ebit,
-    ebt } = pnlStore
+    ebt, isCalculation } = pnlStore
 
 
   const filterData = {
     periodStartDate: moment(dateRange?.start).format('YYYY-MM-DD'),
     periodEndDate: moment(dateRange?.end).format('YYYY-MM-DD'),
-    periodType: selectedPeriod,
+    periodType: selectedGrouping,
     userCurrencyCode: selectedCurrency,
+    isCalculation: isCalculation,
     isEbitda: ebitda,
     isEbit: ebit,
     isEbt: ebt,
@@ -240,14 +241,10 @@ const ProfitAndLossPage = observer(() => {
           <div className="flex  h-16 items-center sticky z-50 top-0 bg-white justify-between shrink-0">
             <div className="flex items-center gap-4" >
               <h1 className='text-xl whitespace-nowrap font-semibold'>Отчет о прибылях и убытках (P&L)</h1>
-
               <SingleSelect
                 data={appStore.myCurrencies}
                 value={pnlStore.selectedCurrency}
-                onChange={(value) => {
-                  pnlStore.setSelectedCurrency(value)
-                  pnlStore.fetchReport()
-                }}
+                onChange={(value) => pnlStore.setSelectedCurrency(value)}
                 isClearable={false}
                 withSearch={false}
                 className={'bg-white w-28'}
@@ -260,7 +257,6 @@ const ProfitAndLossPage = observer(() => {
                 value={pnlStore.selectedGrouping}
                 onChange={(value) => {
                   pnlStore.setSelectedGrouping(value)
-                  pnlStore.fetchReport()
                 }}
                 isClearable={false}
                 withSearch={false}
@@ -269,10 +265,9 @@ const ProfitAndLossPage = observer(() => {
               />
               <SingleSelect
                 data={accountingMethodOptions}
-                value={pnlStore.isCalculation ? 'accrual' : 'cash'}
+                value={pnlStore.isCalculation}
                 onChange={(value) => {
-                  pnlStore.setIsCalculation(value === 'accrual')
-                  pnlStore.fetchReport()
+                  pnlStore.setIsCalculation(value)
                 }}
                 isClearable={false}
                 withSearch={false}

@@ -21,14 +21,14 @@ class PnLStore {
 	dateRange = getDefaultDateRange()
 	selectedPeriod = 'all'
 	selectedGrouping = 'monthly'
-	isCalculation = true
+	isCalculation = 'cash'
 	operational = false
 	ebitda = false
 	ebit = false
 	ebt = false
 	selectedAccounts = []
 	selectedCounterparties = []
-	defaultDate = { start: new Date(currentYear - 1, 0, 1), end: new Date() }
+	defaultDate = { start: new Date(currentYear, 0, 1), end: new Date() }
 	selectedCurrency = GlobalCurrency.code || 'UZS'
 
 	constructor() {

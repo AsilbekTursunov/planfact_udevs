@@ -20,7 +20,7 @@ class CashFlowStore {
 	currencyCode = GlobalCurrency.code || 'UZS' // Defaulting to RUB as seen in page
 	sellingDealId = [] // these are same values
 	contrAgentId = []
-	defaultDate = { start: new Date(currentYear - 1, 0, 1), end: new Date() }
+	defaultDate = { start: new Date(currentYear, 0, 1), end: new Date() }
 	accountId = []
 	dealId = [] // these are same values
 
