@@ -63,7 +63,7 @@ const ProfitAndLossPage = observer(() => {
     periodEndDate: moment(dateRange?.end).format('YYYY-MM-DD'),
     periodType: selectedGrouping,
     userCurrencyCode: selectedCurrency,
-    isCalculation: isCalculation,
+    accounting_method: isCalculation,
     isEbitda: ebitda,
     isEbit: ebit,
     isEbt: ebt,
