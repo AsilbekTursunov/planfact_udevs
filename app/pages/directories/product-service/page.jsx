@@ -293,7 +293,7 @@ export default function LegalEntitiesPage() {
   };
 
   const totalItemsCount = useMemo(() => {
-    return productServices.total
+    return productServices?.total
   }, [productServices])
 
   // Block body scroll when page is mounted
